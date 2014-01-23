@@ -35,34 +35,9 @@
 		52D7969F13A6CE560014CED2 /* List.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7967613A6CE560014CED2 /* List.c */; };
 		52D796A113A6CE560014CED2 /* Str.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7967813A6CE560014CED2 /* Str.c */; };
 		52D796A313A6CE560014CED2 /* StringBuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7967A13A6CE560014CED2 /* StringBuffer.c */; };
-		52EC8DDC141A4E6300D17E60 /* OutputStreamTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F8113A5212700FC4089 /* OutputStreamTest.c */; };
-		52EC8DE1141A4FD700D17E60 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52DDC12013C59D45003AA75C /* libmonit.a */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		52EC8DDD141A4E6A00D17E60 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 52A12C2213A0FFAB00C6CEB7 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 52A12C2A13A0FFAB00C6CEB7;
-			remoteInfo = libmonit;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		52EC8DCF141A4E3700D17E60 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		524928DA18912BE500824E3C /* OutputStreamTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = OutputStreamTest; path = /Users/hauk/src/monit/libmonit/build/Debug/OutputStreamTest; sourceTree = "<absolute>"; };
 		5274580B13A1009C00C422FE /* bootstrap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = bootstrap; sourceTree = "<group>"; };
 		5274580C13A1009C00C422FE /* configure.ac */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = configure.ac; sourceTree = "<group>"; };
 		5274580D13A1009C00C422FE /* Makefile.am */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.am; sourceTree = "<group>"; };
@@ -82,8 +57,6 @@
 		52936F8413A5212700FC4089 /* SystemTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = SystemTest.c; sourceTree = "<group>"; };
 		52936F8513A5212700FC4089 /* test.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = test.sh; sourceTree = "<group>"; };
 		52936F8613A5212700FC4089 /* TimeTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TimeTest.c; sourceTree = "<group>"; };
-		52936F9613A5216B00FC4089 /* install-sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; lineEnding = 0; path = "install-sh"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.sh; };
-		52936F9813A5216B00FC4089 /* missing */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; lineEnding = 0; path = missing; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.sh; };
 		52936F9913A5216B00FC4089 /* COPYING */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = COPYING; sourceTree = "<group>"; };
 		52D7964A13A6CE560014CED2 /* Bootstrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = Bootstrap.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52D7964B13A6CE560014CED2 /* Bootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Bootstrap.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -134,14 +107,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		52EC8DCE141A4E3700D17E60 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				52EC8DE1141A4FD700D17E60 /* libmonit.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -149,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				52936F7813A5212700FC4089 /* data */,
+				52936F8513A5212700FC4089 /* test.sh */,
 				52936F7F13A5212700FC4089 /* Makefile.am */,
 				52936F7713A5212700FC4089 /* CommandTest.c */,
 				52936F7A13A5212700FC4089 /* DirTest.c */,
@@ -161,7 +127,6 @@
 				52936F8213A5212700FC4089 /* StringBufferTest.c */,
 				52936F8313A5212700FC4089 /* StrTest.c */,
 				52936F8413A5212700FC4089 /* SystemTest.c */,
-				52936F8513A5212700FC4089 /* test.sh */,
 				52936F8613A5212700FC4089 /* TimeTest.c */,
 			);
 			path = test;
@@ -186,8 +151,6 @@
 		52936F9513A5216B00FC4089 /* config */ = {
 			isa = PBXGroup;
 			children = (
-				52936F9613A5216B00FC4089 /* install-sh */,
-				52936F9813A5216B00FC4089 /* missing */,
 			);
 			path = config;
 			sourceTree = "<group>";
@@ -322,24 +285,6 @@
 			productReference = 52DDC12013C59D45003AA75C /* libmonit.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		52EC8DD0141A4E3700D17E60 /* OutputStreamTest */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 52EC8DDA141A4E3700D17E60 /* Build configuration list for PBXNativeTarget "OutputStreamTest" */;
-			buildPhases = (
-				52EC8DCD141A4E3700D17E60 /* Sources */,
-				52EC8DCE141A4E3700D17E60 /* Frameworks */,
-				52EC8DCF141A4E3700D17E60 /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				52EC8DDE141A4E6A00D17E60 /* PBXTargetDependency */,
-			);
-			name = OutputStreamTest;
-			productName = OutputStreamTest;
-			productReference = 524928DA18912BE500824E3C /* OutputStreamTest */;
-			productType = "com.apple.product-type.tool";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -361,7 +306,6 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				52EC8DD0141A4E3700D17E60 /* OutputStreamTest */,
 				52A12C2A13A0FFAB00C6CEB7 /* libmonit */,
 			);
 		};
@@ -403,23 +347,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		52EC8DCD141A4E3700D17E60 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				52EC8DDC141A4E6300D17E60 /* OutputStreamTest.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		52EC8DDE141A4E6A00D17E60 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 52A12C2A13A0FFAB00C6CEB7 /* libmonit */;
-			targetProxy = 52EC8DDD141A4E6A00D17E60 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		52A12C2D13A0FFAB00C6CEB7 /* Debug */ = {
@@ -514,52 +442,6 @@
 			};
 			name = Release;
 		};
-		52EC8DD8141A4E3700D17E60 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
-				HEADER_SEARCH_PATHS = (
-					$SRCROOT/src/,
-					$SRCROOT/src/exceptions,
-					$SRCROOT/src/thread,
-					$SRCROOT/src/io,
-					$SRCROOT/src/net,
-					$SRCROOT/src/util,
-				);
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		52EC8DD9141A4E3700D17E60 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
-				HEADER_SEARCH_PATHS = (
-					$SRCROOT/src/,
-					$SRCROOT/src/exceptions,
-					$SRCROOT/src/thread,
-					$SRCROOT/src/io,
-					$SRCROOT/src/net,
-					$SRCROOT/src/util,
-				);
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -577,15 +459,6 @@
 			buildConfigurations = (
 				52A12C3013A0FFAB00C6CEB7 /* Debug */,
 				52A12C3113A0FFAB00C6CEB7 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		52EC8DDA141A4E3700D17E60 /* Build configuration list for PBXNativeTarget "OutputStreamTest" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				52EC8DD8141A4E3700D17E60 /* Debug */,
-				52EC8DD9141A4E3700D17E60 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

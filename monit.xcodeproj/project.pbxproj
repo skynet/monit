@@ -106,13 +106,6 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
-		525C3D29141AAA0800F76274 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 525C3D24141AAA0700F76274;
-			remoteInfo = OutputStreamTest;
-		};
 		52DDC12913C59D46003AA75C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
@@ -151,8 +144,6 @@
 		52D25EE317C0E8680039D3E4 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		52D25EE917C0EB460039D3E4 /* monit.pod */ = {isa = PBXFileReference; lastKnownFileType = text; path = monit.pod; sourceTree = "<group>"; };
 		52D25EEA17C0EB460039D3E4 /* PLATFORMS */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLATFORMS; sourceTree = "<group>"; };
-		52F6E66213A74F220023F87A /* install-sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; lineEnding = 0; path = "install-sh"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.sh; };
-		52F6E66413A74F220023F87A /* missing */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; lineEnding = 0; path = missing; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.sh; };
 		52F6E66813A74F220023F87A /* monitrc-gentoo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = "monitrc-gentoo"; sourceTree = "<group>"; };
 		52F6E66B13A74F220023F87A /* distinfo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = distinfo; sourceTree = "<group>"; };
 		52F6E66D13A74F220023F87A /* monit.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = monit.sh; sourceTree = "<group>"; };
@@ -321,7 +312,6 @@
 		52A1310C13A7882A00583257 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				525C3D2A141AAA0800F76274 /* OutputStreamTest */,
 				52DDC12A13C59D46003AA75C /* libmonit.a */,
 			);
 			name = Products;
@@ -352,8 +342,6 @@
 		52F6E65F13A74F220023F87A /* config */ = {
 			isa = PBXGroup;
 			children = (
-				52F6E66213A74F220023F87A /* install-sh */,
-				52F6E66413A74F220023F87A /* missing */,
 			);
 			path = config;
 			sourceTree = "<group>";
@@ -429,19 +417,21 @@
 		52F6E74313A74F220023F87A /* src */ = {
 			isa = PBXGroup;
 			children = (
+				52F6E74B13A74F220023F87A /* device */,
+				52F6E75E13A74F220023F87A /* http */,
+				52F6E77313A74F220023F87A /* process */,
+				52F6E78113A74F220023F87A /* protocols */,
 				52F6E74413A74F220023F87A /* alert.c */,
 				52F6E74513A74F220023F87A /* alert.h */,
 				52F6E74613A74F220023F87A /* collector.c */,
 				52F6E74913A74F220023F87A /* control.c */,
 				52F6E74A13A74F220023F87A /* daemonize.c */,
-				52F6E74B13A74F220023F87A /* device */,
 				52F6E75813A74F220023F87A /* env.c */,
 				52F6E75913A74F220023F87A /* event.c */,
 				52F6E75A13A74F220023F87A /* event.h */,
 				52F6E75B13A74F220023F87A /* file.c */,
 				52F6E75C13A74F220023F87A /* file.h */,
 				52F6E75D13A74F220023F87A /* gc.c */,
-				52F6E75E13A74F220023F87A /* http */,
 				52F6E76813A74F220023F87A /* http.c */,
 				52F6E76913A74F220023F87A /* l.l */,
 				52F6E76B13A74F220023F87A /* log.c */,
@@ -454,10 +444,8 @@
 				52F6E77013A74F220023F87A /* net.c */,
 				52F6E77113A74F220023F87A /* net.h */,
 				52F6E77213A74F220023F87A /* p.y */,
-				52F6E77313A74F220023F87A /* process */,
 				52F6E77F13A74F220023F87A /* process.c */,
 				52F6E78013A74F220023F87A /* process.h */,
-				52F6E78113A74F220023F87A /* protocols */,
 				52F6E7A013A74F220023F87A /* sendmail.c */,
 				52AE77CA14037DA300D2861D /* sha1.c */,
 				52AE77CB14037DA300D2861D /* sha1.h */,
@@ -622,13 +610,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		525C3D2A141AAA0800F76274 /* OutputStreamTest */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = OutputStreamTest;
-			remoteRef = 525C3D29141AAA0800F76274 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		52DDC12A13C59D46003AA75C /* libmonit.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
