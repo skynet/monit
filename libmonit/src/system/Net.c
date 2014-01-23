@@ -75,8 +75,7 @@ int Net_setNonBlocking(int socket) {
 
 
 int Net_setBlocking(int socket) {
-        int  off = 0;
-        return (ioctl(socket, FIONBIO, &off) != -1);
+        return (fcntl(socket, F_SETFL, fcntl(socket, F_GETFL, 0) & ~O_NONBLOCK) != -1);
 }
 
 
