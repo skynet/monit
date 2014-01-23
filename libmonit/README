@@ -1,0 +1,19 @@
+
+libmonit:
+
+
+This library synthesis modules used by Monit into a static library. This
+factoring of functionality into a separate library represent the first step in
+our process of refactoring and improving Monit.
+
+What you see here now is only a small subset of the actual library and just
+the bare minimum for what is necessary to implement 'check program'.
+
+The long-term goal is to reduce the source code of Monit to basically a parser
+for the configuration language and a validator which will run the different
+checks. The rest of the code will be replaced with new libmonit code.
+
+Libmonit is built as part of Monit and is not meant to be installed nor
+distributed. The build system will link libmonit into the monit binary as a
+static library. PLEASE DO NOT USE OR DISTRIBUTE LIBMONIT AS A SEPARATE
+LIBRARY.

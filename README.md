@@ -56,7 +56,7 @@ QUESTIONS AND SUPPORT
 
 If you have questions or comments about the software or documentation please subscribe to the [Monit general mailing list](http://lists.nongnu.org/mailman/listinfo/monit-general "Mailing List") and post your questions there. 
 
-You can also purchase a [M/Monit license](https://mmonit.com/shop/) which entitles you to direct support from us.
+If you have purchased a [M/Monit license](https://mmonit.com/shop/) you are entitled to direct support from us regarding both Monit and M/Monit.
 
 
 CONTRIBUTING

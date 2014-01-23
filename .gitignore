@@ -1,0 +1,10 @@
+# OS X
+.DS_Store
+
+# Thumbnails
+._*
+
+# Xcode
+build/
+project.xcworkspace/
+xcuserdata/

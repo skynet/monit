@@ -1,0 +1,165 @@
+			    Platform Notes
+			    --------------
+
+This file describes platform specific notes for Monit. 
+
+Platforms overview in alphabetical order:
+
+ o AIX
+ o Darwin (Mac OS X)
+ o FreeBSD
+ o Linux
+ o NetBSD
+ o OpenBSD
+ o Solaris
+
+Following platforms are not actively maintained because of lack of testing
+machine for these OS's. They may work - its support was added and confirmed
+in particular Monit releases by contributors. Possible status reports, bug
+reports, patch contributions or access to such platforms for development is
+welcomed:
+
+ o HPUX
+
+
+Platform specific notes:
+========================
+
+
+GNU/Linux
+=========
+
+Monit compiles out of the box on Linux.  Some Linux Distributions
+might have Monit as a precompiled package (see PACKAGES).
+
+In order to be able to use resource support you have to have PROCFS
+support enabled in your kernel.  In case your kernel has fortified
+your proc filesystem, e.g. using the openwall patchset, you might need
+to start Monit as the root user. 
+
+In case a glibc replacement is used one of the following parts may
+apply.
+
+dietlibc
+--------
+
+Since version 4.0 the use of dietlibc is supported by Monit.  For SSL
+support you need to compile the ssl libraries with dietlibc; use the
+"--with-ssl-lib-dir=<path>" option to configure Monit.
+
+A configure for dietlibc might look like this:
+
+  env CC="diet gcc" CFLAGS="-Os" \
+      ./configure --with-ssl-lib-dir=/usr/lib/diet/lib-i386/
+
+
+uClibc
+------
+
+The support for uClibc has been integrated in version 4.0.  Like
+dietlibc you need to compile openssl with uClibc for SSL support.  You
+also need to have the openssl include files outside of your "standard"
+include files (e.g. use an "openssl" link in you <uClibc>/include
+tree).  Otherwise your uClibc include files are mixed up with the
+glibc includes. Finally, specify your <uClibc>/ tree in your configure
+run with "--with-ssl-dir=<path>".
+
+A configure for uClibc might look like this:
+
+  env CC="i386-uclibc-gcc" CFLAGS="-Os" \
+      ./configure --with-ssl-dir=/usr/i386-linux-uclibc
+
+
+Solaris
+=======
+
+64-bit Monit is required for Solaris support.
+
+You can use either gcc or Sun Studio for compilation.  
+
+Package prerequisites
+
+  SUNWbash
+  SUNWgmake
+  SUNWgcc
+  SUNWopenssl-include
+  SUNWopenssl-libraries
+
+Set path to the SFW utilities and libraries, for example:
+
+  PATH=$PATH:/usr/sfw/bin
+  export PATH
+
+  crle -64 -l /lib/64:/usr/lib/64:/usr/sfw/lib/64
+
+Configure Monit (examples):
+
+  gcc [sparc]:
+  ./configure
+
+  gcc [amd64]:
+  ./configure
+
+  Sun Studio 12 [sparc]:
+  ./configure --with-ssl-lib-dir=/usr/sfw/lib/64 CC=/opt/solstudio12.2/bin/cc
+
+  Sun Studio 12 [amd64]:
+  ./configure --with-ssl-lib-dir=/usr/sfw/lib/64 CC=/opt/solstudio12.2/bin/cc
+
+Compile Monit with:
+
+  gmake
+
+
+AIX
+===
+
+Configure Monit with SSL path (examples):
+
+    ./configure \
+        --with-ssl-incl-dir=/opt/freeware/include \
+        --with-ssl-lib-dir=/opt/freeware/64/lib
+
+Use GNU make to compile ('gmake')
+
+
+FreeBSD + NetBSD + OpenBSD
+==========================
+
+Use GNU make to compile ('gmake')
+
+
+Darwin (Mac OS X)
+=================
+
+Monit compiles out of the box on Mac OS X.
+
+It seems that Apple is phasing out the kvm interface and that
+it is disabled by default on Intel based Mac OS X 10.4.8 and later.
+You can get following error in such case for Monit <= 4.9:
+
+ --8<--
+ kvm_open: : /dev/mem: No such file or directory
+ system statistic error -- cannot initialize kvm interface
+ system statistic error -- cannot initialize the process tree =>
+ process resource monitoring disabled
+ --8<--
+
+You can reenable the kvm interface by adding the kmem to the boot-args
+Open Firmware variable as root - for example:
+
+ nvram boot-arg="kmem=1"
+
+and reboot the machine.
+
+Monit > 4.9 don't need this workaround.
+
+
+Any other not yet mentioned but posix compatible platform
+=========================================================
+
+Monit might be able to compile using the "UNKNOWN" architecure.  In
+case a wrong platform is detected you can enforce this behavior by
+using the "--without-resource" flag in the configure run.  Generally,
+it is advisable to stick to gcc for compiling.
+
