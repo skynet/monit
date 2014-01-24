@@ -101,14 +101,6 @@ int file_isFifo(char *fifo);
 
 
 /**
- * Check if this is a socket
- * @param socket A path to the socket to check
- * @return TRUE if socket exist, otherwise FALSE
- */
-int file_isSocket(char *socket);
-
-
-/**
  * Check if the file exist on the system
  * @file A path to the file to check
  * @return TRUE if file exist otherwise FALSE

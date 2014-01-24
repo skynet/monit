@@ -154,6 +154,15 @@ int File_isFile(const char *file) {
 }
 
 
+int File_isSocket(const char *file) {
+        if(file) {
+                struct stat buf;
+                return (stat(file, &buf) == 0 && S_ISSOCK(buf.st_mode));
+        }
+        return false;
+}
+
+
 int File_isDirectory(const char *file) {
         if (file) {
                 struct stat buf;

@@ -149,6 +149,14 @@ int File_isFile(const char *file);
 
 
 /**
+ * Returns true if <code>file</code> is a Unix Domain socket
+ * @param file An absolute file path
+ * @return true if file is a socket file, otherwise false
+ */
+int File_isSocket(const char *file);
+
+        
+/**
  * Check if <code>file</code> is a directory
  * @param file An absolute file path
  * @return true if file exist and is a directory, otherwise false
