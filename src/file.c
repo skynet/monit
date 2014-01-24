@@ -145,6 +145,7 @@ time_t file_getTimestamp(char *object, mode_t type) {
   if(! stat(object, &buf)) {
     if(((type == S_IFREG) && S_ISREG(buf.st_mode)) ||
        ((type == S_IFDIR) && S_ISDIR(buf.st_mode)) ||
+       ((type == S_IFSOCK) && S_ISSOCK(buf.st_mode)) ||
        ((type == (S_IFREG|S_IFDIR)) && (S_ISREG(buf.st_mode) ||
                                         S_ISDIR(buf.st_mode)))
        ) {
@@ -273,6 +274,22 @@ int file_isFifo(char *fifo) {
 
 
 /**
+ * Check if this is a socket
+ * @param socket A path to the socket to check
+ * @return TRUE if socket exist, otherwise FALSE
+ */
+int file_isSocket(char *socket) {
+  
+  struct stat buf;
+  
+  ASSERT(socket);
+
+  return (stat(socket, &buf) == 0 && S_ISSOCK(buf.st_mode));
+  
+}
+
+
+/**
  * Check if the file exist on the system
  * @file A path to the file to check
  * @return TRUE if file exist otherwise FALSE
@@ -308,8 +325,8 @@ int file_checkStat(char *filename, char *description, int permmask) {
     LogError("%s: Cannot stat the %s '%s' -- %s\n", prog, description, filename, STRERROR);
     return FALSE;
   }
-  if(!S_ISREG(buf.st_mode)) {
-    LogError("%s: The %s '%s' is not a regular file.\n", prog, description,  filename);
+  if(!S_ISREG(buf.st_mode) && !S_ISSOCK(buf.st_mode)) {
+    LogError("%s: The %s '%s' is not a regular file nor a socket.\n", prog, description,  filename);
     return FALSE;
   }
   if(buf.st_uid != geteuid())  {

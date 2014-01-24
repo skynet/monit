@@ -217,6 +217,8 @@ int check_process(Service_T s) {
 
         /* Test each host:port and protocol in the service's portlist */
         if (s->portlist)
+                /* skip further tests during startup timeout */
+                if (s->inf->priv.process.uptime < s->start->timeout) return TRUE;
                 for (pp = s->portlist; pp; pp = pp->next)
                         check_connection(s, pp);
 
@@ -316,12 +318,12 @@ int check_file(Service_T s) {
                 Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "file exist");
         }
 
-        if (!S_ISREG(s->inf->st_mode)) {
-                Event_post(s, Event_Invalid, STATE_FAILED, s->action_INVALID, "is not a regular file");
+        if (!S_ISREG(s->inf->st_mode) && !S_ISSOCK(s->inf->st_mode)) {
+                Event_post(s, Event_Invalid, STATE_FAILED, s->action_INVALID, "is neither a regular file nor a socket");
                 return FALSE;
         } else {
-                DEBUG("'%s' is a regular file\n", s->name);
-                Event_post(s, Event_Invalid, STATE_SUCCEEDED, s->action_INVALID, "is a regular file");
+                DEBUG("'%s' is a regular file or socket\n", s->name);
+                Event_post(s, Event_Invalid, STATE_SUCCEEDED, s->action_INVALID, "is a regular file or socket");
         }
 
         if (s->checksum)
