@@ -6,9 +6,9 @@
 Version 5.6.1
 
 New: Merged https://bitbucket.org/tildeslash/monit/pull-request/1/
-     from philfry: 1) Handle sockets (unix domain) as regular regular 
-     files when checking timestamp. 2) Use mysql 4.1 protocol in 
-     MySQL check. 3) Skip connection checks during startup timeout
+     from Philippe Kueck: 1) Handle sockets (unix domain) as regular 
+     regular files when checking timestamp. 2) Use mysql 4.1 protocol 
+     in MySQL check. 3) Skip connection checks during startup timeout (nice)
 
 BUGFIXES:
 
