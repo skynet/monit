@@ -146,8 +146,7 @@ time_t file_getTimestamp(char *object, mode_t type) {
     if(((type == S_IFREG) && S_ISREG(buf.st_mode)) ||
        ((type == S_IFDIR) && S_ISDIR(buf.st_mode)) ||
        ((type == S_IFSOCK) && S_ISSOCK(buf.st_mode)) ||
-       ((type == (S_IFREG|S_IFDIR)) && (S_ISREG(buf.st_mode) ||
-                                        S_ISDIR(buf.st_mode)))
+       ((type == (S_IFREG|S_IFDIR)) && (S_ISREG(buf.st_mode) || S_ISDIR(buf.st_mode)))
        ) {
       return MAX(buf.st_mtime, buf.st_ctime);
     } else {
