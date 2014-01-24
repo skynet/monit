@@ -51,56 +51,39 @@
  */
 int check_mysql(Socket_T socket) {
 
+
   unsigned char buf[STRLEN];
 
-  unsigned char requestLogin[10] = {
-    0x06,                                 /** Packet Length */
-    0x00,
-    0x00,
-
-    0x01,                                 /** Packet Number */
-
-    0x00,                                         /** Flags */
-
-    0x00,                                    /** Max Packet */
-    0x00,
-    0x00,
-
-    0x00,                                       /** Username*/
-
-    0x00                                        /** Password*/
+  unsigned char requestLogin[39] = {
+    0x23, 0x00, 0x00,       // packet_length, 3 bytes
+    0x01,                   // packet_number, 1 byte
+    0x00, 0xa2, 0x00, 0x00, // client_flags, 4 bytes (do+auth 4.1, transact)
+    0x00, 0x00, 0x00, 0x40, // max_packet_size, 4 bytes
+    0x08,                   // charset_number (latin1), 1 byte
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // filler, 23 bytes
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x4d, 0x00,             // user "M" null terminated, 2 bytes
+    0x00,                   // scramble, 1 byte
   };
 
   unsigned char requestPing[5] = {
-    0x01,                                 /** Packet Length */
-    0x00,
-    0x00,
-
-    0x00,                                 /** Packet Number */
-
-    0x0E                                   /** Command Ping */
+    0x01, 0x00, 0x00,       // packet_length, 3 bytes
+    0x00,                   // packet_number, 1 byte
+    0x0e                    // command ping (14), 1 byte
   };
 
   unsigned char responsePing[5] = {
-    0x03,                                 /** Packet Length */
-    0x00,
-    0x00,
-
-    0x01,                                 /** Packet Number */
-
-    0x00                               /** Response Code OK */
-
-                                        /** Padding Ignored */
+    0x07, 0x00, 0x00,       // packet_length, 3 bytes
+    0x01,                   // packet_number, 1 byte
+    0x00                    // affected_rows, 1 byte
+                            // remaining 4 bytes ignored
   };
 
   unsigned char requestQuit[5] = {
-    0x01,                                 /** Packet Length */
-    0x00,
-    0x00,
-
-    0x00,                                 /** Packet Number */
-
-    0x01                                   /** Command Quit */
+    0x01, 0x00, 0x00,       // packet_length, 3 bytes
+    0x00,                   // packet_number, 1 byte
+    0x01                    // command quit (1), 1 byte
   };
 
   ASSERT(socket);
