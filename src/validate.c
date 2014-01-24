@@ -218,7 +218,8 @@ int check_process(Service_T s) {
         /* Test each host:port and protocol in the service's portlist */
         if (s->portlist)
                 /* skip further tests during startup timeout */
-                if (s->inf->priv.process.uptime < s->start->timeout) return TRUE;
+                if (s->start)
+                        if (s->inf->priv.process.uptime < s->start->timeout) return TRUE;
                 for (pp = s->portlist; pp; pp = pp->next)
                         check_connection(s, pp);
 
