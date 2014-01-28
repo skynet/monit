@@ -171,8 +171,7 @@ void start_httpd(int port, int backlog, char *bindAddr) {
 
     if(Run.httpdssl) {
 
-      mySSLServerConnection= init_ssl_server( Run.httpsslpem,
-                                              Run.httpsslclientpem);
+      mySSLServerConnection = init_ssl_server( Run.httpsslpem, Run.httpsslclientpem);
 
       if(mySSLServerConnection == NULL) {
 

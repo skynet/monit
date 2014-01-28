@@ -299,9 +299,7 @@ void delete_ssl_socket(ssl_connection *ssl) {
 ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
         SSL_METHOD *server_method = NULL;
         ssl_server_connection *ssl_server;
-
         ASSERT(pemfile);
-
         if (!ssl_initialized)
                 start_ssl();
 
@@ -316,30 +314,28 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
                 LogError("%s: Cannot initialize the SSL method -- %s\n", prog, SSLERROR);
                 goto sslerror;
         }
-
         if (!(ssl_server->ctx = SSL_CTX_new(ssl_server->method))) {
                 LogError("%s: Cannot initialize SSL server certificate handler -- %s\n", prog, SSLERROR);
                 goto sslerror;
         }
-
         if (SSL_CTX_use_certificate_chain_file(ssl_server->ctx, pemfile) != 1) {
                 LogError("%s: Cannot initialize SSL server certificate -- %s\n", prog, SSLERROR);
                 goto sslerror;
         }
-
         if (SSL_CTX_use_PrivateKey_file(ssl_server->ctx, pemfile, SSL_FILETYPE_PEM) != 1) {
                 LogError("%s: Cannot initialize SSL server private key -- %s\n", prog, SSLERROR);
                 goto sslerror;
         }
-
         if (SSL_CTX_check_private_key(ssl_server->ctx) != 1) {
                 LogError("%s: The private key doesn't match the certificate public key -- %s\n", prog, SSLERROR);
                 goto sslerror;
         }
-
+        if (SSL_CTX_set_cipher_list(ssl_server->ctx, CIPHER_LIST) != 1) {
+                LogError("%s: Error setting cipher list '" CIPHER_LIST "' (no valid ciphers)", prog);
+                goto sslerror;
+        }
         /* Disable session cache */
         SSL_CTX_set_session_cache_mode(ssl_server->ctx, SSL_SESS_CACHE_OFF);
-
         /*
          * We need this to force transmission of client certs
          */
@@ -347,14 +343,11 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
                 LogError("%s: Verification engine was not properly initialized -- %s\n", prog, SSLERROR);
                 goto sslerror;
         }
-
         if (ssl_server->clientpemfile) {
                 STACK_OF(X509_NAME) *stack = SSL_CTX_get_client_CA_list(ssl_server->ctx);
                 LogInfo("%s: Found %d client certificates\n", prog, sk_X509_NAME_num(stack));
         }
-
         return ssl_server;
-
 sslerror:
         delete_ssl_server_socket(ssl_server);
         return NULL;
