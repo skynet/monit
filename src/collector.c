@@ -136,13 +136,19 @@ int handle_mmonit(Event_T E) {
                         LogError("M/Monit: cannot open a connection to %s -- %s\n", C->url->url, STRERROR);
                         goto error;
                 }
+
+                /* Set TCP_NODELAY to socket */
+                if(socket_set_tcp_nodelay(socket) < 0) {
+                    LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
+                }
+            
                 status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket));
                 if (! data_send(socket, C, StringBuffer_toString(sb))) {
                         LogError("M/Monit: cannot send %s message to %s\n", E ? "event" : "status", C->url->url);
                         goto error;
                 }
                 StringBuffer_clear(sb);
-                socket_shutdown_write(socket);
+
                 if (! data_check(socket, C)) {
                         LogError("M/Monit: %s message to %s failed\n", E ? "event" : "status", C->url->url);
                         goto error;
