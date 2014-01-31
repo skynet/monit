@@ -2550,7 +2550,7 @@ control file.
 
 An example:
 
- check program myscript with path "/usr/local/bin/myscript.sh" with timeout 1000 seconds
+ check program myscript with path /usr/local/bin/myscript.sh with timeout 500 seconds
        if status != 0 then alert
 
 Sample script for the above example (/usr/local/bin/myscript.sh):
@@ -2559,8 +2559,16 @@ Sample script for the above example (/usr/local/bin/myscript.sh):
  echo test
  exit $?
 
-Notes: The interpreter (first line) is required unless the executed
-program is binary. The program must be executable.
+You can also send parameters with the program:
+
+ check program list-files with path /bin/ls -lrt /tmp/
+       if status != 0 then alert
+
+Parameters are whitespace separated strings and in the above example
+the strings '-lrt' and '/tmp/' are parameters to the program '/bin/ls'.
+
+Notes: If the program is a script, the interpreter (first line) is
+required. The program or script must also be executable.
 
 Monit will execute the program periodically and if the exit
 status of the program does not match the expected result, Monit
@@ -2615,6 +2623,11 @@ Multiple status tests can be used, for example:
  check program hwtest with path "/usr/local/bin/hwtest.sh"
        if status = 1 then alert
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
+
+Parameters can be sent with the program, for example:
+
+ check program list-files with path /bin/ls -l -r -t /tmp/
+       if status != 0 then alert
 
 
 =head1 SERVICE POLL TIME

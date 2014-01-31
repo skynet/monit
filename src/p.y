@@ -873,9 +873,10 @@ checkfifo       : CHECKFIFO SERVICENAME PATHTOK PATH {
                   }
                 ;
 
-checkprogram     : CHECKPROGRAM SERVICENAME PATHTOK PATH programtimeout {
-                        check_exec($4);
-                        createservice(TYPE_PROGRAM, $<string>2, $4, check_program);
+checkprogram     : CHECKPROGRAM SERVICENAME PATHTOK argumentlist programtimeout {
+                        command_t c = command; // Current command
+                        check_exec(c->arg[0]);
+                        createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
                         current->program->timeout = $<number>5;
                   }
                 ;
@@ -1282,8 +1283,8 @@ urloption       : /* EMPTY */
                   }
                 ;
 
-urloperator     : EQUAL    { $<number>$ = OPERATOR_EQUAL; }
-                | NOTEQUAL { $<number>$ = OPERATOR_NOTEQUAL; }
+urloperator     : EQUAL    { $<number>$ = Operator_Equal; }
+                | NOTEQUAL { $<number>$ = Operator_NotEqual; }
                 ;
 
 alert           : alertmail formatlist reminder {
@@ -1524,12 +1525,12 @@ timestamp       : IF TIMESTAMP operator NUMBER time rate1 THEN action1 recovery 
                   }
                 ;
 
-operator        : /* EMPTY */ { $<number>$ = OPERATOR_EQUAL; }
-                | GREATER     { $<number>$ = OPERATOR_GREATER; }
-                | LESS        { $<number>$ = OPERATOR_LESS; }
-                | EQUAL       { $<number>$ = OPERATOR_EQUAL; }
-                | NOTEQUAL    { $<number>$ = OPERATOR_NOTEQUAL; }
-                | CHANGED     { $<number>$ = OPERATOR_NOTEQUAL; }
+operator        : /* EMPTY */ { $<number>$ = Operator_Equal; }
+                | GREATER     { $<number>$ = Operator_Greater; }
+                | LESS        { $<number>$ = Operator_Less; }
+                | EQUAL       { $<number>$ = Operator_Equal; }
+                | NOTEQUAL    { $<number>$ = Operator_NotEqual; }
+                | CHANGED     { $<number>$ = Operator_NotEqual; }
                 ;
 
 time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
@@ -2004,12 +2005,16 @@ static void postparse() {
                                 cfg_errflag++;
                         }
                 } else if (s->type == TYPE_PROGRAM) {
-                        /* Create the Command object */
-                        s->program->C = Command_new(s->path, NULL);
                         /* Verify that a program test has a status test */
                         if (! s->statuslist) {
                                 LogError("%s: Error: 'check program %s' is incomplete: Please add an 'if status != n' test\n", prog, s->name);
                                 cfg_errflag++;
+                        }
+                        /* Create the Command object */
+                        s->program->C = Command_new(s->path, NULL);
+                        // Append any arguments
+                        for (int i = 1; i < s->program->args->length; i++) {
+                                Command_appendArgument(s->program->C, s->program->args->arg[i]);
                         }
                 }
         }
@@ -2074,6 +2079,8 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
 
   if (type == TYPE_PROGRAM) {
     NEW(current->program);
+    current->program->args = command;
+    command = NULL;
     current->program->timeout = PROGRAM_TIMEOUT;
   }
 
@@ -3272,7 +3279,7 @@ static void reset_resourceset() {
   resourceset.resource_id = 0;
   resourceset.limit = 0;
   resourceset.action = NULL;
-  resourceset.operator = OPERATOR_EQUAL;
+  resourceset.operator = Operator_Equal;
 }
 
 
@@ -3280,7 +3287,7 @@ static void reset_resourceset() {
  * Reset the Timestamp set to default values
  */
 static void reset_timestampset() {
-  timestampset.operator = OPERATOR_EQUAL;
+  timestampset.operator = Operator_Equal;
   timestampset.time = 0;
   timestampset.test_changes = FALSE;
   timestampset.action = NULL;
@@ -3301,7 +3308,7 @@ static void reset_actionrateset() {
  * Reset the Size set to default values
  */
 static void reset_sizeset() {
-  sizeset.operator = OPERATOR_EQUAL;
+  sizeset.operator = Operator_Equal;
   sizeset.size = 0;
   sizeset.test_changes = FALSE;
   sizeset.action = NULL;
@@ -3312,7 +3319,7 @@ static void reset_sizeset() {
  * Reset the Uptime set to default values
  */
 static void reset_uptimeset() {
-  uptimeset.operator = OPERATOR_EQUAL;
+  uptimeset.operator = Operator_Equal;
   uptimeset.uptime = 0;
   uptimeset.action = NULL;
 }
@@ -3343,7 +3350,7 @@ static void reset_permset() {
  */
 static void reset_statusset() {
         statusset.return_value = 0;
-        statusset.operator = OPERATOR_EQUAL;
+        statusset.operator = Operator_Equal;
         statusset.action = NULL;
 }
 
@@ -3371,7 +3378,7 @@ static void reset_gidset() {
  */
 static void reset_filesystemset() {
   filesystemset.resource = 0;
-  filesystemset.operator = OPERATOR_EQUAL;
+  filesystemset.operator = Operator_Equal;
   filesystemset.limit_absolute = -1;
   filesystemset.limit_percent = -1;
   filesystemset.action = NULL;
