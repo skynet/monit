@@ -355,6 +355,13 @@ void Command_free(T *C) {
 }
 
 
+void Command_appendArgument(T C, const char *argument) {
+        assert(C);
+        if (argument)
+                List_append(C->args, Str_dup(argument));
+}
+
+
 void Command_setUid(T C, uid_t uid) {
         assert(C);
         C->uid = uid;

@@ -25,7 +25,7 @@
 
 #ifndef MEMORYEXCEPTION_INCLUDED
 #define MEMORYEXCEPTION_INCLUDED
-#include <exceptions/Exception.h>
+#include "Exception.h"
 
 
 /**

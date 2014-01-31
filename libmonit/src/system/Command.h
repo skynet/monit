@@ -25,8 +25,8 @@
 
 #ifndef COMMAND_INCLUDED
 #define COMMAND_INCLUDED
-#include <system/Process.h>
-#include <util/List.h>
+#include "system/Process.h"
+#include "util/List.h"
 
 
 /**
@@ -90,6 +90,15 @@ void Command_free(T *C);
 
 /** @name Properties */
 //@{
+
+
+/**
+ * Append an argument to the command that should be used to launch this executable.
+ * @param C A Command object
+ * @param argument A string argument
+ */
+void Command_appendArgument(T C, const char *argument);
+
 
 /**
  * Set the user id the sub-process should switch to on exec. If not set, the uid of 

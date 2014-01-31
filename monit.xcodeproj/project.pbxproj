@@ -113,6 +113,13 @@
 			remoteGlobalIDString = 52DDC12013C59D45003AA75C;
 			remoteInfo = libmonit;
 		};
+		52FDD6B5189C2762008E3D5E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 52FDD6A8189C2036008E3D5E;
+			remoteInfo = CommandTest;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -313,6 +320,7 @@
 			isa = PBXGroup;
 			children = (
 				52DDC12A13C59D46003AA75C /* libmonit.a */,
+				52FDD6B6189C2762008E3D5E /* CommandTest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -617,6 +625,13 @@
 			remoteRef = 52DDC12913C59D46003AA75C /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		52FDD6B6189C2762008E3D5E /* CommandTest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = CommandTest;
+			remoteRef = 52FDD6B5189C2762008E3D5E /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -697,6 +712,7 @@
 		528EA77913A74E05003DA4BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -714,15 +730,26 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					$SRCROOT/src/,
+					$SRCROOT/libmonit/src/,
+					$SRCROOT/libmonit/src/exceptions,
+					$SRCROOT/libmonit/src/thread,
+					$SRCROOT/libmonit/src/io,
+					$SRCROOT/libmonit/src/net,
+					$SRCROOT/libmonit/src/util,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$SRCROOT/src/ $SRCROOT/libmonit/src/ $SRCROOT/libmonit/src/thread $SRCROOT/libmonit/src/io $SRCROOT/libmonit/src/net $SRCROOT/libmonit/src/util";
 			};
 			name = Debug;
 		};
 		528EA77A13A74E05003DA4BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -737,8 +764,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					$SRCROOT/src/,
+					$SRCROOT/libmonit/src/,
+					$SRCROOT/libmonit/src/exceptions,
+					$SRCROOT/libmonit/src/thread,
+					$SRCROOT/libmonit/src/io,
+					$SRCROOT/libmonit/src/net,
+					$SRCROOT/libmonit/src/util,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$SRCROOT/src/ $SRCROOT/libmonit/src/ $SRCROOT/libmonit/src/thread $SRCROOT/libmonit/src/io $SRCROOT/libmonit/src/net $SRCROOT/libmonit/src/util";
 			};
 			name = Release;
 		};
@@ -749,16 +786,14 @@
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				HEADER_SEARCH_PATHS = (
-					"$SRCROOT/src/**",
-					$SRCROOT/libmonit/src,
-				);
+				HEADER_SEARCH_PATHS = "";
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DDARWIN",
 					"-DSYSCONFDIR=\"\\\"/etc\\\"\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$SRCROOT/src/ $SRCROOT/libmonit/src/ $SRCROOT/libmonit/src/thread $SRCROOT/libmonit/src/io $SRCROOT/libmonit/src/net $SRCROOT/libmonit/src/util $SRCROOT/libmonit/src/exceptions";
 			};
 			name = Debug;
 		};
@@ -769,16 +804,14 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				HEADER_SEARCH_PATHS = (
-					"$SRCROOT/src/**",
-					$SRCROOT/libmonit/src,
-				);
+				HEADER_SEARCH_PATHS = "";
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DDARWIN",
 					"-DSYSCONFDIR=\"\\\"/etc\\\"\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$SRCROOT/src/ $SRCROOT/libmonit/src/ $SRCROOT/libmonit/src/thread $SRCROOT/libmonit/src/io $SRCROOT/libmonit/src/net $SRCROOT/libmonit/src/util $SRCROOT/libmonit/src/exceptions";
 			};
 			name = Release;
 		};

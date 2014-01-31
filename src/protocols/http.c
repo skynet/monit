@@ -125,7 +125,7 @@ static int do_regex(Socket_T socket, int content_length, Request_T R) {
         regex_return = strstr(buf, R->regex) ? 0 : 1;
 #endif
         switch (R->operator) {
-                case OPERATOR_EQUAL:
+                case Operator_Equal:
                         if (regex_return == 0) {
                                 rv = TRUE;
                                 DEBUG("HTTP: Regular expression matches\n");
@@ -139,7 +139,7 @@ static int do_regex(Socket_T socket, int content_length, Request_T R) {
 #endif
                         }
                         break;
-                case OPERATOR_NOTEQUAL:
+                case Operator_NotEqual:
                         if (regex_return == 0) {
                                 socket_setError(socket, "HTTP error: Regular expression matches\n");
                         } else {

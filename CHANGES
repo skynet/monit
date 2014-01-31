@@ -9,6 +9,12 @@ New: Merged https://bitbucket.org/tildeslash/monit/pull-request/1/
      from Philippe Kueck: 1) Handle sockets (unix domain) as regular
      files when checking timestamp. 2) Use mysql 4.1 protocol in MySQL
      check. 3) Skip connection checks during startup timeout (nice)
+     
+New: Parameters added to 'check program'. Parameters are whitespace
+     separated strings. For instance
+     
+     check program list-files with path /bin/ls -l -r -t /tmp
+         if status != 0 then alert
 
 BUGFIXES:
 

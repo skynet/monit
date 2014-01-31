@@ -1765,22 +1765,22 @@ char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
 }
 
 
-int Util_evalQExpression(int operator, long long left, long long right) {
+int Util_evalQExpression(Operator_Type operator, long long left, long long right) {
 
         switch (operator) {
-                case OPERATOR_GREATER:
+                case Operator_Greater:
                         if (left > right)
                                 return TRUE;
                         break;
-                case OPERATOR_LESS:
+                case Operator_Less:
                         if (left < right)
                                 return TRUE;
                         break;
-                case OPERATOR_EQUAL:
+                case Operator_Equal:
                         if (left == right)
                                 return TRUE;
                         break;
-                case OPERATOR_NOTEQUAL:
+                case Operator_NotEqual:
                         if (left != right)
                                 return TRUE;
                         break;

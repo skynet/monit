@@ -152,10 +152,12 @@
 #define MODE_PASSIVE       1
 #define MODE_MANUAL        2
 
-#define OPERATOR_GREATER   0
-#define OPERATOR_LESS      1
-#define OPERATOR_EQUAL     2
-#define OPERATOR_NOTEQUAL  3
+typedef enum {
+        Operator_Greater = 0,
+        Operator_Less,
+        Operator_Equal,
+        Operator_NotEqual
+} Operator_Type;
 
 #define TIME_SECOND        1
 #define TIME_MINUTE        60
@@ -330,7 +332,7 @@ typedef struct myurl {
 /** Defines a HTTP client request object */
 typedef struct myrequest {
         URL_T url;                                               /**< URL request */
-        int   operator;                 /**< Response content comparison operator */
+        Operator_Type operator;         /**< Response content comparison operator */
 #ifdef HAVE_REGEX_H
         regex_t *regex;                   /* regex used to test the response body */
 #else
@@ -547,7 +549,7 @@ typedef struct mydependant {
 typedef struct myresource {
         int  resource_id;                              /**< Which value is checked */
         long limit;                                     /**< Limit of the resource */
-        int  operator;                                    /**< Comparison operator */
+        Operator_Type operator;                           /**< Comparison operator */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -557,7 +559,7 @@ typedef struct myresource {
 
 /** Defines timestamp object */
 typedef struct mytimestamp {
-        int  operator;                                    /**< Comparison operator */
+        Operator_Type operator;                           /**< Comparison operator */
         int  time;                                        /**< Timestamp watermark */
         int  test_changes;            /**< TRUE if we only should test for changes */
         time_t timestamp; /**< The original last modified timestamp for this object*/
@@ -595,7 +597,7 @@ typedef struct myevery {
 
 typedef struct mystatus {
         int return_value;                /**< Return value of the program to check */
-        int  operator;                                    /**< Comparison operator */
+        Operator_Type operator;                           /**< Comparison operator */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -606,6 +608,7 @@ typedef struct mystatus {
 typedef struct myprogram {
         Process_T P;          /**< A Process_T object representing the sub-process */
         Command_T C;          /**< A Command_T object for building the sub-process */
+        command_t args;                                     /**< Program arguments */
         int timeout;          /**< How long the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
@@ -614,7 +617,7 @@ typedef struct myprogram {
 
 /** Defines size object */
 typedef struct mysize {
-        int  operator;                                    /**< Comparison operator */
+        Operator_Type operator;                           /**< Comparison operator */
         unsigned long long size;                               /**< Size watermark */
         int  test_changes;            /**< TRUE if we only should test for changes */
         int  initialized;                        /**< TRUE if size was initialized */
@@ -627,7 +630,7 @@ typedef struct mysize {
 
 /** Defines uptime object */
 typedef struct myuptime {
-        int  operator;                                    /**< Comparison operator */
+        Operator_Type operator;                           /**< Comparison operator */
         unsigned long long uptime;                           /**< Uptime watermark */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
@@ -687,7 +690,7 @@ typedef struct mygid {
 /** Defines filesystem configuration */
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
-        int  operator;                                    /**< Comparison operator */
+        Operator_Type operator;                           /**< Comparison operator */
         long limit_absolute;                               /**< Watermark - blocks */
         int  limit_percent;                               /**< Watermark - percent */
         EventAction_T action;  /**< Description of the action upon event occurence */
