@@ -17,7 +17,7 @@
  * permission to link the code of portions of this program with the
  * OpenSSL library under certain conditions as described in each
  * individual source file, and distribute linked combinations
- * including the two.'
+ * including the two.
  *
  * You must obey the GNU Affero General Public License in all respects
  * for all of the code used other than OpenSSL.  
