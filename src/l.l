@@ -166,6 +166,7 @@ does              {/* EMPTY */}
                                 BEGIN(ARGUMENT_COND); // Parse Path for program as arguments
                                 return PATHTOK;
                         } else {
+                                unput('"');
                                 return PATHTOK;
                         }
                   }
