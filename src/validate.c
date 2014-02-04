@@ -155,7 +155,9 @@ int validate() {
 
         /* Check the services */
         time_t now = Time_now();
-        for (s = servicelist; s && !Run.stopped; s = s->next) {
+        for (s = servicelist; s; s = s->next) {
+                if (Run.stopped)
+                        break;
                 if (! do_scheduled_action(s) && s->monitor && ! check_skip(s, now)) {
                         check_timeout(s); // Can disable monitoring => need to check s->monitor again
                         if (s->monitor) {
