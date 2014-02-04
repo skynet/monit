@@ -3339,6 +3339,11 @@ insensitive.
  stop            The program used to stop the specified
                  service. Full path is required. This 
                  statement is optional, but recommended.
+ restart         The program used to restart the specified
+                 service. Full path is required. This 
+                 statement is optional. If not used, Monit will
+                 call the service's stop program and then
+                 its start program to restart the service.
  pid and ppid    These keywords may be used as standalone
                  statements in a process service entry to
                  override the alert action for change of

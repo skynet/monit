@@ -11,11 +11,23 @@ New: Merged https://bitbucket.org/tildeslash/monit/pull-request/1/
      2) Use mysql 4.1 protocol in MySQL check, required for checking mysql-proxy 
      3) Skip connection checks during startup timeout.
 
-New: Parameters added to 'check program'. Parameters are whitespace
+New: Arguments added to 'check program'. Arguments are whitespace
      separated strings. For instance:
 
-     check program list-files with path /bin/ls -l -r -t /tmp
-         if status != 0 then alert
+      check program list-files with path "/bin/ls -l -r -t /tmp"
+            if status != 0 then alert
+
+New: Implemented restart as an optional service action. When Monit
+     is called to restart a service, it previously called the stop
+     program registered with the service and then the start program. 
+     Now, if a restart program is registred with the service, this 
+     will be called instead, otherwise Monit fall back to its old
+     behaviour. Example:
+     
+      check process apache with pidfile /var/run/httpd.pid
+          start   = "/usr/sbin/apachectl start"
+          stop    = "/usr/sbin/apachectl stop"
+          restart = "/usr/sbin/apachectl restart" <- New
 
 
 BUGFIXES:
