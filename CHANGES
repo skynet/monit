@@ -33,7 +33,7 @@ New: Implemented restart as an optional service action. When Monit
 BUGFIXES:
 
 
-* Monit stopped if error occurred during MTA connection close.
+* Monit stopped if an error occurred during MTA connection close.
 
 * Make the Memcache protocol test faster.
 

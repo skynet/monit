@@ -119,12 +119,24 @@ static Process_Status wait_process(Service_T s, Process_Status expect) {
 
 
 /*
- * This function start service s (if it is not already running)
+ * This is a post- fix recursive function for starting every service
+ * that s depends on before starting s.
  * @param s A Service_T object
  * @param flag A Custom flag
  */
 static void do_start(Service_T s, int flag) {
         ASSERT(s);
+        if (s->visited)
+                return;
+        s->visited = TRUE;
+        if (s->dependantlist) {
+                Dependant_T d;
+                for (d = s->dependantlist; d; d = d->next ) {
+                        Service_T parent = Util_getService(d->dependant);
+                        ASSERT(parent);
+                        do_start(parent, flag);
+                }
+        }
         if (s->start && (s->type != TYPE_PROCESS || !Util_isProcessRunning(s, FALSE))) {
                 LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
                 spawn(s, s->start, NULL);
@@ -137,7 +149,7 @@ static void do_start(Service_T s, int flag) {
 
 
 /*
- * This function simply stops the service s.
+ * This function simply stops the service p.
  * @param s A Service_T object
  * @param flag TRUE if the monitoring should be disabled or FALSE if monitoring should continue (when stop is part of restart)
  * @return TRUE if the service was stopped otherwise FALSE
@@ -145,6 +157,9 @@ static void do_start(Service_T s, int flag) {
 static int do_stop(Service_T s, int flag) {
         int rv = TRUE;
         ASSERT(s);
+        if (s->depend_visited)
+                return rv;
+        s->depend_visited = TRUE;
         if (s->stop) {
                 LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
                 spawn(s, s->stop, NULL);
@@ -172,6 +187,7 @@ static void do_restart(Service_T s) {
                 if (s->type == TYPE_PROCESS)
                         wait_process(s, Process_Started);
         }
+        Util_monitorSet(s);
 }
 
 
