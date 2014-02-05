@@ -106,39 +106,31 @@ struct Socket_T {
  * @return TRUE (the length of data read) or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
-
         int n;
-
         S->offset = 0;
         S->length = 0;
         /* Optimizing, assuming a request/response pattern and that a udp_write
          was issued before we are called, we don't have to wait for data */
-        if(S->type == SOCK_DGRAM) timeout = 0;
-
+        if (S->type == SOCK_DGRAM)
+                timeout = 0;
         /* Read as much as we can, but only block on the first read */
-        while(RBUFFER_SIZE > S->length) {
-
-                if(S->ssl) {
+        while (RBUFFER_SIZE > S->length) {
+                if (S->ssl) {
                         n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
                 } else {
                         n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE-S->length, timeout);
                 }
-
                 timeout = 0;
-
-                if(n > 0) {
+                if (n > 0) {
                         S->length += n;
                         continue;
-                }  else if(n < 0) {
-                        if(errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM) break;
+                }  else if (n < 0) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM) break;
                         return -1;
                 } else
                         break;
-
         }
-
         return S->length;
-
 }
 
 
@@ -152,16 +144,11 @@ Socket_T socket_new(const char *host, int port, int type, int use_ssl, int timeo
 
 
 Socket_T socket_create(void *port) {
-
         int s;
         Port_T p = port;
-
         ASSERT(port);
-
-        if((s = create_generic_socket(p)) != -1) {
-
+        if ((s = create_generic_socket(p)) != -1) {
                 Socket_T S = NULL;
-
                 NEW(S);
                 S->socket = s;
                 S->length = 0;
@@ -170,42 +157,33 @@ Socket_T socket_create(void *port) {
                 S->port = p->port;
                 S->timeout = p->timeout;
                 S->connection_type = TYPE_LOCAL;
-
-                if(p->family == AF_UNIX) {
+                if (p->family == AF_UNIX) {
                         S->host = Str_dup(LOCALHOST);
                 } else {
                         S->host = Str_dup(p->hostname);
                 }
-
-                if(p->SSL.use_ssl && !socket_switch2ssl(S, p->SSL)) {
+                if (p->SSL.use_ssl && !socket_switch2ssl(S, p->SSL)) {
                         socket_free(&S);
                         return NULL;
                 }
-
                 S->Port = port;
                 return S;
         }
-
         return NULL;
 }
 
 
 Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int timeout) {
-
         int s;
         int proto = type == SOCKET_UDP ? SOCK_DGRAM : SOCK_STREAM;
-
         ASSERT(host);
         ASSERT((type == SOCKET_UDP)||(type == SOCKET_TCP));
-        if(ssl.use_ssl) {
+        if (ssl.use_ssl) {
                 ASSERT(type == SOCKET_TCP);
         }
         ASSERT(timeout>0);
-
-        if((s = create_socket(host, port, proto, timeout)) != -1) {
-
+        if ((s = create_socket(host, port, proto, timeout)) != -1) {
                 Socket_T S = NULL;
-
                 NEW(S);
                 S->socket = s;
                 S->port = port;
@@ -213,26 +191,20 @@ Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int ti
                 S->timeout = timeout;
                 S->host = Str_dup(host);
                 S->connection_type = TYPE_LOCAL;
-
-                if(ssl.use_ssl && !socket_switch2ssl(S, ssl)) {
+                if (ssl.use_ssl && !socket_switch2ssl(S, ssl)) {
                         socket_free(&S);
                         return NULL;
                 }
-
                 return S;
         }
-
         return NULL;
 }
 
 
 Socket_T socket_create_a(int socket, const char *remote_host, int port, void *sslserver) {
-
         Socket_T S;
-
-        ASSERT(socket>=0);
+        ASSERT(socket >= 0);
         ASSERT(remote_host);
-
         NEW(S);
         S->port = port;
         S->socket = socket;
@@ -240,45 +212,37 @@ Socket_T socket_create_a(int socket, const char *remote_host, int port, void *ss
         S->timeout = NET_TIMEOUT;
         S->host = Str_dup(remote_host);
         S->connection_type = TYPE_ACCEPT;
-
-        if(sslserver) {
+        if (sslserver) {
                 S->sslserver = sslserver;
-                if(! (S->ssl = insert_accepted_ssl_socket(S->sslserver))) {
+                if (! (S->ssl = insert_accepted_ssl_socket(S->sslserver))) {
                         goto ssl_error;
                 }
-                if(! embed_accepted_ssl_socket(S->ssl, S->socket)) {
+                if (! embed_accepted_ssl_socket(S->ssl, S->socket)) {
                         goto ssl_error;
                 }
         }
-
         return S;
-
 ssl_error:
         socket_free(&S);
         return NULL;
-
 }
 
 
 void socket_free(Socket_T *S) {
-
         ASSERT(S && *S);
-
 #ifdef HAVE_OPENSSL
-        if((*S)->ssl && (*S)->ssl->handler) {
-                if((*S)->connection_type == TYPE_LOCAL) {
+        if ((*S)->ssl && (*S)->ssl->handler) {
+                if ((*S)->connection_type == TYPE_LOCAL) {
                         close_ssl_socket((*S)->ssl);
                         delete_ssl_socket((*S)->ssl);
-                } else if((*S)->connection_type == TYPE_ACCEPT && (*S)->sslserver) {
+                } else if ((*S)->connection_type == TYPE_ACCEPT && (*S)->sslserver) {
                         close_accepted_ssl_socket((*S)->sslserver, (*S)->ssl);
                 }
         } else
 #endif
-
                 close_socket((*S)->socket);
         FREE((*S)->host);
         FREE(*S);
-
 }
 
 
@@ -286,87 +250,60 @@ void socket_free(Socket_T *S) {
 
 
 int socket_is_ready(Socket_T S) {
-
         ASSERT(S);
-
         switch(S->type) {
-
                 case SOCK_STREAM:
                         return check_socket(S->socket);
-
                 case SOCK_DGRAM:
                         return check_udp_socket(S->socket);
-
                 default:
                         break;
         }
-
         return FALSE;
-
 }
 
 
 int socket_is_secure(Socket_T S) {
-
         ASSERT(S);
-
         return (S->ssl != NULL);
-
 }
 
 
 int socket_get_socket(Socket_T S) {
-
         ASSERT(S);
-
         return S->socket;
-
 }
 
 
 int socket_get_type(Socket_T S) {
-
         ASSERT(S);
-
         return S->type;
-
 }
 
 
 void *socket_get_Port(Socket_T S) {
-
         ASSERT(S);
-
         return S->Port;
-
 }
 
 
 int socket_get_remote_port(Socket_T S) {
-
         ASSERT(S);
-
         return S->port;
-
 }
 
 
 const char *socket_get_remote_host(Socket_T S) {
-
         ASSERT(S);
-
         return S->host;
-
 }
 
 
 int socket_get_local_port(Socket_T S) {
         struct sockaddr sock;
         socklen_t len = sizeof(sock);
-
         ASSERT(S);
-
-        if(getsockname (S->socket, &sock, &len ) == 0)
+        if (getsockname (S->socket, &sock, &len ) == 0)
                 return ntohs (((struct sockaddr_in *)&sock)->sin_port);
         return -1;
 
@@ -376,10 +313,8 @@ int socket_get_local_port(Socket_T S) {
 const char *socket_get_local_host(Socket_T S) {
         struct sockaddr sock;
         socklen_t len = sizeof(sock);
-
         ASSERT(S);
-
-        if(getsockname(S->socket, &sock, &len) == 0)
+        if (getsockname(S->socket, &sock, &len) == 0)
                 return inet_ntoa(((struct sockaddr_in *)&sock)->sin_addr);
         return NULL;
 
@@ -406,18 +341,15 @@ const char *socket_getError(Socket_T S) {
 
 
 int socket_switch2ssl(Socket_T S, Ssl_T ssl)  {
-
-        if(! (S->ssl = new_ssl_connection(ssl.clientpemfile, ssl.version)))
+        assert(S);
+        if (! (S->ssl = new_ssl_connection(ssl.clientpemfile, ssl.version)))
                 return FALSE;
-
-        if(! embed_ssl_socket(S->ssl, S->socket))
+        if (! embed_ssl_socket(S->ssl, S->socket))
                 return FALSE;
-
-        if(ssl.certmd5 && !check_ssl_md5sum(S->ssl, ssl.certmd5)) {
+        if (ssl.certmd5 && !check_ssl_md5sum(S->ssl, ssl.certmd5)) {
                 LogError("md5sum of certificate does not match!");
                 return FALSE;
         }
-
         return TRUE;
 }
 
@@ -426,121 +358,88 @@ int socket_print(Socket_T S, const char *m, ...) {
         int n;
         va_list ap;
         char *buf = NULL;
-
         ASSERT(S);
         ASSERT(m);
-
         va_start(ap, m);
         buf = Str_vcat(m, ap);
         va_end(ap);
-
         n = socket_write(S, buf, strlen(buf));
         FREE(buf);
-
         return n;
-
 }
 
 
 int socket_write(Socket_T S, void *b, size_t size) {
-
         ssize_t n = 0;
         void *p = b;
-
         ASSERT(S);
-
         /* Clear any extra data read from the server */
         socket_reset(S);
-
-        while(size > 0) {
-
-                if(S->ssl) {
+        while (size > 0) {
+                if (S->ssl) {
                         n = send_ssl_socket(S->ssl, p, size, S->timeout);
                 } else {
-                        if(S->type == SOCK_DGRAM)
+                        if (S->type == SOCK_DGRAM)
                                 n = udp_write(S->socket,  p, size, S->timeout);
                         else
                                 n = sock_write(S->socket,  p, size, S->timeout);
                 }
-
-                if(n <= 0) break;
+                if (n <= 0) break;
                 p += n;
                 size -= n;
 
         }
-
-        if(n < 0) {
+        if (n < 0) {
                 /* No write or a partial write is an error */
                 return -1;
         }
-
         return  (int)(p - b);
-
 }
 
 
 int socket_read_byte(Socket_T S) {
-
         ASSERT(S);
-
-        if(S->offset >= S->length) {
-                if(fill(S, S->timeout) <= 0)
+        if (S->offset >= S->length) {
+                if (fill(S, S->timeout) <= 0)
                         return -1;
         }
-
         return S->buffer[S->offset++];
-
 }
 
 
 int socket_read(Socket_T S, void *b, int size) {
-
         int c;
         unsigned char *p = b;
-
         ASSERT(S);
-
-        while((size-- > 0) && ((c = socket_read_byte(S)) >= 0)) {
+        while ((size-- > 0) && ((c = socket_read_byte(S)) >= 0)) {
                 *p++ = c;
         }
-
         return  (int)((long)p - (long)b);
-
 }
 
 
 char *socket_readln(Socket_T S, char *s, int size) {
-
         int c;
         unsigned char *p = (unsigned char *)s;
-
         ASSERT(S);
-
-        while(--size && ((c = socket_read_byte(S)) > 0)) { // Stop when \0 is read
+        while (--size && ((c = socket_read_byte(S)) > 0)) { // Stop when \0 is read
                 *p++ = c;
-                if(c == '\n')
+                if (c == '\n')
                         break;
         }
-
         *p = 0;
-
-        if(*s)
+        if (*s)
                 return s;
-
         return NULL;
-
 }
 
 
 void socket_reset(Socket_T S) {
-
         ASSERT(S);
-
         /* Throw away any pending incomming data */
-        while(fill(S, 0) > 0);
+        while (fill(S, 0) > 0);
         S->offset = 0;
         S->length = 0;
-
 }
 
 
@@ -549,9 +448,9 @@ int socket_shutdown_write(Socket_T S) {
         return (shutdown(S->socket, 1) == 0);
 }
 
+
 int socket_set_tcp_nodelay(Socket_T S) {
     int one = 1;
-
     return setsockopt(S->socket, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
 }
 

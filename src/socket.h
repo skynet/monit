@@ -273,6 +273,7 @@ void socket_reset(Socket_T S);
  */
 int socket_shutdown_write(Socket_T S);
 
+
 /**
  * Set TCP_NODELAY to the socket
  * @param S A Socket object
