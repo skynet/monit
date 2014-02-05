@@ -3708,8 +3708,8 @@ server and then an Asterisk server
 
  check process freeswitch 
     with pidfile /usr/local/freeswitch/log/freeswitch.pid
-  start program = “/usr/local/freeswitch/bin/freeswitch -nc -hp”
-  stop program = “/usr/local/freeswitch/bin/freeswitch -stop”
+  start program = "/usr/local/freeswitch/bin/freeswitch -nc -hp"
+  stop program = "/usr/local/freeswitch/bin/freeswitch -stop"
   if totalmem > 1000.0 MB for 5 cycles then alert
   if totalmem > 1500.0 MB for 5 cycles then alert
   if totalmem > 2000.0 MB for 5 cycles then restart
