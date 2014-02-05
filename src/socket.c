@@ -52,10 +52,7 @@
 #include <arpa/inet.h>
 #endif
 
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-
+#include <netinet/tcp.h>
 
 #include "net.h"
 #include "ssl.h"
@@ -551,3 +548,10 @@ int socket_shutdown_write(Socket_T S) {
         ASSERT(S);
         return (shutdown(S->socket, 1) == 0);
 }
+
+int socket_set_tcp_nodelay(Socket_T S) {
+    int one = 1;
+
+    return setsockopt(S->socket, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+}
+
