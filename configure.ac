@@ -133,6 +133,7 @@ AC_CHECK_HEADERS([ \
 	netdb.h \
         sys/socket.h \
 	netinet/in.h \
+	netinet/tcp.h \
         netinet/in_systm.h \
         pam/pam_appl.h \
         security/pam_appl.h \
