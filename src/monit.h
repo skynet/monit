@@ -246,6 +246,11 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #define SIG_ERR ((Sigfunc *)-1)
 #endif
 
+/* For systems without PATH_MAX define it with a resonable value */
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 
 /** ------------------------------------------------- General purpose macros */
 
