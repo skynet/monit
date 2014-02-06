@@ -1,11 +1,11 @@
 # This file is a systemd template for the monit service. To
-# register monit with systemd, place this file in 
+# register monit with systemd, place this file in
 # /lib/systemd/system/ and start monit using systemctl:
 #
-# Enable monit to start on boot: 
+# Enable monit to start on boot:
 #         systemctl enable monit.service
 #
-# Start monit immediately: 
+# Start monit immediately:
 #         systemctl start monit.service
 #
 # Stop monit:
@@ -20,10 +20,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=@prefix@/bin/monit -I
-ExecStop=@prefix@/bin/monit quit
-ExecReload=@prefix@/bin/monit reload
+ExecStart=@prefix@/bin/monit -I -c @sysconfdir@/monitrc
+ExecStop=@prefix@/bin/monit -c @sysconfdir@/monitrc quit
+ExecReload=@prefix@/bin/monit -c @sysconfdir@/monitrc reload
 
 [Install]
 WantedBy=multi-user.target
-

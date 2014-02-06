@@ -3965,6 +3965,10 @@ F<~/.monit.pid>
    Lock file to help prevent concurrent runs (non-root
    mode).
 
+F</run/monit.pid>
+   Lock file to help prevent concurrent runs (root mode,
+   Linux systems, if /run directory is available).
+
 F</var/run/monit.pid>
    Lock file to help prevent concurrent runs (root mode,
    Linux systems).

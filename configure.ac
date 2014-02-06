@@ -133,6 +133,7 @@ AC_CHECK_HEADERS([ \
 	netdb.h \
         sys/socket.h \
 	netinet/in.h \
+	netinet/tcp.h \
         netinet/in_systm.h \
         pam/pam_appl.h \
         security/pam_appl.h \
@@ -405,9 +406,11 @@ fi
 
 # Find the right directory to put the root-mode PID file in
 AC_MSG_CHECKING([pid file location])
-if test -d "/var/run"
+if test -d "/run"
 then
-	piddir="/var/run"
+	piddir="/run"
+elif test -d "/var/run"
+    piddir="/var/run"
 elif test -d "/etc"
 then
 	piddir="/etc"
