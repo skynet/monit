@@ -61,7 +61,7 @@
 
 #define MAX_STACK_DEPTH 512
 
-  int buffer_stack_ptr=0;
+  int buffer_stack_ptr = 0;
 
   struct buffer_stack_s {
     int             lineno;
@@ -75,7 +75,19 @@
   char *currentfile=NULL;
   char *argcurrentfile=NULL;
   char *argyytext=NULL;
+  typedef enum {
+          Proc_State,
+          File_State,
+          FileSys_State,
+          Dir_State,
+          Host_State,
+          System_State,
+          Fifo_State,
+          Program_State,
+          None_State
+  } Check_State;
 
+  static Check_State check_state = None_State;
 
   /* Prototypes */
   extern void yyerror(const char*,...);
@@ -110,6 +122,7 @@ startarg    start{ws}?(program)?{ws}?([=]{ws})?["]
 stoparg     stop{ws}?(program)?{ws}?([=]{ws})?["]
 restartarg  restart{ws}?(program)?{ws}?([=]{ws})?["]
 execarg     exec(ute)?{ws}?["]
+pathtokarg  path{ws}?["]
 percent     ("percent"|"%")
 byte        ("byte"|"b")
 kilobyte    ("kilobyte"|"kb")
@@ -148,6 +161,15 @@ does              {/* EMPTY */}
 {stoparg}         { BEGIN(ARGUMENT_COND); return STOP; }
 {restartarg}      { BEGIN(ARGUMENT_COND); return RESTART; }
 {execarg}         { BEGIN(ARGUMENT_COND); return EXEC; }
+{pathtokarg}      {
+                        if (check_state == Program_State) {
+                                BEGIN(ARGUMENT_COND); // Parse Path for program as arguments
+                                return PATHTOK;
+                        } else {
+                                unput('"');
+                                return PATHTOK;
+                        }
+                  }
 
 if                { return IF; }
 or                { return OR; }
@@ -342,52 +364,62 @@ depend(s)?[ \t]+(on[ \t]*)? {
 
 check[ \t]+(process[ \t])? {
                     BEGIN(SERVICE_COND);
+                    check_state = Proc_State;
                     return CHECKPROC;
                   }
 
 check[ \t]+(program[ \t])? {
                     BEGIN(SERVICE_COND);
+                    check_state = Program_State;
                     return CHECKPROGRAM;
                   }
 
 check[ \t]+device { /* Filesystem alias for backward compatibility  */
                     BEGIN(SERVICE_COND);
+                    check_state = FileSys_State;
                     return CHECKFILESYS;
                   }
 
 check[ \t]+filesystem {
                     BEGIN(SERVICE_COND);
+                    check_state = FileSys_State;
                     return CHECKFILESYS;
                   }
 
 check[ \t]+file   {
                     BEGIN(SERVICE_COND);
+                    check_state = File_State;
                     return CHECKFILE;
                   }
 
 check[ \t]+directory {
                     BEGIN(SERVICE_COND);
+                    check_state = Dir_State;
                     return CHECKDIR;
                   }
 
 check[ \t]+host   {
                     BEGIN(SERVICE_COND);
+                    check_state = Host_State;
                     return CHECKHOST;
                   }
 
 check[ \t]+system {
                     BEGIN(SERVICE_COND);
+                    check_state = System_State;
                     return CHECKSYSTEM;
                   }
 
 check[ \t]+fifo   {
                     BEGIN(SERVICE_COND);
+                    check_state = Fifo_State;
                     return CHECKFIFO;
                   }
 
 check[ \t]+program   {
                     BEGIN(SERVICE_COND);
-                        return CHECKPROGRAM;
+                    check_state = Program_State;
+                    return CHECKPROGRAM;
                   }
 
 group[ \t]+       {
@@ -674,6 +706,7 @@ group[ \t]+       {
 
 
 <INITIAL,ARGUMENT_COND,SERVICE_COND,DEPEND_COND,URL_COND,STRING_COND,EVERY_COND>. {
+                      check_state = None_State;
                       return yytext[0];
                   }
 

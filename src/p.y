@@ -873,7 +873,7 @@ checkfifo       : CHECKFIFO SERVICENAME PATHTOK PATH {
                   }
                 ;
 
-checkprogram     : CHECKPROGRAM SERVICENAME PATHTOK argumentlist programtimeout {
+checkprogram    : CHECKPROGRAM SERVICENAME PATHTOK argumentlist programtimeout {
                         command_t c = command; // Current command
                         check_exec(c->arg[0]);
                         createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);

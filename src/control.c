@@ -75,15 +75,194 @@ typedef enum {
 } Process_Status;
 
 
-/* -------------------------------------------------------------- Prototypes */
+/* ----------------------------------------------------------------- Private */
 
 
-static void do_start(Service_T, int);
-static int  do_stop(Service_T, int);
-static void do_monitor(Service_T, int);
-static void do_unmonitor(Service_T, int);
-static void do_depend(Service_T, int, int);
-static Process_Status wait_process(Service_T, Process_Status expect);
+/*
+ * This function waits for the process to change state. If the process state doesn't match the expectation,
+ * a failed event is posted to notify the user. The time is saved on enter so in the case that the time steps
+ * backwards/forwards, the wait_process will wait for absolute time and not stall or prematurely exit.
+ * @param service A Service to wait for
+ * @param expect A expected state (see Process_Status)
+ * @return Either Process_Started if the process is running or Process_Stopped if it's not running
+ */
+static Process_Status wait_process(Service_T s, Process_Status expect) {
+        int debug = Run.debug, isrunning = FALSE;
+        unsigned long now = time(NULL) * 1000, wait = 50;
+        assert(s->start || s->restart);
+        unsigned long timeout = (s->start ? s->start->timeout : s->restart->timeout) * 1000 + now;
+        ASSERT(s);
+        do {
+                Time_usleep(wait * USEC_PER_MSEC);
+                now += wait ;
+                wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
+                isrunning = Util_isProcessRunning(s, TRUE);
+                if ((expect == Process_Stopped && ! isrunning) || (expect == Process_Started && isrunning))
+                        break;
+                Run.debug = FALSE; // Turn off debug second time through to avoid flooding the log with pid file does not exist. This poll stuff here _will_ be refactored away
+        } while (now < timeout && ! Run.stopped);
+        Run.debug = debug; // restore the debug state
+        if (isrunning) {
+                if (expect == Process_Started)
+                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
+                else
+                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
+                return Process_Started;
+        } else {
+                if (expect == Process_Started)
+                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start");
+                else
+                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
+                return Process_Stopped;
+        }
+}
+
+
+/*
+ * This is a post- fix recursive function for starting every service
+ * that s depends on before starting s.
+ * @param s A Service_T object
+ * @param flag A Custom flag
+ */
+static void do_start(Service_T s, int flag) {
+        ASSERT(s);
+        if (s->visited)
+                return;
+        s->visited = TRUE;
+        if (s->dependantlist) {
+                Dependant_T d;
+                for (d = s->dependantlist; d; d = d->next ) {
+                        Service_T parent = Util_getService(d->dependant);
+                        ASSERT(parent);
+                        do_start(parent, flag);
+                }
+        }
+        if (s->start && (s->type != TYPE_PROCESS || !Util_isProcessRunning(s, FALSE))) {
+                LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
+                spawn(s, s->start, NULL);
+                /* We only wait for a process type, other service types does not have a pid file to watch */
+                if (s->type == TYPE_PROCESS)
+                        wait_process(s, Process_Started);
+        }
+        Util_monitorSet(s);
+}
+
+
+/*
+ * This function simply stops the service p.
+ * @param s A Service_T object
+ * @param flag TRUE if the monitoring should be disabled or FALSE if monitoring should continue (when stop is part of restart)
+ * @return TRUE if the service was stopped otherwise FALSE
+ */
+static int do_stop(Service_T s, int flag) {
+        int rv = TRUE;
+        ASSERT(s);
+        if (s->depend_visited)
+                return rv;
+        s->depend_visited = TRUE;
+        if (s->stop) {
+                LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
+                spawn(s, s->stop, NULL);
+                if (s->type == TYPE_PROCESS && (wait_process(s, Process_Stopped) != Process_Stopped)) // Only wait for process service types stop
+                        rv = FALSE;
+        }
+        if (flag)
+                Util_monitorUnset(s);
+        else
+                Util_resetInfo(s);
+        
+        return rv;
+}
+
+
+/*
+ * This function simply restarts the service s.
+ * @param s A Service_T object
+ */
+static void do_restart(Service_T s) {
+        if (s->restart) {
+                LogInfo("'%s' restart: %s\n", s->name, s->restart->arg[0]);
+                spawn(s, s->restart, NULL);
+                /* We only wait for a process type, other service types does not have a pid file to watch */
+                if (s->type == TYPE_PROCESS)
+                        wait_process(s, Process_Started);
+        }
+        Util_monitorSet(s);
+}
+
+
+/*
+ * This is a post- fix recursive function for enabling monitoring every service
+ * that s depends on before monitor s.
+ * @param s A Service_T object
+ * @param flag A Custom flag
+ */
+static void do_monitor(Service_T s, int flag) {
+        ASSERT(s);
+        if (s->visited)
+                return;
+        s->visited = TRUE;
+        if (s->dependantlist) {
+                Dependant_T d;
+                for (d = s->dependantlist; d; d = d->next ) {
+                        Service_T parent = Util_getService(d->dependant);
+                        ASSERT(parent);
+                        do_monitor(parent, flag);
+                }
+        }
+        Util_monitorSet(s);
+}
+
+
+/*
+ * This is a function for disabling monitoring
+ * @param s A Service_T object
+ * @param flag A Custom flag
+ */
+static void do_unmonitor(Service_T s, int flag) {
+        ASSERT(s);
+        if (s->depend_visited)
+                return;
+        s->depend_visited = TRUE;
+        Util_monitorUnset(s);
+}
+
+
+/*
+ * This is an in-fix recursive function called before s is started to
+ * stop every service that depends on s, in reverse order *or* after s
+ * was started to start again every service that depends on s. The
+ * action parametere controls if this function should start or stop
+ * the procceses that depends on s.
+ * @param s A Service_T object
+ * @param action An action to do on the dependant services
+ * @param flag A Custom flag
+ */
+static void do_depend(Service_T s, int action, int flag) {
+        Service_T child;
+        ASSERT(s);
+        for (child = servicelist; child; child = child->next) {
+                if (child->dependantlist) {
+                        Dependant_T d;
+                        for (d = child->dependantlist; d; d = d->next) {
+                                if (IS(d->dependant, s->name)) {
+                                        if (action == ACTION_START)
+                                                do_start(child, flag);
+                                        else if (action == ACTION_MONITOR)
+                                                do_monitor(child, flag);
+                                        do_depend(child, action, flag);
+                                        if (action == ACTION_STOP)
+                                                do_stop(child, flag);
+                                        else if (action == ACTION_UNMONITOR)
+                                                do_unmonitor(child, flag);
+                                        break;
+                                }
+                        }
+                }
+        }
+}
+
+
 
 
 /* ------------------------------------------------------------------ Public */
@@ -237,20 +416,25 @@ int control_service(const char *S, int A) {
                         break;
 
                 case ACTION_RESTART:
-                        if (s->type == TYPE_PROCESS && (!s->start || !s->stop)) {
-                                LogError("%s: Start or stop method not defined -- process %s\n", prog, S);
+                        if (! (s->type == TYPE_PROCESS && ((s->start && s->stop) || s->restart))) {
+                                LogError("%s: Start and stop or restart method not defined for process check '%s'\n", prog, S);
                                 Util_monitorSet(s);
                                 return FALSE;
                         }
                         LogInfo("'%s' trying to restart\n", s->name);
                         do_depend(s, ACTION_STOP, FALSE);
-                        if (do_stop(s, FALSE)) {
-                                /* Only start if stop succeeded */
-                                do_start(s, 0);
+                        if (s->restart) {
+                                do_restart(s);
                                 do_depend(s, ACTION_START, 0);
                         } else {
-                                /* enable monitoring of this service again to allow the restart retry in the next cycle up to timeout limit */
-                                Util_monitorSet(s);
+                                if (do_stop(s, FALSE)) {
+                                        /* Only start if stop succeeded */
+                                        do_start(s, 0);
+                                        do_depend(s, ACTION_START, 0);
+                                } else {
+                                        /* enable monitoring of this service again to allow the restart retry in the next cycle up to timeout limit */
+                                        Util_monitorSet(s);
+                                }
                         }
                         break;
 
@@ -283,175 +467,3 @@ void reset_depend() {
                 s->depend_visited = FALSE;
         }
 }
-
-
-/* ----------------------------------------------------------------- Private */
-
-
-/*
- * This is a post- fix recursive function for starting every service
- * that s depends on before starting s.
- * @param s A Service_T object
- * @param flag A Custom flag
- */
-static void do_start(Service_T s, int flag) {
-        ASSERT(s);
-        if (s->visited)
-                return;
-        s->visited = TRUE;
-        if (s->dependantlist) {
-                Dependant_T d;
-                for (d = s->dependantlist; d; d = d->next ) {
-                        Service_T parent = Util_getService(d->dependant);
-                        ASSERT(parent);
-                        do_start(parent, flag);
-                }
-        }
-        if (s->start && (s->type != TYPE_PROCESS || !Util_isProcessRunning(s, FALSE))) {
-                LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
-                spawn(s, s->start, NULL);
-                /* We only wait for a process type, other service types does not have a pid file to watch */
-                if (s->type == TYPE_PROCESS)
-                        wait_process(s, Process_Started);
-        }
-        Util_monitorSet(s);
-}
-
-
-/*
- * This function simply stops the service p.
- * @param s A Service_T object
- * @param flag TRUE if the monitoring should be disabled or FALSE if monitoring should continue (when stop is part of restart)
- * @return TRUE if the service was stopped otherwise FALSE
- */
-static int do_stop(Service_T s, int flag) {
-        int rv = TRUE;
-        ASSERT(s);
-        if (s->depend_visited)
-                return rv;
-        s->depend_visited = TRUE;
-        if (s->stop && (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE))) {
-                LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
-                spawn(s, s->stop, NULL);
-                if (s->type == TYPE_PROCESS && (wait_process(s, Process_Stopped) != Process_Stopped)) // Only wait for process service types stop
-                        rv = FALSE;
-        }
-        if (flag)
-                Util_monitorUnset(s);
-        else
-                Util_resetInfo(s);
-
-        return rv;
-}
-
-
-/*
- * This is a post- fix recursive function for enabling monitoring every service
- * that s depends on before monitor s.
- * @param s A Service_T object
- * @param flag A Custom flag
- */
-static void do_monitor(Service_T s, int flag) {
-        ASSERT(s);
-        if (s->visited)
-                return;
-        s->visited = TRUE;
-        if (s->dependantlist) {
-                Dependant_T d;
-                for (d = s->dependantlist; d; d = d->next ) {
-                        Service_T parent = Util_getService(d->dependant);
-                        ASSERT(parent);
-                        do_monitor(parent, flag);
-                }
-        }
-        Util_monitorSet(s);
-}
-
-
-/*
- * This is a function for disabling monitoring
- * @param s A Service_T object
- * @param flag A Custom flag
- */
-static void do_unmonitor(Service_T s, int flag) {
-        ASSERT(s);
-        if (s->depend_visited)
-                return;
-        s->depend_visited = TRUE;
-        Util_monitorUnset(s);
-}
-
-
-/*
- * This is an in-fix recursive function called before s is started to
- * stop every service that depends on s, in reverse order *or* after s
- * was started to start again every service that depends on s. The
- * action parametere controls if this function should start or stop
- * the procceses that depends on s.
- * @param s A Service_T object
- * @param action An action to do on the dependant services
- * @param flag A Custom flag
- */
-static void do_depend(Service_T s, int action, int flag) {
-        Service_T child;
-        ASSERT(s);
-        for (child = servicelist; child; child = child->next) {
-                if (child->dependantlist) {
-                        Dependant_T d;
-                        for (d = child->dependantlist; d; d = d->next) {
-                                if (IS(d->dependant, s->name)) {
-                                        if (action == ACTION_START)
-                                                do_start(child, flag);
-                                        else if (action == ACTION_MONITOR)
-                                                do_monitor(child, flag);
-                                        do_depend(child, action, flag);
-                                        if (action == ACTION_STOP)
-                                                do_stop(child, flag);
-                                        else if (action == ACTION_UNMONITOR)
-                                                do_unmonitor(child, flag);
-                                        break;
-                                }
-                        }
-                }
-        }
-}
-
-
-/*
- * This function waits for the process to change state. If the process state doesn't match the expectation,
- * a failed event is posted to notify the user. The time is saved on enter so in the case that the time steps
- * backwards/forwards, the wait_process will wait for absolute time and not stall or prematurely exit.
- * @param service A Service to wait for
- * @param expect A expected state (see Process_Status)
- * @return Either Process_Started if the process is running or Process_Stopped if it's not running
- */
-static Process_Status wait_process(Service_T s, Process_Status expect) {
-        int debug = Run.debug, isrunning = FALSE;
-        unsigned long now = time(NULL) * 1000, wait = 50;
-        unsigned long timeout = now + s->start->timeout * 1000;
-        ASSERT(s);
-        do {
-                Time_usleep(wait * USEC_PER_MSEC);
-                now += wait ;
-                wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
-                isrunning = Util_isProcessRunning(s, TRUE);
-                if ((expect == Process_Stopped && ! isrunning) || (expect == Process_Started && isrunning))
-                        break;
-                Run.debug = FALSE; // Turn off debug second time through to avoid flooding the log with pid file does not exist. This poll stuff here _will_ be refactored away
-        } while (now < timeout && ! Run.stopped);
-        Run.debug = debug; // restore the debug state
-        if (isrunning) {
-                if (expect == Process_Started)
-                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
-                else
-                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
-                return Process_Started;
-        } else {
-                if (expect == Process_Started)
-                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start");
-                else
-                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
-                return Process_Stopped;
-        }
-}
-

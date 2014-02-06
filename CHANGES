@@ -1,27 +1,43 @@
-                     CHANGES version 5.6.1
-                                
+                     CHANGES version 5.7
+
            This file summarizes changes made since 5.0
 
 
-Version 5.6.1
+Version 5.7
 
 New: Merged https://bitbucket.org/tildeslash/monit/pull-request/1/
-     from Philippe Kueck: 
-     1) Handle sockets (unix domain) as regular files when checking timestamp.
-     2) Use mysql 4.1 protocol in MySQL check, required for checking mysql-proxy 
-     3) Skip connection checks during startup timeout.
+from Philippe Kueck:
+1) Handle sockets (unix domain) as regular files when checking timestamp.
+2) Use mysql 4.1 protocol in MySQL check, required for checking mysql-proxy
+3) Skip connection checks during startup timeout.
 
-New: Parameters added to 'check program'. Parameters are whitespace
-     separated strings. For instance:
+New: Arguments added to 'check program'. Arguments are whitespace
+separated strings. For instance:
 
-     check program list-files with path /bin/ls -l -r -t /tmp
-         if status != 0 then alert
+  check program list-files with path "/bin/ls -l -r -t /tmp"
+        if status != 0 then alert
+
+New: Implemented restart as an optional service action. When Monit
+is called to restart a service, it previously called the stop
+program registered with the service and then the start program.
+Now, if a restart program is registred with the service, this
+will be called instead, otherwise Monit fall back to its old
+behaviour. Example:
+     
+  check process apache with pidfile /var/run/httpd.pid
+        start   = "/usr/sbin/apachectl start"
+        stop    = "/usr/sbin/apachectl stop"
+        restart = "/usr/sbin/apachectl restart" <- New
+
+New: Improved communication with M/Monit. Thanks to Hippo Lin. For 
+scalability purpose, this Monit version should only be used with
+M/Monit version 3.1 or later.
 
 
 BUGFIXES:
 
 
-* Monit stopped if error occurred during MTA connection close.
+* Monit stopped if an error occurred during MTA connection close.
 
 * Make the Memcache protocol test faster.
 

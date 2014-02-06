@@ -6,7 +6,7 @@ AC_PREREQ([2.53])
 # Note: in  case of beta subversion, use underscore "_" rather then dash "-"
 # since RPM doesn't allow dash in Version
 # Example: 5.0_beta2
-AC_INIT([monit], [5.6.1], [monit-general@nongnu.org])
+AC_INIT([monit], [5.7], [monit-general@nongnu.org])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
@@ -133,6 +133,7 @@ AC_CHECK_HEADERS([ \
 	netdb.h \
         sys/socket.h \
 	netinet/in.h \
+	netinet/tcp.h \
         netinet/in_systm.h \
         pam/pam_appl.h \
         security/pam_appl.h \

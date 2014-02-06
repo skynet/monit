@@ -2561,11 +2561,14 @@ Sample script for the above example (/usr/local/bin/myscript.sh):
 
 You can also send parameters with the program:
 
- check program list-files with path /bin/ls -lrt /tmp/
+ check program list-files with path "/bin/ls -lrt /tmp/"
        if status != 0 then alert
 
-Parameters are whitespace separated strings and in the above example
-the strings '-lrt' and '/tmp/' are parameters to the program '/bin/ls'.
+Arguments to the program or script is a sequence of whitespace
+separated strings. In the above example the strings '-lrt' and 
+'/tmp/' are arguments to the program '/bin/ls'. If arguments are
+used, it is recommended to use quotes B<"> to enclose the string,
+otherwise quotes are not needed.
 
 Notes: If the program is a script, the interpreter (first line) is
 required. The program or script must also be executable.
@@ -2620,14 +2623,9 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 
 Multiple status tests can be used, for example:
 
- check program hwtest with path "/usr/local/bin/hwtest.sh"
+ check program hwtest with path /usr/local/bin/hwtest.sh
        if status = 1 then alert
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
-
-Parameters can be sent with the program, for example:
-
- check program list-files with path /bin/ls -l -r -t /tmp/
-       if status != 0 then alert
 
 
 =head1 SERVICE POLL TIME
@@ -3341,6 +3339,11 @@ insensitive.
  stop            The program used to stop the specified
                  service. Full path is required. This 
                  statement is optional, but recommended.
+ restart         The program used to restart the specified
+                 service. Full path is required. This 
+                 statement is optional. If not used, Monit will
+                 call the service's stop program and then
+                 its start program to restart the service.
  pid and ppid    These keywords may be used as standalone
                  statements in a process service entry to
                  override the alert action for change of
@@ -3705,8 +3708,8 @@ server and then an Asterisk server
 
  check process freeswitch 
     with pidfile /usr/local/freeswitch/log/freeswitch.pid
-  start program = “/usr/local/freeswitch/bin/freeswitch -nc -hp”
-  stop program = “/usr/local/freeswitch/bin/freeswitch -stop”
+  start program = "/usr/local/freeswitch/bin/freeswitch -nc -hp"
+  stop program = "/usr/local/freeswitch/bin/freeswitch -stop"
   if totalmem > 1000.0 MB for 5 cycles then alert
   if totalmem > 1500.0 MB for 5 cycles then alert
   if totalmem > 2000.0 MB for 5 cycles then restart
@@ -3718,8 +3721,8 @@ server and then an Asterisk server
 
  check process asterisk 
    with pidfile /var/run/asterisk/asterisk.pid
-   start program = “/usr/sbin/asterisk”
-   stop program = “/usr/sbin/asterisk -r -x ’shutdown now’”
+   start program = "/usr/sbin/asterisk"
+   stop program = "/usr/sbin/asterisk -r -x 'shutdown now'"
    if totalmem > 1000.0 MB for 5 cycles then alert
    if totalmem > 1500.0 MB for 5 cycles then alert
    if totalmem > 2000.0 MB for 5 cycles then restart

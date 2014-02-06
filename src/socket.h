@@ -274,4 +274,12 @@ void socket_reset(Socket_T S);
 int socket_shutdown_write(Socket_T S);
 
 
+/**
+ * Set TCP_NODELAY to the socket
+ * @param S A Socket object
+ * @return Upon successful completion, the value 0 is returned; 
+ * otherwise the value -1 is returned and the global variable errno is set to indicate the error.
+ */
+int socket_set_tcp_nodelay(Socket_T S);
+
 #endif

@@ -65,22 +65,22 @@
 static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
         char *auth = Util_getBasicAuthHeader(C->url->user, C->url->password);
         int rv = socket_print(socket,
-                          "POST %s HTTP/1.1\r\n"
-                          "Host: %s:%d\r\n"
-                          "Content-Type: text/xml\r\n"
-                          "Content-Length: %d\r\n"
-                          "Pragma: no-cache\r\n"
-                          "Accept: */*\r\n"
-                          "User-Agent: %s/%s\r\n"
-                          "%s"
-                          "\r\n"
-                          "%s",
-                          C->url->path,
-                          C->url->hostname, C->url->port,
-                          strlen(D),
-                          prog, VERSION,
-                          auth?auth:"",
-                          D);
+                              "POST %s HTTP/1.1\r\n"
+                              "Host: %s:%d\r\n"
+                              "Content-Type: text/xml\r\n"
+                              "Content-Length: %d\r\n"
+                              "Pragma: no-cache\r\n"
+                              "Accept: */*\r\n"
+                              "User-Agent: %s/%s\r\n"
+                              "%s"
+                              "\r\n"
+                              "%s",
+                              C->url->path,
+                              C->url->hostname, C->url->port,
+                              strlen(D),
+                              prog, VERSION,
+                              auth?auth:"",
+                              D);
         FREE(auth);
         if (rv <0) {
                 LogError("M/Monit: error sending data to %s -- %s\n", C->url->url, STRERROR);
@@ -98,7 +98,6 @@ static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
 static int data_check(Socket_T socket, Mmonit_T C) {
         int  status;
         char buf[STRLEN];
-
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 LogError("M/Monit: error receiving data from %s -- %s\n", C->url->url, STRERROR);
                 return FALSE;
@@ -125,16 +124,17 @@ int handle_mmonit(Event_T E) {
         int       rv = HANDLER_MMONIT;
         Socket_T  socket = NULL;
         Mmonit_T  C = Run.mmonits;
-
         /* The event is sent to mmonit just once - only in the case that the state changed */
         if (! C || (E && ! E->state_changed))
                 return HANDLER_SUCCEEDED;
-
         StringBuffer_T sb = StringBuffer_create(256);
         for (; C; C = C->next) {
                 if (! (socket = socket_create_t(C->url->hostname, C->url->port, SOCKET_TCP, C->ssl, C->timeout))) {
                         LogError("M/Monit: cannot open a connection to %s -- %s\n", C->url->url, STRERROR);
                         goto error;
+                }
+                if(socket_set_tcp_nodelay(socket) < 0) {
+                    LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
                 }
                 status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket));
                 if (! data_send(socket, C, StringBuffer_toString(sb))) {
@@ -142,7 +142,6 @@ int handle_mmonit(Event_T E) {
                         goto error;
                 }
                 StringBuffer_clear(sb);
-                socket_shutdown_write(socket);
                 if (! data_check(socket, C)) {
                         LogError("M/Monit: %s message to %s failed\n", E ? "event" : "status", C->url->url);
                         goto error;

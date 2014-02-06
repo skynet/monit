@@ -831,6 +831,21 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, " timeout %d second(s)", s->stop->timeout);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
+        if(s->restart) {
+                int i= 0;
+                StringBuffer_append(res->outputbuffer, "<tr><td>Restart program</td><td>'");
+                while(s->restart->arg[i]) {
+                        if(i) StringBuffer_append(res->outputbuffer, " ");
+                        StringBuffer_append(res->outputbuffer, "%s", s->restart->arg[i++]);
+                }
+                StringBuffer_append(res->outputbuffer, "'");
+                if(s->restart->has_uid)
+                        StringBuffer_append(res->outputbuffer, " as uid %d", s->restart->uid);
+                if(s->restart->has_gid)
+                        StringBuffer_append(res->outputbuffer, " as gid %d", s->restart->gid);
+                StringBuffer_append(res->outputbuffer, " timeout %d second(s)", s->restart->timeout);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
 
         if(s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Existence</td><td>If doesn't exist %s ", Util_getEventratio(s->action_NONEXIST->failed, buf, sizeof(buf)));
@@ -1546,7 +1561,7 @@ static void print_buttons(HttpRequest req, HttpResponse res, Service_T s) {
                           "<input type=hidden value='stop' name=action>"
                           "<input type=submit value='Stop service'></form></td>", s->name);
         /* Restart program */
-        if(s->start && s->stop)
+        if((s->start && s->stop) || s->restart)
                 StringBuffer_append(res->outputbuffer,
                           "<td><form method=POST action=%s>"
                           "<input type=hidden value='restart' name=action>"
