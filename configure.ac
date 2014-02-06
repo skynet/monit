@@ -409,11 +409,10 @@ AC_MSG_CHECKING([pid file location])
 if test -d "/run"
 then
 	piddir="/run"
-elif test -d "/var/run"
-    piddir="/var/run"
-elif test -d "/etc"
-then
-	piddir="/etc"
+elif test -d "/var/run"; then
+        piddir="/var/run"
+elif test -d "/etc"; then
+        piddir="/etc"
 fi
 
 AC_DEFINE_UNQUOTED([PIDDIR], "$piddir",
