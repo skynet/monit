@@ -62,7 +62,7 @@ If you have purchased a [M/Monit license](https://mmonit.com/shop/) you are enti
 CONTRIBUTING
 ============
  
-You are welcome to contribute to this project, but please note that we are only able to accept contributions under a [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/ "CC0 License"). **IMPORTANT**: By submitting a patch or a pull request, you agree to allow the project owners to license your work under the terms of the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/ "CC0 License").
+You are welcome to contribute to this project, but we desires that all contributors of ideas, code, or documentation to the Monit project complete, sign, and submit (via email to contributor@tildeslash.com) an [Individual Contributor License Agreement (CLA)](http://creativecommons.org/publicdomain/zero/1.0/). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. A signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
 
 
 REPORTING A BUG
