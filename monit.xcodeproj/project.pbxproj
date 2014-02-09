@@ -268,6 +268,7 @@
 		52F6E8D013A756DB0023F87A /* libpam.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpam.dylib; path = usr/lib/libpam.dylib; sourceTree = SDKROOT; };
 		52F6E8D213A756EB0023F87A /* libpthread.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpthread.dylib; path = usr/lib/libpthread.dylib; sourceTree = SDKROOT; };
 		52F6E8D413A757050023F87A /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
+		52FFBA1118A7E785001F9962 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -298,6 +299,7 @@
 				52D25EE017C0E8680039D3E4 /* Makefile.am */,
 				52D25EE217C0E8680039D3E4 /* monitrc */,
 				52D25EE317C0E8680039D3E4 /* README */,
+				52FFBA1118A7E785001F9962 /* README.md */,
 				52D25EE817C0EB460039D3E4 /* doc */,
 				52F6E74313A74F220023F87A /* src */,
 				52A1312013A788B900583257 /* libs */,
