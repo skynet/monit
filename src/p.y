@@ -1159,43 +1159,43 @@ apache_stat_list: apache_stat
 
 apache_stat     : LOGLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.loglimitOP = $<number>2;
-                    portset.ApacheStatus.loglimit = (int)$3;
+                    portset.ApacheStatus.loglimit = $<number>3;
                   }
                 | CLOSELIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.closelimitOP = $<number>2;
-                    portset.ApacheStatus.closelimit = (int)($3);
+                    portset.ApacheStatus.closelimit = $<number>3;
                   }
                 | DNSLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.dnslimitOP = $<number>2;
-                    portset.ApacheStatus.dnslimit = (int)($3);
+                    portset.ApacheStatus.dnslimit = $<number>3;
                   }
                 | KEEPALIVELIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.keepalivelimitOP = $<number>2;
-                    portset.ApacheStatus.keepalivelimit = (int)($3);
+                    portset.ApacheStatus.keepalivelimit = $<number>3;
                   }
                 | REPLYLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.replylimitOP = $<number>2;
-                    portset.ApacheStatus.replylimit = (int)($3);
+                    portset.ApacheStatus.replylimit = $<number>3;
                   }
                 | REQUESTLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.requestlimitOP = $<number>2;
-                    portset.ApacheStatus.requestlimit = (int)($3);
+                    portset.ApacheStatus.requestlimit = $<number>3;
                   }
                 | STARTLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.startlimitOP = $<number>2;
-                    portset.ApacheStatus.startlimit = (int)($3);
+                    portset.ApacheStatus.startlimit = $<number>3;
                   }
                 | WAITLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.waitlimitOP = $<number>2;
-                    portset.ApacheStatus.waitlimit = (int)($3);
+                    portset.ApacheStatus.waitlimit = $<number>3;
                   }
                 | GRACEFULLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.gracefullimitOP = $<number>2;
-                    portset.ApacheStatus.gracefullimit = (int)($3);
+                    portset.ApacheStatus.gracefullimit = $<number>3;
                   }
                 | CLEANUPLIMIT operator NUMBER PERCENT {
                     portset.ApacheStatus.cleanuplimitOP = $<number>2;
-                    portset.ApacheStatus.cleanuplimit = (int)($3);
+                    portset.ApacheStatus.cleanuplimit = $<number>3;
                   }
                 ;
 

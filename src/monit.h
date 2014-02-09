@@ -460,18 +460,18 @@ typedef struct mygenericproto {
 
 /** Defines a port object */
 typedef struct myport {
-        volatile int socket;                       /**< Socket used for connection */
-        int  type;                  /**< Socket type used for connection (UDP/TCP) */
-        int  family;            /**< Socket family used for connection (INET/UNIX) */
         char *hostname;                                     /**< Hostname to check */
-        int  port;                                                 /**< Portnumber */
         char *request;                              /**< Specific protocol request */
         char *request_checksum;     /**< The optional checksum for a req. document */
         char *request_hostheader;            /**< The optional Host: header to use */
-        int  request_hashtype;  /**< The optional type of hash for a req. document */
         char *pathname;                   /**< Pathname, in case of an UNIX socket */
-        int maxforward;            /**< Optional max forward for protocol checking */
         Generic_T generic;                                /**< Generic test handle */
+        volatile int socket;                       /**< Socket used for connection */
+        int type;                   /**< Socket type used for connection (UDP/TCP) */
+        int family;             /**< Socket family used for connection (INET/UNIX) */
+        int port;                                                  /**< Portnumber */
+        int request_hashtype;   /**< The optional type of hash for a req. document */
+        int maxforward;            /**< Optional max forward for protocol checking */
         int timeout;   /**< The timeout in seconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
         int is_available;                /**< TRUE if the server/port is available */
@@ -479,26 +479,26 @@ typedef struct myport {
         EventAction_T action;  /**< Description of the action upon event occurence */
         /** Apache-status specific parameters */
         struct apache_status {
-                int loglimit;                  /**< Max percentatge of logging processes */
-                int loglimitOP;                                   /**< loglimit operator */
-                int closelimit;             /**< Max percentatge of closinging processes */
-                int closelimitOP;                               /**< closelimit operator */
-                int dnslimit;         /**< Max percentatge of processes doing DNS lookup */
-                int dnslimitOP;                                   /**< dnslimit operator */
-                int keepalivelimit;          /**< Max percentatge of keepalive processes */
-                int keepalivelimitOP;                       /**< keepalivelimit operator */
-                int replylimit;               /**< Max percentatge of replying processes */
-                int replylimitOP;                               /**< replylimit operator */
-                int requestlimit;     /**< Max percentatge of processes reading requests */
-                int requestlimitOP;                           /**< requestlimit operator */
-                int startlimit;            /**< Max percentatge of processes starting up */
-                int startlimitOP;                               /**< startlimit operator */
-                int waitlimit;  /**< Min percentatge of processes waiting for connection */
-                int waitlimitOP;                                 /**< waitlimit operator */
-                int gracefullimit;/**< Max percentatge of processes gracefully finishing */
-                int gracefullimitOP;                         /**< gracefullimit operator */
-                int cleanuplimit;      /**< Max percentatge of processes in idle cleanup */
-                int cleanuplimitOP;                           /**< cleanuplimit operator */
+                short loglimit;                  /**< Max percentage of logging processes */
+                short loglimitOP;                                  /**< loglimit operator */
+                short closelimit;             /**< Max percentage of closinging processes */
+                short closelimitOP;                              /**< closelimit operator */
+                short dnslimit;         /**< Max percentage of processes doing DNS lookup */
+                short dnslimitOP;                                  /**< dnslimit operator */
+                short keepalivelimit;          /**< Max percentage of keepalive processes */
+                short keepalivelimitOP;                      /**< keepalivelimit operator */
+                short replylimit;               /**< Max percentage of replying processes */
+                short replylimitOP;                              /**< replylimit operator */
+                short requestlimit;     /**< Max percentage of processes reading requests */
+                short requestlimitOP;                          /**< requestlimit operator */
+                short startlimit;            /**< Max percentage of processes starting up */
+                short startlimitOP;                              /**< startlimit operator */
+                short waitlimit;  /**< Min percentage of processes waiting for connection */
+                short waitlimitOP;                                /**< waitlimit operator */
+                short gracefullimit;/**< Max percentage of processes gracefully finishing */
+                short gracefullimitOP;                        /**< gracefullimit operator */
+                short cleanuplimit;      /**< Max percentage of processes in idle cleanup */
+                short cleanuplimitOP;                          /**< cleanuplimit operator */
         } ApacheStatus;
 
         Ssl_T SSL;                                             /**< SSL definition */
