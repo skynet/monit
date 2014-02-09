@@ -68,9 +68,9 @@ struct Process_T {
         pid_t pid;
         uid_t uid;
         gid_t gid;
+        int status;
         char **env; 
         char **args;
-        int status;
         int stdin_pipe[2];
         int stdout_pipe[2];
         int stderr_pipe[2];
