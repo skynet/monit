@@ -400,9 +400,6 @@ typedef struct myprocesstree {
         int           pid;
         int           ppid;
         int           status_flag;
-        time_t        starttime;
-        char         *cmdline;
-
         int           visited;
         int           children_num;
         int           children_sum;
@@ -410,6 +407,8 @@ typedef struct myprocesstree {
         int           cpu_percent_sum;
         unsigned long mem_kbyte;
         unsigned long mem_kbyte_sum;
+        time_t        starttime;
+        char         *cmdline;
 
         /** For internal use */
         double        time;                                      /**< 1/10 seconds */
