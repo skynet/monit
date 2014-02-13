@@ -60,7 +60,7 @@ You can subscribe to [Monitʼs mailing list](https://lists.nongnu.org/mailman/li
 CONTRIBUTING
 ============
  
-You are welcome to contribute to this project, but we desires that all contributors of ideas, code, or documentation to the Monit project, electronically sign an [Individual Contributor License Agreement](http://tildeslash.com/cla/). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. An electronically signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
+You are welcome to contribute to this project, but we desires that all contributors to the Monit project, electronically sign an [Individual Contributor License Agreement](http://tildeslash.com/cla/) (CLA). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. An electronically signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
 
 
 REPORTING A BUG
