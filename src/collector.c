@@ -133,7 +133,7 @@ int handle_mmonit(Event_T E) {
                         LogError("M/Monit: cannot open a connection to %s -- %s\n", C->url->url, STRERROR);
                         goto error;
                 }
-                if(socket_set_tcp_nodelay(socket) < 0) {
+                if (! socket_set_tcp_nodelay(socket)) {
                     LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
                 }
                 status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket));
