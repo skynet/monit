@@ -82,17 +82,6 @@ Please use `man monit' for an in-depth documentation of the program. More
 documentation can be found at http://mmonit.com/monit/documentation/
 
 
-Questions and support
----------------------
-
-If you have questions or comments about the software or documentation
-please subscribe to the Monit general mailing list and post your questions
-there. http://lists.nongnu.org/mailman/listinfo/monit-general
-
-If you have purchased a M/Monit license at https://mmonit.com/shop/ you
-are entitled to direct support from us regarding both Monit and M/Monit.
-
-
 Acknowledgments
 ---------------
 
@@ -107,16 +96,30 @@ http://www.cs.princeton.edu/software/cii/
 Contributing
 ------------
  
-You are welcome to contribute to this project, but we desires that all
-contributors of ideas, code, or documentation to the Monit project 
-complete, sign, and submit (to contributor@tildeslash.com) a Contributor
-License Agreement http://tildeslash.com/cla-tildeslash.pdf. The purpose
-of this agreement is to clearly define the terms under which intellectual
-property has been contributed to the project and thereby allow us to 
-defend the project should there be a legal dispute regarding the 
-software at some future time. A signed CLA is required to be on file
-before any Pull Request or patches are accepted or you are given commit
-rights to the project.
+You are welcome to contribute to this project, but please note that
+an electronically signed CLA is required to be on file before any Pull
+Request or patches are accepted or you are given commit rights to the
+project. To sign, go to http://tildeslash.com/cla/
+
+
+Reporting a problem
+-------------------
+
+If you believe you have found a bug, please use the issue tracker to
+report the problem. Remember to include the necessary information that 
+will enable us to understand and reproduce this problem.
+
+If you have found a security vulnerabilities we appreciate if you will
+send this information to cve@tildeslash.com.
+
+
+Mailing list
+------------
+
+You can subscribe to Monitʼs mailing list to be the first to hear 
+about new releases and important information about Monit. The mailing 
+list is read-only with very low traffic. Please go here to subscribe;
+https://lists.nongnu.org/mailman/listinfo/monit-announce
 
 
 Contact information

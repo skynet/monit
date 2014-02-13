@@ -51,18 +51,16 @@ DOCUMENTATION
 Please use `man monit` for an in-depth documentation of the program. More documentation can be found at [Monit's web-site](http://mmonit.com/monit/documentation/ "Documentation")
 
 
-QUESTIONS AND SUPPORT
-=====================
+MAILING LIST
+============
 
-If you have questions or comments about the software or documentation please subscribe to the [Monit general mailing list](http://lists.nongnu.org/mailman/listinfo/monit-general "Mailing List") and post your questions there. 
-
-If you have purchased a [M/Monit license](https://mmonit.com/shop/) you are entitled to direct support from us regarding both Monit and M/Monit.
+You can subscribe to [Monitʼs mailing list](https://lists.nongnu.org/mailman/listinfo/monit-announce) to be the first to hear about new releases and important information about Monit. 
 
 
 CONTRIBUTING
 ============
  
-You are welcome to contribute to this project, but we desires that all contributors of ideas, code, or documentation to the Monit project electronically sign an [Individual Contributor License Agreement](http://tildeslash.com/cla/). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. An electronically signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
+You are welcome to contribute to this project, but we desires that all contributors of ideas, code, or documentation to the Monit project, electronically sign an [Individual Contributor License Agreement](http://tildeslash.com/cla/). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. An electronically signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
 
 
 REPORTING A BUG
