@@ -62,7 +62,7 @@ If you have purchased a [M/Monit license](https://mmonit.com/shop/) you are enti
 CONTRIBUTING
 ============
  
-You are welcome to contribute to this project, but we desires that all contributors of ideas, code, or documentation to the Monit project complete, sign, and submit (via email to contributor@tildeslash.com) an [Individual Contributor License Agreement](http://tildeslash.com/cla-tildeslash.pdf) (PDF). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. A signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
+You are welcome to contribute to this project, but we desires that all contributors of ideas, code, or documentation to the Monit project electronically sign an [Individual Contributor License Agreement](http://tildeslash.com/cla/). The purpose of this agreement is to clearly define the terms under which intellectual property has been contributed to the project and thereby allow us to defend the project should there be a legal dispute regarding the software at some future time. An electronically signed CLA is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project.
 
 
 REPORTING A BUG
