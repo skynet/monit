@@ -98,34 +98,6 @@ T StringBuffer_vappend(T S, const char *s, va_list ap);
 
 
 /**
- * Returns the character in the given <code>index</code> position. The
- * first char in the string buffer is located at position 0 and the last
- * character is located at StringBuffer_length() - 1. The index parameter
- * must be greater than or equal to 0 and less than the length of the 
- * StringBuffer.
- * @param S StringBuffer object
- * @param index The index of the character to return
- * @return The char located at index
- * @exception AssertException if the index parameter is negative 
- * or greater than or equal to the StringBuffer length.
- */
-char StringBuffer_charAt(T S, int index);
-
-
-/**
- * Set the character in the StringBuffer to <code>c</code> at the 
- * <code>index</code> position. The index parameter must be greater 
- * than or equal to 0 and less than the length of the StringBuffer.
- * @param S StringBuffer object
- * @param index The index of the character to set
- * @param c The character to set
- * @exception AssertException if the index parameter is negative 
- * or greater than or equal to the StringBuffer length.
- */
-void StringBuffer_setCharAt(T S, int index, char c);
-
-
-/**
  * Replace all occurences of <code>a</code> with <code>b</code>. Example: 
  * <pre>
  * StringBuffer_T b = StringBuffer_new("foo bar baz foo foo bar baz"); 

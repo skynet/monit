@@ -129,22 +129,6 @@ T StringBuffer_vappend(T S, const char *s, va_list ap) {
 }
 
 
-char StringBuffer_charAt(T S, int index) {
-        assert(S);
-        if (index < 0 || index > S->used)
-                THROW(AssertException, "Index out of bounds");
-        return S->buffer[index];
-}
-
-
-void StringBuffer_setCharAt(T S, int index, char c) {
-        assert(S);
-        if (index < 0 || index > S->used)
-                THROW(AssertException, "Index out of bounds");
-        S->buffer[index] = c;
-}
-
-
 int StringBuffer_replace(T S, const char *a, const char *b) {
         int n = 0;
         assert(S);

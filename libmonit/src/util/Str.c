@@ -223,15 +223,15 @@ int Str_endsWith(const char *a, const char *b) {
 
 char *Str_sub(const char *a, const char *b) {
         if (a && STR_DEF(b)) {
-                const char *ap, *bp;
+                const char *p, *q;
                 while (*a) {
                         if (toupper(*a) == toupper(*b)) {
-                                ap = a;
-                                bp = b;
+                                p = a;
+                                q = b;
                                 do
-                                        if (! *bp)
+                                        if (! *q)
                                                 return (char*)a;
-                                while (toupper(*ap++) == toupper(*bp++));
+                                while (toupper(*p++) == toupper(*q++));
                         }
                         a++;
                 }
