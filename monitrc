@@ -60,8 +60,8 @@ set daemon  60              # check services at 1-minute intervals
 ## By default Monit will drop alert events if no mail servers are available. 
 ## If you want to keep the alerts for later delivery retry, you can use the 
 ## EVENTQUEUE statement. The base directory where undelivered alerts will be 
-## stored is specified by the BASEDIR option. You can limit the maximal queue
-## size using the SLOTS option (if omitted, the queue is limited by space 
+## stored is specified by the BASEDIR option. You can limit the queue size 
+## by using the SLOTS option (if omitted, the queue is limited by space
 ## available in the back end filesystem).
 #
 # set eventqueue
