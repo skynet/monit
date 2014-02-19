@@ -33,7 +33,7 @@ AC_PATH_PROG([FLEX], [flex], [no], [$PATH:/usr/local/bin:/usr/bin])
 if test "x$FLEX" = "xno"; then
 	# Require flex unless lex.yy.c already is built
 	if test ! -f src/lex.yy.c; then
-                AC_MSG_RESULT([flex is required. Download from http://www.gnu.org/software/flex/])
+                AC_MSG_ERROR([flex is required. Download from http://www.gnu.org/software/flex/])
 	fi
 fi
 AC_PATH_PROG([POD2MAN], [pod2man], [no], [$PATH:/usr/local/bin:/usr/bin])
