@@ -135,6 +135,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		520B200618B4AC52005AA9DF /* CONTRIBUTORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CONTRIBUTORS; sourceTree = "<group>"; };
 		528EA77213A74E05003DA4BE /* monit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = monit; sourceTree = BUILT_PRODUCTS_DIR; };
 		52A1310B13A7882A00583257 /* libmonit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libmonit.xcodeproj; path = libmonit/libmonit.xcodeproj; sourceTree = "<group>"; };
 		52A1311C13A7886800583257 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -300,6 +301,7 @@
 				52D25EE217C0E8680039D3E4 /* monitrc */,
 				52D25EE317C0E8680039D3E4 /* README */,
 				52FFBA1118A7E785001F9962 /* README.md */,
+				520B200618B4AC52005AA9DF /* CONTRIBUTORS */,
 				52D25EE817C0EB460039D3E4 /* doc */,
 				52F6E74313A74F220023F87A /* src */,
 				52A1312013A788B900583257 /* libs */,
