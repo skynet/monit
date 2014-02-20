@@ -114,6 +114,7 @@ dist-hook::
 	-rm -f $(distdir)/src/y.output
 	-rm -f $(distdir)/README.md
 	-perl -pi -e 's/^Version: .*/Version: '$(VERSION)'/' $(distdir)/contrib/packages/redhat/monit.spec
+	-cp $(distdir)/contrib/packages/redhat/monit.spec $(distdir)/
 	-chmod 600 monitrc
 	
 clean-local:

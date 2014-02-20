@@ -2,14 +2,15 @@ Name: monit
 Summary: Process monitor and restart utility
 Version: 5.7
 Release: 1
-Source: http://www.mmonit.com/monit/dist/%{name}-%{version}.tar.gz
+URL: http://mmonit.com/monit/
+Source: http://mmonit.com/monit/dist/%{name}-%{version}.tar.gz
 Group: Utilities/Console
-URL: http://www.mmonit.com/monit/
 BuildRoot: %{_tmppath}/%{name}-buildroot
 License: AGPL
 BuildRequires: flex
 BuildRequires: bison
 BuildRequires: openssl-devel
+BuildRequires: pam-devel
 
 %description
 Monit is a utility for managing and monitoring processes,
@@ -21,8 +22,8 @@ actions in error situations.
 %setup
 
 %build
-%{configure}
-make
+%configure
+make %{?_smp_mflags}
 
 %install
 if [ -d %{buildroot} ] ; then
@@ -81,7 +82,7 @@ fi
 * Thu Aug 25 2011 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-5.3
 
-* Wed Mar 28 2011 Martin Pala <martinp@tildeslash.com>
+* Mon Mar 28 2011 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-5.2.5
 
 * Wed Feb 23 2011 Martin Pala <martinp@tildeslash.com>
@@ -108,35 +109,35 @@ fi
 * Sun Apr 13 2008 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-5.0
 
-* Mon Nov 06 2007 Martin Pala <martinp@tildeslash.com>
+* Tue Nov 06 2007 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.10.1
 
 * Mon Nov 05 2007 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.10
 
-* Wed Feb 19 2007 Martin Pala <martinp@tildeslash.com>
+* Mon Feb 19 2007 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.9
 
 * Sun Mar 05 2006 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.7
 
-* Wed Sep 19 2005 Martin Pala <martinp@tildeslash.com>
+* Mon Sep 19 2005 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.6
 
-* Wed Oct 19 2004 Martin Pala <martinp@tildeslash.com>
+* Tue Oct 19 2004 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.4
 
-* Wed Nov 04 2003 Martin Pala <martinp@tildeslash.com>
+* Tue Nov 04 2003 Martin Pala <martinp@tildeslash.com>
 - Fixed the bad path to monit binary in startup script. Thanks to Ben Ciceron
   for report of the problem.
 
-* Wed Oct 27 2003 Martin Pala <martinp@tildeslash.com>
+* Mon Oct 27 2003 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.1
 
-* Wed Sep 23 2003 Martin Pala <martinp@tildeslash.com>
+* Tue Sep 23 2003 Martin Pala <martinp@tildeslash.com>
 - change the description
 
-* Wed Mar 07 2003 Martin Pala <martinp@tildeslash.com>
+* Fri Mar 07 2003 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-4.0
 - Updated documentation list
 - Changed use of monit.conf file to default monitrc ( => monit could find it )
@@ -154,3 +155,4 @@ fi
 * Thu Feb 01 2001 Clinton Work <work@scripty.com>
 - Create the inital spec file
 - Created a sample config file and a rc startup script
+
