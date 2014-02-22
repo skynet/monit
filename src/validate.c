@@ -473,13 +473,13 @@ int check_program(Service_T s) {
                         }
                 }
                 s->program->exitStatus = Process_exitStatus(P); // Save exit status for web-view display
-                int n = 0;
-                char buf[STRLEN + 1];
                 // Evaluate program's exit status against our status checks.
                 /* TODO: Multiple checks we have now should be deprecated and removed - not useful because it
                  will alert on everything if != is used other than the match or if = is used, might report nothing on error. */
                 for (Status_T status = s->statuslist; status; status = status->next) {
                         if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
+                                int n = 0;
+                                char buf[STRLEN + 1];
                                 // Read message from script
                                 if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
                                         n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
