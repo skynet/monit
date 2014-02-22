@@ -630,7 +630,7 @@ static void handle_options(int argc, char **argv) {
                         case 'c':
                         {
                                 if (! File_isFile(optarg))
-                                        THROW(AssertException, "The control file '%s' is not a file", Str_trunc(optarg, STRLEN));
+                                        THROW(AssertException, "The control file '%s' is not a file", Str_trunc(optarg, 80));
                                 Run.controlfile = Str_dup(optarg);
                                 break;
                         }

@@ -207,7 +207,9 @@ void vLogAbortHandler(const char *s, va_list ap) {
         va_copy(ap_copy, ap);
         log_log(LOG_CRIT, s, ap);
         va_end(ap_copy);
-        abort();
+        if (Run.debug)
+                abort();
+        exit(1);
 }
 
 
