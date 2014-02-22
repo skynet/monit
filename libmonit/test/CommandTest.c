@@ -153,8 +153,10 @@ int main(void) {
                 // Set and get env string
                 Command_setEnv(c, "PATH", "/usr/bin");
                 Command_setEnv(c, "SHELL", "/bin/bash");
+                Command_setEnv(c, "PAT", "Carroll");
                 assert(Str_isEqual(Command_getEnv(c, "PATH"), "/usr/bin"));
                 assert(Str_isEqual(Command_getEnv(c, "SHELL"), "/bin/bash"));
+                assert(Str_isEqual(Command_getEnv(c, "PAT"), "Carroll"));
                 // Empty and NULL value
                 Command_setEnv(c, "PATH", "");
                 Command_setEnv(c, "SHELL", NULL);
