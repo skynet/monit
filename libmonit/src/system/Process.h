@@ -45,10 +45,10 @@
  * or Process_kill().
  *
  * <h4>Environment</h4>
- * The Process does <em>not</em> inherit the environment from the calling 
- * process and has only a spartan PATH set by default; defined by 
- * Command_Path. Clients should call Command_setEnv() to set environment 
- * variables as needed <em>before</em> calling Command_execute()
+ * The Process inherits the environment from the calling process. Clients can
+ * also call Command_setEnv() to set or reset environment variables as needed
+ * <em>before</em> calling Command_execute(). Environment variables set this way
+ * will be added to the sub-process at execution time.
  *
  * @see Command.h
  * @author http://www.tildeslash.com/

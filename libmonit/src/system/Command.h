@@ -49,11 +49,6 @@
 
 #define T Command_T
 typedef struct T *T;
-/** 
- * Default Path for Command: <code>PATH=/bin:/usr/bin:/usr/local/bin:/opt/csw/bin:/usr/sfw/bin</code>. 
- * May be overridden by Command_setEnv() 
- */
-extern const char *Command_Path;
 
 
 /**
@@ -163,26 +158,14 @@ const char *Command_getDir(T C);
 
 /**
  * Set or replace the environment variable identified by <code>name</code>.
- * The sub-process does <em>not</em> inherit the environment from the calling 
- * process and has only a spartan PATH set by default.
+ * The sub-process initially inherits the environment from the calling process.
+ * Environment variables set with this method does not affect the parent 
+ * process and only apply to the sub-process.
  * @param C A Command object
  * @param name The environment variable to set or replace
  * @param value The value
  */
 void Command_setEnv(T C, const char *name, const char *value);
-
-
-/**
- * Set or replace the environment variable(s) specified in <code>env</code>.
- * The <code>env</code> string is expected to be on a name=value; format
- * and each name=value pair must be separated with ';'. This is a
- * convenience function, wrapping Command_setEnv() and is rather inefficient.
- * @param C A Command object
- * @param env An environment string containing name=value pairs separated 
- * with ';'. Example: <code>PATH=/usr/bin; SHELL=/bin/bash;</code>
- * @see Command_setEnv()
- */
-void Command_vSetEnv(T C, const char *env, ...);
 
 
 /**
@@ -218,7 +201,7 @@ List_T Command_getCommand(T C);
  * Process_T object by calling Process_free(). If creating the new 
  * sub-process failed, NULL is returned and errno is set to indicate the
  * error. Use e.g. System_getLastError() to get a description of the error
- * that occured.
+ * that occurred.
  * @param C A Command object
  * @return A new Process_T object representing the sub-process or NULL
  * if execute failed.

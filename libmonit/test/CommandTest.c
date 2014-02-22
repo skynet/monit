@@ -71,6 +71,20 @@ static void onKill(Process_T P) {
 }
 
 
+static void onEnv(Process_T P) {
+        assert(P);
+        char buf[STRLEN];
+        InputStream_T in = Process_getInputStream(P);
+        assert(InputStream_readLine(in, buf, STRLEN));
+        assert(Str_isEqual(Str_chomp(buf), "Ylajali"));
+        // Assert that sub-process environment is not set in main process
+        assert(! getenv("SULT"));
+        printf("\tEnvironment Variable in sub-process only: $SULT = %s\n", buf);
+        Process_free(&P);
+        assert(! P);
+}
+
+
 int main(void) {
 
         Bootstrap(); // Need to initialize library
@@ -136,34 +150,18 @@ int main(void) {
         {
                 Command_T c = Command_new("/bin/sh", "-c", "ps -aef|grep monit", NULL);
                 assert(c);
-                // Check default PATH
-                assert(Str_isEqual(Command_getEnv(c, "PATH"), "/bin:/usr/bin:/usr/local/bin:/opt/csw/bin:/usr/sfw/bin"));
-                // Set and get
-                Command_setEnv(c, "LANG", "C");
-                assert(Str_isEqual(Command_getEnv(c, "LANG"), "C"));
-                Command_setEnv(c, "SHELL", "/bin/bash");
-                assert(Str_isEqual(Command_getEnv(c, "SHELL"), "/bin/bash"));
-                // setEnvString
-                // Check default PATH
-                assert(Str_isEqual(Command_getEnv(c, "PATH"), "/bin:/usr/bin:/usr/local/bin:/opt/csw/bin:/usr/sfw/bin"));
                 // Set and get env string
-                Command_vSetEnv(c, "PATH=/usr/bin;SHELL=/bin/bash");
+                Command_setEnv(c, "PATH", "/usr/bin");
+                Command_setEnv(c, "SHELL", "/bin/bash");
                 assert(Str_isEqual(Command_getEnv(c, "PATH"), "/usr/bin"));
                 assert(Str_isEqual(Command_getEnv(c, "SHELL"), "/bin/bash"));
-                // With space in string
-                Command_vSetEnv(c, "LANG = C");
-                assert(Str_isEqual(Command_getEnv(c, "LANG"), "C"));
-                Command_vSetEnv(c, "PATH = /usr/bin ; SHELL = /bin/bash");
-                assert(Str_isEqual(Command_getEnv(c, "PATH"), "/usr/bin"));
-                assert(Str_isEqual(Command_getEnv(c, "SHELL"), "/bin/bash"));
-                // Invalid String
-                Command_vSetEnv(c, "HELLO:WORLD");
-                assert(! Command_getEnv(c, "HELLO"));
-                assert(! Command_getEnv(c, "HELLO:WORLD"));
-                // Varargs
-                Command_vSetEnv(c, "PATH=%s; TERM=%s;", "/bin", "vterm");
-                assert(Str_isEqual(Command_getEnv(c, "PATH"), "/bin"));
-                assert(Str_isEqual(Command_getEnv(c, "TERM"), "vterm"));
+                // Empty and NULL value
+                Command_setEnv(c, "PATH", "");
+                Command_setEnv(c, "SHELL", NULL);
+                assert(Str_isEqual(Command_getEnv(c, "PATH"), ""));
+                assert(Str_isEqual(Command_getEnv(c, "SHELL"), ""));
+                // Unknown variable should result in NULL
+                assert(Command_getEnv(c, "UKNOWNVARIABLE") == NULL);
                 Command_free(&c);
                 assert(!c);
         }
@@ -242,7 +240,33 @@ int main(void) {
                 assert(!c);
         }
         printf("=> Test10: OK\n\n");
-
+        
+        printf("=> Test11: environment in sub-process\n");
+        {
+                Command_T c = Command_new("/bin/sh", "-c", "echo $SULT", NULL);
+                assert(c);
+                // Set environment in sub-process only
+                Command_setEnv(c, "SULT", "Ylajali");
+                onEnv(Command_execute(c));
+                Command_free(&c);
+                assert(!c);
+        }
+        printf("=> Test11: OK\n\n");
+        
+        
+        printf("=> Test12: on execute error\n");
+        {
+                // Try executing a directory should produce an error
+                Command_T c = Command_new("/tmp", NULL);
+                assert(c);
+                Process_T p = Command_execute(c);
+                assert(! p);
+                Command_free(&c);
+                printf("\tOK, got execute error -- %s\n", System_getLastError());
+                assert(!c);
+        }
+        printf("=> Test12: OK\n\n");
+        
         printf("============> Command Tests: OK\n\n");
 
         return 0;

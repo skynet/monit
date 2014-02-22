@@ -79,7 +79,7 @@ int Dir_chdir(const char *path);
  * Returns the current working directory of the process.
  * @param result A buffer to write the result to. 
  * @param length The length of the result buffer
- * @return A pointer to the result buffer
+ * @return A pointer to the result buffer or NULL in case of error
  */
 const char *Dir_cwd(char *result, int length);
 

@@ -147,7 +147,7 @@ int kill_daemon(int sig) {
 
   pid_t pid;
 
-  if ( (pid= exist_daemon()) > 0 ) {
+  if ( (pid = exist_daemon()) > 0 ) {
 
     if ( kill(pid, sig) < 0 ) {
 
@@ -184,11 +184,11 @@ int exist_daemon() {
 
   pid_t pid;
 
-  errno= 0;
+  errno = 0;
 
-  if( (pid= Util_getPid(Run.pidfile)) )
+  if( (pid = Util_getPid(Run.pidfile)) )
     if( (getpgid(pid)) > -1 || (errno == EPERM) )
-      return( (int)pid );
+      return((int)pid);
 
   return(FALSE);
 

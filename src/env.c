@@ -70,148 +70,38 @@
 
 #include "monit.h"
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN STRLEN
-#endif
 
-#ifdef DARWIN
-#define environ (*_NSGetEnviron())
-#endif
-
-/* Private prototypes */
-static void set_sandbox(void);
-static void set_environment(void);
-
-/**
- *  Setup this program for safer exec, and set required runtime
- *  "environment" variables.
- *
- *  @file
- */
-
-
-/* ------------------------------------------------------------------ Public */
+// libmonit
+#include "io/Dir.h"
+#include "exceptions/AssertException.h"
 
 
 /**
  * Initialize the program environment
  */
 void init_env() {
-
-  /* Setup for safe(r) exec */
-  set_sandbox();
-
-  /* Setup program environment */
-  set_environment();
-
+        // Close all descriptors except stdio
+        for (int i = 3, descriptors = getdtablesize(); i < descriptors; i++)
+                close(i);
+        // Ensure that std descriptors (0, 1 and 2) are open
+        for (int i = 0; i < 3; i++) {
+                struct stat st;
+                if (fstat(i, &st) == -1 && open("/dev/null", O_RDWR) != i)
+                        THROW(AssertException, "Cannot open /dev/null -- %s\n", STRERROR);
+        }
+        // Get password struct with user info
+        struct passwd *pw = getpwuid(geteuid());
+        if (! pw)
+                THROW(AssertException, "%s: You don't exist. Go away.\n", prog);
+        Run.Env.home = Str_dup(pw->pw_dir);
+        Run.Env.user = Str_dup(pw->pw_name);
+        // Get CWD
+        char t[PATH_MAX];
+        if (! Dir_cwd(t, PATH_MAX))
+                THROW(AssertException, "%s: Cannot read current directory -- %s\n", prog, STRERROR);
+        Run.Env.cwd = Str_dup(t);
+        // Save and clear file creation mask
+        Run.umask = umask(0);
 }
 
-
-/* ----------------------------------------------------------------- Private */
-
-
-/**
- *  DESCRIPTION
- *    This code was originally posted by Wietse Venema, years ago, in
- *    a discussion on news on how to create safe suid wrappers. For
- *    those interested in NNTP archeology, here's the post:
- *
- *  Article 5648 of comp.security.unix:
- *  From: wietse@wzv.win.tue.nl (Wietse Venema)
- *  Newsgroups: comp.security.unix
- *  Subject: Re: [8lgm]-Advisory-7.UNIX.passwd.11-May-1994
- *  Date: 18 May 1994 07:52:05 +0200
- *  Organization: Eindhoven University of Technology, The Netherlands
- *  Lines: 68
- *
- *  milton@picard.med.miami.edu (H. Milton Johnson) writes:
- *  >OK, I admit it, I'm a totally incompetent sysadmin because I am not
- *  >sure I could write a bullet-proof setuid wrapper.  However, if one of
- *  >the competent sysadmins subscribing to this group could post or point
- *  >the way to an example of a bullet- proof setuid wrapper, I'm sure that
- *  >I could use it as a template to address this/future/other problems.
- *
- *  Ok, here is a first stab. Perhaps we can make this into a combined
- *  effort and get rid of the problem once and for all.
- *
- *           Wietse
- *
- *  [code - see the function below, only marginally changed to suit monit]
- *
- *
- */
-static void set_sandbox(void) {
-
-  int    i = 0;
-  struct stat st;
-  extern char **environ;
-  char   *path = "PATH=/bin:/usr/bin:/sbin:/usr/sbin";
-  char   *tz;
-
-  /*
-   * Purge the environment, but keep the TZ variable as the time.h family depends on it at least on AIX
-   */
-  for (tz = environ[0]; tz; tz = environ[++i]) {
-    if (! strncasecmp(tz, "TZ=", 3)) {
-      environ[0] = tz;
-      environ[1] = 0;
-      break;
-    }
-  }
-  if (! tz)
-    environ[0] = 0;
-
-  if (putenv(path)) {
-    LogError("%s: cannot set the PATH variable -- %s\n", prog, STRERROR);
-    exit(1);
-  }
-
-  /*
-   * Require that file descriptors 0,1,2 are open. Mysterious things
-   * can happen if that is not the case.
-   */
-  for(i= 0; i < 3; i++) {
-
-    if(fstat(i, &st) == -1 && open("/dev/null", O_RDWR) != i) {
-
-      LogError("Cannot open /dev/null -- %s\n", STRERROR);
-      exit(1);
-
-    }
-
-  }
-
-  Util_closeFds();
-
-}
-
-
-/**
- * Get and set required runtime "environment" variables.
- */
-static void set_environment(void) {
-
-  struct passwd *pw;
-
-  /* Get password struct */
-  if ( ! (pw= getpwuid(geteuid())) ) {
-    LogError("%s: You don't exist. Go away.\n", prog);
-    exit(1);
-  }
-  Run.Env.home= Str_dup(pw->pw_dir);
-  Run.Env.user= Str_dup(pw->pw_name);
-
-  /* Get CWD */
-  Run.Env.cwd= CALLOC(sizeof(char), MAXPATHLEN+1);
-  if ( ! (getcwd(Run.Env.cwd, MAXPATHLEN)) ) {
-    LogError("%s: Cannot read current directory -- %s\n", prog, STRERROR);
-    exit(1);
-  }
-
-  /*
-   * Save and clear the file creation mask
-   */
-  Run.umask= umask(0);
-
-}
 
