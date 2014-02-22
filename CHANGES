@@ -1,6 +1,13 @@
-                     CHANGES version 5.7
+                     CHANGES version 5.8
 
            This file summarizes changes made since 5.0
+
+
+Version 5.8
+
+New: Monit no longer purge the environment for sub-processes
+
+Fixed: https://bitbucket.org/tildeslash/monit/issue/7/enable-optimized-error-with-flag-ofast
 
 
 Version 5.7

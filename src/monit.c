@@ -80,6 +80,7 @@
 // libmonit
 #include "Bootstrap.h"
 #include "io/File.h"
+#include "exceptions/AssertException.h"
 
 
 /**
@@ -609,96 +610,121 @@ static void handle_options(int argc, char **argv) {
         int opt;
         opterr = 0;
         Run.mygroup = NULL;
-
-        while ((opt = getopt(argc,argv,"c:d:g:l:p:s:iItvVhH")) != -1) {
-
+        struct option longopts[] = {
+                {"conf",        required_argument,      NULL,   'c'},
+                {"daemon",      required_argument,      NULL,   'd'},
+                {"group",       required_argument,      NULL,   'g'},
+                {"logfile",     required_argument,      NULL,   'l'},
+                {"pidfile",     required_argument,      NULL,   'p'},
+                {"statefile",   required_argument,      NULL,   's'},
+                {"hash",        optional_argument,      NULL,   'H'},
+                {"interactive", no_argument,            NULL,   'I'},
+                {"test",        no_argument,            NULL,   't'},
+                {"verbose",     no_argument,            NULL,   'v'},
+                {"version",     no_argument,            NULL,   'V'},
+                {"help",        no_argument,            NULL,   'h'},
+                {0}
+        };
+        while ((opt = getopt_long(argc, argv,"c:d:g:l:p:s:HItvVh", longopts, NULL)) != -1) {
                 switch(opt) {
-
                         case 'c':
+                        {
+                                if (! File_isFile(optarg))
+                                        THROW(AssertException, "The control file '%s' is not a file", Str_trunc(optarg, STRLEN));
                                 Run.controlfile = Str_dup(optarg);
                                 break;
-
+                        }
                         case 'd':
+                        {
                                 Run.isdaemon = TRUE;
                                 sscanf(optarg, "%d", &Run.polltime);
-                                if (Run.polltime<1) {
+                                if (Run.polltime < 1) {
                                         LogError("%s: option -%c requires a natural number\n", prog, opt);
                                         exit(1);
                                 }
                                 break;
-
+                        }
                         case 'g':
+                        {
                                 Run.mygroup = Str_dup(optarg);
                                 break;
-
+                        }
                         case 'l':
+                        {
                                 Run.logfile = Str_dup(optarg);
                                 if (IS(Run.logfile, "syslog"))
                                         Run.use_syslog = TRUE;
                                 Run.dolog = TRUE;
                                 break;
-
+                        }
                         case 'p':
+                        {
                                 Run.pidfile = Str_dup(optarg);
                                 break;
-
+                        }
                         case 's':
+                        {
                                 Run.statefile = Str_dup(optarg);
                                 break;
-
+                        }
                         case 'I':
+                        {
                                 Run.init = TRUE;
                                 break;
-
+                        }
                         case 't':
+                        {
                                 Run.testing = TRUE;
                                 break;
-
+                        }
                         case 'v':
+                        {
                                 Run.debug++;
                                 break;
-
+                        }
                         case 'H':
+                        {
                                 if (argc > optind)
                                         Util_printHash(argv[optind]);
                                 else
                                         Util_printHash(NULL);
-
                                 exit(0);
                                 break;
-
+                        }
                         case 'V':
+                        {
                                 version();
                                 exit(0);
                                 break;
-
+                        }
                         case 'h':
+                        {
                                 help();
                                 exit(0);
                                 break;
-
+                        }
                         case '?':
+                        {
                                 switch(optopt) {
-
                                         case 'c':
                                         case 'd':
                                         case 'g':
                                         case 'l':
                                         case 'p':
                                         case 's':
+                                        {
                                                 LogError("%s: option -- %c requires an argument\n", prog, optopt);
                                                 break;
+                                        }
                                         default:
+                                        {
                                                 LogError("%s: invalid option -- %c  (-h will show valid options)\n", prog, optopt);
-
+                                        }
                                 }
-
                                 exit(1);
-
+                        }
                 }
-
         }
-
 }
 
 
@@ -748,7 +774,7 @@ static void help() {
  */
 static void version() {
         printf("This is Monit version " VERSION "\n");
-        printf("Copyright (C) 2001-2013 Tildeslash Ltd.");
+        printf("Copyright (C) 2001-2014 Tildeslash Ltd.");
         printf(" All Rights Reserved.\n");
 }
 
