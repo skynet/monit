@@ -88,7 +88,7 @@ struct Process_T {
  if found, otherwise NULL */
 static inline char *findEnv(T C, const char *name) {
         for (list_t p = C->env->head; p; p = p->next) {
-                if ((strncasecmp(p->e, name, strlen(name)) == 0))
+                if ((strncmp(p->e, name, strlen(name)) == 0))
                         if (((char*)p->e)[strlen(name)] == '=') // Ensure that p->e is not just a sub-string
                                 return p->e;
         }
