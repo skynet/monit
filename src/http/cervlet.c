@@ -286,7 +286,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                 "<title>Monit: %s</title> "\
                 "<style type=\"text/css\"> "\
                 " html, body {height: 100%%;margin: 0;} "\
-                " body {background-color: white;font: normal normal normal 14px/18px 'HelveticaNeue', Helvetica, Arial, sans-serif; color:#222;} "\
+                " body {background-color: white;font: normal normal normal 16px/20px 'HelveticaNeue', Helvetica, Arial, sans-serif; color:#222;} "\
                 " h1 {padding:30px 0 10px 0; text-align:center;color:#222;font-size:28px;} "\
                 " h2 {padding:20px 0 10px 0; text-align:center;color:#555;font-size:22px;} "\
                 " a:hover {text-decoration: none;} "\
@@ -306,14 +306,14 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                 " #nav {background:#ddd;font:normal normal normal 14px/0px 'HelveticaNeue', Helvetica;} "\
                 " #nav td {padding:5px 10px;} "\
                 " #header {margin-bottom:30px;background:#EFF7FF} "\
-                " #nav, #header {border-bottom:1px solid #555;} "\
+                " #nav, #header {border-bottom:1px solid #ccc;} "\
                 " #header-row {width:95%%;} "\
                 " #header-row th {padding:30px 10px 10px 10px;font-size:120%%;} "\
                 " #header-row td {padding:3px 10px;} "\
                 " #header-row .first {min-width:200px;width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} "\
                 " #status-table {width:95%%;} "\
                 " #status-table th {text-align:left;background:#edf5ff;font-weight:normal;} "\
-                " #status-table th, #status-table td, #status-table tr {border:1px solid #999;padding:5px;} "\
+                " #status-table th, #status-table td, #status-table tr {border:1px solid #ccc;padding:5px;} "\
                 " #buttons {font-size:20px; margin:40px 0 20px 0;} "\
                 " #buttons td {padding-right:50px;} "\
                 " #buttons input {font-size:18px;padding:5px;} "\
