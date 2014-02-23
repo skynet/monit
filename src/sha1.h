@@ -1,5 +1,6 @@
 /*
- * Copyright (C) Tildeslash Ltd. All rights reserved.
+ * Public Domain SHA-1 in C By Steve Reid <sreid@sea-to-sky.net>
+ * Sub-licensed with modifications under AGPL:
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3.

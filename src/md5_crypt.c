@@ -1,5 +1,13 @@
 /*
- * Copyright (C) Tildeslash Ltd. All rights reserved.
+ * From crypt implementation 1.7 by Poul-Henning Kamp
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <phk@login.dknet.dk> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
+ * ----------------------------------------------------------------------------
+ *
+ * Sub-licensed with modifications under AGPL:
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3.
@@ -20,16 +28,6 @@
  *
  * You must obey the GNU Affero General Public License in all respects
  * for all of the code used other than OpenSSL.
- */
-/*
- * Based on crypt implementation 1.7 by Poul-Henning Kamp
- *
- * ----------------------------------------------------------------------------
- * "THE BEER-WARE LICENSE" (Revision 42):
- * <phk@login.dknet.dk> wrote this file.  As long as you retain this notice you
- * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
- * ----------------------------------------------------------------------------
  */
 
 #include "config.h"
