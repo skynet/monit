@@ -63,8 +63,8 @@ struct T {
         gid_t gid;
         List_T env;
         List_T args;
-        char **tenv;
-        char **targs;
+        char **_env;
+        char **_args;
         char *working_directory;
 };
 struct Process_T {
@@ -130,18 +130,18 @@ static void buildArgs(T C, const char *path, const char *x, va_list ap) {
 
 
 /* Returns an array of program args */
-static char **targs(T C) {
-        if (! C->targs)
-                C->targs = (char**)List_toArray(C->args);
-        return C->targs;
+static inline char **_args(T C) {
+        if (! C->_args)
+                C->_args = (char**)List_toArray(C->args);
+        return C->_args;
 }
 
 
 /* Returns an array of program environment */
-static char **tenv(T C) {
-        if (! C->tenv)
-                C->tenv = (char**)List_toArray(C->env);
-        return C->tenv;
+static inline char **_env(T C) {
+        if (! C->_env)
+                C->_env = (char**)List_toArray(C->env);
+        return C->_env;
 }
 
 
@@ -345,8 +345,9 @@ void Process_kill(Process_T P) {
 
 T Command_new(const char *path, const char *arg0, ...) {
         T C;
+        assert(path);
         if (! File_exist(path))
-                THROW(AssertException, "File '%s' does not exist", path ? path : "null");
+                THROW(AssertException, "File '%s' does not exist", path);
         NEW(C);
         C->env = List_new();
         C->args = List_new();
@@ -354,7 +355,7 @@ T Command_new(const char *path, const char *arg0, ...) {
         va_start(ap, arg0);
         buildArgs(C, path, arg0, ap);
         va_end(ap);
-        // Copy this process's environment onto sub-processes
+        // Copy this process's environment for transit to sub-processes
         extern char **environ;
         for (char **e = environ; *e; e++) {
                 List_append(C->env, Str_dup(*e));
@@ -365,8 +366,8 @@ T Command_new(const char *path, const char *arg0, ...) {
 
 void Command_free(T *C) {
         assert(C && *C);
-        FREE((*C)->targs);
-        FREE((*C)->tenv);
+        FREE((*C)->_args);
+        FREE((*C)->_env);
         freeStrings((*C)->args);
         List_free(&(*C)->args);
         freeStrings((*C)->env);
@@ -380,7 +381,7 @@ void Command_appendArgument(T C, const char *argument) {
         assert(C);
         if (argument)
                 List_append(C->args, Str_dup(argument));
-        FREE(C->targs); // Recreate Command argument on exec
+        FREE(C->_args); // Recreate Command argument on exec
 }
 
 
@@ -434,7 +435,7 @@ void Command_setEnv(Command_T C, const char *name, const char *value) {
         assert(name);
         removeEnv(C, name);
         List_append(C->env, Str_cat("%s=%s", name, value ? value : ""));
-        FREE(C->tenv); // Recreate Command environment on exec
+        FREE(C->_env); // Recreate Command environment on exec
 }
 
 
@@ -464,8 +465,8 @@ List_T Command_getCommand(T C) {
  parent process until exec or exit is called */
 Process_T Command_execute(T C) {
         assert(C);
-        assert(tenv(C));
-        assert(targs(C));
+        assert(_env(C));
+        assert(_args(C));
         volatile int exec_error = 0;
         Process_T P = Process_new();
         createPipes(P);
@@ -509,7 +510,7 @@ Process_T Command_execute(T C) {
                 signal(SIGUSR1, SIG_DFL);
                 signal(SIGHUP, SIG_IGN);  // Ensure future opens won't allocate controlling TTYs
                 // Execute the program
-                execve(targs(C)[0], targs(C), tenv(C));
+                execve(_args(C)[0], _args(C), _env(C));
                 exec_error = errno;
                 _exit(errno);
         }
