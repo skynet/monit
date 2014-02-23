@@ -210,10 +210,8 @@ int Str_startsWith(const char *a, const char *b) {
 
 int Str_endsWith(const char *a, const char *b) {
         if (a && b) {
-                register int i = 0, j = 0;
-                while (a[i]) i++;
-                while (b[j]) j++;
-                for(; (i && j); i--, j--)
+                size_t i = 0, j = 0;
+                for(i = strlen(a), j = strlen(b); (i && j); i--, j--)
                         if(toupper(a[i]) != toupper(b[j])) return false;
                 return (i >= j);
         }

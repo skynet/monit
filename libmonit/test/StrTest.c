@@ -203,8 +203,7 @@ int main(void) {
         printf("=> Test13: endsWith\n");
         {
                 char *a= "mysql://localhost:3306";
-                printf("\tResult: ends with 3306 - %s\n", 
-                       Str_endsWith(a, "3306")?"yes":"no");
+                printf("\tResult: ends with 3306 - %s\n", Str_endsWith(a, "3306")?"yes":"no");
                 assert(Str_endsWith(a, "3306"));
                 assert(!Str_endsWith(a, "sqlite"));
                 assert(Str_endsWith("sqlite", "sqlite"));
@@ -222,8 +221,7 @@ int main(void) {
         printf("=> Test14: isEqual\n");
         {
                 char *a= "mysql://localhost:3306";
-                printf("\tResult: is equal - %s\n", 
-                       Str_isEqual(a, "mysql://localhost:3306")?"yes":"no");
+                printf("\tResult: is equal - %s\n", Str_isEqual(a, "mysql://localhost:3306")?"yes":"no");
                 assert(Str_isEqual("sqlite", "sqlite"));
                 printf("\tTesting for NULL and NUL argument\n");
                 assert(!Str_isEqual(a, NULL));
@@ -290,42 +288,31 @@ int main(void) {
                 char *invalid_email2= "";
                 char *invalid_email3= "hauk@tildeslashcom";
                 char *invalid_email4= "hauk@æøåtildeslash.com";
-                printf("\tResult: match(%s, %s)\n", 
-                       phone_pattern, valid_phone1);
+                // phone
+                printf("\tResult: match(%s, %s)\n", phone_pattern, valid_phone1);
                 assert(Str_match(phone_pattern, valid_phone1));
-                printf("\tResult: match(%s, %s)\n", 
-                       phone_pattern, valid_phone2);
+                printf("\tResult: match(%s, %s)\n", phone_pattern, valid_phone2);
                 assert(Str_match(phone_pattern, valid_phone2));
-                printf("\tResult: match(%s, %s)\n", 
-                       phone_pattern, invalid_phone1);
+                printf("\tResult: match(%s, %s)\n", phone_pattern, invalid_phone1);
                 assert(! Str_match(phone_pattern, invalid_phone1));
-                printf("\tResult: match(%s, %s)\n", 
-                       phone_pattern, invalid_phone2);
+                printf("\tResult: match(%s, %s)\n", phone_pattern, invalid_phone2);
                 assert(! Str_match(phone_pattern, invalid_phone2));
-                printf("\tResult: match(%s, %s)\n", 
-                       phone_pattern, invalid_phone3);
+                printf("\tResult: match(%s, %s)\n", phone_pattern, invalid_phone3);
                 assert(! Str_match(phone_pattern, invalid_phone3));
-                printf("\tResult: match(%s, %s)\n", 
-                       phone_pattern, invalid_phone4);
+                printf("\tResult: match(%s, %s)\n", phone_pattern, invalid_phone4);
                 assert(! Str_match(phone_pattern, invalid_phone4));
-
-                printf("\tResult: match(%s, %s)\n", 
-                       email_pattern, valid_email1);
+                // email
+                printf("\tResult: match(%s, %s)\n", email_pattern, valid_email1);
                 assert(Str_match(email_pattern, valid_email1));
-                printf("\tResult: match(%s, %s)\n", 
-                       email_pattern, valid_email2);
+                printf("\tResult: match(%s, %s)\n", email_pattern, valid_email2);
                 assert(Str_match(email_pattern, valid_email2));
-                printf("\tResult: match(%s, %s)\n", 
-                       email_pattern, invalid_email1);
+                printf("\tResult: match(%s, %s)\n", email_pattern, invalid_email1);
                 assert(! Str_match(email_pattern, invalid_email1));
-                printf("\tResult: match(%s, %s)\n", 
-                       email_pattern, invalid_email2);
+                printf("\tResult: match(%s, %s)\n", email_pattern, invalid_email2);
                 assert(! Str_match(email_pattern, invalid_email2));
-                printf("\tResult: match(%s, %s)\n", 
-                       email_pattern, invalid_email3);
+                printf("\tResult: match(%s, %s)\n", email_pattern, invalid_email3);
                 assert(! Str_match(email_pattern, invalid_email3));
-                printf("\tResult: match(%s, %s)\n", 
-                       email_pattern, invalid_email4);
+                printf("\tResult: match(%s, %s)\n", email_pattern, invalid_email4);
                 assert(! Str_match(email_pattern, invalid_email4));
         }
         printf("=> Test17: OK\n\n");
