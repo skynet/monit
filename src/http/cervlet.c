@@ -339,7 +339,7 @@ static void do_foot(HttpResponse res) {
         StringBuffer_append(res->outputbuffer,
                 "</center></div></div>"
                 "<div id='footer'>"
-                "Copyright &copy; 2001-2013 <a href=\"http://tildeslash.com/\">Tildeslash</a>. All rights reserved. "
+                "Copyright &copy; 2001-2014 <a href=\"http://tildeslash.com/\">Tildeslash</a>. All rights reserved. "
                 "<span style='margin-left:5px;'></span>"
                 "<a href=\"http://mmonit.com/monit/\">Monit web site</a> | "
                 "<a href=\"http://mmonit.com/wiki/\">Monit Wiki</a> | "
@@ -385,7 +385,7 @@ static void do_about(HttpRequest req, HttpResponse res) {
                   "monit " VERSION "</a></center></h1>");
         StringBuffer_append(res->outputbuffer,
                   "<ul>"
-                  "<li style='padding-bottom:10px;'>Copyright &copy; 2001-2013 <a "
+                  "<li style='padding-bottom:10px;'>Copyright &copy; 2001-2014 <a "
                   "href='http://tildeslash.com/'>Tildeslash Ltd"
                   "</a>. All Rights Reserved.</li></ul>");
         StringBuffer_append(res->outputbuffer, "<hr size='1'>");
