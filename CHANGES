@@ -7,6 +7,10 @@ Version 5.8
 
 New: Monit no longer purge the environment for sub-processes
 
+New: Add command line option to view Monit ID (-i/--id)
+
+New: Add command line option to reset Monit ID (-r/--resetid)
+
 Fixed: https://bitbucket.org/tildeslash/monit/issue/7/enable-optimized-error-with-flag-ofast
 
 

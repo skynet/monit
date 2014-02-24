@@ -619,13 +619,15 @@ static void handle_options(int argc, char **argv) {
                 {"statefile",   required_argument,      NULL,   's'},
                 {"hash",        optional_argument,      NULL,   'H'},
                 {"interactive", no_argument,            NULL,   'I'},
+                {"id",          no_argument,            NULL,   'i'},
+                {"resetid",     no_argument,            NULL,   'r'},
                 {"test",        no_argument,            NULL,   't'},
                 {"verbose",     no_argument,            NULL,   'v'},
                 {"version",     no_argument,            NULL,   'V'},
                 {"help",        no_argument,            NULL,   'h'},
                 {0}
         };
-        while ((opt = getopt_long(argc, argv,"c:d:g:l:p:s:HItvVh", longopts, NULL)) != -1) {
+        while ((opt = getopt_long(argc, argv,"c:d:g:l:p:s:HIirtvVh", longopts, NULL)) != -1) {
                 switch(opt) {
                         case 'c':
                         {
@@ -670,6 +672,26 @@ static void handle_options(int argc, char **argv) {
                         case 'I':
                         {
                                 Run.init = TRUE;
+                                break;
+                        }
+                        case 'i':
+                        {
+                                do_init();
+                                assert(Run.id);
+                                printf("Monit ID: %s\n", Run.id);
+                                exit(0);
+                                break;
+                        }
+                        case 'r':
+                        {
+                                do_init();
+                                assert(Run.id);
+                                printf("Reset Monit Id? [Y/N]> ");
+                                if (getchar() == 'Y') {
+                                        File_delete(Run.idfile);
+                                        Util_monitId(Run.idfile);
+                                }
+                                exit(0);
                                 break;
                         }
                         case 't':
@@ -741,6 +763,8 @@ static void help() {
         printf(" -p pidfile    Use this lock file in daemon mode\n");
         printf(" -s statefile  Set the file monit should write state information to\n");
         printf(" -I            Do not run in background (needed for run from init)\n");
+        printf(" --id          Print Monit's unique ID\n");
+        printf(" --resetid     Reset Monit's unique ID\n");
         printf(" -t            Run syntax check for the control file\n");
         printf(" -v            Verbose mode, work noisy (diagnostic output)\n");
         printf(" -vv           Very verbose mode, same as -v plus log stacktrace on error\n");
