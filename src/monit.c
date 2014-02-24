@@ -764,7 +764,7 @@ static void help() {
         printf(" -s statefile  Set the file monit should write state information to\n");
         printf(" -I            Do not run in background (needed for run from init)\n");
         printf(" --id          Print Monit's unique ID\n");
-        printf(" --resetid     Reset Monit's unique ID\n");
+        printf(" --resetid     Reset Monit's unique ID. Use with caution\n");
         printf(" -t            Run syntax check for the control file\n");
         printf(" -v            Verbose mode, work noisy (diagnostic output)\n");
         printf(" -vv           Very verbose mode, same as -v plus log stacktrace on error\n");
