@@ -882,7 +882,6 @@ struct myrun {
         volatile int  dowakeup;  /**< TRUE if a monit daemon was wake up by signal */
         int  doaction;             /**< TRUE if some service(s) has action pending */
         mode_t umask;                /**< The initial umask monit was started with */
-        int  testing;   /**< Running in configuration testing mode - TRUE or FALSE */
         time_t incarnation;              /**< Unique ID for running monit instance */
         int  handler_init;                  /**< The handlers queue initialization */
         int  handler_flag;                            /**< The handlers state flag */

@@ -281,17 +281,6 @@ static void do_init() {
                 exit(1);
 
         /*
-         * Stop and report success if we are just validating the Control
-         * file syntax. The previous parse statement exits the program with
-         * an error message if a syntax error is present in the control
-         * file.
-         */
-        if (Run.testing) {
-                LogInfo("Control file syntax OK\n");
-                exit(0);
-        }
-
-        /*
          * Initialize the log system
          */
         if (! log_init())
@@ -696,7 +685,9 @@ static void handle_options(int argc, char **argv) {
                         }
                         case 't':
                         {
-                                Run.testing = TRUE;
+                                do_init(); // Parses control file and initialize program, exit on error
+                                printf("Control file syntax OK\n");
+                                exit(0);
                                 break;
                         }
                         case 'v':
