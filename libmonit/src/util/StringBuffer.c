@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include "Str.h"
 #include "StringBuffer.h"
 
 
@@ -107,7 +108,7 @@ void StringBuffer_free(T *S) {
 
 T StringBuffer_append(T S, const char *s, ...) {
         assert(S);
-        if (s && *s) {
+        if (STR_DEF(s)) {
                 va_list ap;
                 va_start(ap, s);
                 append(S, s, ap);
@@ -119,7 +120,7 @@ T StringBuffer_append(T S, const char *s, ...) {
 
 T StringBuffer_vappend(T S, const char *s, va_list ap) {
         assert(S);
-        if (s && *s) {
+        if (STR_DEF(s)) {
                 va_list ap_copy;
                 va_copy(ap_copy, ap);
                 append(S, s, ap_copy);
@@ -204,7 +205,7 @@ T StringBuffer_delete(T S, int index) {
 
 int StringBuffer_indexOf(T S, const char *s) {
         assert(S);
-        if (s && *s) {
+        if (STR_DEF(s)) {
                 int i, j;
                 for (i = 0; i <= S->used; i++) {
                         if (S->buffer[i] == *s) {
@@ -222,7 +223,7 @@ int StringBuffer_indexOf(T S, const char *s) {
 
 int StringBuffer_lastIndexOf(T S, const char *s) {
         assert(S);
-        if (s && *s) {
+        if (STR_DEF(s)) {
                 int i, j;
                 for (i = S->used; i >= 0; i--) {
                         if (S->buffer[i] == *s) {

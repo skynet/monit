@@ -197,12 +197,10 @@ void List_clear(T L) {
 
 
 void List_map(T L, void (*apply)(void *e, void *ap), void *ap) {
-        int stamp;
-        list_t p;
         assert(L);
-        stamp = L->timestamp;
         assert(apply);
-        for (p = L->head; p; p = p->next) {
+        int stamp = L->timestamp;
+        for (list_t p = L->head; p; p = p->next) {
                 apply(p->e, ap);
                 assert(L->timestamp == stamp);
         }
