@@ -2076,7 +2076,7 @@ host using an IP-address, and the web-server handle name based
 virtual hosts. Examples:
 
   if failed host 192.168.1.100 port 8080 protocol http 
-     and request '/testing' hostheader 'example.com' 
+     and request '/testing/' hostheader 'example.com' 
      with content = "regular.*expression"
      and with timeout 20 seconds for 2 cycles
   then alert
