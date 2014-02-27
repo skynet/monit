@@ -11,6 +11,19 @@ New: Add command line option to view Monit ID (-i/--id)
 
 New: Add command line option to reset Monit ID (-r/--resetid)
 
+New: Simplified HTTP protocol test to allow testing content without creating 
+an URL object. It is now possible to say in a more natural way,
+ check host mmonit.com with address mmonit.com
+    if failed port 80 protocol http 
+     and request /monit/ with content = "Monit 5.7 Download"
+    then alert
+meaning that if the page mmonit.com/monit does not contain the text
+"Monit" then the test will fail. To reverse the test, i.e. to test 
+that the page should not contain a specific string simply use '!=' 
+instead, like,
+    if failed port 80 protocol http with content != "Nagios" then alert
+Remember also that the string to test can be a regular expression
+
 Fixed: https://bitbucket.org/tildeslash/monit/issue/7/enable-optimized-error-with-flag-ofast
 
 

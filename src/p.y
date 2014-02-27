@@ -937,11 +937,16 @@ hostname        : /* EMPTY */     { $<string>$ = NULL; }
                 | HOSTNAME STRING { $<string>$ = $2; }
                 ;
 
-connection      : IF FAILED host port type protocol nettimeout retry rate1
+connection      : IF FAILED host port type protocol urloption nettimeout retry rate1
                   THEN action1 recovery {
-                    portset.timeout = $<number>7;
-                    portset.retry = $<number>8;
-                    addeventaction(&(portset).action, $<number>11, $<number>12);
+                    portset.timeout = $<number>8;
+                    portset.retry = $<number>9;
+                    /* This is a workaround to support content match without having to create
+                     an URL object. 'urloption' creates the Request_T object we need minus the
+                     URL object, but with enough information to perform content test. 
+                     TODO: Parser in dire need to be refactored */
+                    portset.url_request = urlrequest;
+                    addeventaction(&(portset).action, $<number>12, $<number>13);
                     addport(&portset);
                   }
                 | IF FAILED URL URLOBJECT urloption nettimeout retry rate1
