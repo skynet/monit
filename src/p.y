@@ -944,7 +944,7 @@ connection      : IF FAILED host port type protocol urloption nettimeout retry r
                     /* This is a workaround to support content match without having to create
                      an URL object. 'urloption' creates the Request_T object we need minus the
                      URL object, but with enough information to perform content test. 
-                     TODO: Parser in dire need to be refactored */
+                     TODO: Parser is in need of refactoring */
                     portset.url_request = urlrequest;
                     addeventaction(&(portset).action, $<number>12, $<number>13);
                     addport(&portset);

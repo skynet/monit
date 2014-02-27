@@ -2199,58 +2199,6 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
 
-=head4 Connection testing using the URL notation
-
-You can test a HTTP server using the compact URL syntax. This
-test also allow you to use POSIX regular expressions to test the
-content returned by the HTTP server.
-
-The full syntax for the URL statement is as follows (keywords are
-in capital and optional statements in [brackets]):
-
-  IF FAILED URL URL-spec
-     [CONTENT {==|!=} "regular-expression"]
-     [TIMEOUT number SECONDS] [[<X>] <Y> CYCLES] 
-     THEN action
-     [ELSE IF SUCCEEDED [[<X>] <Y> CYCLES] THEN action]
-
-Where URL-spec is an URL on the standard form as specified in RFC
-2396:
-
- <protocol>://<authority><path>?<query>
-
-Here is an example of an URL where all components are used:
-
- http://user:password@www.foo.bar:8080/document/?querystring#ref
-
-If a username and password is included in the URL Monit will
-attempt to login at the server using B<Basic Authentication>.
-
-Testing the content returned by the server is optional. If used,
-you can test if the content B<match> or does B<not match> a
-regular expression. Here's an example on how the URL statement
-can be used in a I<check service>:
-
- check host FOO with address www.foo.bar
-      if failed (url http://user:password@www.foo.bar:8080/login?querystring
-         and content == 'up')
-      then ...
-
-Note that the content option extends the URL by the expected data
-and does not act as standalone failure specification. The syntax is
-"if failed (<URL> and <content>)".
-
-Monit will look at the content-length header returned by the
-server and download this amount before testing the content. That
-is, if the content-length is more than 1Mb or this header is not
-set by the server Monit will default to download up to 1 Mb and
-not more.
-
-Only the http(s) protocol is supported in an URL statement. If
-the protocol is B<https> Monit will use SSL when connecting to
-the server.
-
-
 =head4 Remote host ping test
 
 In addition Monit can perform ICMP Echo tests in remote host
