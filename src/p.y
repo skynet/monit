@@ -1121,11 +1121,9 @@ sendexpectlist  : sendexpect
 
 sendexpect      : SEND STRING {
                     addgeneric(&portset, $2, NULL);
-                    FREE($2); //FIXME: we duplicate in addgeneric => reuse $2 in it and don't FREE
                   }
                 | EXPECT STRING {
                     addgeneric(&portset, NULL, $2);
-                    FREE($2); //FIXME: we duplicate in addgeneric => reuse $2 in it and don't FREE
                   }
                 ;
 
@@ -2773,7 +2771,7 @@ static void addgeneric(Port_T port, char *send, char *expect) {
   }
 
   if (send != NULL) {
-    g->send = Str_dup(send);
+    g->send = send;
     g->expect = NULL;
   } else if (expect != NULL) {
 #ifdef HAVE_REGEX_H
@@ -2781,13 +2779,14 @@ static void addgeneric(Port_T port, char *send, char *expect) {
     int   reg_return;
     NEW(g->expect);
     reg_return = regcomp(g->expect, expect, REG_NOSUB|REG_EXTENDED);
+    FREE(expect);
     if (reg_return != 0) {
       char errbuf[STRLEN];
       regerror(reg_return, g->expect, errbuf, STRLEN);
       yyerror2("regex parsing error:%s", errbuf);
     }
 #else
-    g->expect = Str_dup(expect);
+    g->expect = expect;
 #endif
     g->send = NULL;
   }
