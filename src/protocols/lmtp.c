@@ -38,7 +38,7 @@
 static int do_send(Socket_T socket, char *msg) {
 
         if(socket_write(socket, msg, strlen(msg)) < 0) {
-                socket_setError(socket, "LMTP: error sending data -- %s\n", STRERROR);
+                socket_setError(socket, "LMTP: error sending data -- %s", STRERROR);
                 return FALSE;
         }
 
@@ -53,7 +53,7 @@ static int expect(Socket_T socket, int expect, int log) {
         char buf[STRLEN];
 
         if(!socket_readln(socket, buf, STRLEN)) {
-                socket_setError(socket, "LMTP: error receiving data -- %s\n", STRERROR);
+                socket_setError(socket, "LMTP: error receiving data -- %s", STRERROR);
                 return FALSE;
         }
 
@@ -62,7 +62,7 @@ static int expect(Socket_T socket, int expect, int log) {
         sscanf(buf, "%d%*s", &status);
         if(status != expect) {
                 if(log)
-                        socket_setError(socket, "LMTP error: %s\n", buf);
+                        socket_setError(socket, "LMTP error: %s", buf);
                 return FALSE;
         }
 

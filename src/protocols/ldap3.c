@@ -123,24 +123,24 @@ int check_ldap3(Socket_T socket) {
 
 
   if(socket_write(socket, (unsigned char *)request, sizeof(request)) < 0) {
-    socket_setError(socket, "LDAP: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "LDAP: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   if(socket_read(socket, (unsigned char *)buf, sizeof(response)) <= 0) {
-    socket_setError(socket, "LDAP: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "LDAP: error receiving data -- %s", STRERROR);
     return FALSE;
   }
 
   if(memcmp((unsigned char *)buf,
             (unsigned char *)response,
             sizeof(response))) {
-    socket_setError(socket, "LDAP: anonymous bind failed\n");
+    socket_setError(socket, "LDAP: anonymous bind failed");
     return FALSE;
   }
 
   if(socket_write(socket, (unsigned char *)unbind, sizeof(unbind)) < 0) {
-    socket_setError(socket, "LDAP: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "LDAP: error sending data -- %s", STRERROR);
     return FALSE;
   }
 

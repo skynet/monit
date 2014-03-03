@@ -86,19 +86,19 @@ int check_postfix_policy(Socket_T socket) {
     "client_address=1.2.3.4\n"
     "client_name=mx.foo.tld\n"
     "\n") < 0) {
-    socket_setError(socket, "POSTFIX-POLICY: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "POSTFIX-POLICY: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   if(! socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "POSTFIX-POLICY: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "POSTFIX-POLICY: error receiving data -- %s", STRERROR);
     return FALSE;
   }
 
   Str_chomp(buf);
 
   if( (strlen(buf) <= 7) || strncasecmp(buf, "action=", 7) ) {
-    socket_setError(socket, "POSTFIX-POLICY error: %s\n",
+    socket_setError(socket, "POSTFIX-POLICY error: %s",
       *buf?buf:"no action returned");
     return FALSE;
   }

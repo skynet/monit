@@ -73,19 +73,19 @@ int check_memcache(Socket_T socket) {
   ASSERT(socket);
 
   if(socket_write(socket, (unsigned char *)request, sizeof(request)) <= 0) {
-    socket_setError(socket, "MEMCACHE: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "MEMCACHE: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   /* Response should have at least MEMCACHELEN bytes */
   length = socket_read(socket, (unsigned char *)response, sizeof(response));
   if (length != MEMCACHELEN) {
-    socket_setError(socket, "MEMCACHE: Received %d bytes from server, expected %d bytes\n", length, MEMCACHELEN);
+    socket_setError(socket, "MEMCACHE: Received %d bytes from server, expected %d bytes", length, MEMCACHELEN);
     return FALSE;
   }
 
   if(response[0] != MAGIC_RESPONSE) {
-    socket_setError(socket, "MEMCACHELEN: Invalid response code -- error occured\n");
+    socket_setError(socket, "MEMCACHELEN: Invalid response code -- error occured");
     return FALSE;
   }
 
@@ -94,28 +94,28 @@ int check_memcache(Socket_T socket) {
     case NO_ERROR:
       return TRUE;
     case OUT_OF_MEMORY:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Out of memory\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Out of memory");
       return FALSE;
     case UNKNOWN_COMMAND:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Unknown command\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Unknown command");
       return FALSE;
     case INVALID_ARGUMENTS:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Invalid arguments\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Invalid arguments");
       return FALSE;
     case VALUE_TOO_BIG:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Value too big\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Value too big");
       return FALSE;
     case ITEM_NOT_STORED:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Item not stored\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Item not stored");
       return FALSE;
     case KEY_NOT_FOUND:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Key not found\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Key not found");
       return FALSE;
     case KEY_EXISTS:
-      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Key exists\n");
+      socket_setError(socket, "MEMCACHELEN: Invalid response code -- Key exists");
       return FALSE;
     default:
-      socket_setError(socket, "MEMCACHELEN: Unknow response code %u -- error occured\n", status);
+      socket_setError(socket, "MEMCACHELEN: Unknow response code %u -- error occured", status);
       return FALSE;
   }
 }

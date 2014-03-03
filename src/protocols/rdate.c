@@ -67,7 +67,7 @@ int check_rdate(Socket_T socket) {
   ASSERT(socket);
 
   if(socket_read(socket,(char*) &rdatet, sizeof(time_t)) <= 0) {
-    socket_setError(socket, "RDATE: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "RDATE: error receiving data -- %s", STRERROR);
     return FALSE;
   }
 
@@ -75,7 +75,7 @@ int check_rdate(Socket_T socket) {
   rdatet = ntohl(rdatet) - TIME_OFFSET;
 
   if((systemt = time(NULL)) == -1) {
-    socket_setError(socket, "RDATE error: cannot get system time -- %s\n", STRERROR);
+    socket_setError(socket, "RDATE error: cannot get system time -- %s", STRERROR);
     return FALSE;
   }
 
@@ -85,7 +85,7 @@ int check_rdate(Socket_T socket) {
     delta= (systemt-rdatet);
 
   if(delta > TIME_TOLERANCE) {
-    socket_setError(socket, "RDATE error: time does not match system time -- %s\n", STRERROR);
+    socket_setError(socket, "RDATE error: time does not match system time -- %s", STRERROR);
     return FALSE;
   }
 

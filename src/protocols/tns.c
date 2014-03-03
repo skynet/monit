@@ -88,20 +88,20 @@ int check_tns(Socket_T socket) {
   ASSERT(socket);
 
   if(socket_write(socket, (unsigned char *)requestPing, sizeof(requestPing)) < 0) {
-    socket_setError(socket, "TNS: error sending ping -- %s\n", STRERROR);
+    socket_setError(socket, "TNS: error sending ping -- %s", STRERROR);
     return FALSE;
   }
 
   /* read just first few bytes which contains enough information */
   if(socket_read(socket, (unsigned char *)buf, 5) < 5) {
-    socket_setError(socket, "TNS: error receiving ping response -- %s\n", STRERROR);
+    socket_setError(socket, "TNS: error receiving ping response -- %s", STRERROR);
     return FALSE;
   }
 
   /* compare packet type */
   if(buf[4] != TNS_TYPE_REFUSED)
   {
-    socket_setError(socket, "TNS: invalid ping response\n");
+    socket_setError(socket, "TNS: invalid ping response");
     return FALSE;
   }
 
