@@ -272,7 +272,7 @@
 %token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
-%token DEFAULT HTTP APACHESTATUS FTP SMTP POP IMAP CLAMAV NNTP NTP3 MYSQL DNS
+%token DEFAULT HTTP APACHESTATUS FTP SMTP POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
 %token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE
 %token <string> STRING PATH MAILADDR MAILFROM MAILREPLYTO MAILSUBJECT
 %token <string> MAILBODY SERVICENAME STRINGNAME
@@ -281,7 +281,7 @@
 %token <number> CLEANUPLIMIT
 %token <real> REAL
 %token CHECKPROC CHECKFILESYS CHECKFILE CHECKDIR CHECKHOST CHECKSYSTEM CHECKFIFO CHECKPROGRAM
-%token CHILDREN SYSTEM STATUS
+%token CHILDREN SYSTEM STATUS ORIGIN VERSIONOPT
 %token RESOURCE MEMORY TOTALMEMORY LOADAVG1 LOADAVG5 LOADAVG15 SWAP
 %token MODE ACTIVE PASSIVE MANUAL CPU TOTALCPU CPUUSER CPUSYSTEM CPUWAIT
 %token GROUP REQUEST DEPENDS BASEDIR SLOT EVENTQUEUE SECRET HOSTHEADER
@@ -1107,6 +1107,9 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL MEMCACHE {
                     portset.protocol = Protocol_get(Protocol_MEMCACHE);
                   }
+                | PROTOCOL WEBSOCKET websocketlist {
+                    portset.protocol = Protocol_get(Protocol_WEBSOCKET);
+                  }
                 | sendexpectlist {
                     portset.protocol = Protocol_get(Protocol_GENERIC);
                   }
@@ -1116,8 +1119,32 @@ sendexpectlist  : sendexpect
                 | sendexpectlist sendexpect
                 ;
 
-sendexpect      : SEND STRING { addgeneric(&portset, $2, NULL); FREE($2);}
-                | EXPECT STRING { addgeneric(&portset, NULL, $2); FREE($2);}
+sendexpect      : SEND STRING {
+                    addgeneric(&portset, $2, NULL);
+                    FREE($2); //FIXME: we duplicate in addgeneric => reuse $2 in it and don't FREE
+                  }
+                | EXPECT STRING {
+                    addgeneric(&portset, NULL, $2);
+                    FREE($2); //FIXME: we duplicate in addgeneric => reuse $2 in it and don't FREE
+                  }
+                ;
+
+websocketlist   : websocket
+                | websocketlist websocket
+                ;
+
+websocket       : ORIGIN STRING {
+                    portset.pathname = $2;
+                  }
+                | REQUEST PATH {
+                    portset.request = $2;
+                  }
+                | HOST STRING {
+                    portset.request_hostheader = $2;
+                  }
+                | VERSIONOPT NUMBER {
+                    portset.version = $<number>2;
+                  }
                 ;
 
 target          : /* EMPTY */
@@ -2231,6 +2258,7 @@ static void addport(Port_T port) {
   p->url_request        = port->url_request;
   p->request_checksum   = port->request_checksum;
   p->request_hostheader = port->request_hostheader;
+  p->version            = port->version;
   memcpy(&p->ApacheStatus, &port->ApacheStatus, sizeof(struct apache_status));
 
   if (p->request_checksum) {

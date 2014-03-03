@@ -11,6 +11,15 @@ New: Add command line option to view Monit ID (-i/--id)
 
 New: Add command line option to reset Monit ID (-r/--resetid)
 
+New: Add WebSocket protocol test support for port check. Example:
+ check host websocket.org with address "echo.websocket.org"
+     if failed port 80 protocol websocket
+       host "echo.websocket.org"
+       request "/"
+       origin "http://www.websocket.com"
+       version 13
+     then alert
+
 New: Simplified HTTP protocol test to allow testing content without 
 creating an URL object. It is now possible to say in a more natural way,
  check host mmonit.com with address mmonit.com

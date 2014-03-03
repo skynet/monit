@@ -65,7 +65,8 @@ static Protocol_T protocols[] = {
         &(struct Protocol_T){"LMTP",            check_lmtp},
         &(struct Protocol_T){"GPS",             check_gps},
         &(struct Protocol_T){"RADIUS",          check_radius},
-        &(struct Protocol_T){"MEMCACHE",        check_memcache}
+        &(struct Protocol_T){"MEMCACHE",        check_memcache},
+        &(struct Protocol_T){"WEBSOCKET",       check_websocket}
 };
 
 

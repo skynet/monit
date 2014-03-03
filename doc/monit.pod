@@ -2021,6 +2021,7 @@ moment Monit knows how to speak:
  I<MYSQL>
  I<NNTP>
  I<NTP3>
+ I<PGSQL>
  I<POP>
  I<POSTFIX-POLICY>
  I<RADIUS>
@@ -2030,7 +2031,7 @@ moment Monit knows how to speak:
  I<SMTP>
  I<SSH>
  I<TNS>
- I<PGSQL>
+ I<WEBSOCKET>
 If you have compiled Monit with ssl support, Monit can also speak
 the SSL variants such as:
  I<HTTPS>
@@ -2492,6 +2493,46 @@ RADIUS example:
            secret testing123 
        then alert
        if 5 restarts within 5 cycles then timeout
+
+
+=head4 Testing the WEBSOCKET protocol
+
+The WEBSOCKET test is similar to the other protocol tests, but in
+addition allows extra optional parameters.
+
+=over 4
+
+=item  IF FAILED [host] [port] [type] PROTOCOL websocket
+         [REQUEST string]
+         [HOST string]
+         [ORIGIN string]
+         [VERSION number]
+       THEN action
+       [ELSE IF SUCCEEDED [[<X>] <Y> CYCLES] THEN action]
+
+=back
+
+HOST:
+you may specify an alternative Host header
+
+REQUEST:
+you may specify an alternative request, default is "/"
+
+ORIGIN:
+you may specify an alternative origin, default is "http://www.mmonit.com"
+
+VERSION:
+you may specify an alternative version, default is "0"
+
+WEBSOCKET example:
+
+   check host websocket.org with address "echo.websocket.org"
+     if failed port 80 protocol websocket
+       host "echo.websocket.org"
+       request "/"
+       origin 'http://websocket.com'
+       version 13
+     then alert
 
 
 =head2 PROGRAM STATUS TESTING
@@ -3479,7 +3520,8 @@ I<unmonitor>, I<rdate>, I<rsync>, I<data>, I<invalid>, I<exec>,
 I<nonexist>, I<policy>, I<reminder>, I<instance>, I<eventqueue>,
 I<basedir>, I<slot(s)>, I<system>, I<idfile>, I<gps>, I<radius>,
 I<secret>, I<target>, I<maxforward>, I<hostheader>, I<register>,
-I<credentials>, I<fips>, I<status>, I<uptime> and I<failed>
+I<credentials>, I<fips>, I<status>, I<uptime>, I<websocket>,
+I<origin>, I<version> and I<failed>
 
 And here is a complete list of B<noise keywords> ignored by
 monit:

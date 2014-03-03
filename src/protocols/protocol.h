@@ -60,7 +60,8 @@ typedef enum {
         Protocol_LMTP,
         Protocol_GPS,
         Protocol_RADIUS,
-        Protocol_MEMCACHE
+        Protocol_MEMCACHE,
+        Protocol_WEBSOCKET
 } Protocol_Type;
 
 
@@ -91,6 +92,7 @@ int check_lmtp(Socket_T);
 int check_gps(Socket_T);
 int check_radius(Socket_T);
 int check_memcache(Socket_T);
+int check_websocket(Socket_T);
 
 
 /*
