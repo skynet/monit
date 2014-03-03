@@ -28,7 +28,6 @@
 #include <string.h>
 #endif
 
-#include "base64.h"
 #include "protocol.h"
 
 
