@@ -37,7 +37,7 @@
  *
  *  http://tools.ietf.org/html/rfc6455
  *
- *  If the status code is >= 400, an error has occurred.
+ *  Establish websocket connection, send ping and close.
  *
  *  Return TRUE if the status code is OK, otherwise FALSE.
  *  @file
