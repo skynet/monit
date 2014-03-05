@@ -105,6 +105,24 @@ void socket_free(Socket_T *S);
 
 
 /**
+ * Set a read/write <code>timeout</code> in milliseconds. During a read
+ * operation the socket will wait up to <code>timeout</code>
+ * milliseconds for data to become available if not already present.
+ * @param S A Socket object
+ * @param timeout The timeout value in milliseconds
+ */
+void socket_setTimeout(Socket_T S, int timeout);
+
+
+/**
+ * Returns the socket's read/write <code>timeout</code> in milliseconds.
+ * @param S A Socket object
+ * @return The timeout value in milliseconds
+ */
+int socket_getTimeout(Socket_T S);
+
+
+/**
  * Returns TRUE if the socket is ready for i|o
  * @param S A Socket object
  * @return TRUE if the socket is ready otherwise FALSE

@@ -246,6 +246,18 @@ void socket_free(Socket_T *S) {
 /* ------------------------------------------------------------ Properties */
 
 
+void socket_setTimeout(Socket_T S, int timeout) {
+        ASSERT(S);
+        S->timeout = timeout;
+}
+
+
+int socket_getTimeout(Socket_T S) {
+        ASSERT(S);
+        return S->timeout;
+}
+
+
 int socket_is_ready(Socket_T S) {
         ASSERT(S);
         switch(S->type) {
