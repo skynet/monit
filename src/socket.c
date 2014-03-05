@@ -83,7 +83,8 @@
 
 #define TYPE_LOCAL   0
 #define TYPE_ACCEPT  1
-#define RBUFFER_SIZE 1024
+// One TCP frame data size
+#define RBUFFER_SIZE 1500
 
 struct Socket_T {
         int port;
@@ -97,7 +98,7 @@ struct Socket_T {
         ssl_server_connection *sslserver;
         int length;
         int offset;
-        unsigned char buffer[RBUFFER_SIZE+1];
+        unsigned char buffer[RBUFFER_SIZE + 1];
 };
 
 
@@ -112,20 +113,29 @@ struct Socket_T {
  * @return TRUE (the length of data read) or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
+        int n;
         S->offset = 0;
         S->length = 0;
         /* Optimizing, assuming a request/response pattern and that a udp_write
          was issued before we are called, we don't have to wait for data */
         if (S->type == SOCK_DGRAM)
                 timeout = 0;
-        if (S->ssl) {
-                S->length = recv_ssl_socket(S->ssl, S->buffer, RBUFFER_SIZE, timeout);
-        } else {
-                S->length = (int)sock_read(S->socket, S->buffer,  RBUFFER_SIZE, timeout);
-        }
-        if (S->length == 0) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM)
+        /* Read as much as we can, but only block on the first read */
+        while (RBUFFER_SIZE > S->length) {
+                if (S->ssl) {
+                        n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
+                } else {
+                        n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE-S->length, timeout);
+                }
+                timeout = 0;
+                if (n > 0) {
+                        S->length += n;
+                        continue;
+                }  else if (n < 0) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM) break;
                         return -1;
+                } else
+                        break;
         }
         return S->length;
 }
