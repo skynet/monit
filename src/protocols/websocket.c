@@ -142,6 +142,10 @@ int check_websocket(Socket_T socket) {
                 socket_setError(socket, "WEBSOCKET: error receiving close response -- %s", STRERROR);
                 return FALSE;
         }
+        if ((*buf & 0xF) != 0x8) {
+                socket_setError(socket, "WEBSOCKET: close response error -- opcode 0x%x", *buf & 0xF);
+                return FALSE;
+        }
 
         return TRUE;
 }
