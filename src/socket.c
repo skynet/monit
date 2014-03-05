@@ -119,22 +119,16 @@ static int fill(Socket_T S, int timeout) {
          was issued before we are called, we don't have to wait for data */
         if (S->type == SOCK_DGRAM)
                 timeout = 0;
-        /* Read as much as we can, but only block on the first read */
-        while (RBUFFER_SIZE > S->length) {
-                if (S->ssl) {
-                        n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
-                } else {
-                        n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE-S->length, timeout);
-                }
-                timeout = 0;
-                if (n > 0) {
-                        S->length += n;
-                        continue;
-                }  else if (n < 0) {
-                        if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM) break;
+        if (S->ssl) {
+                n = recv_ssl_socket(S->ssl, S->buffer, RBUFFER_SIZE, timeout);
+        } else {
+                n = (int)sock_read(S->socket, S->buffer,  RBUFFER_SIZE, timeout);
+        }
+        if (n > 0) {
+                S->length += n;
+        }  else if (n < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM)
                         return -1;
-                } else
-                        break;
         }
         return S->length;
 }
