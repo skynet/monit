@@ -88,38 +88,58 @@ int check_websocket(Socket_T socket) {
                 0x89, // Fin:True, Opcode:Ping
                 0x00  // Mask:False, Payload:0
         };
-        if (socket_write(socket, (unsigned char *)ping, sizeof(ping)) < 0) {
+        if (socket_write(socket, ping, sizeof(ping)) < 0) {
                 socket_setError(socket, "WEBSOCKET: error sending ping -- %s", STRERROR);
                 return FALSE;
         }
 
         // Pong: verify response opcode is Pong (0xA)
-        if (socket_read(socket, (unsigned char *)buf, 2) <= 0) {
-                socket_setError(socket, "WEBSOCKET: error receiving pong -- %s", STRERROR);
-                return FALSE;
-        }
-        if ((*buf & 0xF) != 0xA) {
-                socket_setError(socket, "WEBSOCKET: pong error -- opcode 0x%x", *buf & 0xF);
-                return FALSE;
-        }
+        int n;
+        do {
+                // Read frame header
+                if ((n = socket_read(socket, buf, 2)) != 2) {
+                        socket_setError(socket, "WEBSOCKET: pong frame read error -- %s", STRERROR);
+                        return FALSE;
+                }
+                /*
+                 * As we don't know the specific protocol used by this websocket server, the pipeline
+                 * may contain some frames sent by server before Pong response (such as chat prompt)
+                 * => discard any non-Pong frames
+                 */
+                if ((*buf & 0xF) != 0xA) {
+                        // Skip payload of current frame
+                        unsigned payload = *(buf + 1) & 0x7F; 
+                        if (payload <= sizeof(buf)) {
+                                n = socket_read(socket, buf, payload);
+                                if (n != payload) {
+                                        socket_setError(socket, "WEBSOCKET: pong data read error");
+                                        return FALSE;
+                                }
+                        } else {
+                                /* STRLEN buffer should be sufficient for any pre-Pong frame payload,
+                                 * guard against too large frames. If in real life such situation will
+                                 * be valid (payload > STRLEN), then fix here. */
+                                socket_setError(socket, "WEBSOCKET: pong data read error -- unexpected payload size: %d", payload);
+                                return FALSE;
+                        }
+                } else {
+                        break; // Pong
+                }
+        } while (n > 0);
 
         // Close request
         unsigned char close_request[2] = {
                 0x88, // Fin:True, Opcode:Close
                 0x00  // Mask:False, Payload:0
         };
-        if (socket_write(socket, (unsigned char *)close_request, sizeof(close_request)) < 0) {
+        if (socket_write(socket, close_request, sizeof(close_request)) < 0) {
                 socket_setError(socket, "WEBSOCKET: error sending close -- %s", STRERROR);
                 return FALSE;
         }
 
-        // Close response
-        if (socket_read(socket, (unsigned char *)buf, 2) <= 0) {
+        // Close response (pipeline should be clean at this point and we expect Close response only)
+        if (socket_read(socket, buf, 2) <= 0) {
                 socket_setError(socket, "WEBSOCKET: error receiving close response -- %s", STRERROR);
-                return FALSE;
-        }
-        if ((*buf & 0xF) != 0x8) {
-                socket_setError(socket, "WEBSOCKET: close response error -- opcode 0x%x", *buf & 0xF);
                 return FALSE;
         }
 
