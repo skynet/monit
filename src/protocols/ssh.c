@@ -49,18 +49,18 @@ int check_ssh(Socket_T socket) {
   ASSERT(socket);
 
   if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "SSH: error receiving identification string -- %s\n", STRERROR);
+    socket_setError(socket, "SSH: error receiving identification string -- %s", STRERROR);
     return FALSE;
   }
 
   if(! Str_startsWith(buf, "SSH-")) {
-    socket_setError(socket, "SSH: protocol error %s\n", buf);
+    socket_setError(socket, "SSH: protocol error %s", buf);
     return FALSE;
   }
 
   /* send identification string back to server */
   if(socket_write(socket, buf, strlen(buf)) <= 0) {
-    socket_setError(socket, "SSH: error sending identification string -- %s\n", STRERROR);
+    socket_setError(socket, "SSH: error sending identification string -- %s", STRERROR);
     return FALSE;
   }
 

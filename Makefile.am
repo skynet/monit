@@ -79,6 +79,7 @@ monit_SOURCES	= src/y.tab.c \
 		  src/protocols/smtp.c \
 		  src/protocols/ssh.c \
 		  src/protocols/tns.c \
+		  src/protocols/websocket.c \
 		  src/device/device_common.c \
 		  src/device/sysdep_@ARCH@.c \
 		  src/process/process_common.c \

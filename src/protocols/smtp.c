@@ -69,7 +69,7 @@ int check_smtp(Socket_T socket) {
 
 static int say(Socket_T socket, char *msg) {
         if (socket_write(socket, msg, strlen(msg)) < 0) {
-                socket_setError(socket, "SMTP: error sending data -- %s\n", STRERROR);
+                socket_setError(socket, "SMTP: error sending data -- %s", STRERROR);
                 return FALSE;
         }
         return TRUE;
@@ -82,14 +82,14 @@ static int expect(Socket_T socket, int expect, int log) {
 
         do {
                 if (! socket_readln(socket, buf, STRLEN)) {
-                        socket_setError(socket, "SMTP: error receiving data -- %s\n", STRERROR);
+                        socket_setError(socket, "SMTP: error receiving data -- %s", STRERROR);
                         return FALSE;
                 }
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
         if (sscanf(buf, "%d", &status) != 1) {
                 if(log)
-                        socket_setError(socket, "SMTP error: %s\n", buf);
+                        socket_setError(socket, "SMTP error: %s", buf);
                 return FALSE;
         }
         return TRUE;

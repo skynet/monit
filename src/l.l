@@ -242,6 +242,9 @@ lmtp              { return LMTP; }
 rsync             { return RSYNC; }
 tns               { return TNS; }
 pgsql             { return PGSQL; }
+websocket         { return WEBSOCKET; }
+origin            { return ORIGIN; }
+version           { return VERSIONOPT; }
 sip               { return SIP; }
 gps               { return GPS; }
 radius            { return RADIUS; }

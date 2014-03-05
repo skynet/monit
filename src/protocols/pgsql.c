@@ -111,13 +111,13 @@ int check_pgsql(Socket_T socket) {
   ASSERT(socket);
 
   if(socket_write(socket, (unsigned char *)requestLogin, sizeof(requestLogin)) <= 0) {
-    socket_setError(socket, "PGSQL: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "PGSQL: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   /** Nine-byte is enough to hold Auth-Ok */
   if(socket_read(socket, buf, 9) <= 0) {
-    socket_setError(socket, "PGSQL: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "PGSQL: error receiving data -- %s", STRERROR);
     return FALSE;
   }
 
@@ -138,7 +138,7 @@ int check_pgsql(Socket_T socket) {
     return TRUE;
   }
 
-  socket_setError(socket, "PGSQL: unknown error\n");
+  socket_setError(socket, "PGSQL: unknown error");
 
   return FALSE;
 }

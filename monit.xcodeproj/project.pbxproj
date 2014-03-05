@@ -77,6 +77,7 @@
 		52F6E8D113A756DB0023F87A /* libpam.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D013A756DB0023F87A /* libpam.dylib */; };
 		52F6E8D313A756EB0023F87A /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D213A756EB0023F87A /* libpthread.dylib */; };
 		52F6E8D513A757050023F87A /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D413A757050023F87A /* libresolv.dylib */; };
+		9303FB8018C47E7000138D72 /* websocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 9303FB7F18C47E7000138D72 /* websocket.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -270,6 +271,7 @@
 		52F6E8D213A756EB0023F87A /* libpthread.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpthread.dylib; path = usr/lib/libpthread.dylib; sourceTree = SDKROOT; };
 		52F6E8D413A757050023F87A /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
 		52FFBA1118A7E785001F9962 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
+		9303FB7F18C47E7000138D72 /* websocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = websocket.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -563,6 +565,7 @@
 				52F6E79D13A74F220023F87A /* smtp.c */,
 				52F6E79E13A74F220023F87A /* ssh.c */,
 				52F6E79F13A74F220023F87A /* tns.c */,
+				9303FB7F18C47E7000138D72 /* websocket.c */,
 			);
 			path = protocols;
 			sourceTree = "<group>";
@@ -694,6 +697,7 @@
 				52F6E84513A74F220023F87A /* rsync.c in Sources */,
 				52F6E84613A74F220023F87A /* sip.c in Sources */,
 				52F6E84713A74F220023F87A /* smtp.c in Sources */,
+				9303FB8018C47E7000138D72 /* websocket.c in Sources */,
 				52F6E84813A74F220023F87A /* ssh.c in Sources */,
 				52F6E84913A74F220023F87A /* tns.c in Sources */,
 				52F6E84A13A74F220023F87A /* sendmail.c in Sources */,

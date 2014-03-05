@@ -89,25 +89,25 @@ int check_mysql(Socket_T socket) {
   ASSERT(socket);
 
   if(!socket_readln(socket, (char *)buf, sizeof(buf))) {
-    socket_setError(socket, "MYSQL: error receiving greeting -- %s\n", STRERROR);
+    socket_setError(socket, "MYSQL: error receiving greeting -- %s", STRERROR);
     return FALSE;
   }
 
   if(socket_write(socket, requestLogin, sizeof(requestLogin)) < 0) {
-    socket_setError(socket, "MYSQL: error sending login -- %s\n", STRERROR);
+    socket_setError(socket, "MYSQL: error sending login -- %s", STRERROR);
     return FALSE;
   }
 
   /* read just first few bytes  which contains enough information */
   errno = 0;
   if(socket_read(socket, buf, 7) <= 6) {
-    socket_setError(socket, "MYSQL: error receiving login response\n");
+    socket_setError(socket, "MYSQL: error receiving login response");
     return FALSE;
   }
 
   /* Compare Packet Number: */
   if(buf[3] != 0x02) {
-    socket_setError(socket, "MYSQL: invalid response packet number\n");
+    socket_setError(socket, "MYSQL: invalid response packet number");
     return FALSE;
   }
 
@@ -115,23 +115,23 @@ int check_mysql(Socket_T socket) {
   if(buf[4] == 0x00) {
     /* If OK, we are loged in and will perform MySQL ping */
     if(socket_write(socket, (unsigned char *)requestPing, sizeof(requestPing)) < 0) {
-      socket_setError(socket, "MYSQL: error sending ping -- %s\n", STRERROR);
+      socket_setError(socket, "MYSQL: error sending ping -- %s", STRERROR);
       return FALSE;
     }
 
     if(socket_read(socket, buf, sizeof(responsePing)) <= 0) {
-      socket_setError(socket, "MYSQL: error receiving ping response -- %s\n", STRERROR);
+      socket_setError(socket, "MYSQL: error receiving ping response -- %s", STRERROR);
       return FALSE;
     }
 
     if(memcmp((unsigned char *)buf,
                 (unsigned char *)responsePing, sizeof(responsePing))) {
-      socket_setError(socket, "MYSQL: ping failed\n");
+      socket_setError(socket, "MYSQL: ping failed");
       return FALSE;
     }
 
     if(socket_write(socket, (unsigned char *)requestQuit, sizeof(requestQuit)) < 0) {
-      socket_setError(socket, "MYSQL: error sending quit -- %s\n", STRERROR);
+      socket_setError(socket, "MYSQL: error sending quit -- %s", STRERROR);
       return FALSE;
     }
 
@@ -141,7 +141,7 @@ int check_mysql(Socket_T socket) {
     return TRUE;
   }
 
-  socket_setError(socket, "MYSQL: login failed (error code %d)\n", buf[6] * 256 + buf[5]);
+  socket_setError(socket, "MYSQL: login failed (error code %d)", buf[6] * 256 + buf[5]);
 
   return FALSE;
 }

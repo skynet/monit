@@ -128,7 +128,7 @@ int check_sip(Socket_T socket) {
     }
     default:
     {
-      socket_setError(socket, "Unsupported socket type, only TCP and UDP are supported\n");
+      socket_setError(socket, "Unsupported socket type, only TCP and UDP are supported");
       return TRUE;
     }
   }
@@ -166,12 +166,12 @@ int check_sip(Socket_T socket) {
     port,             // contact port
     prog, VERSION     // user agent
     ) < 0) {
-    socket_setError(socket, "SIP: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "SIP: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   if(! socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "SIP: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "SIP: error receiving data -- %s", STRERROR);
     return FALSE;
   }
 
@@ -180,22 +180,22 @@ int check_sip(Socket_T socket) {
   DEBUG("Response from SIP server: %s\n", buf);
 
   if(! sscanf(buf, "%*s %d", &status)) {
-    socket_setError(socket, "SIP error: cannot parse SIP status in response: %s\n", buf);
+    socket_setError(socket, "SIP error: cannot parse SIP status in response: %s", buf);
     return FALSE;
   }
 
   if(status >= 400) {
-    socket_setError(socket, "SIP error: Server returned status %d\n", status);
+    socket_setError(socket, "SIP error: Server returned status %d", status);
     return FALSE;
   }
 
   if(status >= 300 && status < 400) {
-    socket_setError(socket, "SIP info: Server redirection. Returned status %d\n", status);
+    socket_setError(socket, "SIP info: Server redirection. Returned status %d", status);
     return FALSE;
   }
 
   if(status > 100 && status < 200) {
-    socket_setError(socket, "SIP error: Provisional response . Returned status %d\n", status);
+    socket_setError(socket, "SIP error: Provisional response . Returned status %d", status);
     return FALSE;
   }
 

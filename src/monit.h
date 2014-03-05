@@ -470,6 +470,7 @@ typedef struct myport {
         int timeout;   /**< The timeout in seconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
         int is_available;                /**< TRUE if the server/port is available */
+        int version;                                         /**< Protocol version */
         double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
         /** Apache-status specific parameters */

@@ -56,19 +56,19 @@ int check_clamav(Socket_T socket) {
   ASSERT(socket);
 
   if(socket_print(socket, "PING\r\n") < 0) {
-    socket_setError(socket, "CLAMAV: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "CLAMAV: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "CLAMAV: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "CLAMAV: error receiving data -- %s", STRERROR);
     return FALSE;
   }
 
   Str_chomp(buf);
 
   if(strncasecmp(buf, ok, strlen(ok)) != 0) {
-    socket_setError(socket, "CLAMAV error: %s\n", buf);
+    socket_setError(socket, "CLAMAV error: %s", buf);
     return FALSE;
   }
 

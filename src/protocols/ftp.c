@@ -52,28 +52,28 @@ int check_ftp(Socket_T socket) {
 
   do {
     if (! socket_readln(socket, buf, STRLEN)) {
-      socket_setError(socket, "FTP: error receiving data -- %s\n", STRERROR);
+      socket_setError(socket, "FTP: error receiving data -- %s", STRERROR);
       return FALSE;
     }
     Str_chomp(buf);
   } while(buf[3] == '-'); // Discard multi-line response
   if (sscanf(buf, "%d", &status) != 1 || status != 220) {
-    socket_setError(socket, "FTP greeting error: %s\n", buf);
+    socket_setError(socket, "FTP greeting error: %s", buf);
     return FALSE;
   }
 
   if (socket_print(socket, "QUIT\r\n") < 0) {
-    socket_setError(socket, "FTP: error sending data -- %s\n", STRERROR);
+    socket_setError(socket, "FTP: error sending data -- %s", STRERROR);
     return FALSE;
   }
 
   if (! socket_readln(socket, buf, STRLEN)) {
-    socket_setError(socket, "FTP: error receiving data -- %s\n", STRERROR);
+    socket_setError(socket, "FTP: error receiving data -- %s", STRERROR);
     return FALSE;
   }
   Str_chomp(buf);
   if (sscanf(buf, "%d", &status) != 1 || status != 221) {
-    socket_setError(socket, "FTP quit error: %s\n", buf);
+    socket_setError(socket, "FTP quit error: %s", buf);
     return FALSE;
   }
 

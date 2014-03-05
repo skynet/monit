@@ -42,12 +42,12 @@ int check_gps(Socket_T socket) {
         ASSERT(socket);
 
         if(socket_print(socket, "G\r\n") < 0) {
-                socket_setError(socket, "GPS: error sending data -- %s\n", STRERROR);
+                socket_setError(socket, "GPS: error sending data -- %s", STRERROR);
                 return FALSE;
         }
 
         if(!socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "GPS: error receiving data -- %s\n", STRERROR);
+                socket_setError(socket, "GPS: error receiving data -- %s", STRERROR);
                 return FALSE;
         }
 
@@ -55,7 +55,7 @@ int check_gps(Socket_T socket) {
         if(strncasecmp(buf, ok_gps_device, strlen(ok_gps_device)) != 0) {
                 if(strncasecmp(buf, ok_rtcm104v2_device, strlen(ok_rtcm104v2_device)) != 0) {
                         if(strncasecmp(buf, ok_rtcm104_device, strlen(ok_rtcm104_device)) != 0) {
-                                socket_setError(socket, "GPS error (no device): %s\n", buf);
+                                socket_setError(socket, "GPS error (no device): %s", buf);
                                 return FALSE;
                         }
                 }
