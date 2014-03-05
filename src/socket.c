@@ -112,7 +112,6 @@ struct Socket_T {
  * @return TRUE (the length of data read) or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
-        int n;
         S->offset = 0;
         S->length = 0;
         /* Optimizing, assuming a request/response pattern and that a udp_write
@@ -120,13 +119,11 @@ static int fill(Socket_T S, int timeout) {
         if (S->type == SOCK_DGRAM)
                 timeout = 0;
         if (S->ssl) {
-                n = recv_ssl_socket(S->ssl, S->buffer, RBUFFER_SIZE, timeout);
+                S->length = recv_ssl_socket(S->ssl, S->buffer, RBUFFER_SIZE, timeout);
         } else {
-                n = (int)sock_read(S->socket, S->buffer,  RBUFFER_SIZE, timeout);
+                S->length = (int)sock_read(S->socket, S->buffer,  RBUFFER_SIZE, timeout);
         }
-        if (n > 0) {
-                S->length += n;
-        }  else if (n < 0) {
+        if (S->length == 0) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM)
                         return -1;
         }
