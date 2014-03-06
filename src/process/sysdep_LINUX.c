@@ -293,7 +293,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
       return FALSE;
     }
     if (sscanf(tmp+strlen(GID), "\t%d", &(pt[i].gid)) != 1) {
-      DEBUG("system statistic error -- cannot read process uid\n");
+      DEBUG("system statistic error -- cannot read process gid\n");
       return FALSE;
     }
 
