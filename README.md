@@ -61,6 +61,7 @@ CONTRIBUTING
 ============
  
 You are welcome to contribute to this project, but please note that an electronically signed Contributor License Agreement (CLA) is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project. [Signing the CLA](http://tildeslash.com/cla/) is quick and almost painless.
+
 Please also join and ask on our [developer mailing](https://lists.nongnu.org/mailman/listinfo/monit-dev) list if a new feature is wanted before working on a patch, otherwise you risk spending a lot of time working on something that the project's developers might not want to merge into the project. Good pull requests, patches, improvements and new features are helpful and appreciated.
 
 To create a pull request:
