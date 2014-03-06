@@ -65,8 +65,7 @@ static int read_response(Socket_T socket, int opcode) {
                         // Skip payload of current frame
                         unsigned payload_size = *(buf + 1) & 0x7F;
                         if (payload_size <= sizeof(buf)) {
-                                n = socket_read(socket, buf, payload_size);
-                                if (n != payload_size) {
+                                if ((n = socket_read(socket, buf, payload_size)) != payload_size) {
                                         socket_setError(socket, "WEBSOCKET: response data read error");
                                         return FALSE;
                                 }
