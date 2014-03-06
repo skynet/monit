@@ -349,6 +349,7 @@ AC_CHECK_FUNCS(syslog)
 AC_CHECK_FUNCS(vsyslog)
 AC_CHECK_FUNCS(backtrace)
 AC_CHECK_FUNCS(getloadavg)
+AC_CHECK_FUNCS(getopt_long)
 
 # Check for SOL_IP
 AC_MSG_CHECKING(for SOL_IP)

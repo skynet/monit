@@ -599,6 +599,7 @@ static void handle_options(int argc, char **argv) {
         int opt;
         opterr = 0;
         Run.mygroup = NULL;
+#ifdef HAVE_GETOPT_LONG
         struct option longopts[] = {
                 {"conf",        required_argument,      NULL,   'c'},
                 {"daemon",      required_argument,      NULL,   'd'},
@@ -617,6 +618,9 @@ static void handle_options(int argc, char **argv) {
                 {0}
         };
         while ((opt = getopt_long(argc, argv,"c:d:g:l:p:s:HIirtvVh", longopts, NULL)) != -1) {
+#else
+        while ((opt = getopt(argc,argv,"c:d:g:l:p:s:HIirtvVh")) != -1) {
+#endif
                 switch(opt) {
                         case 'c':
                         {
