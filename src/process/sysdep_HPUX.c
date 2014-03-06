@@ -198,6 +198,9 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         for (i = 0; i < treesize; i++) {
                 pt[i].pid         = psall[i].pst_pid;
                 pt[i].ppid        = psall[i].pst_ppid;
+                pt[i].uid         = psall[i].pst_uid;
+                pt[i].euid        = psall[i].pst_euid;
+                pt[i].gid         = psall[i].pst_gid;
                 pt[i].starttime   = psall[i].pst_start;
                 pt[i].time        = get_float_time();
                 pt[i].cputime     =  psall[i].pst_utime + psall[i].pst_stime * 10;

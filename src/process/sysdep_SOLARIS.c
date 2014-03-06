@@ -172,7 +172,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
   ASSERT(reference);
 
   /* Find all processes in the /proc directory */
-  if ((rv = glob("/proc/[0-9]*", NULL, NULL, &globbuf)) != 0) {
+  if ((rv = glob("/proc/[0-9]*", 0, NULL, &globbuf)) != 0) {
     LogError("system statistic error -- glob failed: %d (%s)\n", rv, STRERROR);
     return 0;
   }
@@ -198,6 +198,9 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
     }
 
     pt[i].ppid      = psinfo->pr_ppid;
+    pt[i].uid       = psinfo->pr_uid;
+    pt[i].euid      = psinfo->pr_euid;
+    pt[i].gid       = psinfo->pr_gid;
     pt[i].starttime = psinfo->pr_start.tv_sec;
 
     /* If we don't have any light-weight processes (LWP) then we are definitely a zombie */

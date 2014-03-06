@@ -165,6 +165,9 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
     StringBuffer_T cmdline = StringBuffer_create(64);
     pt[i].pid       = pinfo[i].ki_pid;
     pt[i].ppid      = pinfo[i].ki_ppid;
+    pt[i].uid       = pinfo[i].ki_ruid;
+    pt[i].euid      = pinfo[i].ki_uid;
+    pt[i].gid       = pinfo[i].ki_rgid;
     pt[i].starttime = pinfo[i].ki_start.tv_sec;
     pt[i].cputime   = (long)(pinfo[i].ki_runtime / 100000);
     pt[i].mem_kbyte = (unsigned long)(pinfo[i].ki_rssize * pagesize_kbyte);

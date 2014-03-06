@@ -111,6 +111,9 @@ int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid)
     /* save the previous ppid and set actual one */
     s->inf->priv.process._ppid             = s->inf->priv.process.ppid;
     s->inf->priv.process.ppid              = pt[leaf].ppid;
+    s->inf->priv.process.uid               = pt[leaf].uid;
+    s->inf->priv.process.euid              = pt[leaf].euid;
+    s->inf->priv.process.gid               = pt[leaf].gid;
     s->inf->priv.process.uptime            = time(NULL) - pt[leaf].starttime;
     s->inf->priv.process.children          = pt[leaf].children_sum;
     s->inf->priv.process.mem_kbyte         = pt[leaf].mem_kbyte;
@@ -129,6 +132,9 @@ int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid)
 
   } else {
     s->inf->priv.process.ppid              = 0;
+    s->inf->priv.process.uid               = -1;
+    s->inf->priv.process.euid              = -1;
+    s->inf->priv.process.gid               = -1;
     s->inf->priv.process.uptime            = 0;
     s->inf->priv.process.children          = 0;
     s->inf->priv.process.total_mem_kbyte   = 0;

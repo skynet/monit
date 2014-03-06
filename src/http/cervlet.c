@@ -2264,6 +2264,15 @@ static void print_service_params_process(HttpResponse res, Service_T s) {
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Parent process id </td><td>%d</td></tr>",
                                   s->inf->priv.process.ppid > 0 ? s->inf->priv.process.ppid : 0);
+                        StringBuffer_append(res->outputbuffer,
+                                  "<tr><td>UID</td><td>%d</td></tr>",
+                                  s->inf->priv.process.uid);
+                        StringBuffer_append(res->outputbuffer,
+                                  "<tr><td>Effective UID</td><td>%d</td></tr>",
+                                  s->inf->priv.process.euid);
+                        StringBuffer_append(res->outputbuffer,
+                                  "<tr><td>GID</td><td>%d</td></tr>",
+                                  s->inf->priv.process.gid);
 
                         uptime= Util_getUptime(s->inf->priv.process.uptime, "&nbsp;");
                         StringBuffer_append(res->outputbuffer,
@@ -2515,9 +2524,15 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %d\n"
                                           "  %-33s %d\n"
+                                          "  %-33s %d\n"
+                                          "  %-33s %d\n"
+                                          "  %-33s %d\n"
                                           "  %-33s %s\n",
                                           "pid", s->inf->priv.process.pid > 0 ? s->inf->priv.process.pid : 0,
                                           "parent pid", s->inf->priv.process.ppid > 0 ? s->inf->priv.process.ppid : 0,
+                                          "uid", s->inf->priv.process.uid,
+                                          "effective uid", s->inf->priv.process.euid,
+                                          "gid", s->inf->priv.process.gid,
                                           "uptime", uptime);
                                 FREE(uptime);
                                 if(Run.doprocess)        {

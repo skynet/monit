@@ -400,6 +400,9 @@ typedef struct myprocesstree {
         int           children_sum;
         int           cpu_percent;
         int           cpu_percent_sum;
+        uid_t         uid;
+        uid_t         euid;
+        gid_t         gid;
         unsigned long mem_kbyte;
         unsigned long mem_kbyte_sum;
         time_t        starttime;
@@ -738,6 +741,9 @@ typedef struct myinfo {
                         int    _ppid;                  /**< Process parent PID from last cycle */
                         int    pid;                         /**< Process PID from actual cycle */
                         int    ppid;                 /**< Process parent PID from actual cycle */
+                        uid_t  uid;                                           /**< Process UID */
+                        uid_t  euid;                                /**< Effective Process UID */
+                        gid_t  gid;                                           /**< Process GID */
                         int    status_flag;
                         int    children;
                         long   mem_kbyte;

@@ -185,6 +185,9 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
 
     pt[i].pid       = pinfo[i].kp_proc.p_pid;
     pt[i].ppid      = pinfo[i].kp_eproc.e_ppid;
+    pt[i].uid       = pinfo[i].kp_eproc.e_pcred.p_ruid;
+    pt[i].euid      = pinfo[i].kp_eproc.e_ucred.cr_uid;
+    pt[i].gid       = pinfo[i].kp_eproc.e_pcred.p_rgid;
     pt[i].starttime = pinfo[i].kp_proc.p_starttime.tv_sec;
 
     args_size = size;

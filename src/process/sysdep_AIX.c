@@ -240,6 +240,9 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
     }
     if (close(fd) < 0)
       LogError("%s: Socket close failed -- %s\n", prog, STRERROR);
+    pt[i].uid     = ps.pr_uid;
+    pt[i].euid    = ps.pr_euid;
+    pt[i].gid     = ps.pr_gid;
     pt[i].cmdline = (ps.pr_psargs && *ps.pr_psargs) ? Str_dup(ps.pr_psargs) : Str_dup(procs[i].pi_comm);
   }
 

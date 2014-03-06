@@ -204,9 +204,15 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                 StringBuffer_append(B,
                                         "<pid>%d</pid>"
                                         "<ppid>%d</ppid>"
+                                        "<uid>%d</uid>"
+                                        "<euid>%d</euid>"
+                                        "<gid>%d</gid>"
                                         "<uptime>%ld</uptime>",
                                         S->inf->priv.process.pid,
                                         S->inf->priv.process.ppid,
+                                        S->inf->priv.process.uid,
+                                        S->inf->priv.process.euid,
+                                        S->inf->priv.process.gid,
                                         (long)S->inf->priv.process.uptime);
                                 if (Run.doprocess) {
                                         StringBuffer_append(B,

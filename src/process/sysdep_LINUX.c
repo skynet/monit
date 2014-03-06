@@ -98,6 +98,8 @@
 /* ----------------------------------------------------------------- Private */
 
 
+#define UID       "Uid:"
+#define GID       "Gid:"
 #define MEMTOTAL  "MemTotal:"
 #define MEMFREE   "MemFree:"
 #define MEMBUF    "Buffers:"
@@ -273,6 +275,27 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
       pt[i].mem_kbyte = (stat_item_rss >> abs(page_shift_to_kb));
     else
       pt[i].mem_kbyte = (stat_item_rss << abs(page_shift_to_kb));
+
+    if (! read_proc_file(buf, sizeof(buf), "status", pt[i].pid, NULL))
+      return FALSE;
+
+    if (! (tmp = strstr(buf, UID))) {
+      DEBUG("system statistic error -- cannot find process uid\n");
+      return FALSE;
+    }
+    if (sscanf(tmp+strlen(UID), "\t%d\t%d", &(pt[i].uid), &(pt[i].euid)) != 2) {
+      DEBUG("system statistic error -- cannot read process uid\n");
+      return FALSE;
+    }
+
+    if (! (tmp = strstr(buf, GID))) {
+      DEBUG("system statistic error -- cannot find process gid\n");
+      return FALSE;
+    }
+    if (sscanf(tmp+strlen(GID), "\t%d", &(pt[i].gid)) != 1) {
+      DEBUG("system statistic error -- cannot read process uid\n");
+      return FALSE;
+    }
 
     if (! read_proc_file(buf, sizeof(buf), "cmdline", pt[i].pid, &bytes)) {
       DEBUG("system statistic error -- cannot read /proc/%d/cmdline\n", pt[i].pid);

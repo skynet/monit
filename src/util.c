@@ -1735,6 +1735,9 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.process._ppid = -1;
                         s->inf->priv.process.pid = -1;
                         s->inf->priv.process.ppid = -1;
+                        s->inf->priv.process.uid = -1;
+                        s->inf->priv.process.euid = -1;
+                        s->inf->priv.process.gid = -1;
                         s->inf->priv.process.status_flag = 0;
                         s->inf->priv.process.children = 0;
                         s->inf->priv.process.mem_kbyte = 0L;
