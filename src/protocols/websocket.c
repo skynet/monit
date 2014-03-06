@@ -43,6 +43,48 @@
  */
 
 
+/* ----------------------------------------------------------------- Private */
+
+
+static int read_response(Socket_T socket, int opcode) {
+        int n;
+        do {
+                char buf[STRLEN];
+                // Read frame header
+                if ((n = socket_read(socket, buf, 2)) != 2) {
+                        socket_setError(socket, "WEBSOCKET: response header read error -- %s", STRERROR);
+                        return FALSE;
+                }
+                /*
+                 * As we don't know the specific protocol used by this websocket server, the pipeline
+                 * may contain some frames sent by server before the response we're waiting for (such
+                 * as chat prompt sent by the server on connect) => drain frames until we find what
+                 * we need or timeout
+                 */
+                if ((*buf & 0xF) != opcode) {
+                        // Skip payload of current frame
+                        unsigned payload_size = *(buf + 1) & 0x7F;
+                        if (payload_size <= sizeof(buf)) {
+                                n = socket_read(socket, buf, payload_size);
+                                if (n != payload_size) {
+                                        socket_setError(socket, "WEBSOCKET: response data read error");
+                                        return FALSE;
+                                }
+                        } else {
+                                /* STRLEN buffer should be sufficient for any frame spuriously sent by
+                                 * the server. Guard against too large frames. If in real life such
+                                 * situation will be valid (payload > STRLEN), then fix */
+                                socket_setError(socket, "WEBSOCKET: response data read error -- unexpected payload size: %d", payload_size);
+                                return FALSE;
+                        }
+                } else {
+                        break; // Found frame with matching opcode
+                }
+        } while (n > 0);
+        return TRUE;
+}
+
+
 /* ------------------------------------------------------------------ Public */
 
 
@@ -94,38 +136,8 @@ int check_websocket(Socket_T socket) {
         }
 
         // Pong: verify response opcode is Pong (0xA)
-        int n;
-        do {
-                // Read frame header
-                if ((n = socket_read(socket, buf, 2)) != 2) {
-                        socket_setError(socket, "WEBSOCKET: pong frame read error -- %s", STRERROR);
-                        return FALSE;
-                }
-                /*
-                 * As we don't know the specific protocol used by this websocket server, the pipeline
-                 * may contain some frames sent by server before Pong response (such as chat prompt)
-                 * => discard any non-Pong frames
-                 */
-                if ((*buf & 0xF) != 0xA) {
-                        // Skip payload of current frame
-                        unsigned payload = *(buf + 1) & 0x7F; 
-                        if (payload <= sizeof(buf)) {
-                                n = socket_read(socket, buf, payload);
-                                if (n != payload) {
-                                        socket_setError(socket, "WEBSOCKET: pong data read error");
-                                        return FALSE;
-                                }
-                        } else {
-                                /* STRLEN buffer should be sufficient for any pre-Pong frame payload,
-                                 * guard against too large frames. If in real life such situation will
-                                 * be valid (payload > STRLEN), then fix here. */
-                                socket_setError(socket, "WEBSOCKET: pong data read error -- unexpected payload size: %d", payload);
-                                return FALSE;
-                        }
-                } else {
-                        break; // Pong
-                }
-        } while (n > 0);
+        if (! read_response(socket, 0xA))
+                return FALSE;
 
         // Close request
         unsigned char close_request[2] = {
@@ -137,15 +149,9 @@ int check_websocket(Socket_T socket) {
                 return FALSE;
         }
 
-        // Close response (pipeline should be clean at this point and we expect Close response only)
-        if (socket_read(socket, buf, 2) <= 0) {
-                socket_setError(socket, "WEBSOCKET: error receiving close response -- %s", STRERROR);
+        // Close response (0x8)
+        if (! read_response(socket, 0x8))
                 return FALSE;
-        }
-        if ((*buf & 0xF) != 0x8) {
-                socket_setError(socket, "WEBSOCKET: close response error -- opcode 0x%x", *buf & 0xF);
-                return FALSE;
-        }
 
         return TRUE;
 }
