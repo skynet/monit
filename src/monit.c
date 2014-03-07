@@ -599,6 +599,7 @@ static void handle_options(int argc, char **argv) {
         int opt;
         opterr = 0;
         Run.mygroup = NULL;
+        const char shortopts[] = "c:d:g:l:p:s:HIirtvVh";
 #ifdef HAVE_GETOPT_LONG
         struct option longopts[] = {
                 {"conf",        required_argument,      NULL,   'c'},
@@ -617,11 +618,11 @@ static void handle_options(int argc, char **argv) {
                 {"help",        no_argument,            NULL,   'h'},
                 {0}
         };
-        while ((opt = getopt_long(argc, argv,"c:d:g:l:p:s:HIirtvVh", longopts, NULL)) != -1) {
+        while ((opt = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
 #else
-        while ((opt = getopt(argc,argv,"c:d:g:l:p:s:HIirtvVh")) != -1) {
+        while ((opt = getopt(argc, argv, shortopts)) != -1) {
 #endif
-                switch(opt) {
+                switch (opt) {
                         case 'c':
                         {
                                 if (! File_isFile(optarg))
