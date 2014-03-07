@@ -104,6 +104,12 @@ B<-s> I<statefile>
 B<-I>
    Do not run in background (needed for run from init)
 
+B<-i>
+   Print Monit's unique ID
+
+B<-r>
+   Reset Monit's unique ID. Use with caution
+
 B<-t>
    Run syntax check for the control file
 
