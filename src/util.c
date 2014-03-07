@@ -1044,6 +1044,16 @@ void Util_printService(Service_T s) {
                 printf("\n");
         }
 
+        if (s->euid && s->euid->action) {
+                EventAction_T a= s->euid->action;
+                printf(" %-20s = ", "EUID");
+                printf("if failed %d %s ", (int)s->euid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
+                printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
+                printf("else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
+                printf("then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                printf("\n");
+        }
+
         if (s->gid && s->gid->action) {
                 EventAction_T a= s->gid->action;
                 printf(" %-20s = ", "GID");

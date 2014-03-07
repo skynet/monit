@@ -108,6 +108,7 @@
 
 
 static void check_uid(Service_T);
+static void check_euid(Service_T);
 static void check_gid(Service_T);
 static void check_size(Service_T);
 static void check_uptime(Service_T);
@@ -209,6 +210,12 @@ int check_process(Service_T s) {
                         check_process_state(s);
                         check_process_pid(s);
                         check_process_ppid(s);
+                        if (s->uid)
+                                check_uid(s);
+                        if (s->euid)
+                                check_euid(s);
+                        if (s->gid)
+                                check_gid(s);
                         if (s->uptimelist)
                                 check_uptime(s);
                         for (pr = s->resourcelist; pr; pr = pr->next)
@@ -969,31 +976,64 @@ static void check_perm(Service_T s) {
 
 
 /**
- * Test for associated path uid change
+ * Test UID of file or process
  */
 static void check_uid(Service_T s) {
         ASSERT(s && s->uid);
 
-        if (s->inf->st_uid != s->uid->uid)
-                Event_post(s, Event_Uid, STATE_FAILED, s->uid->action, "uid test failed for %s -- current uid is %d", s->path, (int)s->inf->st_uid);
-        else {
-                DEBUG("'%s' uid check succeeded [current uid=%d]\n", s->name, (int)s->inf->st_uid);
-                Event_post(s, Event_Uid, STATE_SUCCEEDED, s->uid->action, "uid succeeded");
+        if (s->type == TYPE_PROCESS) {
+                if (s->inf->priv.process.uid != s->uid->uid)
+                        Event_post(s, Event_Uid, STATE_FAILED, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, s->inf->priv.process.uid);
+                else {
+                        DEBUG("'%s' uid check succeeded [current uid=%d]\n", s->name, s->inf->priv.process.uid);
+                        Event_post(s, Event_Uid, STATE_SUCCEEDED, s->uid->action, "uid succeeded");
+                }
+        } else {
+                if (s->inf->st_uid != s->uid->uid)
+                        Event_post(s, Event_Uid, STATE_FAILED, s->uid->action, "uid test failed for %s -- current uid is %d", s->path, (int)s->inf->st_uid);
+                else {
+                        DEBUG("'%s' uid check succeeded [current uid=%d]\n", s->name, (int)s->inf->st_uid);
+                        Event_post(s, Event_Uid, STATE_SUCCEEDED, s->uid->action, "uid succeeded");
+                }
         }
 }
 
 
 /**
- * Test for associated path gid change
+ * Test effective UID of process
+ */
+static void check_euid(Service_T s) {
+        ASSERT(s && s->uid);
+
+        if (s->inf->priv.process.euid != s->euid->uid)
+                Event_post(s, Event_Uid, STATE_FAILED, s->euid->action, "euid test failed for %s -- current euid is %d", s->name, s->inf->priv.process.euid);
+        else {
+                DEBUG("'%s' euid check succeeded [current euid=%d]\n", s->name, s->inf->priv.process.euid);
+                Event_post(s, Event_Uid, STATE_SUCCEEDED, s->euid->action, "euid succeeded");
+        }
+}
+
+
+/**
+ * Test GID of file or process
  */
 static void check_gid(Service_T s) {
         ASSERT(s && s->gid);
 
-        if (s->inf->st_gid != s->gid->gid )
-                Event_post(s, Event_Gid, STATE_FAILED, s->gid->action, "gid test failed for %s -- current gid is %d", s->path, (int)s->inf->st_gid);
-        else {
-                DEBUG("'%s' gid check succeeded [current gid=%d]\n", s->name, (int)s->inf->st_gid);
-                Event_post(s, Event_Gid, STATE_SUCCEEDED, s->gid->action, "gid succeeded");
+        if (s->type == TYPE_PROCESS) {
+                if (s->inf->priv.process.gid != s->gid->gid )
+                        Event_post(s, Event_Gid, STATE_FAILED, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, s->inf->priv.process.gid);
+                else {
+                        DEBUG("'%s' gid check succeeded [current gid=%d]\n", s->name, s->inf->priv.process.gid);
+                        Event_post(s, Event_Gid, STATE_SUCCEEDED, s->gid->action, "gid succeeded");
+                }
+        } else {
+                if (s->inf->st_gid != s->gid->gid )
+                        Event_post(s, Event_Gid, STATE_FAILED, s->gid->action, "gid test failed for %s -- current gid is %d", s->path, (int)s->inf->st_gid);
+                else {
+                        DEBUG("'%s' gid check succeeded [current gid=%d]\n", s->name, (int)s->inf->st_gid);
+                        Event_post(s, Event_Gid, STATE_SUCCEEDED, s->gid->action, "gid succeeded");
+                }
         }
 }
 

@@ -537,8 +537,8 @@ Monit will raise an email alert in the following situations:
  o A file size problem
  o A file/directory timestamp problem
  o A file/directory/filesystem permission problem
- o A file/directory/filesystem uid problem
- o A file/directory/filesystem gid problem
+ o A file/directory/filesystem/process uid problem
+ o A file/directory/filesystem/process gid problem
  o An action is done per administrator's request
 
 Monit will send an alert each time a monitored object changed.
@@ -1761,16 +1761,19 @@ a depend tree.
 
 =head2 UID TESTING
 
-Monit can monitor the owner user id (uid) of a file object.
-This test may only be used within a check - file, fifo,
-directory or filesystem service entry in the Monit control
-file.
+Monit can monitor the owner user id (uid) of a file object or
+process. This test may only be used within following checks:
+ o file
+ o fifo
+ o directory
+ o filesystem
+ o process (supports also EUID monitoring for effective UID)
 
 The syntax for the uid statement is:
 
 =over 4
 
-=item IF FAILED UID user [[<X>] <Y> CYCLES] THEN action
+=item IF FAILED [E]UID user [[<X>] <Y> CYCLES] THEN action
       [ELSE IF SUCCEEDED [[<X>] <Y> CYCLES] THEN action]
 
 =back
@@ -1799,9 +1802,13 @@ a depend tree.
 
 =head2 GID TESTING
 
-Monit can monitor the owner group id (gid) of file objects. This
-test may only be used within a file, fifo, directory or
-filesystem service entry in the Monit control file.
+Monit can monitor the owner group id (gid) of file objects or
+process. This test may only be used within following checks:
+ o file
+ o fifo
+ o directory
+ o filesystem
+ o process
 
 The syntax for the gid statement is:
 
@@ -3347,14 +3354,14 @@ insensitive.
                  statements in a process service entry to
                  override the alert action for change of
                  process pid and ppid.
- uid and gid     These keywords are either 1) an optional part of
-                 a start, stop or exec statement. They may be
+ uid, euid       These keywords are either 1) an optional part of
+ gid             a start, stop or exec statement. They may be
                  used to specify a user id and a group id the
                  program (process) should switch to upon start.
                  This feature can only be used if the superuser
                  is running monit. 2) uid and gid may also be
-                 used as standalone statements in a file service
-                 entry to test a file's uid and gid attributes.
+                 used as standalone statements to test a uid
+                 and gid attributes.
  host            The hostname or IP address to test the port
                  at. This keyword can only be used together
                  with a port statement or in the check host
@@ -3510,7 +3517,7 @@ Here's the complete list of reserved B<keywords> used by monit:
 I<if>, I<then>, I<else>, I<set>, I<daemon>, I<logfile>,
 I<syslog>, I<address>, I<httpd>, I<ssl>, I<enable>, I<disable>,
 I<pemfile>, I<allow>, I<read-only>, I<check>, I<init>, I<count>,
-I<pidfile>, I<statefile>, I<group>, I<start>, I<stop>, I<uid>,
+I<pidfile>, I<statefile>, I<group>, I<start>, I<stop>, I<(e)uid>,
 I<gid>, I<connection>, I<port(number)>, I<unix(socket)>, I<type>,
 I<proto(col)>, I<tcp>, I<tcpssl>, I<udp>, I<alert>, I<noalert>,
 I<mail-format>, I<restart>, I<timeout>, I<checksum>, I<resource>,

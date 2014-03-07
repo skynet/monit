@@ -159,8 +159,8 @@
   static command_t command1 = NULL;
   static command_t command2 = NULL;
   static Service_T depend_list = NULL;
-  static struct mygid gidset;
   static struct myuid uidset;
+  static struct mygid gidset;
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
@@ -218,8 +218,8 @@
   static void  addmatch(Match_T, int, int);
   static void  addmatchpath(Match_T, int);
   static void  addstatus(Status_T);
-  static void  adduid(Uid_T);
-  static void  addgid(Gid_T);
+  static Uid_T adduid(Uid_T);
+  static Gid_T addgid(Gid_T);
   static void  addeuid(uid_t);
   static void  addegid(gid_t);
   static void  addeventaction(EventAction_T *, int, int);
@@ -239,8 +239,8 @@
   static void  reset_checksumset();
   static void  reset_permset();
   static void  reset_uidset();
-  static void  reset_statusset();
   static void  reset_gidset();
+  static void  reset_statusset();
   static void  reset_filesystemset();
   static void  reset_icmpset();
   static void  reset_rateset();
@@ -285,7 +285,7 @@
 %token RESOURCE MEMORY TOTALMEMORY LOADAVG1 LOADAVG5 LOADAVG15 SWAP
 %token MODE ACTIVE PASSIVE MANUAL CPU TOTALCPU CPUUSER CPUSYSTEM CPUWAIT
 %token GROUP REQUEST DEPENDS BASEDIR SLOT EVENTQUEUE SECRET HOSTHEADER
-%token UID GID MMONIT INSTANCE USERNAME PASSWORD
+%token UID EUID GID MMONIT INSTANCE USERNAME PASSWORD
 %token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY
 %token SSLAUTO SSLV2 SSLV3 TLSV1 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
@@ -344,6 +344,9 @@ optproc         : start
                 | exist
                 | pid
                 | ppid
+                | uid
+                | euid
+                | gid
                 | uptime
                 | connection
                 | connectionunix
@@ -1773,26 +1776,39 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
 uid             : IF FAILED UID STRING rate1 THEN action1 recovery {
                     uidset.uid = get_uid($4, 0);
                     addeventaction(&(uidset).action, $<number>7, $<number>8);
-                    adduid(&uidset);
+                    current->uid = adduid(&uidset);
                     FREE($4);
                   }
                 | IF FAILED UID NUMBER rate1 THEN action1 recovery {
                     uidset.uid = get_uid(NULL, $4);
                     addeventaction(&(uidset).action, $<number>7, $<number>8);
-                    adduid(&uidset);
+                    current->uid = adduid(&uidset);
+                  }
+                ;
+
+euid            : IF FAILED EUID STRING rate1 THEN action1 recovery {
+                    uidset.uid = get_uid($4, 0);
+                    addeventaction(&(uidset).action, $<number>7, $<number>8);
+                    current->euid = adduid(&uidset);
+                    FREE($4);
+                  }
+                | IF FAILED EUID NUMBER rate1 THEN action1 recovery {
+                    uidset.uid = get_uid(NULL, $4);
+                    addeventaction(&(uidset).action, $<number>7, $<number>8);
+                    current->euid = adduid(&uidset);
                   }
                 ;
 
 gid             : IF FAILED GID STRING rate1 THEN action1 recovery {
                     gidset.gid = get_gid($4, 0);
                     addeventaction(&(gidset).action, $<number>7, $<number>8);
-                    addgid(&gidset);
+                    current->gid = addgid(&gidset);
                     FREE($4);
                   }
                 | IF FAILED GID NUMBER rate1 THEN action1 recovery {
                     gidset.gid = get_gid(NULL, $4);
                     addeventaction(&(gidset).action, $<number>7, $<number>8);
-                    addgid(&gidset);
+                    current->gid = addgid(&gidset);
                   }
                 ;
 
@@ -1990,8 +2006,8 @@ static void preparse() {
    * Initialize objects
    */
   reset_uidset();
-  reset_statusset();
   reset_gidset();
+  reset_statusset();
   reset_sizeset();
   reset_mailset();
   reset_mailserverset();
@@ -2615,32 +2631,30 @@ static void addstatus(Status_T status) {
 /*
  * Set Uid object in the current service
  */
-static void adduid(Uid_T us) {
-  Uid_T u;
+static Uid_T adduid(Uid_T u) {
+        ASSERT(u);
 
-  ASSERT(us);
-
-  NEW(u);
-  u->uid       = us->uid;
-  u->action    = us->action;
-  current->uid = u;
-  reset_uidset();
+        Uid_T uid;
+        NEW(uid);
+        uid->uid = u->uid;
+        uid->action = u->action;
+        reset_uidset();
+        return uid;
 }
 
 
 /*
  * Set Gid object in the current service
  */
-static void addgid(Gid_T gs) {
-  Gid_T g;
+static Gid_T addgid(Gid_T g) {
+        ASSERT(g);
 
-  ASSERT(gs);
-
-  NEW(g);
-  g->gid       = gs->gid;
-  g->action    = gs->action;
-  current->gid = g;
-  reset_gidset();
+        Gid_T gid;
+        NEW(gid);
+        gid->gid = g->gid;
+        gid->action = g->action;
+        reset_gidset();
+        return gid;
 }
 
 

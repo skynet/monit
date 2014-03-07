@@ -256,6 +256,7 @@ active            { return ACTIVE; }
 passive           { return PASSIVE; }
 manual            { return MANUAL; }
 uid               { return UID; }
+euid              { return EUID; }
 gid               { return GID; }
 request           { return REQUEST; }
 secret            { return SECRET; }

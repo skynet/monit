@@ -784,7 +784,6 @@ typedef struct myservice {
         ActionRate_T actionratelist;                    /**< ActionRate check list */
         Checksum_T  checksum;                                  /**< Checksum check */
         Filesystem_T filesystemlist;                    /**< Filesystem check list */
-        Gid_T       gid;                                            /**< Gid check */
         Icmp_T      icmplist;                                 /**< ICMP check list */
         Perm_T      perm;                                    /**< Permission check */
         Port_T      portlist; /**< Portnumbers to check, either local or at a host */
@@ -795,6 +794,8 @@ typedef struct myservice {
         Match_T     matchignorelist;                /**< Content Match ignore list */
         Timestamp_T timestamplist;                       /**< Timestamp check list */
         Uid_T       uid;                                            /**< Uid check */
+        Uid_T       euid;                                 /**< Effective Uid check */
+        Gid_T       gid;                                            /**< Gid check */
         Status_T    statuslist;           /**< Program execution status check list */
 
 

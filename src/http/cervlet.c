@@ -124,6 +124,7 @@ static void print_service_rules_port(HttpResponse, Service_T);
 static void print_service_rules_icmp(HttpResponse, Service_T);
 static void print_service_rules_perm(HttpResponse, Service_T);
 static void print_service_rules_uid(HttpResponse, Service_T);
+static void print_service_rules_euid(HttpResponse, Service_T);
 static void print_service_rules_gid(HttpResponse, Service_T);
 static void print_service_rules_timestamp(HttpResponse, Service_T);
 static void print_service_rules_filesystem(HttpResponse, Service_T);
@@ -890,6 +891,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_port(res, s);
         print_service_rules_perm(res, s);
         print_service_rules_uid(res, s);
+        print_service_rules_euid(res, s);
         print_service_rules_gid(res, s);
         print_service_rules_timestamp(res, s);
         print_service_rules_filesystem(res, s);
@@ -1637,6 +1639,18 @@ static void print_service_rules_uid(HttpResponse res, Service_T s) {
                 char buf[STRLEN];
                 EventAction_T a= s->uid->action;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Associated UID</td><td>If failed %d %s ", (int)s->uid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
+                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
+                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
+                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        }
+}
+
+
+static void print_service_rules_euid(HttpResponse res, Service_T s) {
+        if(s->euid) {
+                char buf[STRLEN];
+                EventAction_T a= s->euid->action;
+                StringBuffer_append(res->outputbuffer, "<tr><td>Associated EUID</td><td>If failed %d %s ", (int)s->euid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
