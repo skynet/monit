@@ -243,6 +243,9 @@ static void _gc_service(Service_T *s) {
         if((*s)->uid)
                 _gcuid(&(*s)->uid);
 
+        if((*s)->euid)
+                _gcuid(&(*s)->euid);
+
         if((*s)->gid)
                 _gcgid(&(*s)->gid);
 
