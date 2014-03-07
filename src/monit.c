@@ -599,7 +599,7 @@ static void handle_options(int argc, char **argv) {
         int opt;
         opterr = 0;
         Run.mygroup = NULL;
-        const char shortopts[] = "c:d:g:l:p:s:HIirtvVh";
+        const char *shortopts = "c:d:g:l:p:s:HIirtvVh";
 #ifdef HAVE_GETOPT_LONG
         struct option longopts[] = {
                 {"conf",        required_argument,      NULL,   'c'},
