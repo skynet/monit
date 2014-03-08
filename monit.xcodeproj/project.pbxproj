@@ -72,11 +72,11 @@
 		52F6E85213A74F220023F87A /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7AD13A74F220023F87A /* util.c */; };
 		52F6E85313A74F220023F87A /* validate.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7AF13A74F220023F87A /* validate.c */; };
 		52F6E85513A74F220023F87A /* xml.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7B113A74F220023F87A /* xml.c */; };
-		52F6E8CD13A756990023F87A /* libssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8CC13A756990023F87A /* libssl.dylib */; };
-		52F6E8CF13A756A30023F87A /* libcrypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8CE13A756A30023F87A /* libcrypto.dylib */; };
 		52F6E8D113A756DB0023F87A /* libpam.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D013A756DB0023F87A /* libpam.dylib */; };
 		52F6E8D313A756EB0023F87A /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D213A756EB0023F87A /* libpthread.dylib */; };
 		52F6E8D513A757050023F87A /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D413A757050023F87A /* libresolv.dylib */; };
+		52FE3D2818CAD60E0050AA5D /* libssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8CC13A756990023F87A /* libssl.dylib */; };
+		52FE3D2918CAD61A0050AA5D /* libcrypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8CE13A756A30023F87A /* libcrypto.dylib */; };
 		9303FB8018C47E7000138D72 /* websocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 9303FB7F18C47E7000138D72 /* websocket.c */; };
 /* End PBXBuildFile section */
 
@@ -279,12 +279,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52FE3D2918CAD61A0050AA5D /* libcrypto.dylib in Frameworks */,
+				52FE3D2818CAD60E0050AA5D /* libssl.dylib in Frameworks */,
 				52A1311D13A7886800583257 /* libmonit.a in Frameworks */,
 				52F6E8D513A757050023F87A /* libresolv.dylib in Frameworks */,
 				52F6E8D313A756EB0023F87A /* libpthread.dylib in Frameworks */,
 				52F6E8D113A756DB0023F87A /* libpam.dylib in Frameworks */,
-				52F6E8CF13A756A30023F87A /* libcrypto.dylib in Frameworks */,
-				52F6E8CD13A756990023F87A /* libssl.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -795,7 +795,7 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				HEADER_SEARCH_PATHS = "";
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = /Users/hauk/src/zild/ext/repository/lib;
 				OTHER_CFLAGS = (
 					"-DDARWIN",
 					"-DSYSCONFDIR=\"\\\"/etc\\\"\"",
@@ -813,7 +813,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				HEADER_SEARCH_PATHS = "";
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = /Users/hauk/src/zild/ext/repository/lib;
 				OTHER_CFLAGS = (
 					"-DDARWIN",
 					"-DSYSCONFDIR=\"\\\"/etc\\\"\"",

@@ -42,7 +42,9 @@
 #define SSL_VERSION_SSLV2      1
 #define SSL_VERSION_SSLV3      2
 #define SSL_VERSION_TLS        3
-#define SSL_VERSION_NONE       4
+#define SSL_VERSION_TLS11      4
+#define SSL_VERSION_TLS12      5
+#define SSL_VERSION_NONE       6
 
 /** Defines an SSL object */
 typedef struct myssl {

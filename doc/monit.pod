@@ -2014,7 +2014,7 @@ is used you may optionally specify the SSL/TLS protocol to be
 used and the md5 sum of the server's certificate. The TCPSSL
 options are:
 
- TCPSSL [SSLAUTO|SSLV2|SSLV3|TLSV1] [CERTMD5 md5sum]
+ TCPSSL [SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12] [CERTMD5 md5sum]
 
 B<proto(col):PROTO {protocols}>. Optionally specify the protocol
 Monit should speak when a connection is established. At the

@@ -285,6 +285,8 @@ day(s)?           { return DAY; }
 sslv2             { return SSLV2; }
 sslv3             { return SSLV3; }
 tlsv1             { return TLSV1; }
+tlsv11            { return TLSV11; }
+tlsv12            { return TLSV12; }
 sslauto           { return SSLAUTO; }
 inode(s)?         { return INODE; }
 space             { return SPACE; }

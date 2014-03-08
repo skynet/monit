@@ -11,6 +11,11 @@ New: Add command line option to view Monit ID (-i/--id)
 
 New: Add command line option to reset Monit ID (-r/--resetid)
 
+New: Add client support for using TLS version 1.1 and 1.2. A recent
+1.x version of OpenSSL is required and of course that the server
+speaks this TLS version. At this time, not many does. Example: 
+if failed port 443 with type TCPSSL tlsv11 protocol http  then alert
+
 New: Process UID, EUID and GID tests. Allows to test if the
 process is running as given user. Example:
     check process syslog with pidfile /var/run/rsyslogd.pid

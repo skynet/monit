@@ -287,7 +287,7 @@
 %token GROUP REQUEST DEPENDS BASEDIR SLOT EVENTQUEUE SECRET HOSTHEADER
 %token UID EUID GID MMONIT INSTANCE USERNAME PASSWORD
 %token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY
-%token SSLAUTO SSLV2 SSLV3 TLSV1 CERTMD5
+%token SSLAUTO SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
 %token INODE SPACE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
 %token EXEC UNMONITOR ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
@@ -1025,6 +1025,20 @@ sslversion      : /* EMPTY */  { $<number>$ = SSL_VERSION_NONE; }
                 | SSLV2        { $<number>$ = SSL_VERSION_SSLV2; }
                 | SSLV3        { $<number>$ = SSL_VERSION_SSLV3; }
                 | TLSV1        { $<number>$ = SSL_VERSION_TLS; }
+                | TLSV11
+                {
+#ifndef HAVE_TLSV1_1_CLIENT_METHOD
+                        yyerror("Your SSL Library does not support TLS version 1.1");
+#endif
+                        $<number>$ = SSL_VERSION_TLS11;
+                }
+                | TLSV12
+                {
+#ifndef HAVE_TLSV1_1_CLIENT_METHOD
+                        yyerror("Your SSL Library does not support TLS version 1.2");
+#endif
+                        $<number>$ = SSL_VERSION_TLS12;
+                }
                 | SSLAUTO      { $<number>$ = SSL_VERSION_AUTO; }
                 ;
 

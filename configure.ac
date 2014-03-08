@@ -821,6 +821,14 @@ then
         fi
     fi
 fi
+# Check TLS version
+if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
+        AC_CHECK_LIB([ssl], [TLSv1_1_client_method], 
+                [AC_DEFINE([HAVE_TLSV1_1_CLIENT_METHOD], 1, [Define to 1 if you have openssl with TLSv1.1])])
+        AC_CHECK_LIB([ssl], [TLSv1_2_client_method],
+                [AC_DEFINE([HAVE_TLSV1_2_CLIENT_METHOD], 1, [Define to 1 if you have openssl with TLSv1.2])])
+fi
+
 
 # ------------------------------------------------------------------------
 # Outputs
