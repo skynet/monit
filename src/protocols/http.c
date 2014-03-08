@@ -201,7 +201,7 @@ static int check_request(Socket_T socket, Port_T P) {
                 socket_setError(socket, "HTTP error: Cannot parse HTTP status in response: %s", buf);
                 return FALSE;
         }
-        if (status >= 400) {
+        if (! Util_evalQExpression(P->operator, status, P->status)) {
                 socket_setError(socket, "HTTP error: Server returned status %d", status);
                 return FALSE;
         }

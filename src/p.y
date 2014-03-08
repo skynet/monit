@@ -1060,7 +1060,7 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL FTP {
                     portset.protocol = Protocol_get(Protocol_FTP);
                   }
-                | PROTOCOL HTTP request {
+                | PROTOCOL HTTP httplist {
                     portset.protocol = Protocol_get(Protocol_HTTP);
                   }
                 | PROTOCOL IMAP {
@@ -1177,20 +1177,34 @@ maxforward      : /* EMPTY */
                    }
                 ;
 
-request         : /* EMPTY */
-                | REQUEST PATH hostheader {
-                    portset.request = Util_urlEncode($2);
-                    FREE($2);
-                  }
-                | REQUEST PATH CHECKSUM STRING hostheader {
-                    portset.request = Util_urlEncode($2);
-                    FREE($2);
-                    portset.request_checksum = $4;
+httplist        : /* EMPTY */
+                | httplist http
+                ;
+
+http            : request
+                | responsesum
+                | status
+                | hostheader
+                ;
+
+status          : STATUS operator NUMBER {
+                    portset.operator = $<number>2;
+                    portset.status = $<number>3;
                   }
                 ;
 
-hostheader      : /* EMPTY */
-                | HOSTHEADER STRING {
+request         : REQUEST PATH {
+                    portset.request = Util_urlEncode($2);
+                    FREE($2);
+                  }
+                ;
+
+responsesum     : CHECKSUM STRING {
+                    portset.request_checksum = $2;
+                  }
+                ;
+
+hostheader      : HOSTHEADER STRING {
                     portset.request_hostheader = $2;
                   }
                 ;
@@ -2287,6 +2301,8 @@ static void addport(Port_T port) {
   p->request_checksum   = port->request_checksum;
   p->request_hostheader = port->request_hostheader;
   p->version            = port->version;
+  p->operator           = port->operator;
+  p->status             = port->status;
   memcpy(&p->ApacheStatus, &port->ApacheStatus, sizeof(struct apache_status));
 
   if (p->request_checksum) {
@@ -3328,7 +3344,8 @@ static void reset_portset() {
   portset.timeout = NET_TIMEOUT;
   portset.retry = 1;
   portset.maxforward = 70;
-  urlrequest = NULL;
+  portset.operator = Operator_Less;
+  portset.status = 400;
 }
 
 

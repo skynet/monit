@@ -635,7 +635,7 @@ retry:
 
         /* Run the protocol verification routine through the socket */
         if (! p->protocol->check(socket)) {
-                snprintf(report, STRLEN, "failed protocol test [%s] at %s -- %s\n", p->protocol->name, Util_portDescription(p, buf, sizeof(buf)), socket_getError(socket));
+                snprintf(report, STRLEN, "failed protocol test [%s] at %s -- %s", p->protocol->name, Util_portDescription(p, buf, sizeof(buf)), socket_getError(socket));
                 rv = FALSE;
                 goto error;
         } else

@@ -474,6 +474,8 @@ typedef struct myport {
         int retry;       /**< Number of connection retry before reporting an error */
         int is_available;                /**< TRUE if the server/port is available */
         int version;                                         /**< Protocol version */
+        Operator_Type operator;                           /**< Comparison operator */
+        int status;                                           /**< Protocol status */
         double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
         /** Apache-status specific parameters */

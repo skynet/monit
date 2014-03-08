@@ -45,6 +45,21 @@ instead, like,
     if failed port 80 protocol http with content != "Nagios" then alert
 Remember also that the string to test can be a regular expression
 
+New: The HTTP protocol test allows to set custom status code
+condition using "status <operator> <number>" option.
+Backward compatible defaults (return error if status >= 400):
+    if failed port 80
+        protocol http
+        status < 400
+    then alert
+Return error if page DOES exist (for success 404 is expected):
+    if failed
+        port 80
+        protocol http
+        request "/non/existent.php"
+        status = 404
+    then alert
+
 Fixed: https://bitbucket.org/tildeslash/monit/issue/7/enable-optimized-error-with-flag-ofast
 
 
