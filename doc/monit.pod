@@ -2100,9 +2100,9 @@ virtual hosts. Examples:
   then alert
 
 The STATUS option allows to set custom status. By default error
-is returned if status code is greater or equal to 400. For example
-to test page that MUST NOT exist (404 should be returned in such
-case):
+is returned if status code is greater or equal to 400. You can
+override this behavior using, for example to test page that
+MUST NOT exist (404 should be returned in such case):
 
   if failed
      port 80
