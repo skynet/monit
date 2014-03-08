@@ -843,8 +843,8 @@ AH_BOTTOM([
 
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([contrib/monit.upstart])
-AC_CONFIG_FILES([contrib/monit.service])
+AC_CONFIG_FILES([system/startup/monit.upstart])
+AC_CONFIG_FILES([system/startup/monit.service])
 
 AC_OUTPUT
 

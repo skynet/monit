@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects
 ACLOCAL_AMFLAGS	 = -I m4
 
-EXTRA_DIST	= README CHANGES COPYING CONTRIBUTORS bootstrap doc src config monitrc contrib libmonit monit.1
+EXTRA_DIST	= README CHANGES COPYING CONTRIBUTORS bootstrap doc src config monitrc system libmonit monit.1
 
 SUBDIRS		= libmonit
 
@@ -114,8 +114,7 @@ dist-hook::
 	-rm -f $(distdir)/src/stamp-*
 	-rm -f $(distdir)/src/y.output
 	-rm -f $(distdir)/README.md
-	-perl -pi -e 's/^Version: .*/Version: '$(VERSION)'/' $(distdir)/contrib/packages/redhat/monit.spec
-	-cp $(distdir)/contrib/packages/redhat/monit.spec $(distdir)/
+	-perl -pi -e 's/^Version: .*/Version: '$(VERSION)'/' $(distdir)/system/packages/redhat/monit.spec
 	-chmod 600 monitrc
 	
 clean-local:

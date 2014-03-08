@@ -1,6 +1,6 @@
 Name: monit
 Summary: Process monitor and restart utility
-Version: 5.7
+Version: 5.8
 Release: 1
 URL: http://mmonit.com/monit/
 Source: http://mmonit.com/monit/dist/%{name}-%{version}.tar.gz
@@ -36,7 +36,7 @@ mkdir -p %{buildroot}/etc/init.d
 install -m 755 monit %{buildroot}%{_bindir}/monit
 install -m 644 monit.1 %{buildroot}%{_mandir}/man1/monit.1
 install -m 600 monitrc %{buildroot}/etc/monitrc
-install -m 755 contrib/rc.monit %{buildroot}/etc/init.d/%{name}
+install -m 755 system/startup/rc.monit %{buildroot}/etc/init.d/%{name}
 
 %post
 /sbin/chkconfig --add %{name}
@@ -61,6 +61,9 @@ fi
 %{_mandir}/man1/%{name}.1.gz
 
 %changelog
+* Sat Mar 08 2014 Martin Pala <martinp@tildeslash.com>
+- Upgraded to monit-5.8
+
 * Thu Feb 20 2014 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-5.7
 
