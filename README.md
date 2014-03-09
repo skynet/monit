@@ -61,9 +61,8 @@ CONTRIBUTING
 ============
  
 You are welcome to contribute to this project. Join our [developer mailing
-list](https://lists.nongnu.org/mailman/listinfo/monit-dev) and ask first if a new feature is wanted before working on a patch,
-otherwise you risk spending a lot of time working on something that the project's developers might not want to merge into the project.
-Good pull requests, patches, improvements and new features are helpful and appreciated.
+list](https://lists.nongnu.org/mailman/listinfo/monit-dev) and ask first if a new feature is wanted before working on a patch.
+Good pull requests, patches, improvements and new features are always helpful and appreciated.
 
 To create a pull request:
 

@@ -85,7 +85,8 @@ documentation can be found at http://mmonit.com/monit/documentation/
 Acknowledgments
 ---------------
 
-Thanks to the Free Software Foundation (FSF) for hosting the mailing list.
+Thanks to the Free Software Foundation (FSF) for hosting the mailing list
+and to Atlassian for hosting the code repository.
 
 The design of libmonit was inspired by principles put forth by David R. 
 Hanson <drh@drhanson.net> in his excellent book "C Interfaces and 
@@ -96,10 +97,10 @@ http://www.cs.princeton.edu/software/cii/
 Contributing
 ------------
  
-You are welcome to contribute to this project, but please note that
-an electronically signed CLA is required to be on file before any Pull
-Request or patches are accepted or you are given commit rights to the
-project. To sign, go to http://tildeslash.com/cla/
+You are welcome to contribute to this project. Good pull requests, 
+patches, improvements and new features are always helpful and 
+appreciated. Please read the contributing guidelines before working 
+on a patch. See https://bitbucket.org/tildeslash/monit
 
 
 Reporting a problem
