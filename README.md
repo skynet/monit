@@ -60,15 +60,18 @@ You can subscribe to [Monitʼs mailing list](https://lists.nongnu.org/mailman/li
 CONTRIBUTING
 ============
  
-You are welcome to contribute to this project, but please note that an electronically signed Contributor License Agreement (CLA) is required to be on file before any Pull Request or patches are accepted or you are given commit rights to the project. [Signing the CLA](http://tildeslash.com/cla/) is quick and almost painless.
-
-Please also join and ask on our [developer mailing](https://lists.nongnu.org/mailman/listinfo/monit-dev) list if a new feature is wanted before working on a patch, otherwise you risk spending a lot of time working on something that the project's developers might not want to merge into the project. Good pull requests, patches, improvements and new features are helpful and appreciated.
+You are welcome to contribute to this project. Join our [developer mailing
+list](https://lists.nongnu.org/mailman/listinfo/monit-dev) and ask first if a new feature is wanted before working on a patch,
+otherwise you risk spending a lot of time working on something that the project's developers might not want to merge into the project.
+Good pull requests, patches, improvements and new features are helpful and appreciated.
 
 To create a pull request:
 
 * Fork the Monit project
 * Create a new topic branch (off the master branch) to contain your feature, change, or fix
 * Commit your changes in logical chunks and when done push your changes up to your fork and open a pull request (PR) with a clear title and description against the Monit master branch
+
+In order for the team to accept your change, you must complete the [Tildeslash Contributor Agreement](http://tildeslash.com/cla/)
 
 
 REPORTING A BUG
@@ -83,7 +86,7 @@ If you have found a security vulnerabilities we appreciate if you will send this
 ACKNOWLEDGMENTS
 ===============
 
-Thanks to the [Free Software Foundation](http://www.fsf.org) for hosting the mailing list.
+Thanks to the [Free Software Foundation](http://www.fsf.org) for hosting the mailing list and to [Atlassian](https://www.atlassian.com) for hosting the code repository.
 
 The design of libmonit was inspired by principles put forth by *David R. Hanson* in his excellent book ["C Interfaces and
 Implementations"](http://www.cs.princeton.edu/software/cii/ "CII"). 
