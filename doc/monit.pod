@@ -2092,17 +2092,16 @@ Specifying a host header is useful if you want to connect to the
 host using an IP-address, and the web-server handle name based
 virtual hosts. Examples:
 
-  if failed host 192.168.1.100 port 8080
-     protocol http with status < 400
-     and request '/testing/' hostheader 'example.com' 
-     with content = "regular.*expression"
-     and with timeout 20 seconds for 2 cycles
+  if failed host 192.168.1.100 port 8080 protocol http
+     hostheader 'example.com'
   then alert
 
-The STATUS option allows to set custom status. By default error
-is returned if status code is greater or equal to 400. You can
-override this behavior using, for example to test page that
-MUST NOT exist (404 should be returned in such case):
+The STATUS qualifier can be use to explicit test the HTTP status 
+code returned by the HTTP server. If not used, the http protocol test
+will fail if the status code returned is greater than or equal to 400. 
+You can override this behaviour by using the I<status> qualifier, for
+example to test that a page does B<not> exist (404 should be returned
+in this case):
 
   if failed
      port 80
