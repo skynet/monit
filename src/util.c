@@ -1418,22 +1418,17 @@ pid_t Util_getPid(char *pidfile) {
 int Util_isProcessRunning(Service_T s, int refresh) {
         int   i;
         pid_t pid = -1;
-
         ASSERT(s);
-
         errno = 0;
-
-        if (refresh || ! ptree || ! ptreesize)
-                initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
-
         if (s->matchlist) {
-                /* The process table read may sporadically fail during read, because we're using glob on some platforms which may fail if the proc filesystem
-                 * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
-                 * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
                 if (Run.doprocess) {
+                        if (refresh || ! ptree || ! ptreesize)
+                                initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
+                        /* The process table read may sporadically fail during read, because we're using glob on some platforms which may fail if the proc filesystem
+                         * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
+                         * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
                         for (i = 0; i < ptreesize; i++) {
                                 int found = FALSE;
-
                                 if (ptree[i].cmdline) {
 #ifdef HAVE_REGEX_H
                                         found = regexec(s->matchlist->regex_comp, ptree[i].cmdline, 0, NULL, 0) ? FALSE : TRUE;
@@ -1454,14 +1449,12 @@ int Util_isProcessRunning(Service_T s, int refresh) {
         } else {
                 pid = Util_getPid(s->path);
         }
-
         if (pid > 0) {
                 if ((getpgid(pid) > -1) || (errno == EPERM))
                         return pid;
                 DEBUG("'%s' Error testing process id [%d] -- %s\n", s->name, pid, STRERROR);
         }
         Util_resetInfo(s);
-
         return 0;
 }
 

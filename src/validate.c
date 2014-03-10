@@ -184,27 +184,23 @@ int validate() {
  * its configuration. In case of a fatal event FALSE is returned.
  */
 int check_process(Service_T s) {
-
         pid_t  pid = -1;
         Port_T pp = NULL;
         Resource_T pr = NULL;
-
         ASSERT(s);
-
         /* Test for running process */
         if (!(pid = Util_isProcessRunning(s, FALSE))) {
                 Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "process is not running");
                 return FALSE;
-        } else
+        } else {
                 Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "process is running with pid %d", (int)pid);
-
+        }
         /* Reset the exec and timeout errors if active ... the process is running (most probably after manual intervention) */
         if (IS_EVENT_SET(s->error, Event_Exec))
                 Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "process is running after previous exec error (slow starting or manually recovered?)");
         if (IS_EVENT_SET(s->error, Event_Timeout))
                 for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next)
                         Event_post(s, Event_Timeout, STATE_SUCCEEDED, ar->action, "process is running after previous restart timeout (manually recovered?)");
-
         if (Run.doprocess) {
                 if (update_process_data(s, ptree, ptreesize, pid)) {
                         check_process_state(s);
@@ -223,7 +219,6 @@ int check_process(Service_T s) {
                 } else
                         LogError("'%s' failed to get service data\n", s->name);
         }
-
         /* Test each host:port and protocol in the service's portlist */
         if (s->portlist)
                 /* skip further tests during startup timeout */
@@ -231,9 +226,7 @@ int check_process(Service_T s) {
                         if (s->inf->priv.process.uptime < s->start->timeout) return TRUE;
                 for (pp = s->portlist; pp; pp = pp->next)
                         check_connection(s, pp);
-
         return TRUE;
-
 }
 
 
