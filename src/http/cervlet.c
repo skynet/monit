@@ -1841,7 +1841,7 @@ static void print_service_rules_program(HttpResponse res, Service_T s) {
                 for (Status_T status = s->statuslist; status; status = status->next) {
                         EventAction_T a = status->action;
                         StringBuffer_append(res->outputbuffer, "<tr><td>Test Exit value</td><td>if exit value %s %d for %s ", operatorshortnames[status->operator], status->return_value, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->failed, buf, sizeof(buf)));
+                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                         StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
                         StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
                 }
