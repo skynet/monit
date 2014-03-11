@@ -1,9 +1,5 @@
 # This is an upstart script to keep monit running.
-# To install, disable the old way of doing things:
-#
-#   /etc/init.d/monit stop && update-rc.d -f monit remove
-#
-# then put this script here:
+# Put this script here:
 #
 #   /etc/init/monit.conf
 #
@@ -11,7 +7,7 @@
 #
 #   initctl reload-configuration
 #
-# You can manually start and stop monit like this:
+# You can then manually start and stop monit like this:
 #
 # start monit
 # stop monit

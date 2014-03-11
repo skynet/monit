@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		520587A318CF7235006296CB /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 5205879318CF7235006296CB /* Makefile */; };
 		52A1311D13A7886800583257 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A1311C13A7886800583257 /* libmonit.a */; };
 		52AE77CC14037DA300D2861D /* sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = 52AE77CA14037DA300D2861D /* sha1.c */; };
 		52AE77CF14037E6A00D2861D /* md5_crypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 52AE77CD14037E6A00D2861D /* md5_crypt.c */; };
@@ -136,6 +137,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5205879018CF7235006296CB /* distinfo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = distinfo; sourceTree = "<group>"; };
+		5205879218CF7235006296CB /* monit.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = monit.sh; sourceTree = "<group>"; };
+		5205879318CF7235006296CB /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		5205879418CF7235006296CB /* pkg-descr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "pkg-descr"; sourceTree = "<group>"; };
+		5205879518CF7235006296CB /* pkg-message */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "pkg-message"; sourceTree = "<group>"; };
+		5205879618CF7235006296CB /* README.porter */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.porter; sourceTree = "<group>"; };
+		5205879818CF7235006296CB /* monit.spec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = monit.spec; sourceTree = "<group>"; };
+		5205879A18CF7235006296CB /* init.monit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = init.monit; sourceTree = "<group>"; };
+		5205879B18CF7235006296CB /* makesolpkg.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = makesolpkg.sh; sourceTree = "<group>"; };
+		5205879C18CF7235006296CB /* README.solaris */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.solaris; sourceTree = "<group>"; };
+		5205879F18CF7235006296CB /* monit.service.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = monit.service.in; sourceTree = "<group>"; };
+		520587A118CF7235006296CB /* monit.upstart.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = monit.upstart.in; sourceTree = "<group>"; };
+		520587A218CF7235006296CB /* rc.monit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = rc.monit; sourceTree = "<group>"; };
 		528EA77213A74E05003DA4BE /* monit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = monit; sourceTree = BUILT_PRODUCTS_DIR; };
 		528F7DB318BCABC9004BF9B5 /* CONTRIBUTORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CONTRIBUTORS; sourceTree = "<group>"; };
 		52A1310B13A7882A00583257 /* libmonit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libmonit.xcodeproj; path = libmonit/libmonit.xcodeproj; sourceTree = "<group>"; };
@@ -153,18 +167,6 @@
 		52D25EE317C0E8680039D3E4 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		52D25EE917C0EB460039D3E4 /* monit.pod */ = {isa = PBXFileReference; lastKnownFileType = text; path = monit.pod; sourceTree = "<group>"; };
 		52D25EEA17C0EB460039D3E4 /* PLATFORMS */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLATFORMS; sourceTree = "<group>"; };
-		52F6E66813A74F220023F87A /* monitrc-gentoo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = "monitrc-gentoo"; sourceTree = "<group>"; };
-		52F6E66B13A74F220023F87A /* distinfo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = distinfo; sourceTree = "<group>"; };
-		52F6E66D13A74F220023F87A /* monit.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = monit.sh; sourceTree = "<group>"; };
-		52F6E66E13A74F220023F87A /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		52F6E66F13A74F220023F87A /* pkg-descr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "pkg-descr"; sourceTree = "<group>"; };
-		52F6E67013A74F220023F87A /* pkg-message */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "pkg-message"; sourceTree = "<group>"; };
-		52F6E67113A74F220023F87A /* README.porter */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.porter; sourceTree = "<group>"; };
-		52F6E67313A74F220023F87A /* monit.spec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = monit.spec; sourceTree = "<group>"; };
-		52F6E67513A74F220023F87A /* init.monit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = init.monit; sourceTree = "<group>"; };
-		52F6E67613A74F220023F87A /* makesolpkg.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = makesolpkg.sh; sourceTree = "<group>"; };
-		52F6E67713A74F220023F87A /* README.solaris */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.solaris; sourceTree = "<group>"; };
-		52F6E67813A74F220023F87A /* rc.monit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = rc.monit; sourceTree = "<group>"; };
 		52F6E67B13A74F220023F87A /* monit.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = monit.pod; sourceTree = "<group>"; };
 		52F6E67C13A74F220023F87A /* PLATFORMS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PLATFORMS; sourceTree = "<group>"; };
 		52F6E74413A74F220023F87A /* alert.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = alert.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
@@ -291,6 +293,74 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5205878D18CF7235006296CB /* system */ = {
+			isa = PBXGroup;
+			children = (
+				5205878E18CF7235006296CB /* packages */,
+				5205879D18CF7235006296CB /* startup */,
+			);
+			path = system;
+			sourceTree = "<group>";
+		};
+		5205878E18CF7235006296CB /* packages */ = {
+			isa = PBXGroup;
+			children = (
+				5205878F18CF7235006296CB /* freebsd */,
+				5205879718CF7235006296CB /* redhat */,
+				5205879918CF7235006296CB /* solaris */,
+			);
+			path = packages;
+			sourceTree = "<group>";
+		};
+		5205878F18CF7235006296CB /* freebsd */ = {
+			isa = PBXGroup;
+			children = (
+				5205879018CF7235006296CB /* distinfo */,
+				5205879118CF7235006296CB /* files */,
+				5205879318CF7235006296CB /* Makefile */,
+				5205879418CF7235006296CB /* pkg-descr */,
+				5205879518CF7235006296CB /* pkg-message */,
+				5205879618CF7235006296CB /* README.porter */,
+			);
+			path = freebsd;
+			sourceTree = "<group>";
+		};
+		5205879118CF7235006296CB /* files */ = {
+			isa = PBXGroup;
+			children = (
+				5205879218CF7235006296CB /* monit.sh */,
+			);
+			path = files;
+			sourceTree = "<group>";
+		};
+		5205879718CF7235006296CB /* redhat */ = {
+			isa = PBXGroup;
+			children = (
+				5205879818CF7235006296CB /* monit.spec */,
+			);
+			path = redhat;
+			sourceTree = "<group>";
+		};
+		5205879918CF7235006296CB /* solaris */ = {
+			isa = PBXGroup;
+			children = (
+				5205879A18CF7235006296CB /* init.monit */,
+				5205879B18CF7235006296CB /* makesolpkg.sh */,
+				5205879C18CF7235006296CB /* README.solaris */,
+			);
+			path = solaris;
+			sourceTree = "<group>";
+		};
+		5205879D18CF7235006296CB /* startup */ = {
+			isa = PBXGroup;
+			children = (
+				5205879F18CF7235006296CB /* monit.service.in */,
+				520587A118CF7235006296CB /* monit.upstart.in */,
+				520587A218CF7235006296CB /* rc.monit */,
+			);
+			path = startup;
+			sourceTree = "<group>";
+		};
 		528EA76713A74E05003DA4BE = {
 			isa = PBXGroup;
 			children = (
@@ -304,12 +374,12 @@
 				52D25EE217C0E8680039D3E4 /* monitrc */,
 				52D25EE317C0E8680039D3E4 /* README */,
 				52FFBA1118A7E785001F9962 /* README.md */,
-				52D25EE817C0EB460039D3E4 /* doc */,
-				52F6E74313A74F220023F87A /* src */,
-				52A1312013A788B900583257 /* libs */,
 				52F6E65F13A74F220023F87A /* config */,
-				52F6E66613A74F220023F87A /* contrib */,
+				52F6E74313A74F220023F87A /* src */,
+				52D25EE817C0EB460039D3E4 /* doc */,
 				52F6E67A13A74F220023F87A /* doc */,
+				5205878D18CF7235006296CB /* system */,
+				52A1312013A788B900583257 /* libs */,
 				528EA77313A74E05003DA4BE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -358,65 +428,6 @@
 			children = (
 			);
 			path = config;
-			sourceTree = "<group>";
-		};
-		52F6E66613A74F220023F87A /* contrib */ = {
-			isa = PBXGroup;
-			children = (
-				52F6E66813A74F220023F87A /* monitrc-gentoo */,
-				52F6E66913A74F220023F87A /* packages */,
-				52F6E67813A74F220023F87A /* rc.monit */,
-			);
-			path = contrib;
-			sourceTree = "<group>";
-		};
-		52F6E66913A74F220023F87A /* packages */ = {
-			isa = PBXGroup;
-			children = (
-				52F6E66A13A74F220023F87A /* freebsd */,
-				52F6E67213A74F220023F87A /* redhat */,
-				52F6E67413A74F220023F87A /* solaris */,
-			);
-			path = packages;
-			sourceTree = "<group>";
-		};
-		52F6E66A13A74F220023F87A /* freebsd */ = {
-			isa = PBXGroup;
-			children = (
-				52F6E66B13A74F220023F87A /* distinfo */,
-				52F6E66C13A74F220023F87A /* files */,
-				52F6E66E13A74F220023F87A /* Makefile */,
-				52F6E66F13A74F220023F87A /* pkg-descr */,
-				52F6E67013A74F220023F87A /* pkg-message */,
-				52F6E67113A74F220023F87A /* README.porter */,
-			);
-			path = freebsd;
-			sourceTree = "<group>";
-		};
-		52F6E66C13A74F220023F87A /* files */ = {
-			isa = PBXGroup;
-			children = (
-				52F6E66D13A74F220023F87A /* monit.sh */,
-			);
-			path = files;
-			sourceTree = "<group>";
-		};
-		52F6E67213A74F220023F87A /* redhat */ = {
-			isa = PBXGroup;
-			children = (
-				52F6E67313A74F220023F87A /* monit.spec */,
-			);
-			path = redhat;
-			sourceTree = "<group>";
-		};
-		52F6E67413A74F220023F87A /* solaris */ = {
-			isa = PBXGroup;
-			children = (
-				52F6E67513A74F220023F87A /* init.monit */,
-				52F6E67613A74F220023F87A /* makesolpkg.sh */,
-				52F6E67713A74F220023F87A /* README.solaris */,
-			);
-			path = solaris;
 			sourceTree = "<group>";
 		};
 		52F6E67A13A74F220023F87A /* doc */ = {
@@ -682,6 +693,7 @@
 				52F6E83613A74F220023F87A /* http.c in Sources */,
 				52F6E83713A74F220023F87A /* imap.c in Sources */,
 				52F6E83813A74F220023F87A /* ldap2.c in Sources */,
+				520587A318CF7235006296CB /* Makefile in Sources */,
 				52F6E83913A74F220023F87A /* ldap3.c in Sources */,
 				52F6E83A13A74F220023F87A /* lmtp.c in Sources */,
 				52F6E83B13A74F220023F87A /* memcache.c in Sources */,
