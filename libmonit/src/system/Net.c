@@ -137,3 +137,23 @@ size_t Net_write(int socket, const void *buffer, size_t size, time_t timeout) {
         }
 	return n;
 }
+
+
+int Net_close(int socket) {
+	int r = 0;
+        do {
+                r = close(socket);
+        } while (r == -1 && errno == EINTR);
+	return (r == 0);
+}
+
+
+int Net_abort(int socket) {
+   	int r;
+        struct linger linger = {1, 0};
+        setsockopt(socket, SOL_SOCKET, SO_LINGER, &linger, sizeof linger);
+        do {
+                r = close(socket);
+        } while (r == -1 && errno == EINTR);
+	return (r == 0);
+}
