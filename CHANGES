@@ -62,6 +62,10 @@ Fixed: https://bitbucket.org/tildeslash/monit/issue/7/enable-optimized-error-wit
 Fixed: Unix Socket test now use the communication type (TCP or UDP)
 specified in port statement. Previously TCP was always used.
 
+Fixed: Improved test to check if a socket was connected. Since we use
+non-blocking connect, we now poll a few ms to avoid "connection failed, 
+XXX is not ready for i|o" errors which could occur, especially on high 
+latency networks or long distance connect.
 
 Version 5.7
 

@@ -3346,6 +3346,7 @@ static void reset_portset() {
   portset.maxforward = 70;
   portset.operator = Operator_Less;
   portset.status = 400;
+  urlrequest = NULL;
 }
 
 

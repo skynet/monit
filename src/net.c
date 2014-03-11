@@ -235,17 +235,17 @@ int check_host(const char *hostname) {
 
 
 int check_socket(int socket) {
-        return (can_read(socket, 0) || can_write(socket, 0));
+        return (Net_canRead(socket, 500) || Net_canWrite(socket, 500)); // wait ms
 }
 
 
 int check_udp_socket(int socket) {
-        char buf[STRLEN] = {0};
+        char buf[STRLEN] = {};
         /* We have to send something and if the UDP server is down/unreachable
          *  the remote host should send an ICMP error. We then need to call read
          *  to get the ICMP error as a ECONNREFUSED errno. This test is asynchronous
          *  so we must wait, but we do not want to block to long either and it is
-         *  probably better to report a server falsely up than to block to long.
+         *  probably better to report a server falsely up than to block too long.
          */
         Net_write(socket, buf, 1, 0);
         if(sock_read(socket, buf, STRLEN, 2) < 0) {
