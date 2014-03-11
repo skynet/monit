@@ -17,7 +17,7 @@ speaks this TLS version. At this time, not many does. Example:
 if failed port 443 with type TCPSSL tlsv11 protocol http  then alert
 
 New: Process UID, EUID and GID tests. Allows to test if the
-process is running as given user. Example:
+process is running as a given user. Example:
     check process syslog with pidfile /var/run/rsyslogd.pid
         if failed uid  "syslog" then alert
         if failed euid "syslog" then alert
@@ -45,17 +45,14 @@ instead, like,
     if failed port 80 protocol http with content != "Nagios" then alert
 Remember also that the string to test can be a regular expression
 
-New: The HTTP protocol test allows to set custom status code
-condition using "status <operator> <number>" option.
+New: The HTTP protocol test now support testing the HTTP status code
+returned by the server by using "status <operator> <number>".
 Backward compatible defaults (return error if status >= 400):
-    if failed port 80
-        protocol http
-        status < 400
+    if failed port 80 protocol http
+        and status < 400
     then alert
-Return error if page DOES exist (for success 404 is expected):
-    if failed
-        port 80
-        protocol http
+Return error if a page DOES exist (for success 404 is expected):
+    if failed port 80 protocol http
         request "/non/existent.php"
         status = 404
     then alert
