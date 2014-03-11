@@ -395,7 +395,7 @@ int control_service(const char *S, int A) {
                                         return TRUE;
                                 }
                                 if (!s->start) {
-                                        LogError("%s: Start method not defined -- process %s\n", prog, S);
+                                        LogDebug("%s: Start method not defined -- process %s\n", prog, S);
                                         Util_monitorSet(s);
                                         return FALSE;
                                 }
@@ -407,7 +407,7 @@ int control_service(const char *S, int A) {
 
                 case ACTION_STOP:
                         if (s->type == TYPE_PROCESS && !s->stop) {
-                                LogError("%s: Stop method not defined -- process %s\n", prog, S);
+                                LogDebug("%s: Stop method not defined -- process %s\n", prog, S);
                                 Util_monitorUnset(s);
                                 return FALSE;
                         }
@@ -417,7 +417,7 @@ int control_service(const char *S, int A) {
 
                 case ACTION_RESTART:
                         if (! (s->type == TYPE_PROCESS && ((s->start && s->stop) || s->restart))) {
-                                LogError("%s: Start and stop or restart method not defined for process check '%s'\n", prog, S);
+                                LogDebug("%s: Start, stop or restart method not defined for process check '%s'\n", prog, S);
                                 Util_monitorSet(s);
                                 return FALSE;
                         }
