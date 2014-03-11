@@ -121,7 +121,7 @@ void monit_http(int action) {
     if(!running) break;
     LogInfo("Shutting down %s HTTP server\n", prog);
     stop_httpd();
-    if( (status= pthread_join(thread, NULL)) != 0) {
+    if( (status = pthread_join(thread, NULL)) != 0) {
       LogError("%s: Failed to stop the http server. Thread error -- %s.\n",
           prog, strerror(status));
     } else {
@@ -133,7 +133,7 @@ void monit_http(int action) {
   case START_HTTP:
     LogInfo("Starting %s HTTP server at [%s:%d]\n",
         prog, Run.bind_addr?Run.bind_addr:"*", Run.httpdport);
-    if( (status= pthread_create(&thread, NULL, thread_wrapper, NULL)) != 0) {
+    if( (status = pthread_create(&thread, NULL, thread_wrapper, NULL)) != 0) {
       LogError("%s: Failed to create the http server. Thread error -- %s.\n",
           prog, strerror(status));
     } else {

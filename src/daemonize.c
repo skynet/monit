@@ -91,7 +91,7 @@ void  daemonize() {
   /*
    * Become a session leader to lose our controlling terminal
    */
-  if((pid= fork ()) < 0) {
+  if((pid = fork ()) < 0) {
 
     LogError("Cannot fork of a new process\n");
     exit (1);
@@ -105,7 +105,7 @@ void  daemonize() {
 
   setsid();
 
-  if((pid= fork ()) < 0) {
+  if((pid = fork ()) < 0) {
 
     LogError("Cannot fork of a new process\n");
     exit (1);

@@ -39,7 +39,7 @@
 int check_pop(Socket_T socket) {
 
   char buf[STRLEN];
-  const char *ok= "+OK";
+  const char *ok = "+OK";
 
   ASSERT(socket);
 

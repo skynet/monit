@@ -38,7 +38,7 @@
  */
 int check_nntp(Socket_T socket) {
 
-  int status= 0;
+  int status = 0;
   char buf[STRLEN];
 
   ASSERT(socket);

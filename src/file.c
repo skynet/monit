@@ -92,20 +92,20 @@ void file_init() {
     } else {
       snprintf(pidfile, STRLEN, "%s/.%s", Run.Env.home, MYPIDFILE);
     }
-    Run.pidfile= Str_dup(pidfile);
+    Run.pidfile = Str_dup(pidfile);
   }
 
   /* Set the location of monit's id file */
   if(Run.idfile == NULL) {
     snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYIDFILE);
-    Run.idfile= Str_dup(buf);
+    Run.idfile = Str_dup(buf);
   }
   Util_monitId(Run.idfile);
 
   /* Set the location of monit's state file */
   if(Run.statefile == NULL) {
     snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYSTATEFILE);
-    Run.statefile= Str_dup(buf);
+    Run.statefile = Str_dup(buf);
   }
 
 }
@@ -168,7 +168,7 @@ time_t file_getTimestamp(char *object, mode_t type) {
  */
 char *file_findControlFile() {
 
-  char *rcfile= CALLOC(sizeof(char), STRLEN + 1);
+  char *rcfile = CALLOC(sizeof(char), STRLEN + 1);
 
   snprintf(rcfile, STRLEN, "%s/.%s", Run.Env.home, MONITRC);
   if(file_exist(rcfile)) {
@@ -205,13 +205,13 @@ char *file_findControlFile() {
  */
 int file_createPidFile(char *pidfile) {
 
-  FILE *F= NULL;
+  FILE *F = NULL;
 
   ASSERT(pidfile);
 
   umask(MYPIDMASK);
   unlink(pidfile);
-  if ((F= fopen(pidfile,"w")) == (FILE *)NULL) {
+  if ((F = fopen(pidfile,"w")) == (FILE *)NULL) {
     LogError("%s: Error opening pidfile '%s' for writing -- %s\n", prog, pidfile, STRERROR);
     return(FALSE);
   }
@@ -299,7 +299,7 @@ int file_exist(char *file) {
  */
 int file_checkStat(char *filename, char *description, int permmask) {
   struct stat buf;
-  errno= 0;
+  errno = 0;
 
   ASSERT(filename);
   ASSERT(description);

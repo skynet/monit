@@ -70,8 +70,8 @@
   } buffer_stack[MAX_STACK_DEPTH];
 
 
-  int lineno= 1;
-  int arglineno= 1;
+  int lineno = 1;
+  int arglineno = 1;
   char *currentfile=NULL;
   char *argcurrentfile=NULL;
   char *argyytext=NULL;
@@ -440,12 +440,12 @@ group[ \t]+       {
                   }
 
 {number}          {
-                    yylval.number= atoi(yytext);
+                    yylval.number = atoi(yytext);
                     save_arg(); return NUMBER;
                   }
 
 {real}            {
-                    yylval.real= atof(yytext);
+                    yylval.real = atof(yytext);
                     save_arg(); return REAL;
                   }
 
@@ -454,67 +454,67 @@ group[ \t]+       {
                   }
 
 [a-zA-Z0-9]{str}  {
-                    yylval.string= Str_dup(yytext);
+                    yylval.string = Str_dup(yytext);
                     save_arg(); return STRING;
                   }
 
 \"[/][^\"\n]*\"   {
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     save_arg(); return PATH;
                   }
 
 \'[/][^\'\n]*\'   {
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     save_arg(); return PATH;
                   }
 
 \"[^\"]*\"        {
                     steplinenobycr(yytext);
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     save_arg(); return STRING;
                   }
 
 \'[^\']*\'        {
                     steplinenobycr(yytext);
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     save_arg(); return STRING;
                   }
 
 {str}[@]{str}     {
-                    yylval.string= Str_dup(yytext);
+                    yylval.string = Str_dup(yytext);
                     save_arg(); return MAILADDR;
                   }
 
 [/]{str}          {
-                     yylval.string= Str_dup(yytext);
+                     yylval.string = Str_dup(yytext);
                      save_arg(); return PATH;
                   }
 
 "/"               {
-                     yylval.string= Str_dup(yytext);
+                     yylval.string = Str_dup(yytext);
                      save_arg(); return PATH;
                   }
 
 "from:"[ \t]*{str}[@]{str} {
-                      char *p= yytext+strlen("from:");
+                      char *p = yytext+strlen("from:");
                       yylval.string = Str_trim(Str_dup(p));
                       save_arg(); return MAILFROM;
                   }
 
 "reply-to:"[ \t]*{str}[@]{str} {
-                      char *p= yytext+strlen("reply-to:");
+                      char *p = yytext+strlen("reply-to:");
                       yylval.string = Str_trim(Str_dup(p));
                       save_arg(); return MAILREPLYTO;
                   }
 
 "subject:"[^}\n]* {
-                      char *p= yytext+strlen("subject:");
+                      char *p = yytext+strlen("subject:");
                       yylval.string = Str_trim(Str_dup(p));
                       save_arg(); return MAILSUBJECT;
                   }
 
 "message:"[^}]*   {
-                      char *p= yytext+strlen("message:");
+                      char *p = yytext+strlen("message:");
                       steplinenobycr(yytext);
                       yylval.string = Str_trim(Str_dup(p));
                       save_arg(); return MAILBODY;
@@ -538,19 +538,19 @@ group[ \t]+       {
                   }
 
   {str}           {
-                    yylval.string= Str_dup(yytext);
+                    yylval.string = Str_dup(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return SERVICENAME;
                   }
 
   \"{str}\"       {
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return SERVICENAME;
                   }
 
   \'{str}\'       {
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return SERVICENAME;
                   }
@@ -570,7 +570,7 @@ group[ \t]+       {
                   }
 
   {str}           {
-                    yylval.string= Str_dup(yytext);
+                    yylval.string = Str_dup(yytext);
                     save_arg(); return SERVICENAME;
                   }
 
@@ -596,7 +596,7 @@ group[ \t]+       {
 
   \'[^\']*\'      {
                       steplinenobycr(yytext);
-                      yylval.string= handle_quoted_string(yytext);
+                      yylval.string = handle_quoted_string(yytext);
                       save_arg(); return STRING;
                   }
 
@@ -605,7 +605,7 @@ group[ \t]+       {
                   }
 
   [^ \t\n\"]+     {
-                      yylval.string= Str_dup(yytext);
+                      yylval.string = Str_dup(yytext);
                       save_arg(); return STRING;
                   }
 
@@ -618,8 +618,8 @@ group[ \t]+       {
                       if(!yylval.url->hostname)
                         yyerror("missing hostname in URL");
                       if(!yylval.url->path)
-                        yylval.url->path= Str_dup("/");
-                      yylval.url->url= Str_cat("%s://%s:%d%s%s%s",
+                        yylval.url->path = Str_dup("/");
+                      yylval.url->url = Str_cat("%s://%s:%d%s%s%s",
                         yylval.url->protocol,
                         /* possible credentials are hidden */
                         yylval.url->hostname,
@@ -631,28 +631,28 @@ group[ \t]+       {
                   }
 
   [^:@ ]+/[:][^@: ]+[@] {
-                      yylval.url->user= Str_dup(yytext);
+                      yylval.url->user = Str_dup(yytext);
                   }
 
   [:][^@ ]+[@]    {
                       yytext++;
-                      yylval.url->password= Str_ndup(yytext, strlen(yytext)-1);
+                      yylval.url->password = Str_ndup(yytext, strlen(yytext)-1);
                   }
 
   [^/?:#\r\n ]+   {
-                      yylval.url->hostname= Str_dup(yytext);
+                      yylval.url->hostname = Str_dup(yytext);
                   }
 
   [:]{number}     {
-                      yylval.url->port= atoi(++yytext);
+                      yylval.url->port = atoi(++yytext);
                   }
 
   [/][^?#\r\n ]*  {
-                      yylval.url->path= Util_urlEncode(yytext);
+                      yylval.url->path = Util_urlEncode(yytext);
                   }
 
   [?][^#\r\n ]*   {
-                      yylval.url->query= Util_urlEncode(++yytext);
+                      yylval.url->query = Util_urlEncode(++yytext);
                   }
 
   [#][^\r\n ]*    {
@@ -664,19 +664,19 @@ group[ \t]+       {
 <STRING_COND>{
 
   {str}           {
-                    yylval.string= Str_dup(yytext);
+                    yylval.string = Str_dup(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return STRINGNAME;
                   }
 
   \"{str}\"       {
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return STRINGNAME;
                   }
 
   \'{str}\'       {
-                    yylval.string= handle_quoted_string(yytext);
+                    yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return STRINGNAME;
                   }
@@ -692,13 +692,13 @@ group[ \t]+       {
   {ws}            ;
 
   {number}        {
-                    yylval.number= atoi(yytext);
+                    yylval.number = atoi(yytext);
                     BEGIN(INITIAL);
                     save_arg(); return NUMBER;
                   }
 
   ['"]{ws}?[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}?['"] { // A minimal syntax check of the cron format string; 5 fields separated with white-space
-                    yylval.string= Str_dup(Str_unquote(yytext));
+                    yylval.string = Str_dup(Str_unquote(yytext));
                     BEGIN(INITIAL);
                     save_arg(); return TIMESPEC;
                   }
@@ -762,7 +762,7 @@ group[ \t]+       {
 
 static void steplinenobycr(char *string) {
 
-  char *pos= string;
+  char *pos = string;
 
   while(*pos)
     if('\n'==*pos++) {
@@ -773,7 +773,7 @@ static void steplinenobycr(char *string) {
 
 
 static char *handle_quoted_string(char *string) {
-  char *buf= Str_dup(string);
+  char *buf = Str_dup(string);
   Str_unquote(buf);
   Util_handleEscapes(buf);
   return buf;
@@ -866,13 +866,13 @@ static URL_T create_URL(char *proto) {
   URL_T url;
   ASSERT(proto);
   NEW(url);
-  url->protocol= proto;
+  url->protocol = proto;
   if(IS(url->protocol, "https")) {
-    url->port= 443;
+    url->port = 443;
     if(!have_ssl())
       yyerror("HTTPS protocol not supported -- SSL support disabled" );
   } else if(IS(url->protocol, "http")) {
-    url->port= 80;
+    url->port = 80;
   } else {
     yyerror("URL protocol not supported -- ");
   }

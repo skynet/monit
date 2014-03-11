@@ -74,14 +74,14 @@ int check_sip(Socket_T socket) {
   Port_T P;
   const char *request;
   const char *myip;
-  char *rport= "";
+  char *rport = "";
   char *proto;
 
   ASSERT(socket);
 
-  P= socket_get_Port(socket);
+  P = socket_get_Port(socket);
   ASSERT(P);
-  request= P->request?P->request:"monit@foo.bar";
+  request = P->request?P->request:"monit@foo.bar";
 
   port = socket_get_local_port(socket);
   proto = socket_is_secure(socket) ? "sips" : "sip";
@@ -105,7 +105,7 @@ int check_sip(Socket_T socket) {
     }
   }
 
-  myip= socket_get_local_host(socket);
+  myip = socket_get_local_host(socket);
 
   if(socket_print(socket,
     "OPTIONS %s:%s SIP/2.0\r\n"

@@ -235,7 +235,7 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
 #define TRY do { \
 	volatile int Exception_flag; \
         Exception_Frame Exception_frame; \
-        Exception_frame.message[0]= 0; \
+        Exception_frame.message[0] = 0; \
         Exception_frame.prev = TD_get(Exception_stack); \
         TD_set(Exception_stack, &Exception_frame); \
         Exception_flag = setjmp(Exception_frame.env); \

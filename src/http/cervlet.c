@@ -246,12 +246,12 @@ static void doGet(HttpRequest req, HttpResponse res) {
 static void is_monit_running(HttpRequest req, HttpResponse res) {
 
         int status;
-        int monit= exist_daemon();
+        int monit = exist_daemon();
 
         if(monit) {
-                status= SC_OK;
+                status = SC_OK;
         } else {
-                status= SC_GONE;
+                status = SC_GONE;
         }
 
         set_status(res, status);
@@ -350,7 +350,7 @@ static void do_foot(HttpResponse res) {
 
 
 static void do_home(HttpRequest req, HttpResponse res) {
-        char *uptime= Util_getUptime(Util_getProcessUptime(Run.pidfile), "&nbsp;");
+        char *uptime = Util_getUptime(Util_getProcessUptime(Run.pidfile), "&nbsp;");
 
         do_head(res, "", "", Run.polltime);
         StringBuffer_append(res->outputbuffer,
@@ -415,7 +415,7 @@ static void do_getid(HttpRequest req, HttpResponse res) {
 
 static void do_runtime(HttpRequest req, HttpResponse res) {
 
-        int pid=  exist_daemon();
+        int pid =  exist_daemon();
 
         do_head(res, "_runtime", "Runtime", 1000);
         StringBuffer_append(res->outputbuffer,
@@ -463,7 +463,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
         if(Run.mmonits) {
                 Mmonit_T c;
                 StringBuffer_append(res->outputbuffer, "<tr><td>M/Monit server(s)</td><td>");
-                for(c= Run.mmonits; c; c= c->next)
+                for(c = Run.mmonits; c; c = c->next)
                 {
                         StringBuffer_append(res->outputbuffer,
                                   "%s with timeout %d seconds%s%s%s%s</td></tr>%s",
@@ -481,7 +481,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
         if(Run.mailservers) {
                 MailServer_T mta;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Mail server(s)</td><td>");
-                for(mta= Run.mailservers; mta; mta= mta->next)
+                for(mta = Run.mailservers; mta; mta = mta->next)
                         StringBuffer_append(res->outputbuffer, "%s:%d%s&nbsp;",
                                   mta->host, mta->port, mta->ssl.use_ssl?"(ssl)":"");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -587,7 +587,7 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
 
                 if(!stat(Run.logfile, &sb)) {
 
-                        FILE *f= fopen(Run.logfile, "r");
+                        FILE *f = fopen(Run.logfile, "r");
                         if(f) {
 #define BUFSIZE 512
                                 size_t n;
@@ -684,7 +684,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                         return;
                 }
 
-                for(p= req->params; p; p= p->next) {
+                for(p = req->params; p; p = p->next) {
 
                         if(!strcasecmp(p->name, "service")) {
                                 s  = Util_getService(p->value);
@@ -722,7 +722,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
 
 static void handle_run(HttpRequest req, HttpResponse res) {
 
-        const char *action= get_parameter(req, "action");
+        const char *action = get_parameter(req, "action");
 
         if(action) {
                 if(is_readonly(req)) {
@@ -793,7 +793,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>Monitoring status</td><td>%s</td></tr>", get_monitoring_status(s, buf, sizeof(buf)));
 
-        for(d= s->dependantlist; d; d= d->next) {
+        for(d = s->dependantlist; d; d = d->next) {
                 if(d->dependant != NULL) {
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Depends on service </td><td> <a href=%s> %s </a></td></tr>",
@@ -802,7 +802,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         }
 
         if(s->start) {
-                int i= 0;
+                int i = 0;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Start program</td><td>'");
                 while(s->start->arg[i]) {
                         if(i) StringBuffer_append(res->outputbuffer, " ");
@@ -818,7 +818,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         }
 
         if(s->stop) {
-                int i= 0;
+                int i = 0;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Stop program</td><td>'");
                 while(s->stop->arg[i]) {
                         if(i) StringBuffer_append(res->outputbuffer, " ");
@@ -833,7 +833,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
         if(s->restart) {
-                int i= 0;
+                int i = 0;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Restart program</td><td>'");
                 while(s->restart->arg[i]) {
                         if(i) StringBuffer_append(res->outputbuffer, " ");
@@ -969,10 +969,10 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
 
         Service_T      s;
         char           buf[STRLEN];
-        int            on= TRUE;
-        int            header= TRUE;
+        int            on = TRUE;
+        int            header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_PROCESS) continue;
 
@@ -994,7 +994,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer, "</tr>");
 
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1018,7 +1018,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
 
                 } else {
 
-                        char *uptime= Util_getUptime(s->inf->priv.process.uptime, "&nbsp;");
+                        char *uptime = Util_getUptime(s->inf->priv.process.uptime, "&nbsp;");
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>%s</td>", uptime);
                         FREE(uptime);
@@ -1038,7 +1038,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1052,10 +1052,10 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
 
         Service_T      s;
         char           buf[STRLEN];
-        int            on= TRUE;
-        int            header= TRUE;
+        int            on = TRUE;
+        int            header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_PROGRAM) continue;
 
@@ -1071,7 +1071,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
 
                         StringBuffer_append(res->outputbuffer, "</tr>");
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1098,7 +1098,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1111,10 +1111,10 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
 static void do_home_filesystem(HttpRequest req, HttpResponse res) {
         Service_T     s;
         char          buf[STRLEN];
-        int           on= TRUE;
-        int           header= TRUE;
+        int           on = TRUE;
+        int           header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_FILESYSTEM) continue;
 
@@ -1129,7 +1129,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
                                   "<th align='right'>Inodes usage</th>"
                                   "</tr>");
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1171,7 +1171,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1185,10 +1185,10 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
 
         Service_T  s;
         char       buf[STRLEN];
-        int        on= TRUE;
-        int        header= TRUE;
+        int        on = TRUE;
+        int        header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_FILE) continue;
 
@@ -1205,7 +1205,7 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
                                   "<th align='right'>GID</th>"
                                   "</tr>");
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1240,7 +1240,7 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1254,10 +1254,10 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
 
         Service_T  s;
         char       buf[STRLEN];
-        int        on= TRUE;
-        int        header= TRUE;
+        int        on = TRUE;
+        int        header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_FIFO) continue;
 
@@ -1273,7 +1273,7 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
                                   "<th align='right'>GID</th>"
                                   "</tr>");
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1305,7 +1305,7 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1319,10 +1319,10 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
 
         Service_T        s;
         char             buf[STRLEN];
-        int              on= TRUE;
-        int              header= TRUE;
+        int              on = TRUE;
+        int              header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_DIRECTORY) continue;
 
@@ -1338,7 +1338,7 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
                                   "<th align='right'>GID</th>"
                                   "</tr>");
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1370,7 +1370,7 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1386,10 +1386,10 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
         Icmp_T     icmp;
         Port_T     port;
         char       buf[STRLEN];
-        int        on= TRUE;
-        int        header= TRUE;
+        int        on = TRUE;
+        int        header = TRUE;
 
-        for(s= servicelist_conf; s; s= s->next_conf) {
+        for(s = servicelist_conf; s; s = s->next_conf) {
 
                 if(s->type != TYPE_HOST) continue;
 
@@ -1403,7 +1403,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                                   "<th align='right'>Protocol(s)</th>"
                                   "</tr>");
 
-                        header= FALSE;
+                        header = FALSE;
 
                 }
 
@@ -1425,7 +1425,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                                   "<td align='right'>");
 
                         if(s->icmplist) {
-                                for(icmp= s->icmplist; icmp; icmp= icmp->next) {
+                                for(icmp = s->icmplist; icmp; icmp = icmp->next) {
                                         if(icmp != s->icmplist)
                                                 StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
                                         StringBuffer_append(res->outputbuffer, "<span class='%s'>[ICMP %s]</span>",
@@ -1438,7 +1438,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                                 StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
 
                         if(s->portlist) {
-                                for(port= s->portlist; port; port= port->next) {
+                                for(port = s->portlist; port; port = port->next) {
                                         if(port != s->portlist)
                                                 StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
                                         StringBuffer_append(res->outputbuffer, "<span class='%s'>[%s] at port %d</span>",
@@ -1453,7 +1453,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer, "</tr>");
 
-                on= on?FALSE:TRUE;
+                on = on?FALSE:TRUE;
 
         }
 
@@ -1470,7 +1470,7 @@ static void print_alerts(HttpResponse res, Mail_T s) {
 
         Mail_T r;
 
-        for(r= s; r; r= r->next) {
+        for(r = s; r; r = r->next) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr class='stripe'><td>Alert mail to</td>"
                           "<td>%s</td></tr>", r->to?r->to:"");
@@ -1584,8 +1584,8 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
                 char buf[STRLEN];
                 Port_T        p;
                 EventAction_T a;
-                for(p= s->portlist; p; p= p->next) {
-                        a= p->action;
+                for(p = s->portlist; p; p = p->next) {
+                        a = p->action;
                         if(p->family == AF_INET) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Port</td><td>If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)] %s ", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry > 1 ? p->retry : 0, Util_getEventratio(a->failed, buf, sizeof(buf)));
                                 StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1611,8 +1611,8 @@ static void print_service_rules_icmp(HttpResponse res, Service_T s) {
                 char buf[STRLEN];
                 Icmp_T        i;
                 EventAction_T a;
-                for(i= s->icmplist; i; i= i->next) {
-                        a= i->action;
+                for(i = s->icmplist; i; i = i->next) {
+                        a = i->action;
                         StringBuffer_append(res->outputbuffer, "<tr><td>ICMP</td><td>If failed [%s count %d with timeout %d seconds] %s ", icmpnames[i->type], i->count, i->timeout, Util_getEventratio(a->failed, buf, sizeof(buf)));
                         StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                         StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
@@ -1625,7 +1625,7 @@ static void print_service_rules_icmp(HttpResponse res, Service_T s) {
 static void print_service_rules_perm(HttpResponse res, Service_T s) {
         if(s->perm) {
                 char buf[STRLEN];
-                EventAction_T a= s->perm->action;
+                EventAction_T a = s->perm->action;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Associated permission</td><td>If failed %o %s ", s->perm->perm, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
@@ -1637,7 +1637,7 @@ static void print_service_rules_perm(HttpResponse res, Service_T s) {
 static void print_service_rules_uid(HttpResponse res, Service_T s) {
         if(s->uid) {
                 char buf[STRLEN];
-                EventAction_T a= s->uid->action;
+                EventAction_T a = s->uid->action;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Associated UID</td><td>If failed %d %s ", (int)s->uid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
@@ -1649,7 +1649,7 @@ static void print_service_rules_uid(HttpResponse res, Service_T s) {
 static void print_service_rules_euid(HttpResponse res, Service_T s) {
         if(s->euid) {
                 char buf[STRLEN];
-                EventAction_T a= s->euid->action;
+                EventAction_T a = s->euid->action;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Associated EUID</td><td>If failed %d %s ", (int)s->euid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
@@ -1661,7 +1661,7 @@ static void print_service_rules_euid(HttpResponse res, Service_T s) {
 static void print_service_rules_gid(HttpResponse res, Service_T s) {
         if(s->gid) {
                 char buf[STRLEN];
-                EventAction_T a= s->gid->action;
+                EventAction_T a = s->gid->action;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Associated GID</td><td>If failed %d %s ", (int)s->gid->gid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
@@ -1675,8 +1675,8 @@ static void print_service_rules_timestamp(HttpResponse res, Service_T s) {
                 char buf[STRLEN];
                 Timestamp_T   t;
                 EventAction_T a;
-                for(t= s->timestamplist; t; t= t->next) {
-                        a= t->action;
+                for(t = s->timestamplist; t; t = t->next) {
+                        a = t->action;
                         StringBuffer_append(res->outputbuffer, "<tr><td>Associated timestamp</td><td>");
                         if(t->test_changes) {
                                 StringBuffer_append(res->outputbuffer, "If changed %s ", Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1705,9 +1705,9 @@ static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
                 Filesystem_T  dl;
                 EventAction_T a;
 
-                for(dl= s->filesystemlist; dl; dl= dl->next) {
+                for(dl = s->filesystemlist; dl; dl = dl->next) {
 
-                        a= dl->action;
+                        a = dl->action;
 
                         if(dl->resource == RESOURCE_ID_INODE) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Inodes usage limit</td><td>");
@@ -1749,8 +1749,8 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
                 Size_T        sl;
                 EventAction_T a;
 
-                for(sl= s->sizelist; sl; sl= sl->next) {
-                        a= sl->action;
+                for(sl = s->sizelist; sl; sl = sl->next) {
+                        a = sl->action;
                         StringBuffer_append(res->outputbuffer, "<tr><td>Associated size</td><td>");
                         if(sl->test_changes) {
                                 StringBuffer_append(res->outputbuffer, "If changed %s ", Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1772,8 +1772,8 @@ static void print_service_rules_uptime(HttpResponse res, Service_T s) {
                 Uptime_T      ul;
                 EventAction_T a;
 
-                for(ul= s->uptimelist; ul; ul= ul->next) {
-                        a= ul->action;
+                for(ul = s->uptimelist; ul; ul = ul->next) {
+                        a = ul->action;
                         StringBuffer_append(res->outputbuffer, "<tr><td>Associated uptime</td><td>");
                         StringBuffer_append(res->outputbuffer, "If %s %llu second(s) %s ", operatornames[ul->operator], ul->uptime, Util_getEventratio(a->failed, buf, sizeof(buf)));
                         StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1806,8 +1806,8 @@ static void print_service_rules_match(HttpResponse res, Service_T s) {
 static void print_service_rules_checksum(HttpResponse res, Service_T s) {
         if(s->checksum) {
                 char buf[STRLEN];
-                Checksum_T     cs= s->checksum;
-                EventAction_T  a= cs->action;
+                Checksum_T     cs = s->checksum;
+                EventAction_T  a = cs->action;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Associated regex</td><td>");
                 if(cs->test_changes) {
                         StringBuffer_append(res->outputbuffer, "If changed %s %s ", checksumnames[cs->type], Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1855,8 +1855,8 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
                 Resource_T    q;
                 EventAction_T a;
 
-                for (q= s->resourcelist; q; q= q->next) {
-                        a= q->action;
+                for (q = s->resourcelist; q; q = q->next) {
+                        a = q->action;
                         StringBuffer_append(res->outputbuffer, "<tr><td>");
                         switch (q->resource_id) {
                                 case RESOURCE_ID_CPU_PERCENT:
@@ -1976,7 +1976,7 @@ static void print_service_params_port(HttpResponse res, Service_T s) {
 
                 if(!Util_hasServiceStatus(s)) {
 
-                        for(p= s->portlist; p; p= p->next)
+                        for(p = s->portlist; p; p = p->next)
                                 if(p->family == AF_INET) {
                                         StringBuffer_append(res->outputbuffer, "<tr><td>Port Response time</td><td>-</td></tr>");
                                 } else if(p->family == AF_UNIX) {
@@ -1985,7 +1985,7 @@ static void print_service_params_port(HttpResponse res, Service_T s) {
 
                 } else {
 
-                        for(p= s->portlist; p; p= p->next) {
+                        for(p = s->portlist; p; p = p->next) {
                                 if(p->family == AF_INET) {
                                         if(!p->is_available) {
                                                 StringBuffer_append(res->outputbuffer,
@@ -2029,12 +2029,12 @@ static void print_service_params_icmp(HttpResponse res, Service_T s) {
 
                 if(!Util_hasServiceStatus(s)) {
 
-                        for(i= s->icmplist; i; i= i->next)
+                        for(i = s->icmplist; i; i = i->next)
                                 StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td>-</td></tr>");
 
                 } else {
 
-                        for(i= s->icmplist; i; i= i->next) {
+                        for(i = s->icmplist; i; i = i->next) {
                                 if(!i->is_available) {
                                         StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td class='red-text'>connection failed [%s]</td></tr>", icmpnames[i->type]);
                                 } else {
@@ -2288,7 +2288,7 @@ static void print_service_params_process(HttpResponse res, Service_T s) {
                                   "<tr><td>GID</td><td>%d</td></tr>",
                                   s->inf->priv.process.gid);
 
-                        uptime= Util_getUptime(s->inf->priv.process.uptime, "&nbsp;");
+                        uptime = Util_getUptime(s->inf->priv.process.uptime, "&nbsp;");
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Process uptime</td><td>%s</td></tr>",
                                   uptime);
@@ -2441,7 +2441,7 @@ static void print_status(HttpRequest req, HttpResponse res, int version)
                 StringBuffer_append(res->outputbuffer, "The Monit daemon %s uptime: %s\n\n", VERSION, uptime);
                 FREE(uptime);
 
-                for(s= servicelist_conf; s; s= s->next_conf)
+                for(s = servicelist_conf; s; s = s->next_conf)
                 {
                         status_service_txt(s, res, level);
                 }
@@ -2534,7 +2534,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 }
                         }
                         if(s->type == TYPE_PROCESS) {
-                                char *uptime= Util_getUptime(s->inf->priv.process.uptime, " ");
+                                char *uptime = Util_getUptime(s->inf->priv.process.uptime, " ");
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %d\n"
                                           "  %-33s %d\n"
@@ -2569,7 +2569,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         if(s->type == TYPE_HOST && s->icmplist) {
                                 Icmp_T i;
-                                for(i= s->icmplist; i; i= i->next) {
+                                for(i = s->icmplist; i; i = i->next) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %.3fs [%s]\n",
                                                   "icmp response time", i->is_available ? i->response : 0.,
@@ -2578,7 +2578,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         if((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
                                 Port_T p;
-                                for(p= s->portlist; p; p= p->next) {
+                                for(p = s->portlist; p; p = p->next) {
                                         if(p->family == AF_INET) {
                                                 StringBuffer_append(res->outputbuffer,
                                                           "  %-33s %.3fs to %s:%d%s [%s via %s]\n",

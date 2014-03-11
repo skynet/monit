@@ -94,14 +94,14 @@
 /* ------------------------------------------------------------- Definitions */
 
 
-static FILE *LOG= NULL;
+static FILE *LOG = NULL;
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 static struct mylogpriority {
   int  priority;
   char *description;
-} logPriority[]= {
+} logPriority[] = {
   {LOG_EMERG,   "emergency"},
     {LOG_ALERT,   "alert"},
     {LOG_CRIT,    "critical"},
@@ -316,7 +316,7 @@ void log_close() {
     LogError("%s: Error closing the log file -- %s\n",        prog, STRERROR);
   }
 
-  LOG= NULL;
+  LOG = NULL;
 
 }
 
@@ -345,7 +345,7 @@ static int open_log() {
     openlog(prog, LOG_PID, Run.facility);
   } else {
     umask(LOGMASK);
-    if ((LOG= fopen(Run.logfile,"a+")) == (FILE *)NULL) {
+    if ((LOG = fopen(Run.logfile,"a+")) == (FILE *)NULL) {
       LogError("%s: Error opening the log file '%s' for writing -- %s\n", prog, Run.logfile, STRERROR);
       return(FALSE);
     }
@@ -382,7 +382,7 @@ static char *timefmt(char *t, int size) {
  */
 static const char *logPriorityDescription(int p) {
 
-  struct mylogpriority *lp= logPriority;
+  struct mylogpriority *lp = logPriority;
 
   while ((*lp).description)
   {

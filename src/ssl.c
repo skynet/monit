@@ -98,6 +98,9 @@
 #include "net.h"
 #include "ssl.h"
 
+// libmonit
+#include "system/Net.h"
+
 
 /* -------------------------------------------------------------- Prototypes */
 
@@ -190,7 +193,7 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
                 goto sslerror;
         }
 
-        set_noblock(ssl->socket);
+        Net_setNonBlocking(ssl->socket);
 
         if ((ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE)) == NULL) {
                 LogError("%s: Cannot generate IO buffer -- %s\n", prog, SSLERROR);
@@ -265,7 +268,7 @@ int close_ssl_socket(ssl_connection *ssl) {
                 rv = SSL_shutdown(ssl->handler);
         }
 
-        close_socket(ssl->socket);
+        Net_close(ssl->socket);
         cleanup_ssl_socket(ssl);
 
         return (rv > 0) ? TRUE : FALSE;
@@ -392,7 +395,7 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
         ssl->socket = 0;
         ssl->next = NULL;
         ssl->accepted = FALSE;
-        ssl->cert_md5= NULL;
+        ssl->cert_md5 = NULL;
         ssl->cert_md5_len = 0;
         ssl->clientpemfile = NULL;
 
@@ -427,7 +430,7 @@ void close_accepted_ssl_socket(ssl_server_connection *ssl_server, ssl_connection
         if (!ssl || !ssl_server)
                 return;
 
-        close_socket(ssl->socket);
+        Net_close(ssl->socket);
 
         LOCK(ssl_mutex);
 
@@ -469,7 +472,7 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
                 return FALSE;
         }
 
-        set_noblock(ssl->socket);
+        Net_setNonBlocking(ssl->socket);
 
         if (!(ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE))) {
                 LogError("%s: Cannot generate IO buffer -- %s\n", prog, SSLERROR);
@@ -928,7 +931,7 @@ static int update_ssl_cert_data(ssl_connection *ssl) {
                 ssl->cert_issuer = X509_NAME_oneline (X509_get_issuer_name(ssl->cert), 0, 0);
                 ssl->cert_subject = X509_NAME_oneline (X509_get_subject_name(ssl->cert), 0, 0);
                 X509_digest(ssl->cert, EVP_md5(), md5, &ssl->cert_md5_len);
-                ssl->cert_md5= (unsigned char *)Str_dup((char *)md5);
+                ssl->cert_md5 = (unsigned char *)Str_dup((char *)md5);
 #ifdef OPENSSL_FIPS
         }
 #endif

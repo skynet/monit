@@ -160,8 +160,8 @@ void *http_processor(Socket_T s) {
  * @param doPostFunc doPost function
  */
 void add_Impl(void(*doGet)(HttpRequest, HttpResponse), void(*doPost)(HttpRequest, HttpResponse)) {
-  Impl.doGet= doGet;
-  Impl.doPost= doPost;
+  Impl.doGet = doGet;
+  Impl.doPost = doPost;
 }
 
 
@@ -173,7 +173,7 @@ void add_Impl(void(*doGet)(HttpRequest, HttpResponse), void(*doPost)(HttpRequest
  */
 void send_error(HttpResponse res, int code, const char *msg) {
   char server[STRLEN];
-  const char *err= get_status_string(code);
+  const char *err = get_status_string(code);
 
   reset_response(res);
   set_content_type(res, "text/html");
@@ -199,27 +199,27 @@ void send_error(HttpResponse res, int code, const char *msg) {
  * @param value Header key value
  */
 void set_header(HttpResponse res, const char *name, const char *value) {
-  HttpHeader h= NULL;
+  HttpHeader h = NULL;
 
   ASSERT(res);
   ASSERT(name);
 
   NEW(h);
-  h->name= Str_dup(name);
-  h->value= Str_dup(value);
+  h->name = Str_dup(name);
+  h->value = Str_dup(value);
   if(res->headers) {
     HttpHeader n, p;
-    for( n= p= res->headers; p; n= p, p= p->next) {
+    for( n = p = res->headers; p; n = p, p = p->next) {
       if(!strcasecmp(p->name, name)) {
         FREE(p->value);
-        p->value= Str_dup(value);
+        p->value = Str_dup(value);
         destroy_entry(h);
         return;
       }
     }
-    n->next= h;
+    n->next = h;
   } else {
-    res->headers= h;
+    res->headers = h;
   }
 }
 
@@ -231,8 +231,8 @@ void set_header(HttpResponse res, const char *name, const char *value) {
  * @param msg The status code string message
  */
 void set_status(HttpResponse res, int code) {
-  res->status= code;
-  res->status_msg= get_status_string(code);
+  res->status = code;
+  res->status_msg = get_status_string(code);
 }
 
 
@@ -255,7 +255,7 @@ void set_content_type(HttpResponse res, const char *mime) {
 const char *get_header(HttpRequest req, const char *name) {
   HttpHeader p;
 
-  for(p= req->headers; p; p= p->next) {
+  for(p = req->headers; p; p = p->next) {
     if(!strcasecmp(p->name, name)) {
       return (p->value);
     }
@@ -273,7 +273,7 @@ const char *get_header(HttpRequest req, const char *name) {
 const char *get_parameter(HttpRequest req, const char *name) {
   HttpParameter p;
 
-  for(p= req->params; p; p= p->next) {
+  for(p = req->params; p; p = p->next) {
     if(!strcasecmp(p->name, name)) {
       return (p->value);
     }
@@ -292,10 +292,10 @@ const char *get_parameter(HttpRequest req, const char *name) {
 char *get_headers(HttpResponse res) {
   HttpHeader p;
   char buf[RES_STRLEN];
-  char *b= buf;
+  char *b = buf;
 
   *buf=0;
-  for(p= res->headers; (((b-buf) + STRLEN) < RES_STRLEN) && p; p= p->next) {
+  for(p = res->headers; (((b-buf) + STRLEN) < RES_STRLEN) && p; p = p->next) {
     b+= snprintf(b, STRLEN,"%s: %s\r\n", p->name, p->value);
   }
   return buf[0]?Str_dup(buf):NULL;
@@ -404,8 +404,8 @@ const char *get_status_string(int status) {
  * them to the doXXX methods defined in a cervlet module.
  */
 static void do_service(Socket_T s) {
-  volatile HttpResponse res= create_HttpResponse(s);
-  volatile HttpRequest req= create_HttpRequest(s);
+  volatile HttpResponse res = create_HttpResponse(s);
+  volatile HttpRequest req = create_HttpRequest(s);
 
   if(res && req) {
     if(is_authenticated(req, res)) {
@@ -431,7 +431,7 @@ static char *get_date(char *result, int size) {
 
   time(&now);
   if(strftime(result, size, DATEFMT, gmtime(&now)) <= 0) {
-    *result= 0;
+    *result = 0;
   }
   return result;
 }
@@ -451,15 +451,15 @@ static char *get_server(char *result, int size) {
  * commited, this function does nothing.
  */
 static void send_response(HttpResponse res) {
-  Socket_T S= res->S;
+  Socket_T S = res->S;
 
   if(!res->is_committed) {
     char date[STRLEN];
     char server[STRLEN];
-    char *headers= get_headers(res);
+    char *headers = get_headers(res);
     int length = StringBuffer_length(res->outputbuffer);
 
-    res->is_committed= TRUE;
+    res->is_committed = TRUE;
     get_date(date, STRLEN);
     get_server(server, STRLEN);
     socket_print(S, "%s %d %s\r\n", res->protocol, res->status,
@@ -485,7 +485,7 @@ static void send_response(HttpResponse res) {
  * Returns a new HttpRequest object wrapping the client request
  */
 static HttpRequest create_HttpRequest(Socket_T S) {
-  HttpRequest req= NULL;
+  HttpRequest req = NULL;
   char url[REQ_STRLEN];
   char line[REQ_STRLEN];
   char protocol[STRLEN];
@@ -505,11 +505,11 @@ static HttpRequest create_HttpRequest(Socket_T S) {
     return NULL;
   }
   NEW(req);
-  req->S= S;
+  req->S = S;
   Util_urlDecode(url);
-  req->url= Str_dup(url);
-  req->method= Str_dup(method);
-  req->protocol= Str_dup(protocol);
+  req->url = Str_dup(url);
+  req->method = Str_dup(method);
+  req->protocol = Str_dup(protocol);
   create_headers(req);
   if(!create_parameters(req)) {
     destroy_HttpRequest(req);
@@ -525,15 +525,15 @@ static HttpRequest create_HttpRequest(Socket_T S) {
  * the set_XXX methods to change the object.
  */
 static HttpResponse create_HttpResponse(Socket_T S) {
-  HttpResponse res= NULL;
+  HttpResponse res = NULL;
 
   NEW(res);
-  res->S= S;
-  res->status= SC_OK;
-  res->outputbuffer= StringBuffer_create(256);
-  res->is_committed= FALSE;
-  res->protocol= SERVER_PROTOCOL;
-  res->status_msg= get_status_string(SC_OK);
+  res->S = S;
+  res->status = SC_OK;
+  res->outputbuffer = StringBuffer_create(256);
+  res->is_committed = FALSE;
+  res->protocol = SERVER_PROTOCOL;
+  res->status_msg = get_status_string(SC_OK);
   return res;
 }
 
@@ -544,25 +544,25 @@ static HttpResponse create_HttpResponse(Socket_T S) {
 static void create_headers(HttpRequest req) {
   Socket_T S;
   char *value;
-  HttpHeader header= NULL;
+  HttpHeader header = NULL;
   char line[REQ_STRLEN];
 
-  S= req->S;
+  S = req->S;
   while(1) {
     if(! socket_readln(S, line, sizeof(line)))
         break;
     if(!strcasecmp(line, "\r\n") || !strcasecmp(line, "\n"))
         break;
-    if(NULL != (value= strchr(line, ':'))) {
+    if(NULL != (value = strchr(line, ':'))) {
       NEW(header);
       *value++= 0;
       Str_trim(line);
       Str_trim(value);
       Str_chomp(value);
-      header->name= Str_dup(line);
-      header->value= Str_dup(value);
-      header->next= req->headers;
-      req->headers= header;
+      header->name = Str_dup(line);
+      header->value = Str_dup(value);
+      header->next = req->headers;
+      req->headers = header;
     }
   }
 }
@@ -573,7 +573,7 @@ static void create_headers(HttpRequest req) {
  * occurs.
  */
 static int create_parameters(HttpRequest req) {
-  char query_string[REQ_STRLEN]= {0};
+  char query_string[REQ_STRLEN] = {0};
 
   if(IS(req->method, METHOD_POST) && get_header(req, "Content-Length")) {
     int n;
@@ -587,13 +587,13 @@ static int create_parameters(HttpRequest req) {
       return FALSE;
     if(len==0)
       return TRUE;
-    if(((n= socket_read(S, query_string, len)) <= 0) || (n != len)) {
+    if(((n = socket_read(S, query_string, len)) <= 0) || (n != len)) {
       return FALSE;
     }
-    query_string[n]= 0;
+    query_string[n] = 0;
   } else if(IS(req->method, METHOD_GET)) {
     char *p;
-    if(NULL != (p= strchr(req->url, '?'))) {
+    if(NULL != (p = strchr(req->url, '?'))) {
       *p++= 0;
       strncpy(query_string, p, sizeof(query_string) - 1);
       query_string[sizeof(query_string) - 1] = 0;
@@ -601,11 +601,11 @@ static int create_parameters(HttpRequest req) {
   }
   if(*query_string) {
     char *p;
-    if(NULL != (p= strchr(query_string, '/'))) {
+    if(NULL != (p = strchr(query_string, '/'))) {
       *p++= 0;
-      req->pathinfo= Str_dup(p);
+      req->pathinfo = Str_dup(p);
     }
-    req->params= parse_parameters(query_string);
+    req->params = parse_parameters(query_string);
   }
   return TRUE;
 }
@@ -620,7 +620,7 @@ static int create_parameters(HttpRequest req) {
 static void reset_response(HttpResponse res) {
   if(res->headers) {
     destroy_entry(res->headers);
-    res->headers= NULL; /* Release Pragma */
+    res->headers = NULL; /* Release Pragma */
   }
   StringBuffer_clear(res->outputbuffer);
 }
@@ -672,7 +672,7 @@ static void destroy_HttpResponse(HttpResponse res) {
  * HttpParameter are of this type.
  */
 static void destroy_entry(void *p) {
-  struct entry *h= p;
+  struct entry *h = p;
 
   if(h->next) {
     destroy_entry(h->next);
@@ -714,18 +714,18 @@ static int basic_authenticate(HttpRequest req) {
   char *password;
   char buf[STRLEN];
   char uname[STRLEN];
-  const char *credentials= get_header(req, "Authorization");
+  const char *credentials = get_header(req, "Authorization");
 
   if(! (credentials && Str_startsWith(credentials, "Basic "))) {
     return FALSE;
   }
   strncpy(buf, &credentials[6], sizeof(buf) - 1);
   buf[sizeof(buf) - 1] = 0;
-  if((n= decode_base64((unsigned char*)uname, buf))<=0) {
+  if((n = decode_base64((unsigned char*)uname, buf))<=0) {
     return FALSE;
   }
-  uname[n]= 0;
-  password= strchr(uname, ':');
+  uname[n] = 0;
+  password = strchr(uname, ':');
   if(password==NULL) {
     return FALSE;
   }
@@ -745,7 +745,7 @@ static int basic_authenticate(HttpRequest req) {
         " accessing monit httpd\n", socket_get_remote_host(req->S), uname);
     return FALSE;
   }
-  req->remote_user= Str_dup(uname);
+  req->remote_user = Str_dup(uname);
   return TRUE;
 }
 
@@ -761,7 +761,7 @@ static int basic_authenticate(HttpRequest req) {
 static void internal_error(Socket_T S, int status, char *msg) {
   char date[STRLEN];
   char server[STRLEN];
-  const char *status_msg= get_status_string(status);
+  const char *status_msg = get_status_string(status);
 
   get_date(date, STRLEN);
   get_server(server, STRLEN);
@@ -790,23 +790,23 @@ static HttpParameter parse_parameters(char *query_string) {
 #define KEY 1
 #define VALUE 2
   int token;
-  int cursor= 0;
-  char *key= NULL;
-  char *value= NULL;
-  HttpParameter head= NULL;
+  int cursor = 0;
+  char *key = NULL;
+  char *value = NULL;
+  HttpParameter head = NULL;
 
-  while((token= get_next_token(query_string, &cursor, &value))) {
+  while((token = get_next_token(query_string, &cursor, &value))) {
     if(token==KEY)
-      key= value;
+      key = value;
     else if(token==VALUE) {
-      HttpParameter p= NULL;
+      HttpParameter p = NULL;
       if(!key) goto error;
       NEW(p);
-      p->name= key;
-      p->value= value;
-      p->next= head;
-      head= p;
-      key= NULL;
+      p->name = key;
+      p->value = value;
+      p->next = head;
+      head = p;
+      key = NULL;
     }
   }
   return head;
@@ -824,21 +824,21 @@ error:
  * A mini-scanner for tokenizing a query string
  */
 static int get_next_token(char *s, int *cursor, char **r) {
-  int i= *cursor;
+  int i = *cursor;
 
   while(s[*cursor]) {
     if(s[*cursor+1]=='=') {
       *cursor+= 1;
-      *r= Str_ndup(&s[i], (*cursor-i));
+      *r = Str_ndup(&s[i], (*cursor-i));
       return KEY;
     }
     if(s[*cursor]=='=') {
       while(s[*cursor] && s[*cursor]!='&') *cursor+= 1;
       if(s[*cursor]=='&') {
-        *r= Str_ndup(&s[i+1], (*cursor-i)-1);
+        *r = Str_ndup(&s[i+1], (*cursor-i)-1);
         *cursor+= 1;
       }  else
-        *r= Str_ndup(&s[i+1], (*cursor-i));
+        *r = Str_ndup(&s[i+1], (*cursor-i));
       return VALUE;
     }
     *cursor+= 1;

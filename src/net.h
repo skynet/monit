@@ -76,29 +76,21 @@ int check_udp_socket(int socket);
  * protocol. The protocol should be either SOCK_STREAM or SOCK_DGRAM.
  * @param hostname The host to open a socket at
  * @param port The port number to connect to
- * @param protocol Socket protocol to use (SOCK_STREAM|SOCK_DGRAM)
+ * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
  * @param timeout If not connected within timeout seconds abort and return -1
  * @return The socket or -1 if an error occured.
  */
-int create_socket(const char *hostname, int port, int protocol, int timeout);
-
-
-/**
- * Open a socket using the given Port_T structure. The protocol,
- * destination and type are selected appropriately.
- * @param p connection description
- * @return The socket or -1 if an error occured.
- */
-int create_generic_socket(Port_T p);
+int create_socket(const char *hostname, int port, int type, int timeout);
 
 
 /**
  * Create a non-blocking UNIX socket.
  * @param pathname The pathname to use for the unix socket
+ * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
  * @param timeout If not connected within timeout seconds abort and return -1
  * @return The socket or -1 if an error occured.
  */
-int create_unix_socket(const char *pathname, int timeout);
+int create_unix_socket(const char *pathname, int type, int timeout);
 
 
 /**
@@ -114,30 +106,6 @@ int create_unix_socket(const char *pathname, int timeout);
  * @return The socket ready for accept, or -1 if an error occured.
  */
 int create_server_socket(int port, int backlog, const char *bindAddr);
-
-
-/**
- * Shutdown a socket and close the descriptor.
- * @param socket The socket to shutdown and close
- * @return TRUE if the close succeed otherwise FALSE
- */
-int close_socket(int socket);
-
-
-/**
- * Enable nonblocking i|o on the given socket.
- * @param socket A socket
- * @return TRUE if success, otherwise FALSE
- */
-int set_noblock(int socket);
-
-
-/**
- * Disable nonblocking i|o on the given socket
- * @param socket A socket
- * @return TRUE if success, otherwise FALSE
- */
-int set_block(int socket);
 
 
 /**

@@ -87,7 +87,7 @@ int handle_alert(Event_T E) {
 
   ASSERT(E);
 
-  s= Event_get_source(E);
+  s = Event_get_source(E);
   if(!s) {
     LogError("Aborting alert\n");
     return rv;
@@ -96,12 +96,12 @@ int handle_alert(Event_T E) {
   if(s->maillist || Run.maillist) {
     Mail_T m;
     Mail_T n;
-    Mail_T list= NULL;
+    Mail_T list = NULL;
     /*
      * Build a mail-list with local recipients that has registered interest
      * for this event.
      */
-    for(m= s->maillist; m; m= m->next) {
+    for(m = s->maillist; m; m = m->next) {
 
       if(
         /* particular event notification type is allowed for given recipient */
@@ -115,14 +115,14 @@ int handle_alert(Event_T E) {
         )
       )
       {
-        Mail_T tmp= NULL;
+        Mail_T tmp = NULL;
 
         NEW(tmp);
         copy_mail(tmp, m);
         substitute(tmp, E);
         escape(tmp);
-        tmp->next= list;
-        list= tmp;
+        tmp->next = list;
+        list = tmp;
 
         DEBUG("%s notification is sent to %s\n", Event_get_description(E), m->to);
 
@@ -135,12 +135,12 @@ int handle_alert(Event_T E) {
      * for this event. Recipients which are defined in the service localy
      * overrides the same recipient events which are registered globaly.
      */
-    for(m= Run.maillist; m; m= m->next) {
-      int skip= FALSE;
+    for(m = Run.maillist; m; m = m->next) {
+      int skip = FALSE;
 
-      for(n= s->maillist; n; n= n->next) {
+      for(n = s->maillist; n; n = n->next) {
         if(IS(m->to, n->to)) {
-          skip= TRUE;
+          skip = TRUE;
           break;
         }
       }
@@ -160,14 +160,14 @@ int handle_alert(Event_T E) {
       )
       {
 
-        Mail_T tmp= NULL;
+        Mail_T tmp = NULL;
 
         NEW(tmp);
         copy_mail(tmp, m);
         substitute(tmp, E);
         escape(tmp);
-        tmp->next= list;
-        list= tmp;
+        tmp->next = list;
+        list = tmp;
 
         DEBUG("%s notification is sent to %s\n", Event_get_description(E), m->to);
 
@@ -220,7 +220,7 @@ static void substitute(Mail_T m, Event_T e) {
 static void copy_mail(Mail_T n, Mail_T o) {
   ASSERT(n && o);
 
-  n->to= Str_dup(o->to);
+  n->to = Str_dup(o->to);
   n->from=
       o->from?
       Str_dup(o->from):

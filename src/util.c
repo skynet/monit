@@ -309,12 +309,12 @@ static int PAMquery(int num_msg, const struct pam_message **msg, struct pam_resp
                 switch ((*(msg[i])).msg_style) {
                         case PAM_PROMPT_ECHO_ON:
                                 /* Store the login as the response. This likely never gets called, since login was on pam_start() */
-                                response[i].resp= appdata_ptr ? Str_dup(user->login) : NULL;
+                                response[i].resp = appdata_ptr ? Str_dup(user->login) : NULL;
                                 break;
 
                         case PAM_PROMPT_ECHO_OFF:
                                 /* Store the password as the response */
-                                response[i].resp= appdata_ptr ? Str_dup(user->passwd) : NULL;
+                                response[i].resp = appdata_ptr ? Str_dup(user->passwd) : NULL;
                                 break;
 
                         case PAM_TEXT_INFO:
@@ -416,49 +416,49 @@ char *Util_replaceString(char **src, const char *old, const char *new) {
         ASSERT(old);
         ASSERT(new);
 
-        i= Util_countWords(*src, old);
-        d= strlen(new)-strlen(old);
+        i = Util_countWords(*src, old);
+        d = strlen(new)-strlen(old);
 
         if (i==0)
                 return *src;
         if (d>0)
                 d*= i;
         else
-                d= 0;
+                d = 0;
 
         {
                 char *p, *q;
                 size_t l = strlen(old);
-                char *buf= CALLOC(sizeof(char), strlen(*src)+d+1);
+                char *buf = CALLOC(sizeof(char), strlen(*src)+d+1);
 
-                q= *src;
-                *buf= 0;
+                q = *src;
+                *buf = 0;
 
-                while((p= strstr(q, old))) {
+                while((p = strstr(q, old))) {
 
-                        *p= '\0';
+                        *p = '\0';
                         strcat(buf, q);
                         strcat(buf, new);
                         p+= l;
-                        q= p;
+                        q = p;
 
                 }
 
                 strcat(buf, q);
                 FREE(*src);
-                *src= buf;
+                *src = buf;
         }
         return *src;
 }
 
 
 int Util_countWords(char *s, const char *word) {
-        int i= 0;
-        char *p= s;
+        int i = 0;
+        char *p = s;
 
         ASSERT(s && word);
 
-        while((p= strstr(p, word))) { i++;  p++; }
+        while((p = strstr(p, word))) { i++;  p++; }
         return i;
 }
 
@@ -559,10 +559,10 @@ int Util_handle0Escapes(char *buf) {
 
 char *Util_digest2Bytes(unsigned char *digest, int mdlen, MD_T result) {
         int i;
-        unsigned char *tmp= (unsigned char*)result;
+        unsigned char *tmp = (unsigned char*)result;
         static unsigned char hex[] = "0123456789abcdef";
         ASSERT(mdlen * 2 < MD_SIZE); // Overflow guard
-        for (i= 0; i < mdlen; i++) {
+        for (i = 0; i < mdlen; i++) {
                 *tmp++ = hex[digest[i] >> 4];
                 *tmp++ = hex[digest[i] & 0xf];
         }
@@ -743,7 +743,7 @@ Service_T Util_getService(const char *name) {
 
         ASSERT(name);
 
-        for (s= servicelist; s; s= s->next) {
+        for (s = servicelist; s; s = s->next) {
                 if (IS(s->name, name)) {
                         return s;
                 }
@@ -753,9 +753,9 @@ Service_T Util_getService(const char *name) {
 
 
 int Util_getNumberOfServices() {
-        int i= 0;
+        int i = 0;
         Service_T s;
-        for (s= servicelist; s; s= s->next) i+=1;
+        for (s = servicelist; s; s = s->next) i+=1;
         return i;
 }
 
@@ -796,7 +796,7 @@ void Util_printRunList() {
         if (Run.mmonits) {
                 Mmonit_T c;
                 printf(" %-18s = ", "M/Monit(s)");
-                for (c= Run.mmonits; c; c= c->next) {
+                for (c = Run.mmonits; c; c = c->next) {
                         printf("%s with timeout %d seconds%s%s%s%s%s%s",
                                c->url->url,
                                c->timeout,
@@ -815,7 +815,7 @@ void Util_printRunList() {
         if (Run.mailservers) {
                 MailServer_T mta;
                 printf(" %-18s = ", "Mail server(s)");
-                for (mta= Run.mailservers; mta; mta= mta->next)
+                for (mta = Run.mailservers; mta; mta = mta->next)
                         printf("%s:%d%s%s",
                                mta->host,
                                mta->port,
@@ -871,7 +871,7 @@ void Util_printRunList() {
 
         {
                 Mail_T list;
-                for (list= Run.maillist; list; list= list->next) {
+                for (list = Run.maillist; list; list = list->next) {
                         printf(" %-18s = %s\n", "Alert mail to", is_str_defined(list->to));
                         printf("   %-16s = ", "Alert on");
                         printevents(list->events);
@@ -971,7 +971,7 @@ void Util_printService(Service_T s) {
                 printf("\n");
         }
 
-        for (d= s->dependantlist; d; d= d->next)
+        for (d = s->dependantlist; d; d = d->next)
                 if (d->dependant != NULL)
                         printf(" %-20s = %s\n", "Depends on Service", d->dependant);
 
@@ -1009,8 +1009,8 @@ void Util_printService(Service_T s) {
         }
 
         if (s->checksum && s->checksum->action) {
-                Checksum_T cs= s->checksum;
-                EventAction_T a= cs->action;
+                Checksum_T cs = s->checksum;
+                EventAction_T a = cs->action;
                 printf(" %-20s = ", "Checksum");
                 if (cs->test_changes) {
                         printf("if changed %s %s ", checksumnames[cs->type], Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1025,7 +1025,7 @@ void Util_printService(Service_T s) {
         }
 
         if (s->perm && s->perm->action) {
-                EventAction_T a= s->perm->action;
+                EventAction_T a = s->perm->action;
                 printf(" %-20s = ", "Permission");
                 printf("if failed %04o %s ", s->perm->perm, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1035,7 +1035,7 @@ void Util_printService(Service_T s) {
         }
 
         if (s->uid && s->uid->action) {
-                EventAction_T a= s->uid->action;
+                EventAction_T a = s->uid->action;
                 printf(" %-20s = ", "UID");
                 printf("if failed %d %s ", (int)s->uid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1045,7 +1045,7 @@ void Util_printService(Service_T s) {
         }
 
         if (s->euid && s->euid->action) {
-                EventAction_T a= s->euid->action;
+                EventAction_T a = s->euid->action;
                 printf(" %-20s = ", "EUID");
                 printf("if failed %d %s ", (int)s->euid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1055,7 +1055,7 @@ void Util_printService(Service_T s) {
         }
 
         if (s->gid && s->gid->action) {
-                EventAction_T a= s->gid->action;
+                EventAction_T a = s->gid->action;
                 printf(" %-20s = ", "GID");
                 printf("if failed %d %s ", (int)s->gid->gid, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1065,8 +1065,8 @@ void Util_printService(Service_T s) {
         }
 
         if (s->icmplist)
-                for (i= s->icmplist; i; i= i->next) {
-                        EventAction_T a= i->action;
+                for (i = s->icmplist; i; i = i->next) {
+                        EventAction_T a = i->action;
                         printf(" %-20s = ", "ICMP");
                         printf("if failed [%s count %d with timeout %d seconds] %s ", icmpnames[i->type], i->count, i->timeout, Util_getEventratio(a->failed, buf, sizeof(buf)));
                         printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1076,8 +1076,8 @@ void Util_printService(Service_T s) {
                 }
 
         if (s->portlist) {
-                for (n= s->portlist; n; n= n->next) {
-                        EventAction_T a= n->action;
+                for (n = s->portlist; n; n = n->next) {
+                        EventAction_T a = n->action;
                         if (n->family == AF_INET) {
                                 printf(" %-20s = ", "Port");
                                 printf("if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s) %s ", n->hostname, n->port, n->request ? n->request : "", n->protocol->name, Util_portTypeDescription(n), n->timeout, n->retry > 1 ? n->retry : 0, Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1098,8 +1098,8 @@ void Util_printService(Service_T s) {
                 }
         }
 
-        for (t= s->timestamplist; t; t= t->next) {
-                EventAction_T a= t->action;
+        for (t = s->timestamplist; t; t = t->next) {
+                EventAction_T a = t->action;
                 printf(" %-20s = ", "Timestamp");
                 if (t->test_changes) {
                         printf("if changed %s ", Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1113,8 +1113,8 @@ void Util_printService(Service_T s) {
                 printf("\n");
         }
 
-        for (sl= s->sizelist; sl; sl= sl->next) {
-                EventAction_T a= sl->action;
+        for (sl = s->sizelist; sl; sl = sl->next) {
+                EventAction_T a = sl->action;
                 printf(" %-20s = ", "Size");
                 if (sl->test_changes) {
                         printf("if changed %s ", Util_getEventratio(a->failed, buf, sizeof(buf)));
@@ -1129,8 +1129,8 @@ void Util_printService(Service_T s) {
 
         }
 
-        for (ul= s->uptimelist; ul; ul= ul->next) {
-                EventAction_T a= ul->action;
+        for (ul = s->uptimelist; ul; ul = ul->next) {
+                EventAction_T a = ul->action;
                 printf(" %-20s = ", "Uptime");
                 printf("if %s %llu second(s) %s ", operatornames[ul->operator], ul->uptime, Util_getEventratio(a->failed, buf, sizeof(buf)));
                 printf("then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
@@ -1157,8 +1157,8 @@ void Util_printService(Service_T s) {
                 }
         }
 
-        for (dl= s->filesystemlist; dl; dl= dl->next) {
-                EventAction_T a= dl->action;
+        for (dl = s->filesystemlist; dl; dl = dl->next) {
+                EventAction_T a = dl->action;
                 if (dl->resource == RESOURCE_ID_INODE) {
                         printf(" %-20s = ", "Inodes usage limit");
                         if (dl->limit_absolute > -1) {
@@ -1190,8 +1190,8 @@ void Util_printService(Service_T s) {
                 }
         }
 
-        for (q= s->resourcelist; q; q= q->next) {
-                EventAction_T a= q->action;
+        for (q = s->resourcelist; q; q = q->next) {
+                EventAction_T a = q->action;
                 switch (q->resource_id) {
                         case RESOURCE_ID_CPU_PERCENT:
                                 printf(" %-20s = ", "CPU usage limit");
@@ -1306,7 +1306,7 @@ void Util_printService(Service_T s) {
         for (ar = s->actionratelist; ar; ar = ar->next)
                 printf(" %-20s = If restarted %d times within %d cycle(s) then %s\n", "Timeout", ar->count, ar->cycle, Util_describeAction(ar->action->failed, buf, sizeof(buf)));
 
-        for (r= s->maillist; r; r= r->next) {
+        for (r = s->maillist; r; r = r->next) {
                 printf(" %-20s = %s\n", "Alert mail to", is_str_defined(r->to));
                 printf("   %-18s = ", "Alert on");
                 printevents(r->events);
@@ -1325,7 +1325,7 @@ void Util_printServiceList() {
 
         printf("The service list contains the following entries:\n\n");
 
-        for (s= servicelist_conf; s; s= s->next_conf)
+        for (s = servicelist_conf; s; s = s->next_conf)
                 Util_printService(s);
 
         memset(ruler, '-', STRLEN);
@@ -1464,9 +1464,9 @@ time_t Util_getProcessUptime(char *pidfile) {
 
         ASSERT(pidfile);
 
-        if ((ctime= file_getTimestamp(pidfile, S_IFREG)) ) {
-                time_t now= time(&now);
-                time_t since= now-ctime;
+        if ((ctime = file_getTimestamp(pidfile, S_IFREG)) ) {
+                time_t now = time(&now);
+                time_t since = now-ctime;
                 return since;
         }
         return (time_t)-1;
@@ -1589,11 +1589,11 @@ char *Util_getBasicAuthHeader(char *username, char *password) {
                 return NULL;
 
         snprintf(buf, STRLEN, "%s:%s", username, password ? password : "");
-        if (! (b64= encode_base64(strlen(buf), (unsigned char *)buf)) ) {
+        if (! (b64 = encode_base64(strlen(buf), (unsigned char *)buf)) ) {
                 LogError("Failed to base64 encode authentication header\n");
                 return NULL;
         }
-        auth= CALLOC(sizeof(char), STRLEN+1);
+        auth = CALLOC(sizeof(char), STRLEN+1);
         snprintf(auth, STRLEN, "Authorization: Basic %s\r\n", b64);
         FREE(b64);
         return auth;
@@ -1602,7 +1602,7 @@ char *Util_getBasicAuthHeader(char *username, char *password) {
 
 void Util_redirectStdFds() {
         int i;
-        for (i= 0; i < 3; i++) {
+        for (i = 0; i < 3; i++) {
                 if (close(i) == -1 || open("/dev/null", O_RDWR) != i) {
                         LogError("Cannot reopen standard file descriptor (%d) -- %s\n", i, STRERROR);
                 }
@@ -1619,7 +1619,7 @@ void Util_closeFds() {
 #endif
         for (i = 3; i < max_descriptors; i++)
                 close(i);
-        errno= 0;
+        errno = 0;
 }
 
 
@@ -1641,7 +1641,7 @@ Auth_T Util_getUserCredentials(char *uname) {
 
 
 int Util_checkCredentials(char *uname, char *outside) {
-        Auth_T c= Util_getUserCredentials(uname);
+        Auth_T c = Util_getUserCredentials(uname);
         char outside_crypt[STRLEN];
         if (c == NULL)
                 return FALSE;

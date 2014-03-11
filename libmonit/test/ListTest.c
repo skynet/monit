@@ -61,12 +61,12 @@ int main(void) {
 
         printf("=> Test2: List_pop()\n");
         {
-                int i= 0;
+                int i = 0;
                 list_t p;
                 while (List_pop(L)) ;
                 assert(List_length(L) == 0);
                 // Ensure that nodes are retained in the freelist
-                for (p= L->freelist; p; p= p->next) i++;
+                for (p = L->freelist; p; p = p->next) i++;
                 assert(i == 15);
                 List_free(&L);
         }
@@ -98,7 +98,7 @@ int main(void) {
 
         printf("=> Test4: List_cat()\n");
         {
-                List_T t= List_new();
+                List_T t = List_new();
                 List_append(t, "a");
                 List_append(t, "b");
                 List_append(t, "c");
@@ -113,19 +113,19 @@ int main(void) {
         printf("=> Test5: List_reverse()\n");
         {
                 list_t p;
-                List_T l= List_new();
+                List_T l = List_new();
                 List_append(l, "a");
                 List_append(l, "b");
                 List_append(l, "c");
                 List_append(l, "d");
                 printf("\tList before reverse: ");
-                for (p= l->head; p; p= p->next)
+                for (p = l->head; p; p = p->next)
                         printf("%s%s", (char*)p->e, p->next?"->":"\n");
                 assert(Str_isEqual(l->head->e, "a"));
                 assert(Str_isEqual(l->tail->e, "d"));
                 List_reverse(l);
                 printf("\tList after reverse: ");
-                for (p= l->head; p; p= p->next)
+                for (p = l->head; p; p = p->next)
                         printf("%s%s", (char*)p->e, p->next?"->":"\n");
                 assert(Str_isEqual(l->head->e, "d"));
                 assert(Str_isEqual(l->tail->e, "a"));

@@ -146,7 +146,7 @@ int main(void) {
                 // Note, test assume OutputStream buffer is 1500
                 char a[1024];
                 memset(a, 'x', 1024);
-                a[1023]= 0;
+                a[1023] = 0;
                 out = OutputStream_new(STDOUT);
                 // Test fit into buffer
                 assert(OutputStream_print(out, "data: %s\n", a) == 1030);

@@ -71,7 +71,7 @@ int check_rdate(Socket_T socket) {
   if(rdatet >= systemt)
     delta = (rdatet-systemt);
   else
-    delta= (systemt-rdatet);
+    delta = (systemt-rdatet);
 
   if(delta > TIME_TOLERANCE) {
     socket_setError(socket, "RDATE error: time does not match system time -- %s", STRERROR);

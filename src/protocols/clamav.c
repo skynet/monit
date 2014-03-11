@@ -39,7 +39,7 @@
 int check_clamav(Socket_T socket) {
 
   char buf[STRLEN];
-  const char *ok= "PONG";
+  const char *ok = "PONG";
 
   ASSERT(socket);
 

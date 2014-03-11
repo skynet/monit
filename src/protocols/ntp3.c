@@ -85,7 +85,7 @@ int check_ntp3(Socket_T socket)
   }
 
   /* Receive and validate response */
-  if( (br= socket_read(socket, ntpResponse, NTPLEN)) <= 0) {
+  if( (br = socket_read(socket, ntpResponse, NTPLEN)) <= 0) {
     socket_setError(socket, "NTP: did not receive answer from server -- %s", STRERROR);
     return FALSE;
   }

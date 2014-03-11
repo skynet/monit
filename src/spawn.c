@@ -135,7 +135,7 @@ void spawn(Service_T S, command_t C, Event_T E) {
         pid_t pid;
         sigset_t mask;
         sigset_t save;
-        int stat_loc= 0;
+        int stat_loc = 0;
         int exit_status;
         char date[42];
 
@@ -155,7 +155,7 @@ void spawn(Service_T S, command_t C, Event_T E) {
         pthread_sigmask(SIG_BLOCK, &mask, &save);
 
         Time_string(Time_now(), date);
-        pid= fork();
+        pid = fork();
         if(pid < 0) {
                 LogError("Cannot fork a new process -- %s\n", STRERROR);
                 exit(1);
@@ -227,7 +227,7 @@ void spawn(Service_T S, command_t C, Event_T E) {
                 LogError("Waitpid error\n");
         }
 
-        exit_status= WEXITSTATUS(stat_loc);
+        exit_status = WEXITSTATUS(stat_loc);
         if (exit_status & setgid_ERROR)
                 LogError("Failed to change gid to '%d' for '%s'\n", C->gid, C->arg[0]);
         if (exit_status & setuid_ERROR)

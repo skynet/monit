@@ -19,10 +19,10 @@
 
 #define THREADS 200
 
-Exception_T A= {"AException"};
-Exception_T B= {"BException"};
-Exception_T C= {"CException"};
-Exception_T D= {"DException"};
+Exception_T A = {"AException"};
+Exception_T B = {"BException"};
+Exception_T C = {"CException"};
+Exception_T D = {"DException"};
 
 void throwA() {
         THROW(A, NULL);
@@ -227,7 +227,7 @@ int main(void) {
 
         printf("=> Test5: TRY-FINALLY\n");
         {
-                int i= 0;
+                int i = 0;
                 TRY
                         i++;
                 FINALLY
@@ -309,7 +309,7 @@ int main(void) {
         printf("=> Test11: No exception thrown\n");
         {
                 TRY
-                        int i= 0; i++;
+                        int i = 0; i++;
                 ELSE
                         assert(false); // Should not be reached
                 END_TRY;
@@ -359,10 +359,10 @@ int main(void) {
         {
                 int i;
                 Thread_T threads[THREADS];
-                for (i= 0; i < THREADS; i++) {
+                for (i = 0; i < THREADS; i++) {
                         Thread_create(threads[i], thread, NULL);
                 }
-                for (i= 0; i<THREADS; i++)
+                for (i = 0; i<THREADS; i++)
                         Thread_join(threads[i]);
         }
         printf("=> Test14: OK\n\n");

@@ -40,7 +40,7 @@
  *  @file
  */
 int check_generic(Socket_T socket) {
-  Generic_T g= NULL;
+  Generic_T g = NULL;
   char *buf;
 #ifdef HAVE_REGEX_H
   int regex_return;
@@ -76,15 +76,15 @@ int check_generic(Socket_T socket) {
       int n;
 
       /* Need read, not readln here */
-      if((n= socket_read(socket, buf, Run.expectbuffer))<0) {
+      if((n = socket_read(socket, buf, Run.expectbuffer))<0) {
         socket_setError(socket, "GENERIC: error receiving data -- %s", STRERROR);
         FREE(buf);
         return FALSE;
       }
-      buf[n]= 0;
+      buf[n] = 0;
 
 #ifdef HAVE_REGEX_H
-      regex_return= regexec(g->expect, buf, 0, NULL, 0);
+      regex_return = regexec(g->expect, buf, 0, NULL, 0);
       if (regex_return != 0) {
         char e[STRLEN];
         regerror(regex_return, g->expect, e, STRLEN);
@@ -112,7 +112,7 @@ int check_generic(Socket_T socket) {
       FREE(buf);
       return FALSE;
     }
-    g= g->next;
+    g = g->next;
   }
 
   FREE(buf);

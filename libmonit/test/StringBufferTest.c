@@ -32,12 +32,12 @@ int main(void) {
 
         printf("=> Test1: create/destroy\n");
         {
-                sb= StringBuffer_new("");
+                sb = StringBuffer_new("");
                 assert(sb);
                 assert(StringBuffer_length(sb)==0);
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
-                sb= StringBuffer_create(1024);
+                sb = StringBuffer_create(1024);
                 assert(sb);
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
@@ -46,7 +46,7 @@ int main(void) {
 
         printf("=> Test2: Append NULL value\n");
         {
-                sb= StringBuffer_new("");
+                sb = StringBuffer_new("");
                 assert(sb);
                 StringBuffer_append(sb, NULL);
                 assert(StringBuffer_length(sb)==0);
@@ -57,7 +57,7 @@ int main(void) {
 
         printf("=> Test3: Create with string\n");
         {
-                sb= StringBuffer_new("abc");
+                sb = StringBuffer_new("abc");
                 assert(sb);
                 assert(StringBuffer_length(sb)==3);
                 StringBuffer_free(&sb);
@@ -67,7 +67,7 @@ int main(void) {
 
         printf("=> Test4: Append string value\n");
         {
-                sb= StringBuffer_new("abc");
+                sb = StringBuffer_new("abc");
                 assert(sb);
                 printf("\tTesting StringBuffer_append:..");
                 StringBuffer_append(sb, "def");
@@ -85,7 +85,7 @@ int main(void) {
 
         printf("=> Test5: trim\n");
         {
-                sb= StringBuffer_new("\t 'foo bar' \n ");
+                sb = StringBuffer_new("\t 'foo bar' \n ");
                 assert(Str_isEqual(StringBuffer_toString(StringBuffer_trim(sb)), "'foo bar'"));
                 StringBuffer_clear(sb);
                 StringBuffer_append(sb, "'foo bar'");
@@ -104,7 +104,7 @@ int main(void) {
 
         printf("=> Test6: deleteFrom\n");
         {
-                sb= StringBuffer_new("abcdefgh");
+                sb = StringBuffer_new("abcdefgh");
                 assert(sb);
                 StringBuffer_delete(sb,3);
                 assert(StringBuffer_length(sb)==3);
@@ -115,7 +115,7 @@ int main(void) {
 
         printf("=> Test7: indexOf and lastIndexOf\n");
         {
-                sb= StringBuffer_new("jan-henrik haukeland");
+                sb = StringBuffer_new("jan-henrik haukeland");
                 assert(sb);
                 assert(StringBuffer_indexOf(sb, "henrik")==4);
                 assert(StringBuffer_indexOf(sb, "an")==1);
@@ -138,7 +138,7 @@ int main(void) {
 
         printf("=> Test8: length and clear\n");
         {
-                sb= StringBuffer_new("jan-henrik haukeland");
+                sb = StringBuffer_new("jan-henrik haukeland");
                 assert(sb);
                 assert(StringBuffer_length(sb)==20);
                 StringBuffer_clear(sb);
@@ -150,7 +150,7 @@ int main(void) {
 
         printf("=> Test9: toString value\n");
         {
-                sb= StringBuffer_new("abc");
+                sb = StringBuffer_new("abc");
                 assert(sb);
                 StringBuffer_append(sb, "def");
                 assert(Str_isEqual(StringBuffer_toString(sb), "abcdef"));
@@ -162,9 +162,9 @@ int main(void) {
         printf("=> Test10: internal resize\n");
         {
                 int i;
-                sb= StringBuffer_new("");
+                sb = StringBuffer_new("");
                 assert(sb);
-                for (i= 0; i<1024; i++)
+                for (i = 0; i<1024; i++)
                         StringBuffer_append(sb, "a");
                 assert(StringBuffer_length(sb)==1024);
                 assert(StringBuffer_toString(sb)[1023]=='a');
@@ -176,7 +176,7 @@ int main(void) {
 
         printf("=> Test11: substring\n");
         {
-                sb= StringBuffer_new("jan-henrik haukeland");
+                sb = StringBuffer_new("jan-henrik haukeland");
                 assert(sb);
                 assert(Str_isEqual(StringBuffer_substring(sb, StringBuffer_indexOf(sb, "-")),
                                                  "-henrik haukeland"));
@@ -188,42 +188,42 @@ int main(void) {
         printf("=> Test12: replace\n");
         {
                 printf("\tNothing to replace\n");
-                sb= StringBuffer_new("abc?def?");
+                sb = StringBuffer_new("abc?def?");
                 assert(sb);
                 StringBuffer_replace(sb, "x", "$x");
                 assert(Str_isEqual(StringBuffer_toString(sb), "abc?def?"));
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tReplace and expand\n");
-                sb= StringBuffer_new("abc?def?");
+                sb = StringBuffer_new("abc?def?");
                 assert(sb);
                 StringBuffer_replace(sb, "?", "$x");
                 assert(Str_isEqual(StringBuffer_toString(sb), "abc$xdef$x"));
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tReplace and shrink\n");
-                sb= StringBuffer_new("abc$xdef$x");
+                sb = StringBuffer_new("abc$xdef$x");
                 assert(sb);
                 StringBuffer_replace(sb, "$x", "?");
                 assert(Str_isEqual(StringBuffer_toString(sb), "abc?def?"));
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tReplace with empty string\n");
-                sb= StringBuffer_new("abc$xdef$x");
+                sb = StringBuffer_new("abc$xdef$x");
                 assert(sb);
                 StringBuffer_replace(sb, "$x", "");
                 assert(Str_isEqual(StringBuffer_toString(sb), "abcdef"));
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tReplace with same length\n");
-                sb= StringBuffer_new("foo bar baz foo bar baz");
+                sb = StringBuffer_new("foo bar baz foo bar baz");
                 assert(sb);
                 StringBuffer_replace(sb, "baz", "bar");
                 assert(Str_isEqual(StringBuffer_toString(sb), "foo bar bar foo bar bar"));
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tRemove words and test traceback\n");
-                sb= StringBuffer_new("foo bar baz foo foo bar baz");
+                sb = StringBuffer_new("foo bar baz foo foo bar baz");
                 assert(sb);
                 StringBuffer_replace(sb, "baz", "bar");
                 assert(Str_isEqual(StringBuffer_toString(sb), "foo bar bar foo foo bar bar"));
@@ -232,14 +232,14 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tReplace all elements\n");
-                sb= StringBuffer_new("aaaaaaaaaaaaaaaaaaaaaaaa");
+                sb = StringBuffer_new("aaaaaaaaaaaaaaaaaaaaaaaa");
                 assert(sb);
                 StringBuffer_replace(sb, "a", "b");
                 assert(Str_isEqual(StringBuffer_toString(sb), "bbbbbbbbbbbbbbbbbbbbbbbb"));
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
                 printf("\tReplace and expand with resize of StringBuffer\n");
-                sb= StringBuffer_new("insert into(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) values (1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,01,2,3);");
+                sb = StringBuffer_new("insert into(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) values (1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,01,2,3);");
                 assert(sb);
                 StringBuffer_replace(sb, "?", "$x");
                 assert(Str_isEqual(StringBuffer_toString(sb), "insert into($x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x) values (1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,01,2,3);"));

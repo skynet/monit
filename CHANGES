@@ -59,6 +59,9 @@ Return error if a page DOES exist (for success 404 is expected):
 
 Fixed: https://bitbucket.org/tildeslash/monit/issue/7/enable-optimized-error-with-flag-ofast
 
+Fixed: Unix Socket test now use the communication type (TCP or UDP)
+specified in port statement. Previously TCP was always used.
+
 
 Version 5.7
 

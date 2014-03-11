@@ -39,8 +39,8 @@
 int check_imap(Socket_T socket) {
 
   char buf[STRLEN];
-  const char *ok= "* OK";
-  const char *bye= "* BYE";
+  const char *ok = "* OK";
+  const char *bye = "* BYE";
 
 
   ASSERT(socket);

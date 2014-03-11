@@ -32,7 +32,7 @@ int main(void) {
 
         printf("=> Test2: dup\n");
         {
-                char *s4= Str_dup("abc123");
+                char *s4 = Str_dup("abc123");
                 printf("\tResult: %s\n", s4);
                 assert(Str_isEqual(s4, "abc123"));
                 printf("\tTesting for NULL argument\n");
@@ -43,7 +43,7 @@ int main(void) {
 
         printf("=> Test3: ndup\n");
         {
-                char *s5= Str_ndup("abc123", 3);
+                char *s5 = Str_ndup("abc123", 3);
                 printf("\tResult: %s\n", s5);
                 assert(Str_isEqual(s5, "abc"));
                 printf("\tTesting for NULL argument\n");
@@ -55,13 +55,13 @@ int main(void) {
         printf("=> Test4: Str_cat & Str_vcat\n");
         {
                 char *s6;
-                s6= Str_cat("%s://%s%s?%s", "https", "foo.bar", 
+                s6 = Str_cat("%s://%s%s?%s", "https", "foo.bar", 
                                    "/uri", "abc=123");
                 printf("\tResult: %s\n", s6);
                 assert(Str_isEqual(s6, "https://foo.bar/uri?abc=123"));
                 FREE(s6);
                 printf("\tTesting for NULL arguments\n");
-                s6= Str_cat(NULL);
+                s6 = Str_cat(NULL);
                 assert(s6==NULL);
                 FREE(s6);
         }
@@ -69,7 +69,7 @@ int main(void) {
 
         printf("=> Test5: chomp\n");
         {
-                char s3[]= "abc\r\n123";
+                char s3[] = "abc\r\n123";
                 printf("\tResult: %s\n", Str_chomp(s3));
                 assert(Str_isEqual(s3, "abc"));
                 printf("\tTesting for NULL argument\n");
@@ -104,11 +104,11 @@ int main(void) {
 
         printf("=> Test7: trim quotes\n");
         {
-                char s5[]= "\"'abc'\"";
-                char s5a[]= "\"'abc";
-                char s5b[]= "abc'\"";
-                char s5c[]= "'\"";
-                char s5d[]= " \t abc def '\"  ";
+                char s5[] = "\"'abc'\"";
+                char s5a[] = "\"'abc";
+                char s5b[] = "abc'\"";
+                char s5c[] = "'\"";
+                char s5d[] = " \t abc def '\"  ";
                 printf("\tResult: %s\n", Str_unquote(s5));
                 assert(Str_isEqual(s5, "abc"));
                 printf("\tResult: %s\n", Str_unquote(s5a));
@@ -128,7 +128,7 @@ int main(void) {
 
         printf("=> Test8: toLowerCase\n");
         {
-                char s6[]= "AbC";
+                char s6[] = "AbC";
                 printf("\tResult: %s\n", Str_toLower(s6));
                 assert(Str_isEqual(s6, "abc"));
                 printf("\tTesting for NULL argument\n");
@@ -138,7 +138,7 @@ int main(void) {
 
         printf("=> Test9: toUpperCase\n");
         {
-                char s7[]= "aBc";
+                char s7[] = "aBc";
                 printf("\tResult: %s\n", Str_toUpper(s7));
                 assert(Str_isEqual(s7, "ABC"));
                 printf("\tTesting for NULL argument\n");
@@ -148,11 +148,11 @@ int main(void) {
 
         printf("=> Test10: parseInt, parseLLong, parseDouble\n");
         {
-                char i[STRLEN]= "   -2812 bla";
-                char ll[STRLEN]= "  2147483642 blabla";
-                char d[STRLEN]= "  2.718281828 this is e";
-                char de[STRLEN]= "1.495E+08 kilometer = An Astronomical Unit";
-                char ie[STRLEN]= " 9999999999999999999999999999999999999999";
+                char i[STRLEN] = "   -2812 bla";
+                char ll[STRLEN] = "  2147483642 blabla";
+                char d[STRLEN] = "  2.718281828 this is e";
+                char de[STRLEN] = "1.495E+08 kilometer = An Astronomical Unit";
+                char ie[STRLEN] = " 9999999999999999999999999999999999999999";
                 printf("\tResult:\n");
                 printf("\tParsed int = %d\n", Str_parseInt(i));
                 assert(Str_parseInt(i)==-2812);
@@ -173,7 +173,7 @@ int main(void) {
 
         printf("=> Test11: replace\n");
         {
-                char s9[]= "abccba";
+                char s9[] = "abccba";
                 printf("\tResult: %s\n", Str_replaceChar(s9, 'b', 'X'));
                 assert(Str_isEqual(s9, "aXccXa"));
                 printf("\tTesting for NULL argument\n");
@@ -183,7 +183,7 @@ int main(void) {
 
         printf("=> Test12: startsWith\n");
         {
-                char *a= "mysql://localhost:3306/zild?user=root&password=swordfish";
+                char *a = "mysql://localhost:3306/zild?user=root&password=swordfish";
                 printf("\tResult: starts with mysql - %s\n", 
                        Str_startsWith(a, "mysql")?"yes":"no");
                 assert(Str_startsWith(a, "mysql"));
@@ -202,7 +202,7 @@ int main(void) {
 
         printf("=> Test13: endsWith\n");
         {
-                char *a= "mysql://localhost:3306";
+                char *a = "mysql://localhost:3306";
                 printf("\tResult: ends with 3306 - %s\n", Str_endsWith(a, "3306")?"yes":"no");
                 assert(Str_endsWith(a, "3306"));
                 assert(!Str_endsWith(a, "sqlite"));
@@ -220,7 +220,7 @@ int main(void) {
 
         printf("=> Test14: isEqual\n");
         {
-                char *a= "mysql://localhost:3306";
+                char *a = "mysql://localhost:3306";
                 printf("\tResult: is equal - %s\n", Str_isEqual(a, "mysql://localhost:3306")?"yes":"no");
                 assert(Str_isEqual("sqlite", "sqlite"));
                 printf("\tTesting for NULL and NUL argument\n");
@@ -235,7 +235,7 @@ int main(void) {
 
         printf("=> Test15: trail\n");
         {
-                char s[]= "This string will be trailed someplace";
+                char s[] = "This string will be trailed someplace";
                 assert(Str_trunc(NULL, 100) == NULL);
                 assert(Str_isEqual(Str_trunc("", 0), ""));
                 assert(Str_isEqual(Str_trunc(s, (int)strlen(s)), "This string will be trailed someplace"));
@@ -248,12 +248,12 @@ int main(void) {
 
         printf("=> Test16: hash\n");
         {
-                char *x= "a";
-                char *y= "b";
-                char *a= "abc";
-                char *b= "bca";
-                char *c= "this is a long string";
-                char *d= "this is a longer string";
+                char *x = "a";
+                char *y = "b";
+                char *a = "abc";
+                char *b = "bca";
+                char *c = "this is a long string";
+                char *d = "this is a longer string";
                 printf("\tResult: %s -> %d\n", x, Str_hash(x));
                 printf("\tResult: %s -> %d\n", y, Str_hash(y));
                 assert(Str_hash(x) != Str_hash(y));
@@ -274,20 +274,20 @@ int main(void) {
 
         printf("=> Test17: regular expression match\n");
         {
-                char *phone_pattern= "^[-0-9+( )]{7,40}$";
-                char *email_pattern= "^[^@ ]+@([-a-zA-Z0-9]+\\.)+[a-zA-Z]{2,}$";
-                char *valid_phone1= "+4797141255";
-                char *valid_phone2= "(47)-97-14-12-55";
-                char *invalid_phone1= "141255";
-                char *invalid_phone2= "(47)971412551234567890123456789012345678901234567890";
-                char *invalid_phone3= "";
-                char *invalid_phone4= "abc123";
-                char *valid_email1= "hauk@TILDESLASH.com";
-                char *valid_email2= "jan-henrik.haukeland@haukeland.co.uk";
-                char *invalid_email1= "hauktildeslash.com";
-                char *invalid_email2= "";
-                char *invalid_email3= "hauk@tildeslashcom";
-                char *invalid_email4= "hauk@æøåtildeslash.com";
+                char *phone_pattern = "^[-0-9+( )]{7,40}$";
+                char *email_pattern = "^[^@ ]+@([-a-zA-Z0-9]+\\.)+[a-zA-Z]{2,}$";
+                char *valid_phone1 = "+4797141255";
+                char *valid_phone2 = "(47)-97-14-12-55";
+                char *invalid_phone1 = "141255";
+                char *invalid_phone2 = "(47)971412551234567890123456789012345678901234567890";
+                char *invalid_phone3 = "";
+                char *invalid_phone4 = "abc123";
+                char *valid_email1 = "hauk@TILDESLASH.com";
+                char *valid_email2 = "jan-henrik.haukeland@haukeland.co.uk";
+                char *invalid_email1 = "hauktildeslash.com";
+                char *invalid_email2 = "";
+                char *invalid_email3 = "hauk@tildeslashcom";
+                char *invalid_email4 = "hauk@æøåtildeslash.com";
                 // phone
                 printf("\tResult: match(%s, %s)\n", phone_pattern, valid_phone1);
                 assert(Str_match(phone_pattern, valid_phone1));
@@ -381,7 +381,7 @@ int main(void) {
 
         printf("=> Test22: Str_curtail\n");
         {
-                char s[]= "<text>Hello World</text>"; 
+                char s[] = "<text>Hello World</text>"; 
                 assert(Str_isByteEqual(Str_curtail(s, "</text>"), "<text>Hello World"));
                 assert(Str_isByteEqual(Str_curtail(s, ">"), "<text"));
                 assert(Str_isByteEqual(Str_curtail(s, "@"), "<text"));

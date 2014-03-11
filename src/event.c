@@ -72,7 +72,7 @@
 
 /* ------------------------------------------------------------- Definitions */
 
-EventTable_T Event_Table[]= {
+EventTable_T Event_Table[] = {
   {Event_Action,     "Action done",             "Action done",                "Action done",              "Action done"},
   {Event_Checksum,   "Checksum failed",         "Checksum succeeded",         "Checksum changed",         "Checksum not changed"},
   {Event_Connection, "Connection failed",       "Connection succeeded",       "Connection changed",       "Connection not changed"},
@@ -362,7 +362,7 @@ const char *Event_get_message(Event_T E) {
  * event type is not found NULL is returned.
  */
 const char *Event_get_description(Event_T E) {
-  EventTable_T *et= Event_Table;
+  EventTable_T *et = Event_Table;
 
   ASSERT(E);
 

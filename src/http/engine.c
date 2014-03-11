@@ -90,6 +90,9 @@
 #include "engine.h"
 #include "socket.h"
 
+// libmonit
+#include "system/Net.h"
+
 
 /**
  *  A naive http 1.0 server. The server delegates handling of a HTTP
@@ -114,11 +117,11 @@
 /* ------------------------------------------------------------- Definitions */
 
 
-static int myServerSocket= 0;
-static HostsAllow hostlist= NULL;
-static volatile int stopped= FALSE;
-ssl_server_connection *mySSLServerConnection= NULL;
-static pthread_mutex_t hostlist_mutex= PTHREAD_MUTEX_INITIALIZER;
+static int myServerSocket = 0;
+static HostsAllow hostlist = NULL;
+static volatile int stopped = FALSE;
+ssl_server_connection *mySSLServerConnection = NULL;
+static pthread_mutex_t hostlist_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct ulong_net {
   unsigned long network;
   unsigned long mask;
@@ -147,11 +150,11 @@ static int  parse_network(char *, struct ulong_net *);
  */
 void start_httpd(int port, int backlog, char *bindAddr) {
 
-  Socket_T S= NULL;
+  Socket_T S = NULL;
 
-  stopped= Run.stopped;
+  stopped = Run.stopped;
 
-  if((myServerSocket= create_server_socket(port, backlog, bindAddr)) < 0) {
+  if((myServerSocket = create_server_socket(port, backlog, bindAddr)) < 0) {
 
     LogError("http server: Could not create a server socket at port %d -- %s\n",
         port, STRERROR);
@@ -183,13 +186,13 @@ void start_httpd(int port, int backlog, char *bindAddr) {
       }
 
 #ifdef HAVE_OPENSSL
-      mySSLServerConnection->server_socket= myServerSocket;
+      mySSLServerConnection->server_socket = myServerSocket;
 #endif
     }
 
     while(! stopped) {
 
-      if(!(S= socket_producer(myServerSocket, port, mySSLServerConnection))) {
+      if(!(S = socket_producer(myServerSocket, port, mySSLServerConnection))) {
         continue;
       }
 
@@ -198,7 +201,7 @@ void start_httpd(int port, int backlog, char *bindAddr) {
     }
 
     delete_ssl_server_socket(mySSLServerConnection);
-    close_socket(myServerSocket);
+    Net_close(myServerSocket);
 
   }
 
@@ -210,7 +213,7 @@ void start_httpd(int port, int backlog, char *bindAddr) {
  */
 void stop_httpd() {
 
-  stopped= TRUE;
+  stopped = TRUE;
 
 }
 
@@ -245,11 +248,11 @@ int add_host_allow(char *name) {
 
        NEW(h);
        memcpy(&h->network, &sin->sin_addr, 4);
-       h->mask=    0xffffffff;
+       h->mask =    0xffffffff;
        LOCK(hostlist_mutex)
        if(hostlist) {
          HostsAllow p, n;
-         for(n= p= hostlist; p; n= p, p= p->next) {
+         for(n = p = hostlist; p; n = p, p = p->next) {
            if((p->network == h->network) && ((p->mask == h->mask))) {
              DEBUG("%s: Debug: Skipping redundant host '%s'\n", prog, name);
              destroy_host_allow(h);
@@ -257,11 +260,11 @@ int add_host_allow(char *name) {
            }
          }
          DEBUG("%s: Debug: Adding host allow '%s'\n", prog, name);
-         n->next= h;
+         n->next = h;
        } else {
          DEBUG("%s: Debug: Adding host allow '%s'\n", prog, name);
 
-         hostlist= h;
+         hostlist = h;
        }
        done:
        END_LOCK;
@@ -306,7 +309,7 @@ int add_net_allow(char *s_network) {
 
     HostsAllow p, n;
 
-    for(n= p= hostlist; p; n= p, p= p->next) {
+    for(n = p = hostlist; p; n = p, p = p->next) {
 
       if((p->network == net.network) && ((p->mask == net.mask))) {
 
@@ -322,14 +325,14 @@ int add_net_allow(char *s_network) {
     DEBUG("%s: Debug: Adding net allow '%s'.\n",
           prog, s_network);
 
-    n->next= h;
+    n->next = h;
 
   } else {
 
     DEBUG("%s: Debug: Adding net allow '%s'.\n",
           prog, s_network);
 
-    hostlist= h;
+    hostlist = h;
 
   }
 
@@ -349,7 +352,7 @@ int has_hosts_allow() {
   int rv;
 
   LOCK(hostlist_mutex)
-      rv= (hostlist != NULL);
+      rv = (hostlist != NULL);
   END_LOCK;
 
   return rv;
@@ -366,7 +369,7 @@ void destroy_hosts_allow() {
 
     LOCK(hostlist_mutex)
         destroy_host_allow(hostlist);
-        hostlist= NULL;
+        hostlist = NULL;
     END_LOCK;
 
   }
@@ -439,15 +442,15 @@ static int authenticate(const struct in_addr addr) {
 static int is_host_allow(const struct in_addr addr) {
 
   HostsAllow p;
-  int rv= FALSE;
+  int rv = FALSE;
 
   LOCK(hostlist_mutex)
 
-  for(p= hostlist; p; p= p->next) {
+  for(p = hostlist; p; p = p->next) {
 
     if((p->network & p->mask) == (addr.s_addr & p->mask)) {
 
-      rv= TRUE;
+      rv = TRUE;
       break;
 
     }
@@ -485,7 +488,7 @@ static int parse_network(char *s_network, struct ulong_net *net) {
   ASSERT(s_network);
   ASSERT(net);
 
-  temp= copy= Str_dup(s_network);
+  temp = copy = Str_dup(s_network);
 
   /* decide if we have xxx.xxx.xxx.xxx/yyy or
                        xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy */
@@ -504,7 +507,7 @@ static int parse_network(char *s_network, struct ulong_net *net) {
       }
 
       *temp=0;
-      longmask= *(temp+1)?temp+1:NULL;
+      longmask = *(temp+1)?temp+1:NULL;
       count=0;
       slashcount=1;
       dotcount=0;
@@ -531,7 +534,7 @@ static int parse_network(char *s_network, struct ulong_net *net) {
 
     /* We have just host portion */
 
-    shortmask= 32;
+    shortmask = 32;
 
   } else if ((dotcount==0) && (count > 1) && (count < 4)) {
 
@@ -575,8 +578,8 @@ static int parse_network(char *s_network, struct ulong_net *net) {
 
     } else {
 
-      net->mask= (1<<shortmask)-1;
-      net->mask= htonl(net->mask<<(32-shortmask));
+      net->mask = (1<<shortmask)-1;
+      net->mask = htonl(net->mask<<(32-shortmask));
 
     }
 
@@ -617,11 +620,11 @@ static Socket_T socket_producer(int server, int port, void *sslserver) {
 
   int client;
   struct sockaddr_in in;
-  socklen_t len= sizeof(struct sockaddr_in);
+  socklen_t len = sizeof(struct sockaddr_in);
 
   if(can_read(server, 1)) {
 
-    if( (client= accept(server, (struct sockaddr*)&in, &len)) < 0) {
+    if( (client = accept(server, (struct sockaddr*)&in, &len)) < 0) {
 
       if(stopped) {
         LogError("http server: service stopped\n");
@@ -642,7 +645,7 @@ static Socket_T socket_producer(int server, int port, void *sslserver) {
 
   }
 
-  if(set_noblock(client) < 0) {
+  if (Net_setNonBlocking(client) < 0) {
     goto error;
   }
 
@@ -658,7 +661,7 @@ static Socket_T socket_producer(int server, int port, void *sslserver) {
   return socket_create_a(client, inet_ntoa(in.sin_addr), port, sslserver);
 
   error:
-  close_socket(client);
+  Net_abort(client);
   return NULL;
 
 }
@@ -672,7 +675,7 @@ static Socket_T socket_producer(int server, int port, void *sslserver) {
  */
 static void destroy_host_allow(HostsAllow p) {
 
-  HostsAllow a= p;
+  HostsAllow a = p;
 
   if(a->next) {
     destroy_host_allow(a->next);

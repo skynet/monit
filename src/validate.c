@@ -598,7 +598,7 @@ static void check_connection(Service_T s, Port_T p) {
         volatile int retry_count = p->retry;
         volatile int rv = TRUE;
         char buf[STRLEN];
-        char report[STRLEN] = {0};
+        char report[STRLEN] = {};
         struct timeval t1;
         struct timeval t2;
 

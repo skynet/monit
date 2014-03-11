@@ -117,11 +117,11 @@ char *encode_base64(size_t size, unsigned char *src) {
     return NULL;
 
   if(!size)
-    size= strlen((char *)src);
+    size = strlen((char *)src);
 
-  out= CALLOC(sizeof(char), size*4/3+4);
+  out = CALLOC(sizeof(char), size*4/3+4);
 
-  p= out;
+  p = out;
 
   for(i=0; i<size; i+=3) {
 
@@ -135,10 +135,10 @@ char *encode_base64(size_t size, unsigned char *src) {
     if(i+2<size)
       b3 = src[i+2];
 
-    b4= b1>>2;
-    b5= ((b1&0x3)<<4)|(b2>>4);
-    b6= ((b2&0xf)<<2)|(b3>>6);
-    b7= b3&0x3f;
+    b4 = b1>>2;
+    b5 = ((b1&0x3)<<4)|(b2>>4);
+    b6 = ((b2&0xf)<<2)|(b3>>6);
+    b7 = b3&0x3f;
 
     *p++= encode(b4);
     *p++= encode(b5);
@@ -175,9 +175,9 @@ size_t decode_base64(unsigned char *dest, const char *src) {
 
   if(src && *src) {
 
-    unsigned char *p= dest;
+    unsigned char *p = dest;
     size_t k, l = strlen(src)+1;
-    unsigned char *buf= CALLOC(1, l);
+    unsigned char *buf = CALLOC(1, l);
 
 
     /* Ignore non base64 chars as per the POSIX standard */
@@ -185,7 +185,7 @@ size_t decode_base64(unsigned char *dest, const char *src) {
 
       if(is_base64(src[k])) {
 
-        buf[l++]= src[k];
+        buf[l++] = src[k];
 
       }
 
@@ -196,30 +196,30 @@ size_t decode_base64(unsigned char *dest, const char *src) {
       char c1='A', c2='A', c3='A', c4='A';
       unsigned char b1=0, b2=0, b3=0, b4=0;
 
-      c1= buf[k];
+      c1 = buf[k];
 
       if(k+1<l) {
 
-        c2= buf[k+1];
+        c2 = buf[k+1];
 
       }
 
       if(k+2<l) {
 
-        c3= buf[k+2];
+        c3 = buf[k+2];
 
       }
 
       if(k+3<l) {
 
-        c4= buf[k+3];
+        c4 = buf[k+3];
 
       }
 
-      b1= decode(c1);
-      b2= decode(c2);
-      b3= decode(c3);
-      b4= decode(c4);
+      b1 = decode(c1);
+      b2 = decode(c2);
+      b3 = decode(c3);
+      b4 = decode(c4);
 
       *p++=((b1<<2)|(b2>>4) );
 

@@ -104,7 +104,7 @@ int status(char *level) {
                 if(*buf == '\n' || *buf == '\r')
                         break;
                 if(Str_startsWith(buf, "HTTP/1.0 200"))
-                        status= TRUE;
+                        status = TRUE;
         }
 
         if(!status) {

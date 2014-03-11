@@ -263,7 +263,7 @@ static char *get_auth_header(Port_T P, char *auth, int l) {
 int check_http(Socket_T socket) {
         Port_T P;
         char host[STRLEN];
-        char auth[STRLEN]= {0};
+        char auth[STRLEN] = {};
         const char *request = NULL;
         const char *hostheader = NULL;
 

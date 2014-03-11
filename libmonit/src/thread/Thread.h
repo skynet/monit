@@ -45,7 +45,7 @@
 
 /** @cond hidden */
 #define wrapper(F) do { \
-        int status= (F); if (! (status == 0 || status==ETIMEDOUT)) \
+        int status = (F); if (! (status == 0 || status==ETIMEDOUT)) \
         THROW(AssertException, "%s -- %s", #F, System_getError(status)); \
 } while (0)
 /** @endcond */
@@ -202,7 +202,7 @@
  * @param mutex The mutex to lock
  * @hideinitializer
  */
-#define LOCK(mutex) do { Mutex_T *_yymutex= &(mutex); assert(pthread_mutex_lock(_yymutex)==0);
+#define LOCK(mutex) do { Mutex_T *_yymutex=&(mutex); assert(pthread_mutex_lock(_yymutex)==0);
 /**
  * Ends a LOCK block
  * @hideinitializer
@@ -251,7 +251,7 @@
  * @param lock The read lock
  * @hideinitializer
  */
-#define RLOCK(lock) do { Lock_T *_yyrlock= &(lock); assert(pthread_rwlock_rdlock(_yyrlock)==0);
+#define RLOCK(lock) do { Lock_T *_yyrlock=&(lock); assert(pthread_rwlock_rdlock(_yyrlock)==0);
 /**
  * Ends a RLOCK block
  * @hideinitializer
@@ -262,7 +262,7 @@
  * @param lock The write lock
  * @hideinitializer
  */
-#define WLOCK(lock) do { Lock_T *_yywlock= &(lock); assert(pthread_rwlock_wrlock(_yywlock)==0);
+#define WLOCK(lock) do { Lock_T *_yywlock=&(lock); assert(pthread_rwlock_wrlock(_yywlock)==0);
 /**
  * Ends a RLOCK block
  * @hideinitializer

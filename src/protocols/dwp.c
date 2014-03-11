@@ -66,7 +66,7 @@ int check_dwp(Socket_T socket) {
 
   Str_chomp(buf);
 
-  n= sscanf(buf, "%255s %d", proto, &status);
+  n = sscanf(buf, "%255s %d", proto, &status);
   if(n!=2 || (status >= 400)) {
     socket_setError(socket, "DWP error: %s", buf);
     return FALSE;
