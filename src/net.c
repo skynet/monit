@@ -238,18 +238,20 @@ int check_socket(int socket) {
 
 
 int check_udp_socket(int socket) {
-        char buf[STRLEN] = {};
+        char token[1] = {};
         /* We have to send something and if the UDP server is down/unreachable
          *  the remote host should send an ICMP error. We then need to call read
          *  to get the ICMP error as a ECONNREFUSED errno. This test is asynchronous
          *  so we must wait, but we do not want to block to long either and it is
          *  probably better to report a server falsely up than to block too long.
          */
-        Net_write(socket, buf, 1, 0);
-        if(sock_read(socket, buf, STRLEN, 2) < 0) {
+        Net_write(socket, token, 1, 0);
+        if (Net_read(socket, token, 1, 1200) < 0) {
                 switch(errno) {
-                        case ECONNREFUSED: return FALSE;
-                        default:           break;
+                        case ECONNREFUSED:
+                                return FALSE;
+                        default:
+                                break;
                 }
         }
         return TRUE;

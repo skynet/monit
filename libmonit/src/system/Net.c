@@ -103,7 +103,7 @@ int Net_canWrite(int socket, time_t milliseconds) {
 }
 
 
-size_t Net_read(int socket, void *buffer, size_t size, time_t timeout) {
+ssize_t Net_read(int socket, void *buffer, size_t size, time_t timeout) {
 	ssize_t n = 0;
         if (size > 0) {
                 do {
@@ -121,7 +121,7 @@ size_t Net_read(int socket, void *buffer, size_t size, time_t timeout) {
 }
 
 
-size_t Net_write(int socket, const void *buffer, size_t size, time_t timeout) {
+ssize_t Net_write(int socket, const void *buffer, size_t size, time_t timeout) {
 	ssize_t n = 0;
         if (size > 0) {
                 do {
