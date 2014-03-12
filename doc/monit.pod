@@ -1093,11 +1093,17 @@ test must match over several poll cycles before the action is
 executed by using the statement above. You can use this in
 several ways. For example:
 
- if failed port 80 for 3 times within 5 cycles then alert
+ if failed 
+    port 80 
+    for 3 times within 5 cycles 
+ then alert
 
 or
 
- if failed port 80 for 10 cycles then unmonitor
+ if failed 
+    port 80 
+    for 10 cycles 
+ then unmonitor
 
 If you don't specify <X> times, it equals <Y> by default, thus
 the test match if it evaluate to true for <Y> consecutive cycles.
@@ -1324,8 +1330,8 @@ string Monit should expect when testing a file's checksum. If
 I<expect> is used, Monit will not compute an initial checksum for
 the file, but instead use the string you submit. For example:
 
- if failed checksum and 
-    expect the sum 8f7f419955cefa0b33a2ba316cba3659
+ if failed 
+    checksum expect 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
 You can, for example, use the GNU utility I<md5sum(1)> or 
@@ -1752,7 +1758,9 @@ Monit does not start a possible cracked program or script.
 Example:
 
  check file monit.bin with path "/usr/local/bin/monit"
-       if failed permission 0555 then unmonitor
+       if failed 
+          permission 0555 
+       then unmonitor
 
 If the test fails, Monit will simply send an alert and stop
 monitoring the file and propagate an unmonitor action upward in
@@ -1793,7 +1801,9 @@ Monit does not start a possible cracked program or script.
 Example:
 
  check file passwd with path /etc/passwd
-       if failed uid root then unmonitor
+       if failed 
+          uid root 
+       then unmonitor
 
 If the test fails, Monit will simply send an alert and stop
 monitoring the file and propagate an unmonitor action upward in
@@ -2092,7 +2102,8 @@ Specifying a host header is useful if you want to connect to the
 host using an IP-address, and the web-server handle name based
 virtual hosts. Examples:
 
-  if failed host 192.168.1.100 port 8080 protocol http
+  if failed 
+     host 192.168.1.100 port 8080 protocol http
      hostheader 'example.com'
   then alert
 
@@ -2267,11 +2278,11 @@ should fail we assume that the connection to the host is down and
 Monit does I<not> continue to test any ports. Here's an example:
 
  check host xyzzy with address xyzzy.org
-       if failed icmp type echo count 5 with timeout 15 seconds 
-          then alert
+       if failed 
+          icmp type echo count 5 with timeout 15 seconds
+       then alert
        if failed port 80 proto http then alert
        if failed port 443 type TCPSSL proto http then alert
-       alert foo@bar
 
 In this case, if the icmp test should fail you will get I<one>
 alert and only one alert as long as the host is down, and equally
@@ -2288,16 +2299,20 @@ and thus render the test useless.
 To check a port connection and receive an alert if Monit cannot
 connect to the port, use the following statement:
 
-  if failed port 80 then alert
+  if failed 
+     port 80 
+  then alert
 
 In this case the machine in question is assumed to be the default
 host. For a process entry it's I<localhost> and for a remote host
-entry it's the I<address> of the remote host. Monit will conduct
+entry it's the I<address> of the remote host. Monit will perform
 a tcp connection to the host at port 80 and use tcp by default.
 If you want to connect with udp, you can specify this after the
 port-statement;
 
- if failed port 53 type udp protocol dns then alert
+ if failed 
+    port 53 type udp protocol dns 
+ then alert
 
 Monit will stop trying to connect to the port after 5 seconds and
 assume that the server behind the port is down. You may increase
@@ -2306,7 +2321,9 @@ timeout. In the following example the timeout is increased to 15
 seconds and if Monit cannot connect to the server within 15
 seconds the test will fail and an alert message is sent.
 
-  if failed port 80 with timeout 15 seconds then alert
+  if failed 
+     port 80 with timeout 15 seconds 
+  then alert
 
 If a server is listening to a Unix socket the following statement
 can be used:
@@ -2333,8 +2350,9 @@ protocols. So, besides testing for connections, Monit can also
 speak with the server in question to verify that the server
 works. For example, the following is used to test a http server:
 
- if failed host www.tildeslash.com port 80 proto http 
-    then restart
+ if failed 
+    host www.tildeslash.com port 80 proto http
+ then restart
 
 Some protocols also support a request statement. This statement
 can be used to ask the server for a special document entity. 
@@ -2342,8 +2360,9 @@ can be used to ask the server for a special document entity.
 Currently B<only> the I<HTTP> protocol module supports the
 request statement, such as:
 
- if failed host www.myhost.com port 80 protocol http 
-    and request "/data/show.php?a=b&c=d"
+ if failed 
+    host www.myhost.com port 80 protocol http
+    and request "/data/show?a=b&c=d"
  then restart
 
 The request must contain an URI string specifying a document from
@@ -2352,39 +2371,38 @@ it sends the request to the http server, so it's okay to use URL
 unsafe characters in the request. If the request statement isn't
 specified, the default web server page will be requested.
 
-You can override default Host header in HTTP request:
+You can override default Host header in the HTTP request:
 
- if failed host 192.168.1.100 port 80 protocol http 
+ if failed 
+    host 192.168.1.100 port 80 protocol http
     hostheader "example.com"
  then alert
 
 You can also test the checksum for documents returned by a http
 server.  You can use either MD5 sums:
 
- if failed port 80 protocol http 
-    and request "/page.html"
-        with checksum 8f7f419955cefa0b33a2ba316cba3659 
+ if failed 
+    port 80 protocol http
+    and request "/page.html" 
+    with checksum 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
 Or you can use SHA1 sums:
 
- if failed port 80 protocol http 
+ if failed 
+    port 80 protocol http
     and request "/page.html"
-        with checksum e428302e260e0832007d82de853aa8edf19cd872 
+    with checksum e428302e260e0832007d82de853aa8edf19cd872
  then alert
 
-Monit will compute a checksum (either MD5 or SHA1 is used,
-depending on length of the hash) for the document (in the above
-case, /page.html) and compare the computed checksum with the
-expected checksum. If the sums does not match then the if-tests
-action is performed, in this case alert. Note that Monit will
-B<not> test the checksum for a document if the server does not
-set the HTTP I<Content-Length> header. A HTTP server should set
-this header when it server a static document (i.e. a file). A
-server will often use chunked transfer encoding instead when
-serving dynamic content (e.g. a document created by a CGI-script
-or a Servlet), but to test the checksum for dynamic content is
-not very useful. There are no limitation on the document size,
+Monit will compute a checksum (either MD5 or SHA1 depending
+on length of the hash) for the document and compare the computed
+checksum with the expected checksum. If the sums does not match 
+then the if-tests action is performed, in this case alert. Note
+that Monit will B<not> test the checksum for a document if the 
+server does not set the HTTP I<Content-Length> header. A HTTP 
+server should set this header when it server a static document 
+(i.e. a file). There are no limitation on the document size,
 but keep in mind that Monit will use time to download the
 document over the network so it's probably smart not to ask monit
 to compute a checksum for documents larger than 1Mb or so,
@@ -2395,15 +2413,16 @@ set a longer timeout than the default 5 seconds.
 
 As mentioned above, if the server protocol is not supported by
 Monit you can write your own protocol test using send/expect
-strings. Here we show a protocol test using send/expect for an
-imaginary "Ali Baba and the Forty Thieves" protocol:
+strings. Here we show how to test a SMTP server using send and 
+expect:
 
- if failed host cave.persia.ir port 4040
-    send "Open, Sesame!\r\n"
-    expect "Please enter the cave\r\n"
-    send "Shut, Sesame!\r\n"
-    expect "See you later [A-Za-z ]+\r\n"
- then restart
+ if failed 
+    port 25 and
+    expect "^220.*"
+    send   "HELO localhost.localdomain\r\n"
+    expect "^250.*"
+    send   "QUIT\r\n"
+ then alert
 
 The I<TCPSSL> statement can optionally test the md5 sum of the
 server's certificate. You must state the md5 certificate string
@@ -2432,21 +2451,27 @@ process entry:
  check process apache with pidfile /var/run/apache.pid
        start program = "/etc/init.d/httpd start"
        stop program = "/etc/init.d/httpd stop"
-       if failed host www.tildeslash.com port 80 then restart
+       if failed 
+          host www.tildeslash.com port 80 
+       then restart
 
 Here, a connection test is used in a remote host entry:
 
  check host up2date with address ftp.redhat.com
-       if failed port 21 and protocol ftp then alert
+       if failed 
+          port 21 and protocol ftp 
+       then alert
 
 Since we did not explicit specify a host in the above test, monit
 will connect to port 21 at ftp.redhat.com. Apropos, the host
 address can be specified as a dotted IP address string or as
 hostname in the DNS. The following is exactly[*] the same test,
-but here an ip address is used instead:
+but here an IP address is used instead:
 
  check host up2date with address 66.187.232.30
-       if failed port 21 and protocol ftp then alert
+       if failed 
+          port 21 and protocol ftp 
+       then alert
 
 [*] Well, not quite, since we specify an ip-address directly we
 will bypass any DNS round-robin setup, but that's another story.
@@ -2482,7 +2507,8 @@ may respond 200 OK (test succeeded) or send a 483 Too Many Hops
 SIP examples:
 
  check host openser_all with address 127.0.0.1
-   if failed port 5060 type udp protocol sip 
+   if failed 
+      port 5060 type udp protocol sip
       with target "localhost:5060" and maxforward 6
    then alert
   
@@ -2490,7 +2516,8 @@ If sips is supported, that is, sip over ssl, specify tcpssl as
 the connection type. 
 
  check host fwd.pulver.com with address fwd.pulver.com
-   if failed port 5060 type tcpssl protocol SIP 
+   if failed 
+      port 5060 type tcpssl protocol SIP
       and target 613@fwd.pulver.com maxforward 10 
    then alert
 
@@ -2517,10 +2544,10 @@ RADIUS example:
  check process radiusd with pidfile /var/run/radiusd.pid
        start program = "/etc/init.d/freeradius start"
        stop program = "/etc/init.d/freeradius stop"
-       if failed host 127.0.0.1 port 1812 type udp protocol radius 
-           secret testing123 
+       if failed 
+          host 127.0.0.1 port 1812 type udp protocol radius
+          secret testing123
        then alert
-       if 5 restarts within 5 cycles then timeout
 
 
 =head4 Testing the WEBSOCKET protocol
@@ -2554,13 +2581,14 @@ you may specify an alternative version, default is "0"
 
 WEBSOCKET example:
 
-   check host websocket.org with address "echo.websocket.org"
-     if failed port 80 protocol websocket
-       host "echo.websocket.org"
-       request "/"
-       origin 'http://websocket.com'
-       version 13
-     then alert
+ check host websocket.org with address "echo.websocket.org"
+       if failed
+          port 80 protocol websocket
+          host "echo.websocket.org"
+          request "/"
+          origin 'http://websocket.com'
+          version 13
+       then alert
 
 
 =head2 PROGRAM STATUS TESTING
@@ -2571,7 +2599,8 @@ control file.
 
 An example:
 
- check program myscript with path /usr/local/bin/myscript.sh with timeout 500 seconds
+ check program myscript with path /usr/local/bin/myscript.sh 
+       with timeout 500 seconds
        if status != 0 then alert
 
 Sample script for the above example (/usr/local/bin/myscript.sh):
@@ -2591,8 +2620,8 @@ separated strings. In the above example the strings '-lrt' and
 used, it is recommended to use quotes B<"> to enclose the string,
 otherwise quotes are not needed.
 
-Notes: If the program is a script, the interpreter (first line) is
-required. The program or script must also be executable.
+Notes: If the program is a script, the interpreter is required
+in first line. The program or script must also be executable.
 
 Monit will execute the program periodically and if the exit
 status of the program does not match the expected result, Monit
@@ -2619,7 +2648,7 @@ with a side-effect: when the program has finished executing and
 is waiting for Monit to collect the result, it becomes a
 so-called "zombie" process. A zombie process does not consume
 any system resources (only the PID remains in use) and it is
-under Monit's control; The zombie process is removed from the
+under Monit's control and the zombie process is removed from the
 system as soon as Monit collects the exit status. This means that
 every "check program" will be associated with either a running
 process or a temporary zombie. This unwanted zombie side-effect
@@ -2646,7 +2675,9 @@ Multiple status tests can be used, for example:
 
  check program hwtest with path /usr/local/bin/hwtest.sh
        if status = 1 then alert
-       if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
+       if status = 3 
+          for 5 cycles 
+       then exec "/usr/local/bin/emergency.sh"
 
 
 =head1 SERVICE POLL TIME
@@ -3625,7 +3656,7 @@ gid.
        if failed port 8080 then alert
 
 In this example we use udp for connection testing to check if the
-name-server is running and also use timeout and alert:
+name-server is running and also use timeout:
 
  check process named with pidfile /var/run/named.pid
        start program = "/etc/init.d/named start"
@@ -3659,9 +3690,9 @@ protocol test can be added:
  check process apache with pidfile /var/run/httpd.pid
        start "/etc/init.d/httpd start"
        stop  "/etc/init.d/httpd stop"
-       if failed host www.sol.no port 80 
-          protocol HTTP
-          then alert 
+       if failed 
+          host www.sol.no port 80 protocol http
+       then alert
 
 This example shows a different way to check a webserver using
 the send/expect mechanism:
@@ -3669,10 +3700,11 @@ the send/expect mechanism:
  check process apache with pidfile /var/run/httpd.pid
        start "/etc/init.d/httpd start"
        stop  "/etc/init.d/httpd stop"
-       if failed host www.sol.no port 80 
-          send "GET / HTTP/1.0\r\nHost: www.sol.no\r\n\r\n"
-          expect "HTTP/[0-9\.]{3} 200 .*\r\n"
-          then alert 
+       if failed 
+          host www.sol.no port 80 and
+          send "GET / HTTP/1.1\r\nHost: www.sol.no\r\n\r\n"
+          expect "HTTP/[0-9\.]{3} 200.*"
+       then alert
 
 To make sure that Apache is logging successfully (i.e. no more 
 than 60 percent of child servers are logging), use its mod_status
@@ -3681,8 +3713,10 @@ page at www.sol.no/server-status with this special protocol test:
  check process apache with pidfile /var/run/httpd.pid
        start "/etc/init.d/httpd start"
        stop  "/etc/init.d/httpd stop"
-       if failed host www.sol.no port 80
-       protocol apache-status loglimit > 60% then restart
+       if failed 
+          host www.sol.no port 80 and use
+          protocol apache-status loglimit > 60% 
+       then restart
 
 This configuration can be used to alert you if 25 percent or more
 of Apache child processes are stuck performing DNS lookups:
@@ -3697,8 +3731,9 @@ Here we use an icmp ping test to check if a remote host is up and
 if not send an alert:
 
  check host www.tildeslash.com with address www.tildeslash.com
-       if failed icmp type echo count 5 with timeout 15 seconds
-          then alert
+       if failed 
+          icmp type echo count 5 with timeout 15 seconds
+       then alert
 
 In the following example we ask Monit to compute and verify the
 checksum for the underlying apache binary used by the start and
@@ -3719,9 +3754,10 @@ In this example we ask Monit to test the checksum for a document
 on a remote server. If the checksum was changed we send an alert:
 
  check host tildeslash with address www.tildeslash.com
-       if failed port 80 protocol http 
-          and request "/monit/dist/monit-4.0.tar.gz"
-              with checksum f9d26b8393736b5dfad837bb13780786
+       if failed 
+          port 80 protocol http and 
+          request "/monit/dist/monit-5.7.tar.gz"
+          with checksum f9d26b8393736b5dfad837bb13780786
        then alert
 
 Here are a couple of tests for some popular communication
@@ -3736,10 +3772,10 @@ server and then an Asterisk server
   if totalmem > 1500.0 MB for 5 cycles then alert
   if totalmem > 2000.0 MB for 5 cycles then restart
   if cpu > 60% for 5 cycles then alert
-  if failed port 5060 type udp protocol SIP 
+  if failed 
+     port 5060 type udp protocol SIP
      target me@foo.bar and maxforward 10 
   then restart
-  if 5 restarts within 5 cycles then timeout
 
  check process asterisk 
    with pidfile /var/run/asterisk/asterisk.pid
@@ -3749,10 +3785,10 @@ server and then an Asterisk server
    if totalmem > 1500.0 MB for 5 cycles then alert
    if totalmem > 2000.0 MB for 5 cycles then restart
    if cpu > 60% for 5 cycles then alert
-   if failed port 5060 type udp protocol SIP 
-     and target me@foo.bar maxforward 10 
+   if failed 
+      port 5060 type udp protocol SIP
+      and target me@foo.bar maxforward 10
    then restart
-   if 5 restarts within 5 cycles then timeout
 
 Some servers are slow starters, like for example Java based
 Application Servers. So if we want to keep the poll-cycle low
@@ -3780,7 +3816,9 @@ service if it is not running:
        start program = "/etc/init.d/oracle start"
        stop program  = "/etc/init.d/oracle stop"
        mode active # Not necessary really, since it's the default
-       if failed port 9001 then restart
+       if failed 
+          port 9001 protocol tns
+       then restart
        group database
 
 Here is an example to show the usage of the resource checks. It
@@ -3853,7 +3891,7 @@ restarted, apache must be restarted as well.
  check process oracle with pidfile /var/run/oracle.pid
        start = "/etc/init.d/oracle start"
        stop  = "/etc/init.d/oracle stop"
-       if failed port 9001 then restart
+       if failed port 9001 for 5 cycles then restart
 
 Next, we have 2 services, oracle-import and oracle-export that
 need to be restarted if oracle is restarted, but are independent
@@ -3862,7 +3900,7 @@ of each other.
  check process oracle with pidfile /var/run/oracle.pid
        start = "/etc/init.d/oracle start"
        stop  = "/etc/init.d/oracle stop"
-       if failed port 9001 then restart
+       if failed port 9001 for 3 cycles then restart
 
  check process oracle-import 
       with pidfile /var/run/oracle-import.pid
@@ -3876,94 +3914,6 @@ of each other.
        stop  = "/etc/init.d/oracle-export stop"
        depends on oracle
 
-
-Finally an example with all statements:
-
- check process apache with pidfile /var/run/httpd.pid
-       start program = "/etc/init.d/httpd start"
-       stop program  = "/etc/init.d/httpd stop"
-       if 3 restarts within 5 cycles then timeout
-       if failed host www.sol.no  port 80 protocol http
-          and use the request "/login.cgi"
-              then alert
-       if failed host shop.sol.no port 443 type tcpssl 
-          protocol http and with timeout 15 seconds 
-              then restart
-       if cpu is greater than 60% for 2 cycles then alert
-       if cpu > 80% for 5 cycles then restart
-       if totalmem > 100 MB then stop
-       if children > 200 then alert
-       alert bofh@bar with mail-format {from: monit@foo.bar.no}
-       every 2 cycles
-       mode active
-       depends on weblogic
-       depends on httpd.pid
-       depends on httpd.conf
-       depends on httpd_bin
-       depends on datafs
-       group server
-
- check file httpd.pid with path /usr/local/apache/logs/httpd.pid
-       group server
-       if timestamp > 7 days then restart
-       every 2 cycles
-       alert bofh@bar with mail-format {from: monit@foo.bar.no}
-       depends on datafs
-
- check file httpd.conf with path /etc/httpd/httpd.conf
-       group server
-       if timestamp was changed 
-          then exec "/usr/local/apache/bin/apachectl graceful"
-       every 2 cycles
-       alert bofh@bar with mail-format {from: monit@foo.bar.no}
-       depends on datafs
-
- check file httpd_bin with path /usr/local/apache/bin/httpd
-       group server
-       if failed checksum and expect the sum
-          8f7f419955cefa0b33a2ba316cba3659 then unmonitor
-       if failed permission 755 then unmonitor
-       if failed uid root then unmonitor
-       if failed gid root then unmonitor
-       if changed size then alert
-       if changed timestamp then alert
-       every 2 cycles
-       alert bofh@bar with mail-format {from: monit@foo.bar.no}
-       alert foo@bar on { checksum, size, timestamp, uid, gid } 
-       depends on datafs
-
- check filesystem datafs with path /dev/sdb1
-       group server
-       start program  = "/bin/mount /data"
-       stop program  =  "/bin/umount /data"
-       if failed permission 660 then unmonitor
-       if failed uid root then unmonitor
-       if failed gid disk then unmonitor
-       if space usage > 80 % then alert
-       if space usage > 94 % then stop
-       if inode usage > 80 % then alert
-       if inode usage > 94 % then stop
-       alert root@localhost
-
- check host ftp.redhat.com with address ftp.redhat.com
-       if failed icmp type echo with timeout 15 seconds
-          then alert 
-       if failed port 21 protocol ftp
-          then exec "/usr/X11R6/bin/xmessage -display
-                     :0 ftp connection failed"
-       alert foo@bar.com
- 
- check host www.gnu.org with address www.gnu.org
-       if failed port 80 protocol http 
-          and request "/pub/gnu/bash/bash-2.05b.tar.gz"
-              with checksum 8f7f419955cefa0b33a2ba316cba3659
-       then alert
-       alert rms@gnu.org with mail-format {
-            subject: The gnu server may be hacked again! }
-
-Note: only the B<check statement> is mandatory, the other
-statements are optional and the order of the optional statements
-is not important.
 
 
 =head1 FILES

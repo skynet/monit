@@ -25,7 +25,8 @@ process is running as a given user. Example:
 
 New: Add WebSocket protocol test support for port check. Example:
     check host websocket.org with address "echo.websocket.org"
-        if failed port 80 protocol websocket
+        if failed 
+            port 80 protocol websocket
             host "echo.websocket.org"
             request "/"
             origin "http://www.websocket.com"
@@ -35,7 +36,8 @@ New: Add WebSocket protocol test support for port check. Example:
 New: Simplified HTTP protocol test to allow testing content without 
 creating an URL object. It is now possible to say in a more natural way,
  check host mmonit.com with address mmonit.com
-       if failed port 80 protocol http
+       if failed 
+          port 80 protocol http
           and request /monit/ with content = "Monit 5.7"
        then alert
 meaning that if the page mmonit.com/monit does not contain the text
@@ -48,11 +50,13 @@ Remember also that the string to test can be a regular expression
 New: The HTTP protocol test now support testing the HTTP status code
 returned by the server by using "status <operator> <number>".
 Backward compatible defaults (return error if status >= 400):
-    if failed port 80 protocol http
+    if failed 
+        port 80 protocol http
         and status < 400
     then alert
 Return error if a page DOES exist (for success 404 is expected):
-    if failed port 80 protocol http
+    if failed 
+        port 80 protocol http
         request "/non/existent.php"
         status = 404
     then alert
