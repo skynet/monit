@@ -164,7 +164,6 @@
 static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout) {
         int error = 0;
         struct pollfd fds[1];
-        
         switch (connect(s, addr, addrlen)) {
                 case 0:
                         return 0;
@@ -201,7 +200,6 @@ static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int
 static unsigned short checksum_ip(unsigned char *_addr, int count) {
         register long sum = 0;
         unsigned short *addr = (unsigned short *)_addr;
-        
         while(count > 1) {
                 sum += *addr++;
                 count -= 2;
@@ -299,10 +297,8 @@ int create_unix_socket(const char *pathname, int type, int timeout) {
         int s;
         struct sockaddr_un unixsocket;
         ASSERT(pathname);
-        if((s = socket(PF_UNIX, type, 0)) < 0) {
-                LogError("%s: Cannot create socket -- %s\n", prog, STRERROR);
+        if((s = socket(PF_UNIX, type, 0)) < 0)
                 return -1;
-        }
         unixsocket.sun_family = AF_UNIX;
         snprintf(unixsocket.sun_path, sizeof(unixsocket.sun_path), "%s", pathname);
         if(! Net_setNonBlocking(s)) {
@@ -372,22 +368,22 @@ error:
 
 
 int can_read(int socket, int timeout) {
-        return Net_canRead(socket, timeout * 1000);
+        return Net_canRead(socket, (timeout * 1000)); // TODO: Need to switch rest of Monit to ms instead of seconds
 }
 
 
 int can_write(int socket, int timeout) {
-        return Net_canWrite(socket, timeout * 1000);
+        return Net_canWrite(socket, (timeout * 1000));
 }
 
 
 ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout) {
-        return Net_write(socket, buffer, size, timeout * 1000);
+        return Net_write(socket, buffer, size, (timeout * 1000));
 }
 
 
 ssize_t sock_read(int socket, void *buffer, int size, int timeout) {
-        return Net_read(socket, buffer, size, timeout * 1000);
+        return Net_read(socket, buffer, size, (timeout * 1000));
 }
 
 
