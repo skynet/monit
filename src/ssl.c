@@ -633,16 +633,16 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
 #endif
                                 ssl->method = SSLv3_client_method();
                         break;
-                case SSL_VERSION_TLS:
+                case SSL_VERSION_TLSV1:
                         ssl->method = TLSv1_client_method();
                         break;
 #ifdef HAVE_TLSV1_1_CLIENT_METHOD
-                case SSL_VERSION_TLS11:
+                case SSL_VERSION_TLSV11:
                         ssl->method = TLSv1_1_client_method();
                         break;
 #endif
 #ifdef HAVE_TLSV1_2_CLIENT_METHOD
-                case SSL_VERSION_TLS12:
+                case SSL_VERSION_TLSV12:
                         ssl->method = TLSv1_2_client_method();
                         break;
 #endif

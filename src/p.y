@@ -1024,20 +1024,20 @@ certmd5         : /* EMPTY */    { $<string>$ = NULL; }
 sslversion      : /* EMPTY */  { $<number>$ = SSL_VERSION_NONE; }
                 | SSLV2        { $<number>$ = SSL_VERSION_SSLV2; }
                 | SSLV3        { $<number>$ = SSL_VERSION_SSLV3; }
-                | TLSV1        { $<number>$ = SSL_VERSION_TLS; }
+                | TLSV1        { $<number>$ = SSL_VERSION_TLSV1; }
                 | TLSV11
                 {
 #ifndef HAVE_TLSV1_1_CLIENT_METHOD
                         yyerror("Your SSL Library does not support TLS version 1.1");
 #endif
-                        $<number>$ = SSL_VERSION_TLS11;
+                        $<number>$ = SSL_VERSION_TLSV11;
                 }
                 | TLSV12
                 {
 #ifndef HAVE_TLSV1_1_CLIENT_METHOD
                         yyerror("Your SSL Library does not support TLS version 1.2");
 #endif
-                        $<number>$ = SSL_VERSION_TLS12;
+                        $<number>$ = SSL_VERSION_TLSV12;
                 }
                 | SSLAUTO      { $<number>$ = SSL_VERSION_AUTO; }
                 ;
