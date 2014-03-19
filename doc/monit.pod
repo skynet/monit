@@ -471,50 +471,28 @@ Monit supports three monitoring modes per service: I<active>,
 I<passive> and I<manual>. See also the example section below for
 usage of the mode statement.
 
-In I<active> mode, Monit will monitor a service and in case of
-problems Monit will act and raise alerts, start, stop or restart
-the service. Active mode is the default mode.
+In I<active> mode, Monit will pro-actively monitor a service and
+in case of problems Monit will raise alerts and/or restart the
+service. Active mode is the default mode.
 
 In I<passive> mode, Monit will passively monitor a service and
-specifically B<not> try to fix a problem, but it will still raise
-alerts in case of a problem.
+will raise alerts, but will B<not> try to fix a problem.
 
-For use in clustered environments there is also a I<manual>
-mode. In this mode, Monit will enter I<active> mode B<only> if a
-service was brought under monit's control, for example by
-executing the following command in the console:
+In I<manual> mode, Monit will enter I<active> mode B<only> if a
+service was started via Monit:
 
-  Monit start sybase 
-  (Monit will call sybase's start method and enable monitoring)
+  monit start <servicename>
 
-If a service was not started by Monit or was stopped or disabled
-for example by:
-
-  Monit stop sybase 
-  (Monit will call sybase's stop method and disable monitoring)
-
-Monit will then not monitor the service. This allows for having
-services configured in monitrc and start it with Monit only if it
-should run. This feature can be used to build a simple failsafe
-cluster.
+Use "monit stop <servicename>" to stop the service and take it out
+of Monit control. The manual mode can be used to build simple
+cluster with active/passive HA-services.
 
 A service's monitoring state is persistent across Monit restart.
-This means that you probably would like to make certain that
-services in manual mode are stopped or in unmonitored mode at
-server shutdown. Do for instance the following in a server
-shutdown script:
-
-  Monit stop sybase
-
-or
-
-  Monit unmonitor sybase
 
 If you use Monit in a HA-cluster you should place the state file
-in a temporary filesystem so if the machine should crash and the
-stand-by machine take over services, any manual monitoring mode
-services that were started on the crashed machine won't be
-started on reboot. Use for example:
+in a temporary filesystem so if the machine which runs HA-services
+should crash and the stand-by machine take over its services, the
+HA-services won't be started after the crashed node will boot again:
 
   set statefile /tmp/monit.state
 
@@ -522,361 +500,115 @@ started on reboot. Use for example:
 
 =head1 ALERT MESSAGES
 
-Monit will raise an email alert in the following situations:
+Monit will raise an event in the following situations:
 
- o A service timed out
- o A service does not exist
- o A service related data access problem
- o A service related program execution problem
- o A service is of invalid object type
- o A program status failed
- o A icmp problem
- o A port connection problem
- o A resource statement match
- o A file checksum problem
- o A file size problem
- o A file/directory timestamp problem
- o A file/directory/filesystem permission problem
- o A file/directory/filesystem/process uid problem
- o A file/directory/filesystem/process gid problem
- o An action is done per administrator's request
+ o A service does not exist (e.g. process is not running)
+ o Cannot read service data (e.g. cannot get filesystem usage)
+ o Execution of service related scripts failed (e.g. start failed)
+ o Invalid service type (e.g. if path points to directory instead of file)
+ o Custom test script returned error
+ o Ping test failed
+ o TCP/UDP connection and/or port test failed
+ o Resource usage test failed (e.g. cpu usage too high)
+ o Checksum mismatch or change (e.g. file changed)
+ o File size test failed (e.g. file too large)
+ o Timestamp test failed (e.g. file is older then expected)
+ o Permission test failed (e.g. file mode doesn't match)
+ o An UID test failed (e.g. file owned by different user)
+ o A GID test failed (e.g. file owned by different group)
+ o A process' PID changed out of Monit control
+ o A process' PPID changed out of Monit control
+ o Too many service recovery attempts failed
+ o A file content matched the pattern
+ o Filesystem flags changed
+ o A service action was performed by administrator
+ o Monit was started, stopped or reloaded
 
-Monit will send an alert each time a monitored object changed.
-This involves:
+To get an alert via e-mail, set the alert target using I<set alert>
+statement.
 
- o Monit started, stopped or reloaded
- o A file checksum changed
- o A file size changed
- o A file content match
- o A file/directory timestamp changed
- o A filesystem mount flags changed
- o A process PID changed
- o A process PPID changed
 
-You use the alert statement to notify Monit that you want alert
-messages sent to an email address. If you do not specify an alert
-statement, Monit will not send alert messages.
+=head2 Setting an alert recipient
 
-There are two forms of alert statement:
-
- o Global - common for all services
- o Local  - per service
-
-In both cases you can use more than one alert statement. In other
-words, you can send many different emails to many different
-addresses.
-
-Recipients in the global and in the local lists are alerted when
-a service failed, recovered or changed. If the same email address
-is in the global and in the local list, Monit will only send one
-alert. Local (per service) defined alert email addresses override
-global addresses in case of a conflict. Finally, you may choose
-to only use a global alert list (recommended), a local per
-service list or both.
-
-It is also possible to disable the global alerts locally for
-particular service(s) and recipients.
-
-=head2 Setting a global alert statement
-
-If a change occurred on a monitored services, Monit will send an
-alert to all recipients in the global list who has registered
-interest for the event type. Here is the syntax for the global
-alert statement:
+If an event occurred, Monit will send an alert to all recipients. Syntax:
 
 =over 4
 
-=item SET ALERT mail-address [ [NOT] {events}] [MAIL-FORMAT 
-          {mail-format}] [REMINDER number]
+=item SET ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
 
 =back
 
-Simply using the following in the global section of monitrc:
+Example:
 
  set alert foo@bar
 
-will send a default email to the address foo@bar whenever an
-event occurred on any service. Such an event may be that a
-service timed out, a service doesn't exist and so on. If you want
-to send alert messages to more email addresses, add a I<set alert
-'email'> statement for each address.
+will send a default email to the address foo@bar whenever any event occurred on
+any service.
 
-For explanations of the I<events, MAIL-FORMAT and REMINDER>
-keywords above, please see below.
-
-You can also use the NOT option ahead of the events list which
-will reverse the meaning of the list. That is, only send alerts
-for events I<not> in the list. This can save you some
-configuration bytes if you are interested in most events except a
-few.
+If you want to send alert messages to more email addresses, add a
+I<set alert 'email'> statement for each address.
 
 
-=head2 Setting a local alert statement
+=head3 Setting an event filter
 
-Each service can also have its own recipient list.
+If you only want an alert message sent for certain events, then list them in
+the I<{event, ...}> block, e.g.:
 
-=over 4
+ set alert foo@bar only on { timeout, nonexist }
 
-=item ALERT mail-address [ [NOT] {events}] [MAIL-FORMAT 
-           {mail-format}] [REMINDER number]
+You can also set exclude list (negate the list) to send alerts for all events
+except those which are listed, by prepending the list with the word I<not>.
+For example to receive all alerts except notification about Monit program start
+or stop:
 
-=back
+ set alert foo@bar but not on { instance }
 
-or
+List of all possible event types (value from the first column can be used in
+the event filter:
 
-=over 4
-
-=item NOALERT mail-address
-
-=back
-
-If you only want an alert message sent for certain events and for
-certain service(s), for example only for timeout events or only
-if a service died, then postfix the alert-statement with a filter
-block:
-
- check process myproc with pidfile /var/run/my.pid
-   alert foo@bar only on { timeout, nonexist } 
-   ...
-
-(I<only> and I<on> are noise keywords, ignored by Monit. As a
-side note; Noise keywords are used in the control file grammar to
-make an entry resemble English and thus make it easier to read
-(or, so goes the philosophy). The full set of available noise
-keywords are listed below in the Control File section).
-
-You can also setup to send alerts for all events except some by
-putting the word I<not> ahead of the list. For example, if you
-want to receive alerts for all events except Monit instance
-events, you can write (note that the noise words 'but' and 'on'
-are optional):
-
- check system myserver
-   alert foo@bar but not on { instance } 
-   ...
-
-instead of:
-
-   alert foo@bar on { action
-                      checksum
-                      connection
-                      content
-                      data
-                      exec
-                      fsflags
-                      gid
-                      icmp
-                      invalid
-                      nonexist
-                      permission
-                      pid
-                      ppid
-                      resource
-                      size
-                      status
-                      timeout
-                      timestamp
-                      uid
-                      uptime }
-
-This will send alerts for all events to foo@bar, except Monit
-instance events. An instance event BTW, is an event fired
-whenever the Monit program start or stop.
-
-Event filtering can be used to send an email to different email
-addresses depending on the events that occurred. For instance:
-
- alert foo@bar { nonexist, timeout, resource, icmp, connection }
- alert security@bar on { checksum, permission, uid, gid }
- alert manager@bar
-
-This will send an alert message to foo@bar whenever a nonexist,
-timeout, resource or connection problem occurs and a message to
-security@bar if a checksum, permission, uid or gid problem
-occurs. And finally, a message to manager@bar whenever any error
-event occurs.
-
-Here is the list of events you can use in a mail-filter: I<action,
-checksum, connection, content, data, exec, fsflags, gid, icmp,
-instance, invalid, nonexist, permission, pid, ppid, resource, size, 
-status, timeout, timestamp, uid, uptime>
-
-You can also disable the alerts locally using the NOALERT
-statement. This is useful if you have lots of services monitored
-and are using the global alert statement, but don't want to
-receive alerts for some minor subset of services:
-
- noalert appadmin@bar
-
-For example, if you stick the noalert statement in a 'check
-system' entry, you won't receive system related alerts (such as
-Monit instance started/stopped/reloaded alert, system overloaded
-alert, etc.) but will receive alerts for all other monitored
-services.
-
-The following example will alert foo@bar on all events on all
-services by default, except the service mybar which will send an
-alert only on timeout. The trick is based on the fact that local
-definition of the same recipient overrides the global setting
-(including registered events and mail format):
-
- set alert foo@bar
- 
- check process myfoo with pidfile /var/run/myfoo.pid
-   ...
- check process mybar with pidfile /var/run/mybar.pid
-   alert foo@bar only on { timeout }
-
-=head2 Alert message layout
-
-Monit provides a default mail message layout that is short and to
-the point. Here's an example of a standard alert mail sent by
-monit:
-
- From: monit@tildeslash.com
- Subject: Monit alert -- Does not exist apache 
- To: hauk@tildeslash.com
- Date: Thu, 04 Sep 2003 02:33:03 +0200
-
- Does not exist Service apache
-
-        Date:   Thu, 04 Sep 2003 02:33:03 +0200
-        Action: restart
-        Host:   www.tildeslash.com
-
- Your faithful employee,
- monit
+ Event:     | Failure state:            | Success state:              
+ ---------------------------------------------------------------------
+ ACTION     | "Action done"             | "Action done"               
+ CHECKSUM   | "Checksum failed"         | "Checksum succeeded"        
+ CONNECTION | "Connection failed"       | "Connection succeeded"      
+ CONTENT    | "Content failed",         | "Content succeeded"
+ DATA       | "Data access error"       | "Data access succeeded"     
+ EXEC       | "Execution failed"        | "Execution succeeded"       
+ FSFLAGS    | "Filesystem flags failed" | "Filesystem flags succeeded"
+ GID        | "GID failed"              | "GID succeeded"             
+ ICMP       | "ICMP failed"             | "ICMP succeeded"            
+ INSTANCE   | "Monit instance changed"  | "Monit instance changed not"
+ INVALID    | "Invalid type"            | "Type succeeded"            
+ NONEXIST   | "Does not exist"          | "Exists"                    
+ PERMISSION | "Permission failed"       | "Permission succeeded"      
+ PID        | "PID failed"              | "PID succeeded"
+ PPID       | "PPID failed"             | "PPID succeeded"
+ RESOURCE   | "Resource limit matched"  | "Resource limit succeeded"  
+ SIZE       | "Size failed"             | "Size succeeded"            
+ STATUS     | "Status failed"           | "Status succeeded"            
+ TIMEOUT    | "Timeout"                 | "Timeout recovery"          
+ TIMESTAMP  | "Timestamp failed"        | "Timestamp succeeded"       
+ UID        | "UID failed"              | "UID succeeded"             
+ UPTIME     | "Uptime failed"           | "Uptime succeeded"             
 
 
-If you want to, you can change the format of this message with
-the optional I<mail-format> statement. The syntax for this
-statement is as follows:
+Each alert recipient can have its own filter, for example:
 
- mail-format {
-      from: monit@localhost
-  reply-to: support@domain.com
-   subject: $SERVICE $EVENT at $DATE
-   message: Monit $ACTION $SERVICE at $DATE on $HOST: $DESCRIPTION.
-            Yours sincerely,
-            monit
- }
+ set alert foo@bar { nonexist, timeout, resource, icmp, connection }
+ set alert security@bar on { checksum, permission, uid, gid }
+ set alert admin@bar
 
-Where the keyword I<from:> is the email address Monit should
-pretend it is sending from. It does not have to be a real mail
-address, but it must be a proper formatted mail address, on the
-form: name@domain. The I<reply-to:> keyword can be used to set
-the reply-to mail header. The keyword I<subject:> is for the
-email subject line. The subject must be on only I<one> line. The
-I<message:> keyword denotes the mail body. If used, this keyword
-should always be the last in a mail-format statement. The mail
-body can be as long as you want, but must B<not> contain the '}'
-character.
 
-All of these format keywords are optional, but if used, you must
-provide at least one. Thus if you only want to change the from
-address Monit is using you can do:
+=head3 Setting an error reminder
 
- set alert foo@bar with mail-format { from: bofh@bar.baz }
-
-From the previous example you will notice that some special $XXX
-variables were used. If used, they will be substituted and
-expanded into the text with these values:
+Monit by default sends just B<one> notification if a service failed
+and another notification when it recovered. If you want to be notified
+that the service is still failed, you can use the reminder option in
+the alert statement:
 
 =over 4
 
-=item * I<$EVENT>
-
- A string describing the event that occurred. The values are
- fixed and are:
-
- Event:    | Failure state:           | Success state:              
- -------------------------------------------------------------------
- ACTION    | "Action done"            | "Action done"               
- CHECKSUM  | "Checksum failed"        | "Checksum succeeded"        
- CONNECTION| "Connection failed"      | "Connection succeeded"      
- CONTENT   | "Content failed",        | "Content succeeded"
- DATA      | "Data access error"      | "Data access succeeded"     
- EXEC      | "Execution failed"       | "Execution succeeded"       
- FSFLAG    | "Filesystem flags failed"| "Filesystem flags succeeded"
- GID       | "GID failed"             | "GID succeeded"             
- ICMP      | "ICMP failed"            | "ICMP succeeded"            
- INSTANCE  | "Monit instance changed" | "Monit instance changed not"
- INVALID   | "Invalid type"           | "Type succeeded"            
- NONEXIST  | "Does not exist"         | "Exists"                    
- PERMISSION| "Permission failed"      | "Permission succeeded"      
- PID       | "PID failed"             | "PID succeeded"
- PPID      | "PPID failed"            | "PPID succeeded"
- RESOURCE  | "Resource limit matched" | "Resource limit succeeded"  
- SIZE      | "Size failed"            | "Size succeeded"            
- STATUS    | "Status failed"          | "Status succeeded"            
- TIMEOUT   | "Timeout"                | "Timeout recovery"          
- TIMESTAMP | "Timestamp failed"       | "Timestamp succeeded"       
- UID       | "UID failed"             | "UID succeeded"             
- UPTIME    | "Uptime failed"          | "Uptime succeeded"             
-
-=item * I<$SERVICE>
-
- The service entry name in monitrc
-
-=item * I<$DATE> 
-
- The current time and date (RFC 822 date style).
-
-=item * I<$HOST> 
-
- The name of the host Monit is running on
-
-=item * I<$ACTION> 
-
- The name of the action which was done. Action names are fixed
- and are:
-
- Action:  | Name:
- --------------------
- ALERT    | "alert"
- EXEC     | "exec"
- RESTART  | "restart"
- START    | "start"
- STOP     | "stop"
- UNMONITOR| "unmonitor"
-
-=item * I<$DESCRIPTION> 
-
- The description of the error condition
-
-=back 
-
-
-=head2 Setting a global mail format 
-
-It is possible to set a standard mail format with the following
-global set-statement (keywords are in capital):
-
-=over 4
-
-=item SET MAIL-FORMAT {mail-format}
-
-=back
-
-Format set with this statement will apply to every alert
-statement that does I<not> have its own specified mail-format.
-This statement is most useful for setting a default from address
-for messages sent by monit, like so:
-
- set mail-format { from: monit@foo.bar.no }
-
-
-=head2 Setting an error reminder
-
-Monit by default sends just one error notification if a service
-failed and another when it recovered. If you want to be notified
-more then once if a service remains in a failed state, you can
-use the reminder option to the alert statement (keywords are in
-capital):
-
-=over 4
-
-=item ALERT ... [WITH] REMINDER [ON] number [CYCLES]
+=item SET ALERT mail-address [WITH] REMINDER [ON] number [CYCLES]
 
 =back
 
@@ -891,15 +623,128 @@ use:
   alert foo@bar with reminder on 1 cycle
 
 
-=head2 Setting a mail server for alert messages
+=head2 Disabling alerts for some service
+
+To suppress alerts for some user and service, add the NOALERT statement in the
+context of the service which show not generate alerts:
+
+=over 4
+
+=item NOALERT mail-address
+
+=back
+
+Example (send all alerts to foo@bar except for service p3):
+
+ set alert foo@bar
+
+ check process p1 with pidfile /var/run/p1.pid
+
+ check process p2 with pidfile /var/run/p2.pid
+
+ check process p3 with pidfile /var/run/p3.pid
+     noalert foo@bar
+
+
+=head2 Message format
+
+Monit provides a default message format. Sample default-formatted message:
+
+ From: monit@foo.bar
+ Subject: Monit alert -- Does not exist apache 
+ To: admin@foo.bar
+ Date: Thu, 04 Sep 2014 02:33:03 +0200
+
+ Does not exist Service apache
+
+        Date:   Thu, 04 Sep 2014 02:33:03 +0200
+        Action: restart
+        Host:   www.foo.bar
+
+ Your faithful employee,
+ monit
+
+
+You can set custom message format using I<set main-format> statement:
+
+=over 4
+
+=item SET MAIL-FORMAT {mail-format}
+
+=back
+
+Example:
+
+ set mail-format {
+      from: monit@foo.bar
+  reply-to: support@domain.com
+   subject: $SERVICE $EVENT at $DATE
+   message: Monit $ACTION $SERVICE at $DATE on $HOST: $DESCRIPTION.
+            Yours sincerely,
+            monit
+ }
+
+The I<from:> option is the sender email address. 
+
+The I<reply-to:> option can be used to set the reply-to mail header.
+
+The I<subject:> option allows to set message subject and must be on
+only I<one> line.
+
+The I<message:> option sets the mail body. This option should always
+be the last in a mail-format statement. The mail body can be as long
+as needed, but must B<not> contain the '}' character.
+
+You can set only the option which you want to override. For example
+to change sender address only:
+
+ set mail-format { from: bofh@foo.bar }
+
+The subject and body may contain $XYZ variables, which are expanded
+by Monit:
+
+=over 4
+
+=item * I<$EVENT>
+
+ A string describing the event that occurred.
+
+=item * I<$SERVICE>
+
+ The service name
+
+=item * I<$DATE> 
+
+ The current time and date (RFC 822 date style).
+
+=item * I<$HOST> 
+
+ The name of the host Monit is running on
+
+=item * I<$ACTION> 
+
+ The name of the action which was done by Monit.
+
+=item * I<$DESCRIPTION> 
+
+ The description of the error condition
+
+=back 
+
+
+=head2 Setting a mail server for alert delivery
 
 The mail server Monit should use to send alert messages is
 defined with a global set statement (keywords are in capital and
 optional statements in [brackets]):
 
- SET MAILSERVER {hostname|ip-address [PORT port]
-                [USERNAME username] [PASSWORD password]
-                [using SSLV2|SSLV3|TLSV1] [CERTMD5 checksum]}+ 
+ SET MAILSERVER <hostname | ip-address>
+                [PORT number]
+                [USERNAME string]
+                [PASSWORD string]
+                [using SSLV2|SSLV3|TLSV1]
+                [CERTMD5 checksum]
+                ... 
                 [with TIMEOUT X SECONDS]
                 [using HOSTNAME hostname]
 
@@ -924,8 +769,10 @@ the case, you can use the optional timeout statement to explicit
 set the timeout to a higher value if needed. Here is an example
 for setting several mail servers:
 
- set mailserver mail.tildeslash.com, mail.foo.bar port 10025
-     username "Rabbi" password "Loew" using tlsv1, localhost
+ set mailserver
+     mail.tildeslash.com,
+     mail.foo.bar port 10025 username "myuser" password "mypassword" using tlsv1,
+     localhost
      with timeout 15 seconds
 
 Here Monit will first try to connect to the server
@@ -949,7 +796,7 @@ local host name by using the HOSTNAME option:
      "myhost.example.org"
 
 
-=head2 Event queue
+=head2 Event queue (alert retry)
 
 If the MTA (mail server) for sending alerts is not available,
 Monit I<can> queue events on the local file-system until the MTA
@@ -2239,7 +2086,7 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
 
-=head4 Remote host ping test
+=head3 Remote host ping test
 
 In addition Monit can perform ICMP Echo tests in remote host
 checks. The icmp test may only be used in a check host entry and
@@ -2294,7 +2141,7 @@ Keep in mind though that some firewalls can block icmp packages
 and thus render the test useless.
 
 
-=head4 Examples
+=head3 Examples
 
 To check a port connection and receive an alert if Monit cannot
 connect to the port, use the following statement:
@@ -2476,7 +2323,7 @@ but here an IP address is used instead:
 [*] Well, not quite, since we specify an ip-address directly we
 will bypass any DNS round-robin setup, but that's another story.
 
-=head4 Testing the SIP protocol 
+=head3 Testing the SIP protocol 
 
 The SIP protocol is used by communication platform servers such
 as Asterisk and FreeSWITCH.
@@ -2524,7 +2371,7 @@ the connection type.
 For more examples, see the example section below.
 
 
-=head4 Testing the RADIUS protocol
+=head3 Testing the RADIUS protocol
 
 The RADIUS test is similar to the other protocol tests, but in
 addition allows extra optional parameters.
@@ -2550,7 +2397,7 @@ RADIUS example:
        then alert
 
 
-=head4 Testing the WEBSOCKET protocol
+=head3 Testing the WEBSOCKET protocol
 
 The WEBSOCKET test is similar to the other protocol tests, but in
 addition allows extra optional parameters.
@@ -2913,7 +2760,7 @@ connecting to the httpd server, (three, if you count SSL client
 certificate validation). Both schema's can be used together or by
 itself. You B<must> choose at least one.
 
-=head4 Host and network allow list
+=head3 Host and network allow list
 
 The http server maintains an access-control list of hosts and
 networks allowed to connect to the server. You can add as many
@@ -2940,7 +2787,7 @@ Clients, not mentioned in the allow list, trying to connect to
 the server are logged with their ip-address.
 
 
-=head4 Basic Authentication
+=head3 Basic Authentication
 
 This authentication schema is HTTP specific and described in more
 detail in RFC 2617.
@@ -3985,7 +3832,7 @@ occurred.
 
 =item MONIT_DATE
 
-The time and date (rfc 822 style) the event occurred
+The time and date (RFC 822 style) the event occurred
 
 =item MONIT_HOST
 
@@ -4015,19 +3862,6 @@ Process children. This may be 0 if the process was (re)started,
 Process cpu%. This may be 0 if the process was (re)started,
 
 =back 
-
-In addition the following spartan PATH environment variable is
-available:
-
-=over 4
-
-=item PATH=/bin:/usr/bin:/sbin:/usr/sbin
-
-=back 
-
-Scripts or programs that depends on other environment variables
-or on a more verbose PATH must provide means to set these
-variables by them self.
 
 
 =head1 SIGNALS
@@ -4062,7 +3896,7 @@ this man page also receive inspiration from the same authors.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2012 by Tildeslash Ltd. All Rights Reserved.
+Copyright (C) 2001-2014 by Tildeslash Ltd. All Rights Reserved.
 This product is distributed in the hope that it will be useful,
 but WITHOUT any warranty; without even the implied warranty of
 MERCHANTABILITY or FITNESS for a particular purpose.
