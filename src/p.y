@@ -641,8 +641,7 @@ mailserver      : STRING username password sslversion certmd5 {
                     mailserverset.ssl.version = $<number>4;
                     if (mailserverset.ssl.version != SSL_VERSION_NONE) {
                       mailserverset.ssl.use_ssl = TRUE;
-                      if (mailserverset.ssl.version == SSL_VERSION_SSLV2 ||
-                         mailserverset.ssl.version == SSL_VERSION_SSLV3)
+                      if (mailserverset.ssl.version == SSL_VERSION_SSLV2 || mailserverset.ssl.version == SSL_VERSION_SSLV3)
                          mailserverset.port = PORT_SMTPS;
                       mailserverset.ssl.certmd5 = $<string>5;
                     }

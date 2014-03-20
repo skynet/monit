@@ -444,15 +444,15 @@ group of services, like so:
 
 To start a group of services from the console:
 
-  Monit -g <groupname> start
+  monit -g <groupname> start
 
 To stop a group of services:
 
-  Monit -g <groupname> stop
+  monit -g <groupname> stop
 
 To restart a group of services:
 
-  Monit -g <groupname> restart
+  monit -g <groupname> restart
 
 Note:
 the I<status> and I<summary> commands don't support the -g
@@ -648,24 +648,8 @@ Example (send all alerts to foo@bar except for service p3):
 
 =head2 Message format
 
-Monit provides a default message format. Sample default-formatted message:
-
- From: monit@foo.bar
- Subject: Monit alert -- Does not exist apache 
- To: admin@foo.bar
- Date: Thu, 04 Sep 2014 02:33:03 +0200
-
- Does not exist Service apache
-
-        Date:   Thu, 04 Sep 2014 02:33:03 +0200
-        Action: restart
-        Host:   www.foo.bar
-
- Your faithful employee,
- monit
-
-
-You can set custom message format using I<set main-format> statement:
+Monit provides a default message format. You can set custom message
+format using I<set mail-format> statement:
 
 =over 4
 
@@ -735,111 +719,68 @@ by Monit:
 =head2 Setting a mail server for alert delivery
 
 The mail server Monit should use to send alert messages is
-defined with a global set statement (keywords are in capital and
-optional statements in [brackets]):
+defined with a I<set mailserver> statement:
 
- SET MAILSERVER <hostname | ip-address>
-                [PORT number]
-                [USERNAME string]
-                [PASSWORD string]
-                [using SSLV2|SSLV3|TLSV1]
-                [CERTMD5 checksum]
-                ... 
+ SET MAILSERVER <hostname|ip-address [PORT number] [USERNAME string] [PASSWORD string] [using SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12] [CERTMD5 checksum]>, ...
                 [with TIMEOUT X SECONDS]
                 [using HOSTNAME hostname]
 
-The port statement allows one to use SMTP servers other then those
-listening on port 25. If omitted, port 25 is used unless ssl or
-tls is used, in which case port 465 is used by default.
+Multiple mailservers can be set using a comma separated list. If
+Monit cannot connect to the first server, it will try the next in
+the list.
+
+The port statement allows to override the default SMTP port
+(465 for SSL, or 25 for TLS and non secure connection).
 
 Monit supports AUTH PLAIN and AUTH LOGIN for SMTP authentication.
 You can set a username and a password using the USERNAME and
 PASSWORD options.
 
-To use secure communication, use the SSLV2, SSLV3 or TLSV1
-options, you can also specify the server certificate checksum
-using CERTMD5 option.
+You can enable SSL or TLS with optional certificate checksum.
 
-As you can see, it is possible to set several SMTP servers. If
-Monit cannot connect to the first server in the list it will try
-the second server and so on. Monit has a default 5 seconds
-connection timeout and if the SMTP server is slow, Monit could
-timeout when connecting or reading from the server. If this is
-the case, you can use the optional timeout statement to explicit
-set the timeout to a higher value if needed. Here is an example
-for setting several mail servers:
+The default connection timeout is 5 seconds. You can rise this
+limit using the TIMEOUT option.
 
- set mailserver
-     mail.tildeslash.com,
-     mail.foo.bar port 10025 username "myuser" password "mypassword" using tlsv1,
-     localhost
-     with timeout 15 seconds
+Example (setting two mail servers for failover):
 
-Here Monit will first try to connect to the server
-"mail.tildeslash.com", if this server is down Monit will try
-"mail.foo.bar" on port 10025 using the given credentials via tls
-and finally "localhost". We also set an explicit connect and read
-timeout; If Monit cannot connect to the first SMTP server in the
-list within 15 seconds it will try the next server and so on. The
-I<set mailserver ..> statement is optional and if not defined
-Monit will not send email alerts. Not setting a mail server is
-recommended only if alert notification is delegated to M/Monit.
+ set mailserver mail1.foo.bar, mail2.foo.bar
 
-Monit, by default, use the local host name in SMTP HELO/EHLO and
-in the Message-ID header. Some mail servers check this
-information against DNS for spam protection and can reject the
-email if the DNS and the hostname used in the transaction does
-not match. If this is the case, you can override the default
-local host name by using the HOSTNAME option:
-
- set mailserver mail.tildeslash.com using hostname
-     "myhost.example.org"
+By default, Monit uses the local host name in SMTP HELO/EHLO
+and in the Message-ID header. You can override it using the
+HOSTNAME option.
 
 
-=head2 Event queue (alert retry)
+=head2 Event queue
 
-If the MTA (mail server) for sending alerts is not available,
-Monit I<can> queue events on the local file-system until the MTA
-recover. Monit will then post queued events in order with their
-original timestamp so the events are not lost. This feature is
-most useful if Monit is used together with M/Monit and when event
-history is important.
+If no mail server is available, Monit I<can> queue events on the
+local file-system for retry until mail server recovery.
+
+If Monit is configured with M/Monit, the event queue provides safe
+event store for M/Monit in the case of temporary problems as well.
 
 The event queue is persistent across Monit restarts and provided
 that the back-end filesystem is persistent too, across system
 restart as well.
 
 By default, the queue is disabled and if the alert handler fails,
-Monit will simply drop the alert message. To enable the event
-queue, add the following statement to the Monit control file:
+Monit will simply drop the alert message.
+
+To enable the event queue, add the following statement:
 
  SET EVENTQUEUE BASEDIR <path> [SLOTS <number>]
 
 The <path> is the path to the directory where events will be
-stored. Optionally if you want to limit the queue size, use the
-slots option to only store up to I<number> event messages. If the
-slots option is not used, Monit will store as many events as the
-backend filesystem allows.
+stored.
+
+Optionally if you want to limit the queue size, use the slots
+option to only store up to I<number> event messages.
 
 Example:
 
-  set eventqueue
-      basedir /var/monit
-      slots 5000
-
-Events are stored in a binary format, with one file per event.
-The file size is ca. 130 bytes or a bit more (depending on the
-message length). The file name is composed of the unix timestamp,
-underscore and the service name, for example:
-
- /var/monit/1131269471_apache
+  set eventqueue basedir /var/monit slots 5000
 
 If you are running more then one Monit instance on the same
-machine, you B<must> use separated event queue directories to
-avoid sending wrong alerts to the wrong addresses.
-
-If you want to purge the queue by hand, that is, remove queued
-event-files, Monit should be stopped before the removal.
+machine, you B<must> use separated event queue directories.
 
 
 =head1 SERVICE TIMEOUT
@@ -3153,288 +3094,6 @@ it. The default program timeout is 600 seconds (5 minutes).
 
 =back
 
-
-You can use noise keywords like 'if', `and', `with(in)', `has',
-`using', 'use', 'on(ly)', `usage' and `program(s)' anywhere in an
-entry to make it resemble English. They're ignored, but can make
-entries much easier to read at a glance. The punctuation
-characters ';' ',' and '=' are also ignored. Keywords are case
-insensitive.
-
- Here are the legal global keywords:
-
- Keyword         Function
- ----------------------------------------------------------------
- set daemon      Set a background poll interval in seconds.
- set init        Set Monit to run from init. Monit will not
-                 transform itself into a daemon process.
- set logfile     Name of a file to dump error- and status-
-                 messages to. If syslog is specified as the 
-                 file, Monit will utilize the syslog daemon
-                 to log messages. This can optionally be 
-                 followed by 'facility <facility>' where 
-                 facility is 'log_local0' - 'log_local7' or 
-                 'log_daemon'. If no facility is specified, 
-                 LOG_USER is used.
- set mailserver  The mailserver used for sending alert
-                 notifications. If the mailserver is not 
-                 defined, Monit will try to use 'localhost' 
-                 as the smtp-server for sending mail. You 
-                 can add more mail servers, if Monit cannot
-                 connect to the first server it will try the
-                 next server and so on.
- set mail-format Set a global mail format for all alert
-                 messages emitted by monit.
- set idfile      Explicit set the location of the Monit id
-                 file. E.g. set idfile /var/monit/id.
- set pidfile     Explicit set the location of the Monit lock
-                 file. E.g. set pidfile /var/run/xyzmonit.pid.
- set statefile   Explicit set the location of the file Monit 
-                 will write state data to. If not set, the
-                 default is $HOME/.monit.state. 
- set httpd port  Activates Monit http server at the given 
-                 port number.
- ssl enable      Enables ssl support for the httpd server.
-                 Requires the use of the pemfile statement.
- ssl disable     Disables ssl support for the httpd server.
-                 It is equal to omitting any ssl statement.
- pemfile         Set the pemfile to be used with ssl.
- clientpemfile   Set the pemfile to be used when client
-                 certificates should be checked by monit.
- address         If specified, the http server will only 
-                 accept connect requests to this addresses
-                 This statement is an optional part of the
-                 set httpd statement.
- allow           Specifies a host or IP address allowed to
-                 connect to the http server. Can also specify
-                 a username and password allowed to connect
-                 to the server. More than one allow statement
-                 are allowed. This statement is also an 
-                 optional part of the set httpd statement.
- read-only       Set the user defined in username:password
-                 to read only. A read-only user cannot change
-                 a service from the Monit web interface.
- include         include a file or files matching the globstring
-
- Here are the legal service entry keywords:
-
- Keyword         Function
- ----------------------------------------------------------------
- check           Starts an entry and must be followed by the type
-                 of monitored service {filesystem|directory|file|host
-                 process|system|program} and a descriptive name for
-                 the service.
- pidfile         Specify the  process pidfile. Every
-                 process must create a pidfile with its
-                 current process id. This statement should only
-                 be used in a process service entry.
- path            Must be followed by a path to the block
-                 special file for filesystem, regular
-                 file, directory or a process's pidfile.
- group           Specify a groupname for a service entry.
- start           The program used to start the specified 
-                 service. Full path is required. This 
-                 statement is optional, but recommended.
- stop            The program used to stop the specified
-                 service. Full path is required. This 
-                 statement is optional, but recommended.
- restart         The program used to restart the specified
-                 service. Full path is required. This 
-                 statement is optional. If not used, Monit will
-                 call the service's stop program and then
-                 its start program to restart the service.
- pid and ppid    These keywords may be used as standalone
-                 statements in a process service entry to
-                 override the alert action for change of
-                 process pid and ppid.
- uid, euid       These keywords are either 1) an optional part of
- gid             a start, stop or exec statement. They may be
-                 used to specify a user id and a group id the
-                 program (process) should switch to upon start.
-                 This feature can only be used if the superuser
-                 is running monit. 2) uid and gid may also be
-                 used as standalone statements to test a uid
-                 and gid attributes.
- host            The hostname or IP address to test the port
-                 at. This keyword can only be used together
-                 with a port statement or in the check host
-                 statement.
- port            Specify a TCP/IP service port number which 
-                 a process is listening on. This statement
-                 is also optional. If this statement is not
-                 prefixed with a host-statement, localhost is
-                 used as the hostname to test the port at.
- type            Specifies the socket type Monit should use when
-                 testing a connection to a port. If the type
-                 keyword is omitted, tcp is used. This keyword
-                 must be followed by either tcp, udp or tcpssl.
- tcp             Specifies that Monit should use a TCP 
-                 socket type (stream) when testing a port.
- tcpssl          Specifies that Monit should use a TCP socket
-                 type (stream) and the secure socket layer (ssl)
-                 when testing a port connection.
- udp             Specifies that Monit should use a UDP socket
-                 type (datagram) when testing a port.
- certmd5         The md5 sum of a certificate a ssl forged 
-                 server has to deliver.
- proto(col)      This keyword specifies the type of service 
-                 found at the port. See CONNECTION TESTING
-                 for list of supported protocols.
-                 You're welcome to write new protocol test
-                 modules. If no protocol is specified Monit will
-                 use a default test which in most cases are good
-                 enough.
- request         Specifies a server request and must come
-                 after the protocol keyword mentioned above.
-                  - for http it can contain an URL and an
-                    optional query string.
-                  - other protocols does not support this
-                    statement yet
- send/expect     These keywords specify a generic protocol. 
-                 Both require a string whether to be sent or
-                 to be matched against (as extended regex if 
-                 supported).  Send/expect can not be used 
-                 together with the proto(col) statement.
- unix(socket)    Specifies a Unix socket file and used like 
-                 the port statement above to test a Unix 
-                 domain network socket connection.
- URL             Specify an URL string which Monit will use for
-                 connection testing.
- content         Optional sub-statement for the URL statement.
-                 Specifies that Monit should test the content
-                 returned by the server against a regular 
-                 expression.
- timeout x sec.  Define a network port connection timeout. Must
-                 be followed by a number in seconds and the 
-                 keyword, seconds.
- timeout         Define a service timeout. Must be followed by
-                 two digits. The first digit is max number of
-                 restarts for the service. The second digit
-                 is the cycle interval to test restarts. 
-                 This statement is optional.
- alert           Specifies an email address for notification
-                 if a service event occurs. Alert can also
-                 be postfixed, to only send a message for
-                 certain events. See the examples above. More
-                 than one alert statement is allowed in an
-                 entry. This statement is also optional.
- noalert         Specifies an email address which don't want
-                 to receive alerts. This statement is also
-                 optional.
- restart, stop   These keywords may be used as actions for 
- unmonitor,      various test statements. The exec statement is
- start and       special in that it requires a following string
- exec            specifying the program to be execute. You may
-                 also specify an UID and GID for the exec 
-                 statement. The program executed will then run
-                 using the specified user id and group id.
- mail-format     Specifies a mail format for an alert message 
-                 This statement is an optional part of the
-                 alert statement.
- checksum        Specify that Monit should compute and monitor a
-                 file's md5/sha1 checksum. May only be used in a 
-                 check file entry.
- expect          Specifies a md5/sha1 checksum string Monit 
-                 should expect when testing the checksum. This 
-                 statement is an optional part of the checksum 
-                 statement.
- timestamp       Specifies an expected timestamp for a file
-                 or directory. More than one timestamp statement
-                 are allowed. May only be used in a check file or
-                 check directory entry.
- changed         Part of a timestamp statement and used as an
-                 operator to simply test for a timestamp change.
- every           Validate this entry only at every n poll cycle
-                 or per cron specification. Useful in daemon mode
-                 when the cycle is short and a service takes some
-                 time to start or to suppress monitoring during
-                 backup windows.
- mode            Must be followed either by the keyword active,
-                 passive or manual. If active, Monit will restart
-                 the service if it is not running (this is the
-                 default behavior). If passive, Monit will not
-                 (re)start the service if it is not running - it
-                 will only monitor and send alerts (resource
-                 related restart and stop options are ignored
-                 in this mode also). If manual, Monit will enter
-                 active mode only if a service was started under
-                 monit's control otherwise the service isn't
-                 monitored.
- cpu             Must be followed by a compare operator, a number 
-                 with "%" and an action. This statement is used
-                 to check the cpu usage in percent of a process
-                 with its children over a number of cycles. If
-                 the compare expression matches then the 
-                 specified action is executed.
- mem             The equivalent to the cpu token for memory of a 
-                 process (w/o children!).  This token must be 
-                 followed by a compare operator a number with 
-                 unit {B|KB|MB|GB|%|byte|kilobyte|megabyte|
-                 gigabyte|percent} and an action.
- swap            Token for system swap usage monitoring. This token
-                 must be followed by a compare operator a number with 
-                 unit {B|KB|MB|GB|%|byte|kilobyte|megabyte|gigabyte|percent}
-                 and an action.
- loadavg         Must be followed by [1min,5min,15min] in (), a 
-                 compare operator, a number and an action. This
-                 statement is used to check the system load 
-                 average over a number of cycles. If the compare 
-                 expression matches then the specified action is 
-                 executed.
- children        This is the number of child processes spawn by a
-                 process. The syntax is the same as above.
- totalmem        The equivalent of mem, except totalmem is an
-                 aggregation of memory, not only used by a
-                 process but also by all its child
-                 processes. The syntax is the same as above.
- space           Must be followed by a compare operator, a
-                 number, unit {B|KB|MB|GB|%|byte|kilobyte|
-                 megabyte|gigabyte|percent} and an action.
- inode(s)        Must be followed by a compare operator, integer
-                 number, optionally by percent sign (if not, the
-                 limit is absolute) and an action.
- perm(ission)    Must be followed by an octal number describing
-                 the permissions.
- size            Must be followed by a compare operator, a
-                 number, unit {B|KB|MB|GB|byte|kilobyte|
-                 megabyte|gigabyte} and an action.
- uptime          Must be followed by a compare operator, a
-                 number, unit {second(s)|minute(s)|hour(s)|day(s)}
-                 and an action.
- depends (on)    Must be followed by the name of a service this
-                 service depends on.
-
-
-Here's the complete list of reserved B<keywords> used by monit:
-
-I<if>, I<then>, I<else>, I<set>, I<daemon>, I<logfile>,
-I<syslog>, I<address>, I<httpd>, I<ssl>, I<enable>, I<disable>,
-I<pemfile>, I<allow>, I<read-only>, I<check>, I<init>, I<count>,
-I<pidfile>, I<statefile>, I<group>, I<start>, I<stop>, I<(e)uid>,
-I<gid>, I<connection>, I<port(number)>, I<unix(socket)>, I<type>,
-I<proto(col)>, I<tcp>, I<tcpssl>, I<udp>, I<alert>, I<noalert>,
-I<mail-format>, I<restart>, I<timeout>, I<checksum>, I<resource>,
-I<expect>, I<send>, I<mailserver>, I<every>, I<mode>, I<active>,
-I<passive>, I<manual>, I<depends>, I<host>, I<default>, I<http>,
-I<ftp>, I<smtp>, I<pop>, I<ntp3>, I<nntp>, I<imap>, I<clamav>, 
-I<ssh>, I<dwp>, I<ldap2>, I<ldap3>, I<tns>, I<request>, I<cpu>, 
-I<mem>, I<totalmem>, I<swap>, I<children>, I<loadavg>, I<timestamp>, 
-I<changed>, I<second(s)>, I<minute(s)>, I<hour(s)>, I<day(s)>, 
-I<space>, I<inode>, I<pid>, I<ppid>, I<perm(ission)>, I<icmp>,
-I<process>, I<file>, I<directory>, I<filesystem>, I<size>, I<action>,
-I<unmonitor>, I<rdate>, I<rsync>, I<data>, I<invalid>, I<exec>,
-I<nonexist>, I<policy>, I<reminder>, I<instance>, I<eventqueue>,
-I<basedir>, I<slot(s)>, I<system>, I<idfile>, I<gps>, I<radius>,
-I<secret>, I<target>, I<maxforward>, I<hostheader>, I<register>,
-I<credentials>, I<fips>, I<status>, I<uptime>, I<websocket>,
-I<origin>, I<version> and I<failed>
-
-And here is a complete list of B<noise keywords> ignored by
-monit:
-
-I<is>, I<as>, I<are>, I<on(ly)>, I<with(in|out)>, I<and>, I<has>,
-I<using>, I<use>, I<the>, I<sum>, I<program(s)>, I<than>, I<for>,
-I<usage>, I<was>, I<but>, I<of>.
 
 B<Note:> If the I<start> or I<stop> programs are shell scripts,
 then the script must begin with C<#!> and the remainder of the
