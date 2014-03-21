@@ -272,9 +272,9 @@ gracefullimit     { return GRACEFULLIMIT; }
 cleanuplimit      { return CLEANUPLIMIT; }
 mem(ory)?         { return MEMORY; }
 swap              { return SWAP; }
-totalmem(ory)?    { return TOTALMEMORY; }
+total[ ]?mem(ory)? { return TOTALMEMORY; }
 cpu               { return CPU; }
-totalcpu          { return TOTALCPU; }
+total[ ]?cpu      { return TOTALCPU; }
 child(ren)        { return CHILDREN; }
 timestamp         { return TIMESTAMP; }
 changed           { return CHANGED; }
