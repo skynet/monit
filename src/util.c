@@ -1029,7 +1029,7 @@ void Util_printService(Service_T s) {
                                 if (n->SSL.certmd5 != NULL)
                                         printf(" %-20s = %s\n", "Server cert md5 sum", n->SSL.certmd5);
                         } else if (n->family == AF_UNIX) {
-                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, s->gid->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d time(s)", n->pathname, n->protocol->name, n->timeout, n->retry > 1 ? n->retry : 0)));
+                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d time(s)", n->pathname, n->protocol->name, n->timeout, n->retry > 1 ? n->retry : 0)));
                         }
                 }
         }
