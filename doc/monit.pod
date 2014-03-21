@@ -285,8 +285,16 @@ Monit uses its own Domain Specific Language (DSL); The control
 file consists of a series of service entries and global option
 statements in a free-format, token-oriented syntax.
 
+You can use noise keywords like 'if', 'and', 'with(in)', 'has',
+'us(ing|e)', 'on(ly)', 'then', 'for', 'of'  anywhere in an
+entry to make it resemble English. They're ignored, but can make
+entries much easier to read at a glance.  Keywords are case
+insensitive.
+
 Comments begin with a B<#> and extend through the end of the
-line. There are three kinds of tokens in the control file:
+line.
+
+There are three kinds of tokens in the control file:
 I<keywords>, I<numbers> and I<strings>. On a semantic level, the
 control file consists of only three type of entries:
 
@@ -1014,8 +1022,8 @@ statements in [brackets]),
 =back
 
 
-I<resource> is a choice of "CPU", "TOTALCPU",
-"CPU([user|system|wait])", "MEMORY", "SWAP", "CHILDREN", "TOTALMEMORY",
+I<resource> is a choice of "CPU", "TOTAL CPU",
+"CPU([user|system|wait])", "MEMORY", "SWAP", "CHILDREN", "TOTAL MEMORY",
 "LOADAVG([1min|5min|15min])". Some resource tests can be used
 inside a check system entry, some in a check process entry and
 some in both:
@@ -1033,14 +1041,14 @@ Process only resource tests:
 
 CPU is the CPU usage of the process itself (percent).
 
-TOTALCPU is the total CPU usage of the process and its children
-in (percent). You will want to use TOTALCPU typically for
+TOTAL CPU is the total CPU usage of the process and its children
+in (percent). You will want to use TOTAL CPU typically for
 services like Apache web server where one master process forks the
 child processes as workers.
 
 CHILDREN is the number of child processes of the process. 
 
-TOTALMEMORY is the memory usage of the process and its child
+TOTAL MEMORY is the memory usage of the process and its child
 processes in either percent or as an amount (Byte, kB, MB, GB).
 
 System and process resource tests:
@@ -1059,7 +1067,7 @@ I<operator> is a choice of "<", ">", "!=", "==" in C notation,
 specified, default is EQUAL).
 
 I<value> is either an integer or a real number (except for
-CHILDREN). For CPU, TOTALCPU, MEMORY and TOTALMEMORY you need to
+CHILDREN). For CPU, TOTAL CPU, MEMORY and TOTAL MEMORY you need to
 specify a I<unit>. This could be "%" or if applicable "B" (Byte),
 "kB" (1024 Byte), "MB" (1024 KiloByte) or "GB" (1024 MegaByte).
 
@@ -3274,9 +3282,9 @@ server and then an Asterisk server
     with pidfile /usr/local/freeswitch/log/freeswitch.pid
   start program = "/usr/local/freeswitch/bin/freeswitch -nc -hp"
   stop program = "/usr/local/freeswitch/bin/freeswitch -stop"
-  if totalmem > 1000.0 MB for 5 cycles then alert
-  if totalmem > 1500.0 MB for 5 cycles then alert
-  if totalmem > 2000.0 MB for 5 cycles then restart
+  if total memory > 1000.0 MB for 5 cycles then alert
+  if total memory > 1500.0 MB for 5 cycles then alert
+  if total memory > 2000.0 MB for 5 cycles then restart
   if cpu > 60% for 5 cycles then alert
   if failed 
      port 5060 type udp protocol SIP
@@ -3287,9 +3295,9 @@ server and then an Asterisk server
    with pidfile /var/run/asterisk/asterisk.pid
    start program = "/usr/sbin/asterisk"
    stop program = "/usr/sbin/asterisk -r -x 'shutdown now'"
-   if totalmem > 1000.0 MB for 5 cycles then alert
-   if totalmem > 1500.0 MB for 5 cycles then alert
-   if totalmem > 2000.0 MB for 5 cycles then restart
+   if total memory > 1000.0 MB for 5 cycles then alert
+   if total memory > 1500.0 MB for 5 cycles then alert
+   if total memory > 2000.0 MB for 5 cycles then restart
    if cpu > 60% for 5 cycles then alert
    if failed 
       port 5060 type udp protocol SIP
@@ -3338,8 +3346,8 @@ average is more than 10 for 8 cycles:
        start program = "/etc/init.d/httpd start"
        stop program  = "/etc/init.d/httpd stop"
        if cpu > 40% for 2 cycles then alert
-       if totalcpu > 60% for 2 cycles then alert
-       if totalcpu > 80% for 5 cycles then restart
+       if total cpu > 60% for 2 cycles then alert
+       if total cpu > 80% for 5 cycles then restart
        if mem > 100 MB for 5 cycles then stop
        if loadavg(5min) greater than 10.0 for 8 cycles then stop
 

@@ -355,23 +355,33 @@ int Util_getAction(const char *action);
 
 
 /*
- * Write full action description to given buffer
+ * Append full action description to given string buffer
  * @param action An action object
- * @param buf Buffer
- * @param bufsize Buffer size
- * @return the buffer
+ * @param buf StringBuffer
+ * @return StringBuffer reference
  */
-char *Util_describeAction(Action_T action, char *buf, int bufsize);
+StringBuffer_T Util_printAction(Action_T action, StringBuffer_T buf);
 
 
 /**
- * Print event ratio needed to trigger the action to given buffer
+ * Append event ratio needed to trigger the action to given string buffer
  * @param action A action string
- * @param buf Buffer
- * @param bufsize Buffer size
- * @return the buffer
+ * @param buf StringBuffer
+ * @return StringBuffer reference
  */
-char *Util_getEventratio(Action_T action, char *buf, int bufsize);
+StringBuffer_T Util_printEventratio(Action_T action, StringBuffer_T buf);
+
+
+/**
+ * Append a rule description to the given StringBuffer. The description
+ * consists of the formatted string given by the rule argument and constant
+ * part which describes rule actions based on the action argument.
+ * @param buf StringBuffer
+ * @param action An EventAction object
+ * @param rule Rule description
+ * @return StringBuffer reference
+ */
+StringBuffer_T Util_printRule(StringBuffer_T buf, EventAction_T action, const char *rule, ...);
 
 
 /**

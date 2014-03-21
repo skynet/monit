@@ -849,10 +849,9 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         }
 
         if(s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Existence</td><td>If doesn't exist %s ", Util_getEventratio(s->action_NONEXIST->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(s->action_NONEXIST->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(s->action_NONEXIST->succeeded, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(s->action_NONEXIST->succeeded, buf, sizeof(buf)));
+                StringBuffer_append(res->outputbuffer, "<tr><td>Existence</td><td>");
+                Util_printRule(res->outputbuffer, s->action_NONEXIST, "If doesn't exist");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 
         if (s->every.type != EVERY_CYCLE) {
@@ -866,8 +865,11 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 
-        for (ar = s->actionratelist; ar; ar = ar->next)
-                StringBuffer_append(res->outputbuffer, "<tr><td>Timeout</td><td>If restarted %d times within %d cycle(s) then %s</td></tr>", ar->count, ar->cycle, Util_describeAction(ar->action->failed, buf, sizeof(buf)));
+        for (ar = s->actionratelist; ar; ar = ar->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Timeout</td><td>If restarted %d times within %d cycle(s) then", ar->count, ar->cycle);
+                Util_printAction(ar->action->failed, res->outputbuffer);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
 
         StringBuffer_append(res->outputbuffer, "<tr><td>Data collected</td><td>%s</td></tr>", Time_string(s->collected.tv_sec, buf));
 
@@ -1580,26 +1582,18 @@ static void print_buttons(HttpRequest req, HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_port(HttpResponse res, Service_T s) {
-        if(s->portlist) {
-                char buf[STRLEN];
-                Port_T        p;
-                EventAction_T a;
-                for(p = s->portlist; p; p = p->next) {
-                        a = p->action;
-                        if(p->family == AF_INET) {
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Port</td><td>If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)] %s ", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry > 1 ? p->retry : 0, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        if (s->portlist) {
+                for (Port_T p = s->portlist; p; p = p->next) {
+                        if (p->family == AF_INET) {
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Port</td><td>");
+                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry > 1 ? p->retry : 0);
+                                StringBuffer_append(res->outputbuffer, "</td></tr>");
                                 if(p->SSL.certmd5 != NULL)
-                                        StringBuffer_append(res->outputbuffer,
-                                                  "<tr><td>Server certificate md5 sum</td><td>%s</td></tr>",
-                                                  p->SSL.certmd5);
-                        } else if(p->family == AF_UNIX) {
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket</td><td>If failed [%s [%s] with timeout %ds and retry %d time(s)] %s ", p->pathname, p->protocol->name, p->timeout, p->retry > 1 ? p->retry : 0, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
+                        } else if (p->family == AF_UNIX) {
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket</td><td>");
+                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout, p->retry > 1 ? p->retry : 0);
+                                StringBuffer_append(res->outputbuffer, "</td></tr>");
                         }
                 }
         }
@@ -1607,86 +1601,60 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_icmp(HttpResponse res, Service_T s) {
-        if(s->icmplist) {
-                char buf[STRLEN];
-                Icmp_T        i;
-                EventAction_T a;
-                for(i = s->icmplist; i; i = i->next) {
-                        a = i->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>ICMP</td><td>If failed [%s count %d with timeout %d seconds] %s ", icmpnames[i->type], i->count, i->timeout, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        if (s->icmplist) {
+                for (Icmp_T i = s->icmplist; i; i = i->next) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>ICMP</td><td>");
+                        Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
 }
 
 
 static void print_service_rules_perm(HttpResponse res, Service_T s) {
-        if(s->perm) {
-                char buf[STRLEN];
-                EventAction_T a = s->perm->action;
-                StringBuffer_append(res->outputbuffer, "<tr><td>Associated permission</td><td>If failed %o %s ", s->perm->perm, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        if (s->perm) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Permissions</td><td>");
+                Util_printRule(res->outputbuffer, s->perm->action, "If failed %o", s->perm->perm);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
 static void print_service_rules_uid(HttpResponse res, Service_T s) {
-        if(s->uid) {
-                char buf[STRLEN];
-                EventAction_T a = s->uid->action;
-                StringBuffer_append(res->outputbuffer, "<tr><td>Associated UID</td><td>If failed %d %s ", (int)s->uid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        if (s->uid) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td>");
+                Util_printRule(res->outputbuffer, s->uid->action, "If failed %d", s->uid->uid);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
 static void print_service_rules_euid(HttpResponse res, Service_T s) {
-        if(s->euid) {
-                char buf[STRLEN];
-                EventAction_T a = s->euid->action;
-                StringBuffer_append(res->outputbuffer, "<tr><td>Associated EUID</td><td>If failed %d %s ", (int)s->euid->uid, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        if (s->euid) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>EUID</td><td>");
+                Util_printRule(res->outputbuffer, s->euid->action, "If failed %d", s->euid->uid);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
 static void print_service_rules_gid(HttpResponse res, Service_T s) {
-        if(s->gid) {
-                char buf[STRLEN];
-                EventAction_T a = s->gid->action;
-                StringBuffer_append(res->outputbuffer, "<tr><td>Associated GID</td><td>If failed %d %s ", (int)s->gid->gid, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+        if (s->gid) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td>");
+                Util_printRule(res->outputbuffer, s->gid->action, "If failed %d", s->gid->gid);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
 static void print_service_rules_timestamp(HttpResponse res, Service_T s) {
-        if(s->timestamplist) {
-                char buf[STRLEN];
-                Timestamp_T   t;
-                EventAction_T a;
-                for(t = s->timestamplist; t; t = t->next) {
-                        a = t->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Associated timestamp</td><td>");
-                        if(t->test_changes) {
-                                StringBuffer_append(res->outputbuffer, "If changed %s ", Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->failed, buf, sizeof(buf)));
-                        } else {
-                                StringBuffer_append(res->outputbuffer, "If %s %d second(s) %s ", operatornames[t->operator], t->time, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                        }
+        if (s->timestamplist) {
+                for(Timestamp_T t = s->timestamplist; t; t = t->next) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Timestamp</td><td>");
+                        if(t->test_changes)
+                                Util_printRule(res->outputbuffer, t->action, "If changed");
+                        else
+                                Util_printRule(res->outputbuffer, t->action, "If %s %d second(s)", operatornames[t->operator], t->time);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
@@ -1694,48 +1662,26 @@ static void print_service_rules_timestamp(HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
-        char buf[STRLEN];
-
-        if(s->type == TYPE_FILESYSTEM) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Filesystem flags</td><td>If changed %s ", Util_getEventratio(s->action_FSFLAG->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(s->action_FSFLAG->failed, buf, sizeof(buf)));
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Filesystem flags</td><td>");
+                Util_printRule(res->outputbuffer, s->action_FSFLAG, "If changed");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
-
-        if(s->filesystemlist) {
-                Filesystem_T  dl;
-                EventAction_T a;
-
-                for(dl = s->filesystemlist; dl; dl = dl->next) {
-
-                        a = dl->action;
-
-                        if(dl->resource == RESOURCE_ID_INODE) {
+        if (s->filesystemlist) {
+                for (Filesystem_T dl = s->filesystemlist; dl; dl = dl->next) {
+                        if (dl->resource == RESOURCE_ID_INODE) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Inodes usage limit</td><td>");
-                                if(dl->limit_absolute > -1) {
-                                        StringBuffer_append(res->outputbuffer, "If %s %ld %s ", operatornames[dl->operator], dl->limit_absolute, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                                } else {
-                                        StringBuffer_append(res->outputbuffer, "If %s %.1f%% %s ", operatornames[dl->operator], dl->limit_percent / 10., Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                                }
+                                if (dl->limit_absolute > -1)
+                                        Util_printRule(res->outputbuffer, dl->action, "If %s %ld", operatornames[dl->operator], dl->limit_absolute);
+                                else
+                                        Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                                 StringBuffer_append(res->outputbuffer, "</td></tr>");
-                        } else if(dl->resource == RESOURCE_ID_SPACE) {
+                        } else if (dl->resource == RESOURCE_ID_SPACE) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Space usage limit</td><td>");
-                                if(dl->limit_absolute > -1) {
-                                        StringBuffer_append(res->outputbuffer, "If %s %ld blocks %s ", operatornames[dl->operator], dl->limit_absolute, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                                } else {
-                                        StringBuffer_append(res->outputbuffer, "If %s %.1f%% %s ", operatornames[dl->operator], dl->limit_percent / 10., Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                                }
+                                if (dl->limit_absolute > -1)
+                                        Util_printRule(res->outputbuffer, dl->action, "If %s %ld blocks", operatornames[dl->operator], dl->limit_absolute);
+                                else
+                                        Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                                 StringBuffer_append(res->outputbuffer, "</td></tr>");
                         }
                 }
@@ -1744,41 +1690,24 @@ static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_size(HttpResponse res, Service_T s) {
-        if(s->sizelist) {
-                char buf[STRLEN];
-                Size_T        sl;
-                EventAction_T a;
-
-                for(sl = s->sizelist; sl; sl = sl->next) {
-                        a = sl->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Associated size</td><td>");
-                        if(sl->test_changes) {
-                                StringBuffer_append(res->outputbuffer, "If changed %s ", Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->failed, buf, sizeof(buf)));
-                        } else {
-                                StringBuffer_append(res->outputbuffer, "If %s %llu byte(s) %s ", operatornames[sl->operator], sl->size, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                        }
+        if (s->sizelist) {
+                for (Size_T sl = s->sizelist; sl; sl = sl->next) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Size</td><td>");
+                        if(sl->test_changes)
+                                Util_printRule(res->outputbuffer, sl->action, "If changed");
+                        else
+                                Util_printRule(res->outputbuffer, sl->action, "If %s %llu byte(s)", operatornames[sl->operator], sl->size);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
 }
 
-static void print_service_rules_uptime(HttpResponse res, Service_T s) {
-        if(s->uptimelist) {
-                char buf[STRLEN];
-                Uptime_T      ul;
-                EventAction_T a;
 
-                for(ul = s->uptimelist; ul; ul = ul->next) {
-                        a = ul->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Associated uptime</td><td>");
-                        StringBuffer_append(res->outputbuffer, "If %s %llu second(s) %s ", operatornames[ul->operator], ul->uptime, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+static void print_service_rules_uptime(HttpResponse res, Service_T s) {
+        if (s->uptimelist) {
+                for (Uptime_T ul = s->uptimelist; ul; ul = ul->next) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Uptime</td><td>");
+                        Util_printRule(res->outputbuffer, ul->action, "If %s %llu second(s)", operatornames[ul->operator], ul->uptime);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
@@ -1786,77 +1715,59 @@ static void print_service_rules_uptime(HttpResponse res, Service_T s) {
 
 static void print_service_rules_match(HttpResponse res, Service_T s) {
         if (s->type != TYPE_PROCESS) {
-                char buf[STRLEN];
-                Match_T ml;
-                EventAction_T a;
-                for (ml = s->matchignorelist; ml; ml = ml->next) {
-                        a = ml->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Associated ignore pattern</td><td>If %smatch \"%s\" %s ", ml->not ? "not " : "", ml->match_string, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->failed, buf, sizeof(buf)));
+                for (Match_T ml = s->matchignorelist; ml; ml = ml->next) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Ignore pattern</td><td>");
+                        Util_printRule(res->outputbuffer, ml->action, "If %smatch \"%s\"", ml->not ? "not " : "", ml->match_string);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
-                for (ml = s->matchlist; ml; ml = ml->next) {
-                        a = ml->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Associated pattern</td><td>If %smatch \"%s\" %s ", ml->not ? "not " : "", ml->match_string, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->failed, buf, sizeof(buf)));
+                for (Match_T ml = s->matchlist; ml; ml = ml->next) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Pattern</td><td>");
+                        Util_printRule(res->outputbuffer, ml->action, "If %smatch \"%s\"", ml->not ? "not " : "", ml->match_string);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
 }
 
 
 static void print_service_rules_checksum(HttpResponse res, Service_T s) {
-        if(s->checksum) {
-                char buf[STRLEN];
-                Checksum_T     cs = s->checksum;
-                EventAction_T  a = cs->action;
-                StringBuffer_append(res->outputbuffer, "<tr><td>Associated regex</td><td>");
-                if(cs->test_changes) {
-                        StringBuffer_append(res->outputbuffer, "If changed %s %s ", checksumnames[cs->type], Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->failed, buf, sizeof(buf)));
-                } else {
-                        StringBuffer_append(res->outputbuffer, "If failed %s(%s) %s ", cs->hash, checksumnames[cs->type], Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
-                }
+        if (s->checksum) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Regular expression</td><td>");
+                if (s->checksum->test_changes)
+                        Util_printRule(res->outputbuffer, s->checksum->action, "If changed %s", checksumnames[s->checksum->type]);
+                else
+                        Util_printRule(res->outputbuffer, s->checksum->action, "If failed %s(%s)", s->checksum->hash, checksumnames[s->checksum->type]);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
 static void print_service_rules_process(HttpResponse res, Service_T s) {
-        if(s->type == TYPE_PROCESS) {
-                char buf[STRLEN];
-                StringBuffer_append(res->outputbuffer, "<tr><td>Pid</td><td>If changed %s ", Util_getEventratio(s->action_PID->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(s->action_PID->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "<tr><td>Ppid</td><td>If changed %s ", Util_getEventratio(s->action_PPID->failed, buf, sizeof(buf)));
-                StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(s->action_PPID->failed, buf, sizeof(buf)));
+        if (s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>PID</td><td>");
+                Util_printRule(res->outputbuffer, s->action_PID, "If changed");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+                StringBuffer_append(res->outputbuffer, "<tr><td>PPID</td><td>");
+                Util_printRule(res->outputbuffer, s->action_PPID, "If changed");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
 static void print_service_rules_program(HttpResponse res, Service_T s) {
-        if(s->type == TYPE_PROGRAM) {
-                char buf[STRLEN];
+        if (s->type == TYPE_PROGRAM) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Program timeout</td><td>Terminate the program if not finished within %d seconds</td></tr>", s->program->timeout);
                 for (Status_T status = s->statuslist; status; status = status->next) {
-                        EventAction_T a = status->action;
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Test Exit value</td><td>if exit value %s %d for %s ", operatorshortnames[status->operator], status->return_value, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                        StringBuffer_append(res->outputbuffer, "then %s</td></tr>", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Test Exit value</td><td>");
+                        Util_printRule(res->outputbuffer, status->action, "If exit value %s %d", operatorshortnames[status->operator], status->return_value);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
 }
 
 
 static void print_service_rules_resource(HttpResponse res, Service_T s) {
-        if(s->resourcelist) {
-                char buf[STRLEN];
-                Resource_T    q;
-                EventAction_T a;
-
-                for (q = s->resourcelist; q; q = q->next) {
-                        a = q->action;
+        if (s->resourcelist) {
+                for (Resource_T q = s->resourcelist; q; q = q->next) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>");
                         switch (q->resource_id) {
                                 case RESOURCE_ID_CPU_PERCENT:
@@ -1929,35 +1840,23 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
                                 case RESOURCE_ID_CPUWAIT:
                                 case RESOURCE_ID_MEM_PERCENT:
                                 case RESOURCE_ID_SWAP_PERCENT:
-                                        StringBuffer_append(res->outputbuffer, "If %s %.1f%% %s ", operatornames[q->operator], q->limit / 10., Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                                        Util_printRule(res->outputbuffer, q->action, "If %s %.1f%%", operatornames[q->operator], q->limit / 10.);
                                         break;
 
                                 case RESOURCE_ID_MEM_KBYTE:
                                 case RESOURCE_ID_SWAP_KBYTE:
-                                        StringBuffer_append(res->outputbuffer, "If %s %ldkB %s ", operatornames[q->operator], q->limit, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                                        Util_printRule(res->outputbuffer, q->action, "If %s %ldkB", operatornames[q->operator], q->limit);
                                         break;
 
                                 case RESOURCE_ID_LOAD1:
                                 case RESOURCE_ID_LOAD5:
                                 case RESOURCE_ID_LOAD15:
-                                        StringBuffer_append(res->outputbuffer, "If %s %.1f %s ", operatornames[q->operator], q->limit / 10.0, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                                        Util_printRule(res->outputbuffer, q->action, "If %s %.1f", operatornames[q->operator], q->limit / 10.);
                                         break;
 
                                 case RESOURCE_ID_CHILDREN:
                                 case RESOURCE_ID_TOTAL_MEM_KBYTE:
-                                        StringBuffer_append(res->outputbuffer, "If %s %ld %s ", operatornames[q->operator], q->limit, Util_getEventratio(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s ", Util_describeAction(a->failed, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "else if succeeded %s ", Util_getEventratio(a->succeeded, buf, sizeof(buf)));
-                                        StringBuffer_append(res->outputbuffer, "then %s", Util_describeAction(a->succeeded, buf, sizeof(buf)));
+                                        Util_printRule(res->outputbuffer, q->action, "If %s %ld", operatornames[q->operator], q->limit);
                                         break;
                         }
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
