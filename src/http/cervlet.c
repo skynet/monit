@@ -1586,13 +1586,19 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
                 for (Port_T p = s->portlist; p; p = p->next) {
                         if (p->family == AF_INET) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Port</td><td>");
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry > 1 ? p->retry : 0);
+                                if (p->retry > 1)
+                                        Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry);
+                                else
+                                        Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout);
                                 StringBuffer_append(res->outputbuffer, "</td></tr>");
                                 if(p->SSL.certmd5 != NULL)
                                         StringBuffer_append(res->outputbuffer, "<tr><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
                         } else if (p->family == AF_UNIX) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket</td><td>");
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout, p->retry > 1 ? p->retry : 0);
+                                if (p->retry > 1)
+                                        Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout, p->retry);
+                                else
+                                        Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds]", p->pathname, p->protocol->name, p->timeout);
                                 StringBuffer_append(res->outputbuffer, "</td></tr>");
                         }
                 }
