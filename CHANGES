@@ -72,6 +72,8 @@ non-blocking connect, we now poll a few ms to avoid "connection failed,
 XXX is not ready for i|o" errors which could occur, especially on high 
 latency networks or long distance connect.
 
+Fixed: Simplified reporting of if-statement in UI
+
 
 Version 5.7
 
