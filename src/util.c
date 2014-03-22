@@ -1025,11 +1025,17 @@ void Util_printService(Service_T s) {
                 for (n = s->portlist; n; n = n->next) {
                         StringBuffer_clear(buf);
                         if (n->family == AF_INET) {
-                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)", n->hostname, n->port, n->request ? n->request : "", n->protocol->name, Util_portTypeDescription(n), n->timeout, n->retry > 1 ? n->retry : 0)));
+                                if (n->retry > 1)
+                                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d times", n->hostname, n->port, n->request ? n->request : "", n->protocol->name, Util_portTypeDescription(n), n->timeout, n->retry)));
+                                else
+                                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds", n->hostname, n->port, n->request ? n->request : "", n->protocol->name, Util_portTypeDescription(n), n->timeout)));
                                 if (n->SSL.certmd5 != NULL)
                                         printf(" %-20s = %s\n", "Server cert md5 sum", n->SSL.certmd5);
                         } else if (n->family == AF_UNIX) {
-                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d time(s)", n->pathname, n->protocol->name, n->timeout, n->retry > 1 ? n->retry : 0)));
+                                if (n->retry > 1)
+                                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d times", n->pathname, n->protocol->name, n->timeout, n->retry)));
+                                else
+                                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s [protocol %s] with timeout %d seconds", n->pathname, n->protocol->name, n->timeout, n->retry)));
                         }
                 }
         }
