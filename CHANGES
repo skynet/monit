@@ -74,6 +74,12 @@ latency networks or long distance connect.
 
 Fixed: Simplified if-statements reported in UI
 
+Fixed: Ignore lines starting with '#' in an 'allow htpasswd' file
+statement. Thanks to Michael Bakker for reporting the issue
+
+Fixed: Show service restart program on Monit startup in debug mode.
+Thanks to Michael Bakker for reporting the issue
+
 
 Version 5.7
 
