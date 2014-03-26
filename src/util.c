@@ -952,7 +952,18 @@ void Util_printService(Service_T s) {
                 printf(" timeout %d second(s)", s->stop->timeout);
                 printf("\n");
         }
-
+        if (s->restart) {
+                printf(" %-20s = '", "Restart program");
+                for (int i = 0; s->restart->arg[i]; i++)
+                        printf("%s%s", i ? " " : "", s->restart->arg[i]);
+                printf("'");
+                if (s->restart->has_uid)
+                        printf(" as uid %d", s->restart->uid);
+                if (s->restart->has_gid)
+                        printf(" as gid %d", s->restart->gid);
+                printf(" timeout %d second(s)", s->restart->timeout);
+                printf("\n");
+        }
         if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Existence", StringBuffer_toString(Util_printRule(buf, s->action_NONEXIST, "if does not exist")));
