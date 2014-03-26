@@ -118,6 +118,7 @@
 
 // libmonit
 #include "io/File.h"
+#include "util/Str.h"
 
 
 /* ------------------------------------------------------------- Definitions */
@@ -3119,73 +3120,67 @@ static void setpidfile(char *pidfile) {
  * Read a apache htpasswd file and add credentials found for username
  */
 static void addhtpasswdentry(char *filename, char *username, int dtype) {
-  char *ht_username = NULL;
-  char *ht_passwd = NULL;
-  char buf[STRLEN];
-  FILE *handle = NULL;
-  int credentials_added = 0;
+        char *ht_username = NULL;
+        char *ht_passwd = NULL;
+        char buf[STRLEN];
+        FILE *handle = NULL;
+        int credentials_added = 0;
+        
+        ASSERT(filename);
+        
+        handle = fopen(filename, "r");
+        
+        if ( handle == NULL ) {
+                if (username != NULL)
+                yyerror2("cannot read htpasswd (%s)", filename);
+                else
+                yyerror2("cannot read htpasswd", filename);
+                return;
+        }
+        
+        while (!feof(handle)) {
+                char *colonindex = NULL;
+                
+                if (! fgets(buf, STRLEN, handle))
+                        continue;
+                        
+                Str_rtrim(buf);
+                Str_curtail(buf, "#");
 
-  ASSERT(filename);
-
-  handle = fopen(filename, "r");
-
-  if ( handle == NULL ) {
-    if (username != NULL)
-      yyerror2("cannot read htpasswd (%s)", filename);
-    else
-      yyerror2("cannot read htpasswd", filename);
-    return;
-  }
-
-  while (!feof(handle)) {
-    char *colonindex = NULL;
-    int i;
-
-    if (! fgets(buf, STRLEN, handle))
-      continue;
-
-    /* strip trailing non visible characters */
-    for (i = (int)strlen(buf)-1; i >= 0; i--) {
-      if ( buf[i] == ' '  || buf[i] == '\r' || buf[i] == '\n' || buf[i] == '\t' )
-        buf[i] ='\0';
-      else
-        break;
-    }
-
-    if ( NULL == (colonindex = strchr(buf, ':')))
-      continue;
-
-    ht_passwd = Str_dup(colonindex+1);
-    *colonindex = '\0';
-
-    /* In case we have a file in /etc/passwd or /etc/shadow style we
-     *  want to remove ":.*$" and Crypt and MD5 hashed dont have a colon
-     */
-
-    if ( (NULL != (colonindex = strchr(ht_passwd, ':'))) && ( dtype != DIGEST_CLEARTEXT) )
-      *colonindex = '\0';
-
-    ht_username = Str_dup(buf);
-
-    if (username == NULL) {
-      if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
-        credentials_added++;
-    } else if (strcmp(username, ht_username) == 0)  {
-      if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
-        credentials_added++;
-    } else {
-      FREE(ht_passwd);
-      FREE(ht_username);
-    }
-  }
-
-  if (credentials_added == 0) {
-    if ( username == NULL )
-      yywarning2("htpasswd file (%s) has no usable credentials", filename);
-    else
-      yywarning2("htpasswd file (%s) has no usable credentials for user %s", filename, username);
-  }
-  fclose(handle);
+                if ( NULL == (colonindex = strchr(buf, ':')))
+                        continue;
+                
+                ht_passwd = Str_dup(colonindex+1);
+                *colonindex = '\0';
+                
+                /* In case we have a file in /etc/passwd or /etc/shadow style we
+                 *  want to remove ":.*$" and Crypt and MD5 hashed dont have a colon
+                 */
+                
+                if ( (NULL != (colonindex = strchr(ht_passwd, ':'))) && ( dtype != DIGEST_CLEARTEXT) )
+                *colonindex = '\0';
+                
+                ht_username = Str_dup(buf);
+                
+                if (username == NULL) {
+                        if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
+                        credentials_added++;
+                } else if (strcmp(username, ht_username) == 0)  {
+                        if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
+                        credentials_added++;
+                } else {
+                        FREE(ht_passwd);
+                        FREE(ht_username);
+                }
+        }
+        
+        if (credentials_added == 0) {
+                if ( username == NULL )
+                yywarning2("htpasswd file (%s) has no usable credentials", filename);
+                else
+                yywarning2("htpasswd file (%s) has no usable credentials for user %s", filename, username);
+        }
+        fclose(handle);
 }
 
 
