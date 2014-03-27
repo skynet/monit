@@ -107,11 +107,12 @@ set daemon  60              # check services at 1-minute intervals
 #
 ## You can set alert recipients whom will receive alerts if/when a 
 ## service defined in this file has errors. Alerts may be restricted on 
-## events by using a filter as in the second example below. 
+## events by using a filter as in the second example below.
 #
 # set alert sysadm@foo.bar                       # receive all alerts
-## Do not alert when Monit start,stop or perform a user initiated action
-# set alert manager@foo.bar not on { instance, action } 
+## Do not alert when Monit start, stop or perform a user initiated action.
+## This filter is recommended to avoid getting alerts for trivial cases
+# set alert your-name@your.domain not on { instance, action }
 #
 #
 ## Monit has an embedded web server which can be used to view status of 
