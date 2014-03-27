@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects
 ACLOCAL_AMFLAGS	 = -I m4
 
-EXTRA_DIST	= README CHANGES COPYING CONTRIBUTORS bootstrap doc src config monitrc system libmonit monit.1
+EXTRA_DIST	= README COPYING CONTRIBUTORS bootstrap doc src config monitrc system libmonit monit.1
 
 SUBDIRS		= libmonit
 
