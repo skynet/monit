@@ -79,7 +79,7 @@ DOCUMENTATION
 -------------
 
 Please use `man monit' for an in-depth documentation of the program. More 
-documentation can be found at http://mmonit.com/monit/documentation/
+documentation can be found at http://mmonit.com/monit/
 
 
 Acknowledgments
@@ -128,4 +128,4 @@ Contact information
 
 Monit is a product of Tildeslash Ltd. a company registered in Norway and in
 United Kingdom. For further information about this Software, please visit 
-http://mmonit.com/contact/
+http://mmonit.com/monit/

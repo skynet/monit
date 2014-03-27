@@ -48,7 +48,7 @@ point to write your own configuration file for Monit.
 DOCUMENTATION
 =============
 
-Please use `man monit` for an in-depth documentation of the program. More documentation can be found at [Monit's web-site](http://mmonit.com/monit/documentation/ "Documentation")
+Please use `man monit` for an in-depth documentation of the program. More documentation can be found at [Monit's web-site](http://mmonit.com/monit/ "Documentation")
 
 
 MAILING LIST
