@@ -1737,7 +1737,7 @@ static void print_service_rules_match(HttpResponse res, Service_T s) {
 
 static void print_service_rules_checksum(HttpResponse res, Service_T s) {
         if (s->checksum) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Regular expression</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr><td>Checksum</td><td>");
                 if (s->checksum->test_changes)
                         Util_printRule(res->outputbuffer, s->checksum->action, "If changed %s", checksumnames[s->checksum->type]);
                 else
