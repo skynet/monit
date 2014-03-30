@@ -1,6 +1,12 @@
-                     CHANGES version 5.8
+                     CHANGES version 5.9
 
            This file summarizes changes made since 5.0
+
+Version 5.9
+
+Fixed: Monit XML may be invalid if port check with custom HTTP
+protocol request contains ampersand. Thanks to Markus Juenemann
+for report.
 
 
 Version 5.8

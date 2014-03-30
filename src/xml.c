@@ -255,7 +255,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                           "<port>"
                                                           "<hostname>%s</hostname>"
                                                           "<portnumber>%d</portnumber>"
-                                                          "<request>%s</request>"
+                                                          "<request><![CDATA[%s]]></request>"
                                                           "<protocol>%s</protocol>"
                                                           "<type>%s</type>"
                                                           "<responsetime>%.3f</responsetime>"
