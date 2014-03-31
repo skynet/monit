@@ -94,4 +94,4 @@ Implementations"](http://www.cs.princeton.edu/software/cii/ "CII").
 CONTACT INFORMATION
 ===================
 
-Monit is a product of [Tildeslash Ltd.](http://tildeslash.com/) a company registered in Norway and in United Kingdom. For further information about this Software, please visit [http://mmonit.com/contact/](http://mmonit.com/contact/)
+Monit is a product of [Tildeslash Ltd.](http://tildeslash.com/) a company registered in Norway and in United Kingdom. For further information about this Software, please visit [http://mmonit.com/monit/](http://mmonit.com/monit/)
