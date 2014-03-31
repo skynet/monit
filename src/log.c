@@ -293,13 +293,13 @@ void LogInfo(const char *s, ...) {
  * @param s A formated (printf-style) string to log
  */
 void LogDebug(const char *s, ...) {
-  va_list ap;
-
-  ASSERT(s);
-
-  va_start(ap, s);
-  log_log(LOG_DEBUG, s, ap);
-  va_end(ap);
+        ASSERT(s);
+        if (Run.debug) {
+                va_list ap;
+                va_start(ap, s);
+                log_log(LOG_DEBUG, s, ap);
+                va_end(ap);
+        }
 }
 
 

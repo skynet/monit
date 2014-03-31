@@ -255,7 +255,7 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #undef MIN
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define IS(a,b)  ((a&&b)?!strcasecmp(a, b):0)
-#define DEBUG if(Run.debug) LogDebug
+#define DEBUG LogDebug
 #define FLAG(x, y) (x & y) == y
 #define NVLSTR(x) (x?x:"")
 
