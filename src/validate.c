@@ -134,10 +134,13 @@ retry:
                 DEBUG("'%s' succeeded connecting to %s\n", s->name, Util_portDescription(p, buf, sizeof(buf)));
 
         if (p->protocol->check == check_default) {
-                if (! socket_is_ready(socket)) {
-                        snprintf(report, STRLEN, "connection failed, %s is not ready for i|o -- %s", Util_portDescription(p, buf, sizeof(buf)), STRERROR);
-                        rv = FALSE;
-                        goto error;
+                if (socket_is_udp(socket)) {
+                        // Only test "connected" UDP sockets without protocol, TCP connect is verified on create
+                        if (! socket_is_ready(socket)) {
+                                snprintf(report, STRLEN, "connection failed, %s is not ready for i|o -- %s", Util_portDescription(p, buf, sizeof(buf)), STRERROR);
+                                rv = FALSE;
+                                goto error;
+                        }
                 }
         }
         /* Run the protocol verification routine through the socket */

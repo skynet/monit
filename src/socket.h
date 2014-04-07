@@ -139,6 +139,14 @@ int socket_is_secure(Socket_T S);
 
 
 /**
+ * Return TRUE if the connection is over UDP
+ * @param S A Socket object
+ * @return TRUE if UDP is used otherwise FALSE
+ */
+int socket_is_udp(Socket_T S);
+
+
+/**
  * Get the underlying socket descriptor
  * @param S A Socket object
  * @return The socket descriptor

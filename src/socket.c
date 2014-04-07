@@ -299,6 +299,12 @@ int socket_is_secure(Socket_T S) {
 }
 
 
+int socket_is_udp(Socket_T S) {
+        ASSERT(S);
+        return (S->type == SOCK_DGRAM);
+}
+
+
 int socket_get_socket(Socket_T S) {
         ASSERT(S);
         return S->socket;

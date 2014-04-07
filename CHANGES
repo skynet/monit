@@ -8,6 +8,10 @@ Fixed: Monit XML may be invalid if port check with custom HTTP
 protocol request contains ampersand. Thanks to Markus Juenemann
 for report.
 
+Fixed: 5.8 added extra socket poll time which showed up as pluss
+~ 0.5 sec in M/Monit's port response charts. This release remove
+this extra poll time which is not needed.
+
 
 Version 5.8
 
