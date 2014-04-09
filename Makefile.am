@@ -90,7 +90,7 @@ monit_LDFLAGS 	= -static $(EXTLDFLAGS)
 
 man_MANS 	= monit.1
 
-BUILT_SOURCES   = src/lex.yy.c src/y.tab.c src/tokens.h
+BUILT_SOURCES   = src/lex.yy.c src/y.tab.c src/tokens.h src/y.output
 
 CLEANFILES	= 
 DISTCLEANFILES	= *~ $(BUILT_SOURCES)
@@ -121,15 +121,14 @@ clean-local:
 	-rm -f `find . -name "*.o" -o -name "*.lo" -o -name "*.loT" -o -name "*~"`
 
 distclean-local:
-	-rm -rf autom4te.cache/ \
-		src/y.output \
-		monit-[0-9].*tar.gz
-	-rm -rf lib include
-
+	-rm -rf autom4te.cache/
+	-rm -f monit-[0-9].*tar.gz
 
 cleanall: clean distclean
-	-rm -f Makefile.in configure aclocal.m4 autom4te.cache src/config.h.in monit.1 config/config.*
-	-rm -rf m4
+	-rm -f libmonit/Makefile.in libmonit/configure libmonit/aclocal.m4 libmonit/src/xconfig.h.in 
+	-rm -f Makefile.in configure aclocal.m4 autom4te.cache src/config.h.in monit.1 
+	-rm -rf libmonit/m4 libmonit/config
+	-rm -rf m4 config
 		
 monit.1: doc/monit.pod
 	$(POD2MAN) $(POD2MANFLAGS) $< > $@

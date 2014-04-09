@@ -44,8 +44,8 @@ distclean-local:
 	-rm -rf autom4te.cache/ 
 
 cleanall: clean distclean
-	-rm -f Makefile.in test/Makefile.in src/Makefile.in configure aclocal.m4 src/xconfig.h.in  config/config.*
-	-rm -rf m4
+	-rm -f Makefile.in test/Makefile.in src/Makefile.in configure aclocal.m4 src/xconfig.h.in
+	-rm -rf m4 config
 
 verify: libmonit.la
 	cd $(srcdir)/test && $(MAKE) verify	
