@@ -13,7 +13,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/monit.c])
 AC_CONFIG_SUBDIRS([libmonit])
 AC_CONFIG_COMMANDS([libtool_patch],[test `uname` = "OpenBSD" && perl -p -i -e "s/deplibs_check_method=.*/deplibs_check_method=pass_all/g" libtool])
-
+AC_CONFIG_COMMANDS([monitrc], [chmod 600 monitrc])
 
 # ------------------------------------------------------------------------
 # Programs 
