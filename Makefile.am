@@ -90,9 +90,9 @@ monit_LDFLAGS 	= -static $(EXTLDFLAGS)
 
 man_MANS 	= monit.1
 
-BUILT_SOURCES   = src/lex.yy.c src/y.tab.c src/tokens.h src/y.output
+BUILT_SOURCES   = src/lex.yy.c src/y.tab.c src/tokens.h
 
-CLEANFILES	= 
+CLEANFILES	= src/y.output
 DISTCLEANFILES	= *~ $(BUILT_SOURCES)
 
 
@@ -139,7 +139,7 @@ monit.1: doc/monit.pod
 # Grammar rules
 # -------------
 
-src/y.tab.c src/tokens.h : src/p.y
+src/y.tab.c src/tokens.h: src/p.y
 	$(YACC) $(YACCFLAGS) -o src/y.tab.c $<
 	-echo "#include <config.h>" > src/.y.tab.c
 	-cat src/y.tab.c >> src/.y.tab.c

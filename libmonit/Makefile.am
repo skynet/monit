@@ -35,7 +35,7 @@ dist-hook::
 	-rm -rf `find $(distdir) -name ".DS_Store"`
 	-rm -rf `find $(distdir) -name ".libs"`
 	-rm -rf `find $(distdir) -name ".git"`
-	-rm -f $(distdir)/src/xconfig.h $(distdir)/src/stamp-* 
+	-rm -f $(distdir)/src/xconfig.h $(distdir)/Makefile $(distdir)/src/stamp-* 
 
 clean-local:
 	-rm -f `find . -name "*.o" -o -name "*.lo" -o -name "*.loT" -o -name "*~"`
