@@ -12,6 +12,11 @@ __Memory and Disk space__. A minimum of 1 megabytes RAM are required and around 
   
 __ANSI-C Compiler and Build System__. You will need an ANSI-C99 compiler installed to build Monit. The GNU C compiler (GCC) from the Free Software Foundation (FSF) is recommended. In addition, your PATH must contain basic build tools such as make.
 
+BOOTSTRAPPING
+=============
+
+If you build Monit from the git repository, you need to call `./bootstrap` first before continuing with the installation steps below. To build a Monit release package from a bootstrapped build directory, perform the following steps. 1. `make cleanall` 2. `./bootstrap && ./configure` 3. `make dist` This will create a self-contained `monit-x.y.z.tar.gz` package which can be distributed. 
+
 
 INSTALLATION
 ============
@@ -24,7 +29,7 @@ satisfied, building Monit is conducted via the standard;
 > make install  
 
 This will install Monit and the Monit man-file in /usr/local/bin and /usr/local/man/man1 respectively. If you want another location than
-/usr/local, run configure with the *--prefix* options and specify the install directory.
+/usr/local, run configure with the *--prefix* options and specify the install directory. 
 
 Use ./configure --help for build and install options. By default, Monit is built with SSL, PAM and large file support. You can change this
 with the *--without-<xxx>* options to ./configure. For instance, *--without-ssl*, *--without-pam* or *--without-largefiles*.
