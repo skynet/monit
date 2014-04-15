@@ -110,8 +110,10 @@ set daemon  60              # check services at 1-minute intervals
 ## events by using a filter as in the second example below.
 #
 # set alert sysadm@foo.bar                       # receive all alerts
-## Do not alert when Monit start, stop or perform a user initiated action.
-## This filter is recommended to avoid getting alerts for trivial cases
+#
+## Do not alert when Monit starts, stops or performs a user initiated action.
+## This filter is recommended to avoid getting alerts for trivial cases.
+#
 # set alert your-name@your.domain not on { instance, action }
 #
 #
