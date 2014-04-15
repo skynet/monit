@@ -1097,6 +1097,7 @@ Syntax:
 =item <START | STOP | RESTART> [PROGRAM] = "program"
         [[AS] UID <number | string>]
         [[AS] GID <number | string>]
+        [[WITH] TIMEOUT <number> SECOND(S)]
 
 =back
 
@@ -1120,6 +1121,16 @@ Example:
  check process mmonit with pidfile /usr/local/mmonit/mmonit/logs/mmonit.pid
    start program = "/usr/local/mmonit/bin/mmonit -d" as uid "mmonit" and gid "mmonit"
    stop program = "/usr/local/mmonit/bin/mmonit stop" as uid "mmonit" and gid "mmonit"
+
+In the case of process check, Monit waits up to 30 seconds for the
+start/stop action to finish by checking the process table. You can
+override the action timeout using the I<TIMEOUT> option.
+
+Example:
+
+ check process foobar with pidfile /var/run/foobar.pid
+   start program = "/etc/init.d/foobar start" with timeout 60 seconds
+   start program = "/etc/init.d/foobar stop" 
 
 
 =head1 SERVICE POLL TIME
