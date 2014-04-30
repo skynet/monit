@@ -122,9 +122,8 @@ static Process_Status wait_process(Service_T s, Process_Status expect) {
  * This is a post- fix recursive function for starting every service
  * that s depends on before starting s.
  * @param s A Service_T object
- * @param flag A Custom flag
  */
-static void do_start(Service_T s, int flag) {
+static void do_start(Service_T s) {
         ASSERT(s);
         if (s->visited)
                 return;
@@ -134,7 +133,7 @@ static void do_start(Service_T s, int flag) {
                 for (d = s->dependantlist; d; d = d->next ) {
                         Service_T parent = Util_getService(d->dependant);
                         ASSERT(parent);
-                        do_start(parent, flag);
+                        do_start(parent);
                 }
         }
         if (s->start && (s->type != TYPE_PROCESS || !Util_isProcessRunning(s, FALSE))) {
@@ -247,7 +246,7 @@ static void do_depend(Service_T s, int action, int flag) {
                         for (d = child->dependantlist; d; d = d->next) {
                                 if (IS(d->dependant, s->name)) {
                                         if (action == ACTION_START)
-                                                do_start(child, flag);
+                                                do_start(child);
                                         else if (action == ACTION_MONITOR)
                                                 do_monitor(child, flag);
                                         do_depend(child, action, flag);
@@ -401,7 +400,7 @@ int control_service(const char *S, int A) {
                                 }
                         }
                         do_depend(s, ACTION_STOP, FALSE);
-                        do_start(s, 0);
+                        do_start(s);
                         do_depend(s, ACTION_START, 0);
                         break;
 
@@ -429,7 +428,7 @@ int control_service(const char *S, int A) {
                         } else {
                                 if (do_stop(s, FALSE)) {
                                         /* Only start if stop succeeded */
-                                        do_start(s, 0);
+                                        do_start(s);
                                         do_depend(s, ACTION_START, 0);
                                 } else {
                                         /* enable monitoring of this service again to allow the restart retry in the next cycle up to timeout limit */
