@@ -79,6 +79,7 @@
 
 // libmonit
 #include "Bootstrap.h"
+#include "io/Dir.h"
 #include "io/File.h"
 #include "exceptions/AssertException.h"
 
@@ -625,9 +626,17 @@ static void handle_options(int argc, char **argv) {
                 switch (opt) {
                         case 'c':
                         {
-                                if (! File_isFile(optarg))
-                                        THROW(AssertException, "The control file '%s' is not a file", Str_trunc(optarg, 80));
-                                Run.controlfile = Str_dup(optarg);
+                                char *f = optarg;
+                                if (f[0] != SEPARATOR_CHAR)
+                                        f = File_getRealPath(optarg, (char[PATH_MAX]){});
+                                if (! f)
+                                        THROW(AssertException, "The control file '%s' does not exist at %s",
+                                              Str_trunc(optarg, 80), Dir_cwd((char[STRLEN]){}, STRLEN));
+                                if (! File_isFile(f))
+                                        THROW(AssertException, "The control file '%s' is not a file", Str_trunc(f, 80));
+                                if (! File_isReadable(f))
+                                        THROW(AssertException, "The control file '%s' is not readable", Str_trunc(f, 80));
+                                Run.controlfile = Str_dup(f);
                                 break;
                         }
                         case 'd':
