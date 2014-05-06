@@ -216,24 +216,25 @@ int getloadavg_sysdep(double *loadv, int nelem) {
 int used_system_memory_sysdep(SystemInfo_T *si) {
   int                mib[16];
   size_t             len;
-  struct vmtotal     vm;
   int                n = 0;
   int                pagesize = getpagesize();
+  int                v_active_count;
   size_t             miblen;
   struct xswdev      xsw;
   unsigned long long total = 0ULL;
   unsigned long long used  = 0ULL;
 
   /* Memory */
-  memset(mib, 0, sizeof(mib));
-  mib[0] = CTL_VM;
-  mib[1] = VM_METER;
-  len    = sizeof(struct vmtotal);
-  if (sysctl(mib, 2, &vm, &len, NULL, 0) == -1) {
-    LogError("system statistic error -- cannot get real memory usage: %s\n", STRERROR);
+  len = sizeof(v_active_count);
+  if (sysctlbyname("vm.stats.vm.v_active_count", &v_active_count, &len, NULL, 0) == -1) {
+    LogError("system statistic error -- cannot get for real memory usage: %s\n", STRERROR);
     return FALSE;
   }
-  si->total_mem_kbyte = (unsigned long)(vm.t_arm * pagesize_kbyte);
+  if (len != sizeof(v_active_count)) {
+    LogError("system statistic error -- real memory usage statics error\n");
+    return FALSE;
+  }
+  si->total_mem_kbyte = v_active_count * pagesize_kbyte;
 
   /* Swap */
   memset(mib, 0, sizeof(mib));
