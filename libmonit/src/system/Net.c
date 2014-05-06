@@ -139,6 +139,11 @@ ssize_t Net_write(int socket, const void *buffer, size_t size, time_t timeout) {
 }
 
 
+int Net_shutdown(int socket, int how) {
+        return (shutdown(socket, how) == 0);
+}
+
+
 int Net_close(int socket) {
 	int r = 0;
         do {

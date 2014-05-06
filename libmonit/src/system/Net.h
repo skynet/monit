@@ -121,6 +121,18 @@ ssize_t Net_write(int socket, const void *buffer, size_t size, time_t timeout);
 int Net_abort(int socket);
 
 
+
+/**
+ * Shutdown a full-duplex socket connection.
+ * @param socket The socket connection to shutdown
+ * @param how If how is SHUT_RD, further receives will be disallowed. If how
+ * is SHUT_WR, further sends will be disallowed. If how is SHUT_RDWR, further
+ * sends and receives will be disallowed
+ * @return true if success otherwise false
+ */
+int Net_shutdown(int socket, int how);
+
+
 /**
  * Close a socket connection
  * @param socket The socket connection to close
