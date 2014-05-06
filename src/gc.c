@@ -193,6 +193,7 @@ static void _gc_service(Service_T *s) {
                         Command_free(&(*s)->program->C);
                 if ((*s)->program->args)
                         gccmd(&(*s)->program->args);
+                FREE((*s)->program);
         }
 
         if((*s)->portlist)
