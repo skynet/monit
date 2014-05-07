@@ -12,6 +12,12 @@ Fixed: 5.8 added extra socket poll time which showed up as pluss
 ~ 0.5 sec in M/Monit's port response charts. This release remove
 this extra poll time which is not needed.
 
+Fixed: If the process is not running, do not call stop program
+during restart (back to Monit 5.6 behavior).
+
+Fixed: Do graceful TCP close for TCP/UDP port test instead of
+RST.
+
 
 Version 5.8
 

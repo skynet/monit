@@ -159,7 +159,7 @@ static int do_stop(Service_T s, int flag) {
         if (s->depend_visited)
                 return rv;
         s->depend_visited = TRUE;
-        if (s->stop) {
+        if (s->stop && (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE))) {
                 LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
                 spawn(s, s->stop, NULL);
                 if (s->type == TYPE_PROCESS && (wait_process(s, Process_Stopped) != Process_Stopped)) // Only wait for process service types stop
