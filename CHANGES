@@ -18,6 +18,8 @@ during restart (back to Monit 5.6 behavior).
 Fixed: Do graceful TCP close for TCP/UDP port test instead of
 RST.
 
+Fixed: restart action for non-process service types.
+
 
 Version 5.8
 

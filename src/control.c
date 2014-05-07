@@ -136,12 +136,16 @@ static void do_start(Service_T s) {
                         do_start(parent);
                 }
         }
-        if (s->start && (s->type != TYPE_PROCESS || !Util_isProcessRunning(s, FALSE))) {
-                LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
-                spawn(s, s->start, NULL);
-                /* We only wait for a process type, other service types does not have a pid file to watch */
-                if (s->type == TYPE_PROCESS)
-                        wait_process(s, Process_Started);
+        if (s->start) {
+                if (s->type != TYPE_PROCESS || ! Util_isProcessRunning(s, FALSE)) {
+                        LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
+                        spawn(s, s->start, NULL);
+                        /* We only wait for a process type, other service types does not have a pid file to watch */
+                        if (s->type == TYPE_PROCESS)
+                                wait_process(s, Process_Started);
+                }
+        } else {
+                LogDebug("'%s' start skipped -- method not defined\n", s->name);
         }
         Util_monitorSet(s);
 }
@@ -159,11 +163,15 @@ static int do_stop(Service_T s, int flag) {
         if (s->depend_visited)
                 return rv;
         s->depend_visited = TRUE;
-        if (s->stop && (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE))) {
-                LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
-                spawn(s, s->stop, NULL);
-                if (s->type == TYPE_PROCESS && (wait_process(s, Process_Stopped) != Process_Stopped)) // Only wait for process service types stop
-                        rv = FALSE;
+        if (s->stop) {
+                if (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE)) {
+                        LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
+                        spawn(s, s->stop, NULL);
+                        if (s->type == TYPE_PROCESS && (wait_process(s, Process_Stopped) != Process_Stopped)) // Only wait for process service types stop
+                                rv = FALSE;
+                }
+        } else {
+                LogDebug("'%s' stop skipped -- method not defined\n", s->name);
         }
         if (flag)
                 Util_monitorUnset(s);
@@ -185,6 +193,8 @@ static void do_restart(Service_T s) {
                 /* We only wait for a process type, other service types does not have a pid file to watch */
                 if (s->type == TYPE_PROCESS)
                         wait_process(s, Process_Started);
+        } else {
+                LogDebug("'%s' restart skipped -- method not defined\n", s->name);
         }
         Util_monitorSet(s);
 }
@@ -387,39 +397,17 @@ int control_service(const char *S, int A) {
         }
         switch(A) {
                 case ACTION_START:
-                        if (s->type == TYPE_PROCESS) {
-                                if (Util_isProcessRunning(s, FALSE)) {
-                                        DEBUG("%s: Process already running -- process %s\n", prog, S);
-                                        Util_monitorSet(s);
-                                        return TRUE;
-                                }
-                                if (!s->start) {
-                                        LogDebug("%s: Start method not defined -- process %s\n", prog, S);
-                                        Util_monitorSet(s);
-                                        return FALSE;
-                                }
-                        }
                         do_depend(s, ACTION_STOP, FALSE);
                         do_start(s);
                         do_depend(s, ACTION_START, 0);
                         break;
 
                 case ACTION_STOP:
-                        if (s->type == TYPE_PROCESS && !s->stop) {
-                                LogDebug("%s: Stop method not defined -- process %s\n", prog, S);
-                                Util_monitorUnset(s);
-                                return FALSE;
-                        }
                         do_depend(s, ACTION_STOP, TRUE);
                         do_stop(s, TRUE);
                         break;
 
                 case ACTION_RESTART:
-                        if (! (s->type == TYPE_PROCESS && ((s->start && s->stop) || s->restart))) {
-                                LogDebug("%s: Start, stop or restart method not defined for process check '%s'\n", prog, S);
-                                Util_monitorSet(s);
-                                return FALSE;
-                        }
                         LogInfo("'%s' trying to restart\n", s->name);
                         do_depend(s, ACTION_STOP, FALSE);
                         if (s->restart) {
