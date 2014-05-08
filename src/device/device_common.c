@@ -86,7 +86,7 @@ char *device_path(Info_T inf, char *object) {
   ASSERT(object);
 
   if(stat(object, &buf) != 0) {
-    LogError("%s: Cannot stat '%s' -- %s\n", prog, object, STRERROR);
+    LogError("Cannot stat '%s' -- %s\n", object, STRERROR);
     return NULL;
   }
 
@@ -97,7 +97,7 @@ char *device_path(Info_T inf, char *object) {
     return device_mountpoint_sysdep(inf, object);
   }
 
-  LogError("%s: Not file, directory or device: '%s'", prog, object);
+  LogError("Not file, directory or device: '%s'", object);
 
   return NULL;
 }

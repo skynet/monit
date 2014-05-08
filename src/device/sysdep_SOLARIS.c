@@ -75,7 +75,7 @@ char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
   ASSERT(blockdev);
 
   if ((mntfd = fopen("/etc/mnttab", "r")) == NULL) {
-    LogError("%s: Cannot open /etc/mnttab file\n", prog);
+    LogError("Cannot open /etc/mnttab file\n");
     return NULL;
   }
   while (getmntent(mntfd, &mnt) == 0) {
@@ -105,7 +105,7 @@ int filesystem_usage_sysdep(Info_T inf) {
   ASSERT(inf);
 
   if (statvfs(inf->priv.filesystem.mntpath, &usage) != 0) {
-    LogError("%s: Error getting usage statistics for filesystem '%s' -- %s\n", prog, inf->priv.filesystem.mntpath, STRERROR);
+    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", inf->priv.filesystem.mntpath, STRERROR);
     return FALSE;
   }
   size =                                   usage.f_frsize ? (usage.f_bsize / usage.f_frsize) : 1;

@@ -95,12 +95,12 @@ int read_proc_file(char *buf, int buf_size, char *name, int pid, int *bytes_read
                 snprintf(filename, STRLEN, "/proc/%d/%s", pid, name);
 
         if ((fd = open(filename, O_RDONLY)) < 0) {
-                DEBUG("%s: Cannot open proc file %s -- %s\n", prog, filename, STRERROR);
+                DEBUG("Cannot open proc file %s -- %s\n", filename, STRERROR);
                 return rv;
         }
 
         if ((bytes = (int)read(fd, buf, buf_size-1)) < 0) {
-                DEBUG("%s: Cannot read proc file %s -- %s\n", prog, filename, STRERROR);
+                DEBUG("Cannot read proc file %s -- %s\n", filename, STRERROR);
                 goto error;
         }
         if (bytes_read)
@@ -112,7 +112,7 @@ int read_proc_file(char *buf, int buf_size, char *name, int pid, int *bytes_read
 
 error:
         if (close(fd) < 0)
-                LogError("%s: Socket close failed -- %s\n", prog, STRERROR);
+                LogError("Socket close failed -- %s\n", STRERROR);
 
         return rv;
 }

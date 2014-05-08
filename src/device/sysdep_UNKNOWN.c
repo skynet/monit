@@ -41,7 +41,7 @@
  * @return         NULL
  */
 char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
-  LogError("%s: Unsupported mounted filesystem information method\n", prog);
+  LogError("Unsupported mounted filesystem information method\n");
   return NULL;
 }
 
@@ -53,7 +53,7 @@ char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
  * @return        FALSE
  */
 int filesystem_usage_sysdep(Info_T inf) {
-  LogError("%s: Unsupported filesystem informations gathering method\n", prog);
+  LogError("Unsupported filesystem informations gathering method\n");
   return FALSE;
 }
 

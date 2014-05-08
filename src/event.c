@@ -456,7 +456,7 @@ void Event_queue_process() {
 
   if (! (dir = opendir(Run.eventlist_dir)) ) {
     if (errno != ENOENT)
-      LogError("%s: cannot open the directory %s -- %s\n", prog, Run.eventlist_dir, STRERROR);
+      LogError("Cannot open the directory %s -- %s\n", Run.eventlist_dir, STRERROR);
     return;
   }
 
@@ -484,10 +484,10 @@ void Event_queue_process() {
     snprintf(file_name, STRLEN, "%s/%s", Run.eventlist_dir, de->d_name);
 
     if (!stat(file_name, &st) && S_ISREG(st.st_mode)) {
-      DEBUG("%s: processing queued event %s\n", prog, file_name);
+      DEBUG("Processing queued event %s\n", file_name);
 
       if (! (file = fopen(file_name, "r")) ) {
-        LogError("%s: queued event processing failed - cannot open the file %s -- %s\n", prog, file_name, STRERROR);
+        LogError("Queued event processing failed - cannot open the file %s -- %s\n", file_name, STRERROR);
         goto error1;
       }
 
@@ -727,25 +727,25 @@ static void Event_queue_add(Event_T E) {
   ASSERT(E->flag != HANDLER_SUCCEEDED);
 
   if (!file_checkQueueDirectory(Run.eventlist_dir, 0700)) {
-    LogError("%s: Aborting event - cannot access the directory %s\n", prog, Run.eventlist_dir);
+    LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
     return;
   }
 
   if (!file_checkQueueLimit(Run.eventlist_dir, Run.eventlist_slots)) {
-    LogError("%s: Aborting event - queue over quota\n", prog);
+    LogError("Aborting event - queue over quota\n");
     return;
   }
 
   /* compose the file name of actual timestamp and service name */
   snprintf(file_name, STRLEN, "%s/%ld_%lx", Run.eventlist_dir, (long int)time(NULL), (long unsigned)E->source);
 
-  DEBUG("%s: Adding event to the queue file %s for later delivery\n", prog, file_name);
+  DEBUG("Adding event to the queue file %s for later delivery\n", file_name);
 
   mask = umask(QUEUEMASK);
   file = fopen(file_name, "w");
   umask(mask);
   if (! file) {
-    LogError("%s: Aborting event - cannot open the event file %s -- %s\n", prog, file_name, STRERROR);
+    LogError("Aborting event - cannot open the event file %s -- %s\n", file_name, STRERROR);
     return;
   }
 
@@ -772,7 +772,7 @@ static void Event_queue_add(Event_T E) {
   error:
   fclose(file);
   if (!rv) {
-    LogError("%s: Aborting event - unable to save event information to %s\n",  prog, file_name);
+    LogError("Aborting event - unable to save event information to %s\n",  file_name);
     if (unlink(file_name) < 0)
       LogError("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);
   } else {
@@ -802,18 +802,18 @@ static void Event_queue_update(Event_T E, const char *file_name) {
   ASSERT(E->flag != HANDLER_SUCCEEDED);
 
   if (!file_checkQueueDirectory(Run.eventlist_dir, 0700)) {
-    LogError("%s: Aborting event - cannot access the directory %s\n", prog, Run.eventlist_dir);
+    LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
     return;
   }
 
-  DEBUG("%s: Updating event in the queue file %s for later delivery\n", prog, file_name);
+  DEBUG("Updating event in the queue file %s for later delivery\n", file_name);
 
   mask = umask(QUEUEMASK);
   file = fopen(file_name, "w");
   umask(mask);
   if (! file)
   {
-    LogError("%s: Aborting event - cannot open the event file %s -- %s\n", prog, file_name, STRERROR);
+    LogError("Aborting event - cannot open the event file %s -- %s\n", file_name, STRERROR);
     return;
   }
 
@@ -840,7 +840,7 @@ static void Event_queue_update(Event_T E, const char *file_name) {
   error:
   fclose(file);
   if (!rv) {
-    LogError("%s: Aborting event - unable to update event information to %s\n",  prog, file_name);
+    LogError("Aborting event - unable to update event information to %s\n", file_name);
     if (unlink(file_name) < 0)
       LogError("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);
   }

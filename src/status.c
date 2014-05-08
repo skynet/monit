@@ -83,13 +83,13 @@ int status(char *level) {
         char *auth = NULL;
 
         if(!exist_daemon()) {
-                LogError("%s: Status not available -- the monit daemon is not running\n", prog);
+                LogError("Status not available -- the monit daemon is not running\n");
                 return status;
         }
         S = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP,
                             (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
         if (! S) {
-                LogError("%s: error connecting to the monit daemon\n", prog);
+                LogError("Error connecting to the monit daemon\n");
                 return status;
         }
 
@@ -108,7 +108,7 @@ int status(char *level) {
         }
 
         if(!status) {
-                LogError("%s: cannot read status from the monit daemon\n", prog);
+                LogError("Cannot read status from the monit daemon\n");
         } else {
                 while(socket_readln(S, buf, LINE)) {
                         printf("%s", buf);

@@ -1257,7 +1257,7 @@ char *Util_monitId(char *idfile) {
                 file = fopen(idfile, "w");
                 umask(mask);
                 if (! file) {
-                        LogError("%s: Error opening the idfile '%s' -- %s\n", prog, idfile, STRERROR);
+                        LogError("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
                         return NULL;
                 }
                 /* Generate the unique id */
@@ -1267,25 +1267,25 @@ char *Util_monitId(char *idfile) {
                 md5_finish(&ctx, (md5_byte_t *)digest);
                 Util_digest2Bytes((unsigned char *)digest, 16, Run.id);
                 fprintf(file, "%s", Run.id);
-                LogInfo("%s: generated unique Monit id %s and stored to '%s'\n", prog, Run.id, idfile);
+                LogInfo("Generated unique Monit id %s and stored to '%s'\n", Run.id, idfile);
         } else {
                 if (! file_isFile(idfile)) {
-                        LogError("%s: idfile '%s' is not a regular file\n", prog, idfile);
+                        LogError("idfile '%s' is not a regular file\n", idfile);
                         return NULL;
                 }
                 if ((file = fopen(idfile,"r")) == (FILE *)NULL) {
-                        LogError("%s: Error opening the idfile '%s' -- %s\n", prog, idfile, STRERROR);
+                        LogError("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
                         return NULL;
                 }
                 if (fscanf(file, "%255s", Run.id) != 1) {
-                        LogError("%s: Error reading id from file '%s'\n", prog, idfile);
+                        LogError("Error reading id from file '%s'\n", idfile);
                         if (fclose(file))
-                                LogError("%s: Error closing file '%s' -- %s\n", prog, idfile, STRERROR);
+                                LogError("Error closing file '%s' -- %s\n", idfile, STRERROR);
                         return NULL;
                 }
         }
         if (fclose(file))
-                LogError("%s: Error closing file '%s' -- %s\n", prog, idfile, STRERROR);
+                LogError("Error closing file '%s' -- %s\n", idfile, STRERROR);
 
         return Run.id;
 }
@@ -1298,25 +1298,25 @@ pid_t Util_getPid(char *pidfile) {
         ASSERT(pidfile);
 
         if (! file_exist(pidfile)) {
-                DEBUG("%s: pidfile '%s' does not exist\n",prog, pidfile);
+                DEBUG("pidfile '%s' does not exist\n", pidfile);
                 return FALSE;
         }
         if (! file_isFile(pidfile)) {
-                LogError("%s: pidfile '%s' is not a regular file\n",prog, pidfile);
+                LogError("pidfile '%s' is not a regular file\n", pidfile);
                 return FALSE;
         }
         if ((file = fopen(pidfile,"r")) == (FILE *)NULL) {
-                LogError("%s: Error opening the pidfile '%s' -- %s\n", prog, pidfile, STRERROR);
+                LogError("Error opening the pidfile '%s' -- %s\n", pidfile, STRERROR);
                 return FALSE;
         }
         if (fscanf(file, "%d", &pid) != 1) {
-                LogError("%s: Error reading pid from file '%s'\n", prog, pidfile);
+                LogError("Error reading pid from file '%s'\n", pidfile);
                 if (fclose(file))
-                        LogError("%s: Error closing file '%s' -- %s\n", prog, pidfile, STRERROR);
+                        LogError("Error closing file '%s' -- %s\n", pidfile, STRERROR);
                 return FALSE;
         }
         if (fclose(file))
-                LogError("%s: Error closing file '%s' -- %s\n", prog, pidfile, STRERROR);
+                LogError("Error closing file '%s' -- %s\n", pidfile, STRERROR);
 
         if (pid < 0)
                 return(FALSE);
@@ -1835,7 +1835,7 @@ int Util_getfqdnhostname(char *buf, unsigned len) {
 
         // Set the base hostname
         if (gethostname(hostname, sizeof(hostname))) {
-                LogError("%s: Error getting hostname -- %s\n", prog, STRERROR);
+                LogError("Error getting hostname -- %s\n", STRERROR);
                 return -1;
         }
         snprintf(buf, len, "%s", hostname);
@@ -1846,7 +1846,7 @@ int Util_getfqdnhostname(char *buf, unsigned len) {
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_CANONNAME;
         if ((status = getaddrinfo(hostname, NULL, &hints, &info))) {
-                LogError("%s: Cannot translate '%s' to FQDN name -- %s\n", prog, hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                LogError("Cannot translate '%s' to FQDN name -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
         } else {
                 for (struct addrinfo *result = info; result; result = result->ai_next) {
                         if (Str_startsWith(result->ai_canonname, hostname)) {

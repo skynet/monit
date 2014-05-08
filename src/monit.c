@@ -245,7 +245,7 @@ static void do_init() {
          */
         status = pthread_mutex_init(&Run.mutex, NULL);
         if (status != 0) {
-                LogError("%s: Cannot initialize mutex -- %s\n", prog, strerror(status));
+                LogError("Cannot initialize mutex -- %s\n", strerror(status));
                 exit(1);
         }
 
@@ -254,12 +254,12 @@ static void do_init() {
          */
         status = pthread_mutex_init(&heartbeatMutex, NULL);
         if (status != 0) {
-                LogError("%s: Cannot initialize heartbeat mutex -- %s\n", prog, strerror(status));
+                LogError("Cannot initialize heartbeat mutex -- %s\n", strerror(status));
                 exit(1);
         }
         status = pthread_cond_init(&heartbeatCond, NULL);
         if (status != 0) {
-                LogError("%s: Cannot initialize heartbeat condition -- %s\n", prog, strerror(status));
+                LogError("Cannot initialize heartbeat condition -- %s\n", strerror(status));
                 exit(1);
         }
 
@@ -291,7 +291,7 @@ static void do_init() {
          * Did we find any service ?
          */
         if (! servicelist) {
-                LogError("%s: No services has been specified\n", prog);
+                LogError("No services has been specified\n");
                 exit(0);
         }
 
@@ -335,9 +335,9 @@ static void do_reinit() {
 
         if(Run.mmonits && heartbeatRunning) {
                 if ((status = pthread_cond_signal(&heartbeatCond)) != 0)
-                        LogError("%s: Failed to signal the heartbeat thread -- %s\n", prog, strerror(status));
+                        LogError("Failed to signal the heartbeat thread -- %s\n", strerror(status));
                 if ((status = pthread_join(heartbeatThread, NULL)) != 0)
-                        LogError("%s: Failed to stop the heartbeat thread -- %s\n", prog, strerror(status));
+                        LogError("Failed to stop the heartbeat thread -- %s\n", strerror(status));
                 heartbeatRunning = FALSE;
         }
 
@@ -368,7 +368,7 @@ static void do_reinit() {
 
         /* Did we find any services ?  */
         if (! servicelist) {
-                LogError("%s: No services has been specified\n", prog);
+                LogError("No services has been specified\n");
                 exit(0);
         }
 
@@ -393,7 +393,7 @@ static void do_reinit() {
         Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_RELOAD, "Monit reloaded");
 
         if(Run.mmonits && ((status = pthread_create(&heartbeatThread, NULL, heartbeat, NULL)) != 0))
-                LogError("%s: Failed to create the heartbeat thread -- %s\n", prog, strerror(status));
+                LogError("Failed to create the heartbeat thread -- %s\n", strerror(status));
         else
                 heartbeatRunning = TRUE;
 }
@@ -448,11 +448,11 @@ static void do_action(char **args) {
                         if (errors)
                                 exit(1);
                 } else {
-                        LogError("%s: please specify the configured service name or 'all' after %s\n", prog, action);
+                        LogError("Please specify a service name or 'all' after %s\n", action);
                         exit(1);
                 }
         } else if (IS(action, "reload")) {
-                LogInfo("Reinitializing monit daemon\n", prog);
+                LogInfo("Reinitializing %s daemon\n", prog);
                 kill_daemon(SIGHUP);
         } else if (IS(action, "status")) {
                 status(LEVEL_NAME_FULL);
@@ -470,7 +470,7 @@ static void do_action(char **args) {
                 if (! validate())
                         exit(1);
         } else {
-                LogError("%s: invalid argument -- %s  (-h will show valid arguments)\n", prog, action);
+                LogError("Invalid argument -- %s  (-h will show valid arguments)\n", action);
                 exit(1);
         }
 }
@@ -491,9 +491,9 @@ static void do_exit() {
 
                 if(Run.mmonits && heartbeatRunning) {
                         if ((status = pthread_cond_signal(&heartbeatCond)) != 0)
-                                LogError("%s: Failed to signal the heartbeat thread -- %s\n", prog, strerror(status));
+                                LogError("Failed to signal the heartbeat thread -- %s\n", strerror(status));
                         if ((status = pthread_join(heartbeatThread, NULL)) != 0)
-                                LogError("%s: Failed to stop the heartbeat thread -- %s\n", prog, strerror(status));
+                                LogError("Failed to stop the heartbeat thread -- %s\n", strerror(status));
                         heartbeatRunning = FALSE;
                 }
 
@@ -564,7 +564,7 @@ static void do_default() {
                 Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_START, "Monit started");
 
                 if(Run.mmonits && ((status = pthread_create(&heartbeatThread, NULL, heartbeat, NULL)) != 0))
-                        LogError("%s: Failed to create the heartbeat thread -- %s\n", prog, strerror(status));
+                        LogError("Failed to create the heartbeat thread -- %s\n", strerror(status));
                 else
                         heartbeatRunning = TRUE;
 
@@ -644,7 +644,7 @@ static void handle_options(int argc, char **argv) {
                                 Run.isdaemon = TRUE;
                                 sscanf(optarg, "%d", &Run.polltime);
                                 if (Run.polltime < 1) {
-                                        LogError("%s: option -%c requires a natural number\n", prog, opt);
+                                        LogError("Option -%c requires a natural number\n", opt);
                                         exit(1);
                                 }
                                 break;
@@ -740,12 +740,12 @@ static void handle_options(int argc, char **argv) {
                                         case 'p':
                                         case 's':
                                         {
-                                                LogError("%s: option -- %c requires an argument\n", prog, optopt);
+                                                LogError("Option -- %c requires an argument\n", optopt);
                                                 break;
                                         }
                                         default:
                                         {
-                                                LogError("%s: invalid option -- %c  (-h will show valid options)\n", prog, optopt);
+                                                LogError("Invalid option -- %c  (-h will show valid options)\n", optopt);
                                         }
                                 }
                                 exit(1);

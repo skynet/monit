@@ -320,7 +320,7 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
         int s, status, flag = 1;
         struct sockaddr_in myaddr;
         if((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                LogError("%s: Cannot create socket -- %s\n", prog, STRERROR);
+                LogError("Cannot create socket -- %s\n", STRERROR);
                 return -1;
         }
         memset(&myaddr, 0, sizeof(struct sockaddr_in));
@@ -332,7 +332,7 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
                 memset(&hints, 0, sizeof(struct addrinfo));
                 hints.ai_family = AF_INET;
                 if((status = getaddrinfo(bindAddr, NULL, &hints, &result)) != 0) {
-                        LogError("%s: Cannot translate '%s' to IP address -- %s\n", prog, bindAddr, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                        LogError("Cannot translate '%s' to IP address -- %s\n", bindAddr, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                         goto error;
                 }
                 sa = (struct sockaddr_in *)result->ai_addr;
@@ -344,27 +344,27 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
         myaddr.sin_family = AF_INET;
         myaddr.sin_port = htons(port);
         if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)  {
-                LogError("%s: Cannot set reuseaddr option -- %s\n", prog, STRERROR);
+                LogError("Cannot set reuseaddr option -- %s\n", STRERROR);
                 goto error;
         }
         if(! Net_setNonBlocking(s))
                 goto error;
         if(fcntl(s, F_SETFD, FD_CLOEXEC) == -1) {
-                LogError("%s: Cannot set close on exec option -- %s\n", prog, STRERROR);
+                LogError("Cannot set close on exec option -- %s\n", STRERROR);
                 goto error;
         }
         if(bind(s, (struct sockaddr *)&myaddr, sizeof(struct sockaddr_in)) < 0) {
-                LogError("%s: Cannot bind -- %s\n", prog, STRERROR);
+                LogError("Cannot bind -- %s\n", STRERROR);
                 goto error;
         }
         if(listen(s, backlog) < 0) {
-                LogError("%s: Cannot listen -- %s\n", prog, STRERROR);
+                LogError("Cannot listen -- %s\n", STRERROR);
                 goto error;
         }
         return s;
 error:
         if (close(s) < 0)
-                LogError("%s: Socket %d close failed -- %s\n", prog, s, STRERROR);
+                LogError("Socket %d close failed -- %s\n", s, STRERROR);
         return -1;
 }
 
@@ -546,7 +546,7 @@ error1:
                 r = close(s);
         } while(r == -1 && errno == EINTR);
         if (r == -1)
-                LogError("%s: Socket %d close failed -- %s\n", prog, s, STRERROR);
+                LogError("Socket %d close failed -- %s\n", s, STRERROR);
 error2:
         freeaddrinfo(result);
         return response;

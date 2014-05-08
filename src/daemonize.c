@@ -151,15 +151,14 @@ int kill_daemon(int sig) {
 
     if ( kill(pid, sig) < 0 ) {
 
-      LogError("%s: Cannot send signal to daemon process -- %s\n",
-        prog, STRERROR);
+      LogError("Cannot send signal to daemon process -- %s\n", STRERROR);
       return FALSE;
 
     }
 
   } else {
 
-    LogInfo("%s: No daemon process found\n", prog);
+    LogInfo("No daemon process found\n");
     return TRUE;
 
   }

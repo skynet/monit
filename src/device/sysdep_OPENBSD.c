@@ -83,7 +83,7 @@ char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
     }
     FREE(statfs);
   }
-  LogError("%s: Error getting mountpoint for filesystem '%s' -- %s\n", prog, blockdev, STRERROR);
+  LogError("Error getting mountpoint for filesystem '%s' -- %s\n", blockdev, STRERROR);
   return NULL;
 }
 
@@ -101,7 +101,7 @@ int filesystem_usage_sysdep(Info_T inf) {
   ASSERT(inf);
 
   if (statfs(inf->priv.filesystem.mntpath, &usage) != 0) {
-    LogError("%s: Error getting usage statistics for filesystem '%s' -- %s\n", prog, inf->priv.filesystem.mntpath, STRERROR);
+    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", inf->priv.filesystem.mntpath, STRERROR);
     return FALSE;
   }
   inf->priv.filesystem.f_bsize =           usage.f_bsize;

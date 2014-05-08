@@ -179,24 +179,24 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
         if (socket >= 0) {
                 ssl->socket = socket;
         } else {
-                LogError("%s: Socket error!\n", prog);
+                LogError("SSL socket error\n");
                 goto sslerror;
         }
 
         if ((ssl->handler = SSL_new (ssl->ctx)) == NULL) {
-                LogError("%s: Cannot initialize the SSL handler -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize the SSL handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
         if (SSL_CTX_set_cipher_list(ssl->ctx, CIPHER_LIST) != 1) {
-                LogError("%s: Error setting cipher list '" CIPHER_LIST "' (no valid ciphers)", prog);
+                LogError("Error setting cipher list '%s' (no valid ciphers)", CIPHER_LIST);
                 goto sslerror;
         }
 
         Net_setNonBlocking(ssl->socket);
 
         if ((ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE)) == NULL) {
-                LogError("%s: Cannot generate IO buffer -- %s\n", prog, SSLERROR);
+                LogError("Cannot create IO buffer -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
@@ -205,7 +205,7 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
 
         while ((ssl_error = SSL_connect (ssl->handler)) < 0) {
                 if ((time(NULL) - ssl_time) > SSL_TIMEOUT) {
-                        LogError("%s: SSL service timeout!\n", prog);
+                        LogError("SSL service timeout\n");
                         goto sslerror;
                 }
 
@@ -219,7 +219,7 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
         ssl->cipher = (char *) SSL_get_cipher(ssl->handler);
 
         if (! update_ssl_cert_data(ssl)) {
-                LogError("%s: Cannot get the SSL server certificate!\n", prog);
+                LogError("Cannot get the SSL server certificate\n");
                 goto sslerror;
         }
 
@@ -314,27 +314,27 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
 #endif
                 server_method = SSLv23_server_method();
         if (!(ssl_server->method = server_method)) {
-                LogError("%s: Cannot initialize the SSL method -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize the SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (!(ssl_server->ctx = SSL_CTX_new(ssl_server->method))) {
-                LogError("%s: Cannot initialize SSL server certificate handler -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (SSL_CTX_use_certificate_chain_file(ssl_server->ctx, pemfile) != 1) {
-                LogError("%s: Cannot initialize SSL server certificate -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize SSL server certificate -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (SSL_CTX_use_PrivateKey_file(ssl_server->ctx, pemfile, SSL_FILETYPE_PEM) != 1) {
-                LogError("%s: Cannot initialize SSL server private key -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize SSL server private key -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (SSL_CTX_check_private_key(ssl_server->ctx) != 1) {
-                LogError("%s: The private key doesn't match the certificate public key -- %s\n", prog, SSLERROR);
+                LogError("The private key doesn't match the certificate public key -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (SSL_CTX_set_cipher_list(ssl_server->ctx, CIPHER_LIST) != 1) {
-                LogError("%s: Error setting cipher list '" CIPHER_LIST "' (no valid ciphers)", prog);
+                LogError("Error setting cipher list '%s' (no valid ciphers)", CIPHER_LIST);
                 goto sslerror;
         }
         /* Disable session cache */
@@ -343,12 +343,12 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
          * We need this to force transmission of client certs
          */
         if (!verify_init(ssl_server)) {
-                LogError("%s: Verification engine was not properly initialized -- %s\n", prog, SSLERROR);
+                LogError("Verification engine was not properly initialized -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (ssl_server->clientpemfile) {
                 STACK_OF(X509_NAME) *stack = SSL_CTX_get_client_CA_list(ssl_server->ctx);
-                LogInfo("%s: Found %d client certificates\n", prog, sk_X509_NAME_num(stack));
+                LogInfo("Found %d client certificates\n", sk_X509_NAME_num(stack));
         }
         return ssl_server;
 sslerror:
@@ -463,19 +463,19 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
                 start_ssl();
 
         if (!(ssl->handler = SSL_new(ssl->ctx))) {
-                LogError("%s: Cannot initialize the SSL handler -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize the SSL handler -- %s\n", SSLERROR);
                 return FALSE;
         }
 
         if (socket < 0) {
-                LogError("%s: Socket error!\n", prog);
+                LogError("SSL socket error\n");
                 return FALSE;
         }
 
         Net_setNonBlocking(ssl->socket);
 
         if (!(ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE))) {
-                LogError("%s: Cannot generate IO buffer -- %s\n", prog, SSLERROR);
+                LogError("Cannot create IO buffer -- %s\n", SSLERROR);
                 return FALSE;
         }
 
@@ -486,7 +486,7 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
         while ((ssl_error = SSL_accept(ssl->handler)) < 0) {
 
                 if ((time(NULL) - ssl_time) > SSL_TIMEOUT) {
-                        LogError("%s: SSL service timeout!\n", prog);
+                        LogError("SSL service timeout\n");
                         return FALSE;
                 }
 
@@ -501,13 +501,12 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
         ssl->cipher = (char *)SSL_get_cipher(ssl->handler);
 
         if (!update_ssl_cert_data(ssl) && ssl->clientpemfile) {
-                LogError("%s: The client did not supply a required client certificate!\n",
-                         prog);
+                LogError("The client did not supply a required client certificate\n");
                 return FALSE;
         }
 
         if (SSL_get_verify_result(ssl->handler) > 0) {
-                LogError("%s: Verification of the certificate has failed!\n", prog);
+                LogError("Verification of the certificate has failed\n");
                 return FALSE;
         }
 
@@ -653,29 +652,29 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
         }
 
         if (!ssl->method) {
-                LogError("%s: Cannot initialize SSL method -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
         if (!(ssl->ctx = SSL_CTX_new(ssl->method))) {
-                LogError("%s: Cannot initialize SSL server certificate handler -- %s\n", prog, SSLERROR);
+                LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
         if (ssl->clientpemfile) {
 
                 if (SSL_CTX_use_certificate_chain_file(ssl->ctx, ssl->clientpemfile) <= 0) {
-                        LogError("%s: Cannot initialize SSL server certificate -- %s\n", prog, SSLERROR);
+                        LogError("Cannot initialize SSL server certificate -- %s\n", SSLERROR);
                         goto sslerror;
                 }
 
                 if (SSL_CTX_use_PrivateKey_file(ssl->ctx, ssl->clientpemfile, SSL_FILETYPE_PEM) <= 0) {
-                        LogError("%s: Cannot initialize SSL server private key -- %s\n", prog, SSLERROR);
+                        LogError("Cannot initialize SSL server private key -- %s\n", SSLERROR);
                         goto sslerror;
                 }
 
                 if (!SSL_CTX_check_private_key(ssl->ctx)) {
-                        LogError("%s: Private key does not match the certificate public key -- %s\n", prog, SSLERROR);
+                        LogError("Private key does not match the certificate public key -- %s\n", SSLERROR);
                         goto sslerror;
                 }
 
@@ -704,50 +703,50 @@ static int verify_init(ssl_server_connection *ssl_server) {
         }
 
         if (stat(ssl_server->clientpemfile, &stat_buf) == -1) {
-                LogError("%s: Cannot stat the SSL pem path '%s' -- %s\n", prog, Run.httpsslclientpem, STRERROR);
+                LogError("Cannot stat the SSL pem path '%s' -- %s\n", Run.httpsslclientpem, STRERROR);
                 return FALSE;
         }
 
         if (S_ISDIR(stat_buf.st_mode)) {
 
                 if (!SSL_CTX_load_verify_locations(ssl_server->ctx, NULL , ssl_server->clientpemfile)) {
-                        LogError("%s: Error setting verify directory to %s -- %s\n", prog, Run.httpsslclientpem, SSLERROR);
+                        LogError("Error setting verify directory to %s -- %s\n", Run.httpsslclientpem, SSLERROR);
                         return FALSE;
                 }
 
-                LogInfo("%s: Loaded SSL client pem directory '%s'\n", prog, ssl_server->clientpemfile);
+                LogInfo("Loaded SSL client pem directory '%s'\n", ssl_server->clientpemfile);
 
                 /* Monit's server cert for cli support */
 
                 if (!SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
-                        LogError("%s: Error loading verify certificates from %s -- %s\n", prog, ssl_server->pemfile, SSLERROR);
+                        LogError("Error loading verify certificates from %s -- %s\n", ssl_server->pemfile, SSLERROR);
                         return FALSE;
                 }
 
-                LogInfo("%s: Loaded monit's SSL pem server file '%s'\n", prog, ssl_server->pemfile);
+                LogInfo("Loaded monit's SSL pem server file '%s'\n", ssl_server->pemfile);
 
         } else if (S_ISREG(stat_buf.st_mode)) {
 
                 if (!SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->clientpemfile, NULL)) {
-                        LogError("%s: Error loading verify certificates from %s -- %s\n", prog, Run.httpsslclientpem, SSLERROR);
+                        LogError("Error loading verify certificates from %s -- %s\n", Run.httpsslclientpem, SSLERROR);
                         return FALSE;
                 }
 
-                LogInfo("%s: Loaded SSL pem client file '%s'\n", prog, ssl_server->clientpemfile);
+                LogInfo("Loaded SSL pem client file '%s'\n", ssl_server->clientpemfile);
 
                 /* Monits server cert for cli support ! */
 
                 if (!SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
-                        LogError("%s: Error loading verify certificates from %s -- %s\n", prog, ssl_server->pemfile, SSLERROR);
+                        LogError("Error loading verify certificates from %s -- %s\n", ssl_server->pemfile, SSLERROR);
                         return FALSE;
                 }
 
-                LogInfo("%s: Loaded monit's SSL pem server file '%s'\n", prog, ssl_server->pemfile);
+                LogInfo("Loaded monit's SSL pem server file '%s'\n", ssl_server->pemfile);
 
                 SSL_CTX_set_client_CA_list(ssl_server->ctx, SSL_load_client_CA_file(ssl_server->clientpemfile));
 
         } else {
-                LogError("%s: SSL client pem path is no file or directory %s\n", prog, ssl_server->clientpemfile);
+                LogError("SSL client pem path is no file or directory %s\n", ssl_server->clientpemfile);
                 return FALSE;
         }
 
@@ -770,7 +769,7 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx) {
                 return 0;
 
         if (ctx->error_depth == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(ctx->current_cert), &found_cert) != 1) {
-                LogError("%s: SSL connection rejected. No matching certificate found -- %s\n", prog, SSLERROR);
+                LogError("SSL connection rejected. No matching certificate found -- %s\n", SSLERROR);
                 return 0;
         }
 
@@ -785,20 +784,20 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx) {
 static int check_preverify(X509_STORE_CTX *ctx) {
         if ((ctx->error != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) && (ctx->error != X509_V_ERR_INVALID_PURPOSE)) {
                 /* Remote site specified a certificate, but it's not correct */
-                LogError("%s: SSL connection rejected because certificate verification has failed -- error %i\n", prog, ctx->error);
+                LogError("SSL connection rejected because certificate verification has failed -- error %i\n", ctx->error);
                 /* Reject connection */
                 return FALSE;
         }
 
         if (Run.allowselfcert && (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
                 /* Let's accept self signed certs for the moment! */
-                LogInfo("%s: SSL connection accepted with self signed certificate!\n", prog);
+                LogInfo("SSL connection accepted with self signed certificate\n");
                 ctx->error = 0;
                 return TRUE;
         }
 
         /* Reject connection */
-        LogError("%s: SSL connection rejected because certificate verification has failed -- error %i!\n", prog, ctx->error);
+        LogError("SSL connection rejected because certificate verification has failed -- error %i\n", ctx->error);
         return FALSE;
 }
 
@@ -835,25 +834,25 @@ static int handle_error(int code, ssl_connection *ssl) {
                 case SSL_ERROR_WANT_READ:
                         if (can_read(ssl->socket, SSL_TIMEOUT))
                                 return TRUE;
-                        LogError("%s: Openssl read timeout error!\n", prog);
+                        LogError("SSL read timeout error\n");
                         break;
 
                 case SSL_ERROR_WANT_WRITE:
                         if (can_read(ssl->socket, SSL_TIMEOUT))
                                 return TRUE;
-                        LogError("%s: Openssl write timeout error!\n", prog);
+                        LogError("SSL write timeout error\n");
                         break;
 
                 case SSL_ERROR_SYSCALL:
-                        LogError("%s: Openssl syscall error: %s!\n", prog, STRERROR);
+                        LogError("SSL syscall error: %s\n", STRERROR);
                         break;
 
                 case SSL_ERROR_SSL:
-                        LogError("%s: Openssl engine error: %s\n", prog, SSLERROR);
+                        LogError("SSL engine error: %s\n", SSLERROR);
                         break;
 
                 default:
-                        LogError("%s: Openssl error!\n", prog);
+                        LogError("SSL error\n");
                         break;
 
         }

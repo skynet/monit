@@ -292,13 +292,13 @@ int control_service_daemon(const char *S, const char *action) {
         ASSERT(S);
         ASSERT(action);
         if (Util_getAction(action) == ACTION_IGNORE) {
-                LogError("%s: Cannot %s service '%s' -- invalid action %s\n", prog, action, S, action);
+                LogError("Cannot %s service '%s' -- invalid action %s\n", action, S, action);
                 return FALSE;
         }
         socket = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP,
                             (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
         if (! socket) {
-                LogError("%s: Cannot connect to the monit daemon. Did you start it with http support?\n", prog);
+                LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
                 return FALSE;
         }
 
@@ -316,18 +316,18 @@ int control_service_daemon(const char *S, const char *action) {
                 auth ? auth : "",
                 action) < 0)
         {
-                LogError("%s: Cannot send the command '%s' to the monit daemon -- %s", prog, action ? action : "null", STRERROR);
+                LogError("Cannot send the command '%s' to the monit daemon -- %s", action ? action : "null", STRERROR);
                 goto err1;
         }
 
         /* Process response */
         if (! socket_readln(socket, buf, STRLEN)) {
-                LogError("%s: error receiving data -- %s\n", prog, STRERROR);
+                LogError("Error receiving data -- %s\n", STRERROR);
                 goto err1;
         }
         Str_chomp(buf);
         if (! sscanf(buf, "%*s %d", &status)) {
-                LogError("%s: cannot parse status in response: %s\n", prog, buf);
+                LogError("Cannot parse status in response: %s\n", buf);
                 goto err1;
         }
         if (status >= 300) {
@@ -353,7 +353,7 @@ int control_service_daemon(const char *S, const char *action) {
                                 *p = 0;
                 }
 err2:
-                LogError("%s: action failed -- %s\n", prog, message ? message : "unable to parse response");
+                LogError("Action failed -- %s\n", message ? message : "unable to parse response");
                 FREE(message);
         } else
                 rv = TRUE;
@@ -375,7 +375,7 @@ int control_service_string(const char *S, const char *A) {
         ASSERT(S);
         ASSERT(A);
         if ((a = Util_getAction(A)) == ACTION_IGNORE) {
-                LogError("%s: service '%s' -- invalid action %s\n", prog, S, A);
+                LogError("Service '%s' -- invalid action %s\n", S, A);
                 return FALSE;
         }
         return control_service(S, a);
@@ -392,7 +392,7 @@ int control_service(const char *S, int A) {
         Service_T s = NULL;
         ASSERT(S);
         if (! (s = Util_getService(S))) {
-                LogError("%s: service '%s' -- doesn't exist\n", prog, S);
+                LogError("Service '%s' -- doesn't exist\n", S);
                 return FALSE;
         }
         switch(A) {
@@ -437,7 +437,7 @@ int control_service(const char *S, int A) {
                         break;
 
                 default:
-                        LogError("%s: service '%s' -- invalid action %s\n", prog, S, A);
+                        LogError("Service '%s' -- invalid action %s\n", S, A);
                         return FALSE;
         }
         return TRUE;

@@ -254,15 +254,15 @@ int add_host_allow(char *name) {
          HostsAllow p, n;
          for(n = p = hostlist; p; n = p, p = p->next) {
            if((p->network == h->network) && ((p->mask == h->mask))) {
-             DEBUG("%s: Debug: Skipping redundant host '%s'\n", prog, name);
+             DEBUG("Skipping redundant host '%s'\n", name);
              destroy_host_allow(h);
              goto done;
            }
          }
-         DEBUG("%s: Debug: Adding host allow '%s'\n", prog, name);
+         DEBUG("Adding host allow '%s'\n", name);
          n->next = h;
        } else {
-         DEBUG("%s: Debug: Adding host allow '%s'\n", prog, name);
+         DEBUG("Adding host allow '%s'\n", name);
 
          hostlist = h;
        }
@@ -312,28 +312,18 @@ int add_net_allow(char *s_network) {
     for(n = p = hostlist; p; n = p, p = p->next) {
 
       if((p->network == net.network) && ((p->mask == net.mask))) {
-
-        DEBUG("%s: Debug: Skipping redundant net '%s'.\n",
-              prog, s_network);
+        DEBUG("Skipping redundant net '%s'\n", s_network);
         destroy_host_allow(h);
         goto done;
-
       }
 
     }
-
-    DEBUG("%s: Debug: Adding net allow '%s'.\n",
-          prog, s_network);
-
+    DEBUG("Adding net allow '%s'\n", s_network);
     n->next = h;
 
   } else {
-
-    DEBUG("%s: Debug: Adding net allow '%s'.\n",
-          prog, s_network);
-
+    DEBUG("Adding net allow '%s'\n", s_network);
     hostlist = h;
-
   }
 
   done:
@@ -427,8 +417,7 @@ static int authenticate(const struct in_addr addr) {
 
   }
 
-  LogError("%s: Denied connection from non-authorized client [%s]\n", prog,
-      inet_ntoa(addr));
+  LogError("Denied connection from non-authorized client [%s]\n", inet_ntoa(addr));
 
   return FALSE;
 
