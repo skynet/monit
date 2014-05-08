@@ -22,6 +22,8 @@ Fixed: restart action for non-process service types.
 
 Fixed: FreeBSD jail system memory usage report.
 
+Fixed: Issue #37 crash
+
 
 Version 5.8
 
