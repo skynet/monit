@@ -1332,12 +1332,12 @@ int Util_isProcessRunning(Service_T s, int refresh) {
         ASSERT(s);
         errno = 0;
         if (s->matchlist) {
+                if (refresh || ! ptree || ! ptreesize)
+                        initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
+                /* The process table read may sporadically fail during read, because we're using glob on some platforms which may fail if the proc filesystem
+                 * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
+                 * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
                 if (Run.doprocess) {
-                        if (refresh || ! ptree || ! ptreesize)
-                                initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
-                        /* The process table read may sporadically fail during read, because we're using glob on some platforms which may fail if the proc filesystem
-                         * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
-                         * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
                         for (i = 0; i < ptreesize; i++) {
                                 int found = FALSE;
                                 if (ptree[i].cmdline) {

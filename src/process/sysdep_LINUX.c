@@ -147,8 +147,10 @@ int init_process_info_sysdep(void) {
   long  page_size;
   int   page_shift;
 
-  if (! read_proc_file(buf, sizeof(buf), "meminfo", -1, NULL))
+  if (! read_proc_file(buf, sizeof(buf), "meminfo", -1, NULL)) {
+    DEBUG("system statistic error -- cannot read /proc/meminfo\n");
     return FALSE;
+  }
   if (! (ptr = strstr(buf, MEMTOTAL))) {
     DEBUG("system statistic error -- cannot get real memory amount\n");
     return FALSE;
@@ -171,7 +173,8 @@ int init_process_info_sysdep(void) {
     return FALSE;
   }
 
-  for (page_shift = 0; page_size != 1; page_size >>= 1, page_shift++);
+  for (page_shift = 0; page_size != 1; page_size >>= 1, page_shift++)
+        ;
   page_shift_to_kb = page_shift - 10;
 
   return TRUE;
@@ -189,7 +192,11 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
   int                 i = 0, j;
   int                 rv, bytes = 0;
   int                 treesize = 0;
+  int                 stat_pid = 0;
   int                 stat_ppid = 0;
+  int                 stat_uid = 0;
+  int                 stat_euid = 0;
+  int                 stat_gid = 0;
   char               *tmp = NULL;
   char                procname[STRLEN];
   char                buf[1024];
@@ -217,30 +224,23 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
   /* Insert data from /proc directory */
   for (i = 0; i < treesize; i++) {
+    stat_pid = atoi(globbuf.gl_pathv[i] + strlen("/proc/"));
 
-    pt[i].pid = atoi(globbuf.gl_pathv[i] + strlen("/proc/"));
-
-    if (!read_proc_file(buf, sizeof(buf), "stat", pt[i].pid, NULL)) {
-      DEBUG("system statistic error -- cannot read /proc/%d/stat\n", pt[i].pid);
+    /********** /proc/PID/stat **********/
+    if (!read_proc_file(buf, sizeof(buf), "stat", stat_pid, NULL)) {
+      DEBUG("system statistic error -- cannot read /proc/%d/stat\n", stat_pid);
       continue;
     }
-
-    pt[i].time = get_float_time();
-
     if (!(tmp = strrchr(buf, ')'))) {
-      DEBUG("system statistic error -- file /proc/%d/stat parse error\n", pt[i].pid);
+      DEBUG("system statistic error -- file /proc/%d/stat parse error\n", stat_pid);
       continue;
     }
     *tmp = 0;
     if (sscanf(buf, "%*d (%256s", procname) != 1) {
-      DEBUG("system statistic error -- file /proc/%d/stat process name parse error\n", pt[i].pid);
+      DEBUG("system statistic error -- file /proc/%d/stat process name parse error\n", stat_pid);
       continue;
     }
-
     tmp += 2;
-
-    /* This implementation is done by using fs/procfs/array.c as a basis
-     * it is also worth looking into the source of the procps utils */
     if (sscanf(tmp,
          "%c %d %*d %*d %*d %*d %*u %*u"
          "%*u %*u %*u %lu %lu %ld %ld %*d %*d %*d "
@@ -254,58 +254,55 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
          &stat_item_cstime,
          &stat_item_starttime,
          &stat_item_rss) != 8) {
-      DEBUG("system statistic error -- file /proc/%d/stat parse error\n", pt[i].pid);
+      DEBUG("system statistic error -- file /proc/%d/stat parse error\n", stat_pid);
       continue;
     }
 
-    pt[i].ppid      = stat_ppid;
-    pt[i].starttime = get_starttime() + (time_t)(stat_item_starttime / HZ);
-
-    /* jiffies -> seconds = 1 / HZ
-     * HZ is defined in "asm/param.h"  and it is usually 1/100s but on
-     * alpha system it is 1/1024s */
-    pt[i].cputime     = ((float)(stat_item_utime + stat_item_stime) * 10.0) / HZ;
-    pt[i].cpu_percent = 0;
-
-    /* State is Zombie -> then we are a Zombie ... clear or? (-: */
-    if (stat_item_state == 'Z')
-      pt[i].status_flag |= PROCESS_ZOMBIE;
-
-    if (page_shift_to_kb < 0)
-      pt[i].mem_kbyte = (stat_item_rss >> abs(page_shift_to_kb));
-    else
-      pt[i].mem_kbyte = (stat_item_rss << abs(page_shift_to_kb));
-
-    if (! read_proc_file(buf, sizeof(buf), "status", pt[i].pid, NULL))
-      return FALSE;
-
+    /********** /proc/PID/status **********/
+    if (! read_proc_file(buf, sizeof(buf), "status", stat_pid, NULL)) {
+      DEBUG("system statistic error -- cannot read /proc/%d/status\n", stat_pid);
+      continue;
+    }
     if (! (tmp = strstr(buf, UID))) {
       DEBUG("system statistic error -- cannot find process uid\n");
-      return FALSE;
-    }
-    if (sscanf(tmp+strlen(UID), "\t%d\t%d", &(pt[i].uid), &(pt[i].euid)) != 2) {
-      DEBUG("system statistic error -- cannot read process uid\n");
-      return FALSE;
-    }
-
-    if (! (tmp = strstr(buf, GID))) {
-      DEBUG("system statistic error -- cannot find process gid\n");
-      return FALSE;
-    }
-    if (sscanf(tmp+strlen(GID), "\t%d", &(pt[i].gid)) != 1) {
-      DEBUG("system statistic error -- cannot read process gid\n");
-      return FALSE;
-    }
-
-    if (! read_proc_file(buf, sizeof(buf), "cmdline", pt[i].pid, &bytes)) {
-      DEBUG("system statistic error -- cannot read /proc/%d/cmdline\n", pt[i].pid);
       continue;
     }
-    /* The cmdline file contains argv elements/strings terminated separated by '\0' => join the string: */
-    for (j = 0; j < (bytes - 1); j++)
+    if (sscanf(tmp+strlen(UID), "\t%d\t%d", &stat_uid, &stat_euid) != 2) {
+      DEBUG("system statistic error -- cannot read process uid\n");
+      continue;
+    }
+    if (! (tmp = strstr(buf, GID))) {
+      DEBUG("system statistic error -- cannot find process gid\n");
+      continue;
+    }
+    if (sscanf(tmp+strlen(GID), "\t%d", &stat_gid) != 1) {
+      DEBUG("system statistic error -- cannot read process gid\n");
+      continue;
+    }
+
+    /********** /proc/PID/cmdline **********/
+    if (! read_proc_file(buf, sizeof(buf), "cmdline", stat_pid, &bytes)) {
+      DEBUG("system statistic error -- cannot read /proc/%d/cmdline\n", stat_pid);
+      continue;
+    }
+    for (j = 0; j < (bytes - 1); j++) // The cmdline file contains argv elements/strings terminated separated by '\0' => join the string
       if (buf[j] == 0)
         buf[j] = ' ';
-    pt[i].cmdline = *buf ? Str_dup(buf) : Str_dup(procname);
+
+    /* Set the data in ptree only if all process related reads succeeded (prevent partial data in the case that continue was called during data gathering) */
+    pt[i].time = get_float_time();
+    pt[i].pid = stat_pid;
+    pt[i].ppid = stat_ppid;
+    pt[i].uid = stat_uid;
+    pt[i].euid = stat_euid;
+    pt[i].gid = stat_gid;
+    pt[i].starttime = get_starttime() + (time_t)(stat_item_starttime / HZ);
+    pt[i].cmdline = Str_dup(*buf ? buf : procname);
+    pt[i].cputime = ((float)(stat_item_utime + stat_item_stime) * 10.0) / HZ; // jiffies -> seconds = 1 / HZ. HZ is defined in "asm/param.h"  and it is usually 1/100s but on alpha system it is 1/1024s
+    pt[i].cpu_percent = 0;
+    pt[i].mem_kbyte = (page_shift_to_kb < 0) ? (stat_item_rss >> abs(page_shift_to_kb)) : (stat_item_rss << abs(page_shift_to_kb));
+    if (stat_item_state == 'Z') // State is Zombie -> then we are a Zombie ... clear or? (-:
+      pt[i].status_flag |= PROCESS_ZOMBIE;
   }
 
   *reference = pt;

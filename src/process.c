@@ -73,19 +73,18 @@
  * @return TRUE if succeeded otherwise FALSE.
  */
 int init_process_info(void) {
-  memset(&systeminfo, 0, sizeof(SystemInfo_T));
-  gettimeofday(&systeminfo.collected, NULL);
-  if(uname(&systeminfo.uname) < 0) {
-    LogError("'%s' resource monitoring initialization error -- uname failed: %s\n", Run.system->name, STRERROR);
-    return FALSE;
-  }
+        memset(&systeminfo, 0, sizeof(SystemInfo_T));
+        gettimeofday(&systeminfo.collected, NULL);
+        if(uname(&systeminfo.uname) < 0) {
+                LogError("'%s' resource monitoring initialization error -- uname failed: %s\n", Run.system->name, STRERROR);
+                return FALSE;
+        }
 
-  systeminfo.total_cpu_user_percent = -10;
-  systeminfo.total_cpu_syst_percent = -10;
-  systeminfo.total_cpu_wait_percent = -10;
+        systeminfo.total_cpu_user_percent = -10;
+        systeminfo.total_cpu_syst_percent = -10;
+        systeminfo.total_cpu_wait_percent = -10;
 
-  return (init_process_info_sysdep());
-
+        return (init_process_info_sysdep());
 }
 
 
@@ -97,55 +96,50 @@ int init_process_info(void) {
  * @return TRUE if succeeded otherwise FALSE.
  */
 int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid) {
-  int leaf;
+        ASSERT(s);
+        ASSERT(systeminfo.mem_kbyte_max > 0);
 
-  ASSERT(s);
-  ASSERT(systeminfo.mem_kbyte_max > 0);
+        /* save the previous pid and set actual one */
+        s->inf->priv.process._pid = s->inf->priv.process.pid;
+        s->inf->priv.process.pid  = pid;
 
-  /* save the previous pid and set actual one */
-  s->inf->priv.process._pid = s->inf->priv.process.pid;
-  s->inf->priv.process.pid  = pid;
-
-  if ((leaf = findprocess(pid, pt, treesize)) != -1) {
-
-    /* save the previous ppid and set actual one */
-    s->inf->priv.process._ppid             = s->inf->priv.process.ppid;
-    s->inf->priv.process.ppid              = pt[leaf].ppid;
-    s->inf->priv.process.uid               = pt[leaf].uid;
-    s->inf->priv.process.euid              = pt[leaf].euid;
-    s->inf->priv.process.gid               = pt[leaf].gid;
-    s->inf->priv.process.uptime            = time(NULL) - pt[leaf].starttime;
-    s->inf->priv.process.children          = pt[leaf].children_sum;
-    s->inf->priv.process.mem_kbyte         = pt[leaf].mem_kbyte;
-    s->inf->priv.process.status_flag       = pt[leaf].status_flag;
-    s->inf->priv.process.total_mem_kbyte   = pt[leaf].mem_kbyte_sum;
-    s->inf->priv.process.cpu_percent       = pt[leaf].cpu_percent;
-    s->inf->priv.process.total_cpu_percent = pt[leaf].cpu_percent_sum;
-
-    if (systeminfo.mem_kbyte_max == 0) {
-      s->inf->priv.process.total_mem_percent = 0;
-      s->inf->priv.process.mem_percent       = 0;
-    } else {
-      s->inf->priv.process.total_mem_percent = (int)((double)pt[leaf].mem_kbyte_sum * 1000.0 / systeminfo.mem_kbyte_max);
-      s->inf->priv.process.mem_percent       = (int)((double)pt[leaf].mem_kbyte * 1000.0 / systeminfo.mem_kbyte_max);
-    }
-
-  } else {
-    s->inf->priv.process.ppid              = 0;
-    s->inf->priv.process.uid               = -1;
-    s->inf->priv.process.euid              = -1;
-    s->inf->priv.process.gid               = -1;
-    s->inf->priv.process.uptime            = 0;
-    s->inf->priv.process.children          = 0;
-    s->inf->priv.process.total_mem_kbyte   = 0;
-    s->inf->priv.process.total_mem_percent = 0;
-    s->inf->priv.process.mem_kbyte         = 0;
-    s->inf->priv.process.mem_percent       = 0;
-    s->inf->priv.process.cpu_percent       = 0;
-    s->inf->priv.process.total_cpu_percent = 0;
-  }
-
-  return TRUE;
+        int leaf;
+        if ((leaf = findprocess(pid, pt, treesize)) != -1) {
+                /* save the previous ppid and set actual one */
+                s->inf->priv.process._ppid             = s->inf->priv.process.ppid;
+                s->inf->priv.process.ppid              = pt[leaf].ppid;
+                s->inf->priv.process.uid               = pt[leaf].uid;
+                s->inf->priv.process.euid              = pt[leaf].euid;
+                s->inf->priv.process.gid               = pt[leaf].gid;
+                s->inf->priv.process.uptime            = time(NULL) - pt[leaf].starttime;
+                s->inf->priv.process.children          = pt[leaf].children_sum;
+                s->inf->priv.process.mem_kbyte         = pt[leaf].mem_kbyte;
+                s->inf->priv.process.status_flag       = pt[leaf].status_flag;
+                s->inf->priv.process.total_mem_kbyte   = pt[leaf].mem_kbyte_sum;
+                s->inf->priv.process.cpu_percent       = pt[leaf].cpu_percent;
+                s->inf->priv.process.total_cpu_percent = pt[leaf].cpu_percent_sum;
+                if (systeminfo.mem_kbyte_max == 0) {
+                        s->inf->priv.process.total_mem_percent = 0;
+                        s->inf->priv.process.mem_percent       = 0;
+                } else {
+                        s->inf->priv.process.total_mem_percent = (int)((double)pt[leaf].mem_kbyte_sum * 1000.0 / systeminfo.mem_kbyte_max);
+                        s->inf->priv.process.mem_percent       = (int)((double)pt[leaf].mem_kbyte * 1000.0 / systeminfo.mem_kbyte_max);
+                }
+        } else {
+                s->inf->priv.process.ppid              = 0;
+                s->inf->priv.process.uid               = -1;
+                s->inf->priv.process.euid              = -1;
+                s->inf->priv.process.gid               = -1;
+                s->inf->priv.process.uptime            = 0;
+                s->inf->priv.process.children          = 0;
+                s->inf->priv.process.total_mem_kbyte   = 0;
+                s->inf->priv.process.total_mem_percent = 0;
+                s->inf->priv.process.mem_kbyte         = 0;
+                s->inf->priv.process.mem_percent       = 0;
+                s->inf->priv.process.cpu_percent       = 0;
+                s->inf->priv.process.total_cpu_percent = 0;
+        }
+        return TRUE;
 }
 
 
@@ -154,47 +148,45 @@ int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid)
  * @return TRUE if successful, otherwise FALSE
  */
 int update_system_load() {
+        if (Run.doprocess) {
+                ASSERT(systeminfo.mem_kbyte_max > 0);
 
-  if (Run.doprocess) {
+                /** Get load average triplet */
+                if (-1 == getloadavg_sysdep(systeminfo.loadavg, 3)) {
+                        LogError("'%s' statistic error -- load average gathering failed\n", Run.system->name);
+                        goto error1;
+                }
 
-    ASSERT(systeminfo.mem_kbyte_max > 0);
+                /** Get memory usage statistic */
+                if (! used_system_memory_sysdep(&systeminfo)) {
+                        LogError("'%s' statistic error -- memory usage gathering failed\n", Run.system->name);
+                        goto error2;
+                }
+                systeminfo.total_mem_percent  = (int)(1000 * (double)systeminfo.total_mem_kbyte / (double)systeminfo.mem_kbyte_max);
+                systeminfo.total_swap_percent = systeminfo.swap_kbyte_max ? (int)(1000 * (double)systeminfo.total_swap_kbyte / (double)systeminfo.swap_kbyte_max) : 0;
 
-    /** Get load average triplet */
-    if (-1 == getloadavg_sysdep(systeminfo.loadavg, 3)) {
-      LogError("'%s' statistic error -- load average gathering failed\n", Run.system->name);
-      goto error1;
-    }
+                /** Get CPU usage statistic */
+                if (! used_system_cpu_sysdep(&systeminfo)) {
+                        LogError("'%s' statistic error -- cpu usage gathering failed\n", Run.system->name);
+                        goto error3;
+                }
 
-    /** Get memory usage statistic */
-    if (! used_system_memory_sysdep(&systeminfo)) {
-      LogError("'%s' statistic error -- memory usage gathering failed\n", Run.system->name);
-      goto error2;
-    }
-    systeminfo.total_mem_percent  = (int)(1000 * (double)systeminfo.total_mem_kbyte / (double)systeminfo.mem_kbyte_max);
-    systeminfo.total_swap_percent = systeminfo.swap_kbyte_max ? (int)(1000 * (double)systeminfo.total_swap_kbyte / (double)systeminfo.swap_kbyte_max) : 0;
-
-    /** Get CPU usage statistic */
-    if (! used_system_cpu_sysdep(&systeminfo)) {
-      LogError("'%s' statistic error -- cpu usage gathering failed\n", Run.system->name);
-      goto error3;
-    }
-
-    return TRUE;
-  }
+                return TRUE;
+        }
 
 error1:
-  systeminfo.loadavg[0] = 0;
-  systeminfo.loadavg[1] = 0;
-  systeminfo.loadavg[2] = 0;
+        systeminfo.loadavg[0] = 0;
+        systeminfo.loadavg[1] = 0;
+        systeminfo.loadavg[2] = 0;
 error2:
-  systeminfo.total_mem_kbyte   = 0;
-  systeminfo.total_mem_percent = 0;
+        systeminfo.total_mem_kbyte   = 0;
+        systeminfo.total_mem_percent = 0;
 error3:
-  systeminfo.total_cpu_user_percent = 0;
-  systeminfo.total_cpu_syst_percent = 0;
-  systeminfo.total_cpu_wait_percent = 0;
+        systeminfo.total_cpu_user_percent = 0;
+        systeminfo.total_cpu_syst_percent = 0;
+        systeminfo.total_cpu_wait_percent = 0;
 
-  return FALSE;
+        return FALSE;
 }
 
 
@@ -203,91 +195,96 @@ error3:
  * @return treesize >= 0 if succeeded otherwise < 0
  */
 int initprocesstree(ProcessTree_T **pt_r, int *size_r, ProcessTree_T **oldpt_r, int *oldsize_r) {
-  int i;
-  int oldentry;
-  ProcessTree_T *pt;
-  ProcessTree_T *oldpt;
-  int root = -1;
+        ASSERT(pt_r);
+        ASSERT(size_r);
+        ASSERT(oldpt_r);
+        ASSERT(oldsize_r);
 
-  if (*pt_r != NULL) {
-    if (oldpt_r && *oldpt_r != NULL)
-      delprocesstree(oldpt_r, oldsize_r);
-    *oldpt_r   = *pt_r;
-    *oldsize_r = *size_r;
-  }
+        if (*pt_r) {
+                if (*oldpt_r)
+                        delprocesstree(oldpt_r, oldsize_r);
+                *oldpt_r = *pt_r;
+                *oldsize_r = *size_r;
+                *pt_r = NULL;
+                *size_r = 0;
+        }
 
-  if ((*size_r = initprocesstree_sysdep(pt_r)) <= 0) {
-    DEBUG("system statistic error -- cannot initialize the process tree => process resource monitoring disabled\n");
-    Run.doprocess = FALSE;
-    return -1;
-  } else if (Run.doprocess == FALSE) {
-    DEBUG("system statistic -- initialization of the process tree succeeded => process resource monitoring enabled\n");
-    Run.doprocess = TRUE;
-  }
+        if ((*size_r = initprocesstree_sysdep(pt_r)) <= 0 || ! *pt_r) {
+                DEBUG("System statistic error -- cannot initialize the process tree -- process resource monitoring disabled\n");
+                Run.doprocess = FALSE;
+                if (*oldpt_r)
+                        delprocesstree(oldpt_r, oldsize_r);
+                return -1;
+        } else if (Run.doprocess == FALSE) {
+                DEBUG("System statistic -- initialization of the process tree succeeded -- process resource monitoring enabled\n");
+                Run.doprocess = TRUE;
+        }
 
-  pt    = *pt_r;
-  oldpt = *oldpt_r;
+        int oldentry;
+        ProcessTree_T *pt = *pt_r;
+        ProcessTree_T *oldpt = *oldpt_r;
+        for (int i = 0; i < (volatile int)*size_r; i ++) {
+                if (oldpt && ((oldentry = findprocess(pt[i].pid, oldpt, *oldsize_r)) != -1)) {
+                        pt[i].cputime_prev = oldpt[oldentry].cputime;
+                        pt[i].time_prev    = oldpt[oldentry].time;
 
-  if (pt == NULL)
-    return 0;
+                        /* The cpu_percent may be set already (for example by HPUX module) */
+                        if (pt[i].cpu_percent  == 0 && pt[i].cputime_prev != 0 && pt[i].cputime != 0 && pt[i].cputime > pt[i].cputime_prev) {
+                                pt[i].cpu_percent = (int)((1000 * (double)(pt[i].cputime - pt[i].cputime_prev) / (pt[i].time - pt[i].time_prev)) / systeminfo.cpus);
+                                if (pt[i].cpu_percent > 1000)
+                                        pt[i].cpu_percent = 1000;
+                        }
+                } else {
+                        pt[i].cputime_prev = 0;
+                        pt[i].time_prev    = 0.0;
+                        pt[i].cpu_percent  = 0;
+                }
 
-  for (i = 0; i < (volatile int)*size_r; i ++) {
-    if (oldpt && ((oldentry = findprocess(pt[i].pid, oldpt, *oldsize_r)) != -1)) {
-      pt[i].cputime_prev = oldpt[oldentry].cputime;
-      pt[i].time_prev    = oldpt[oldentry].time;
+                if (pt[i].pid == pt[i].ppid) {
+                        pt[i].parent = i;
+                        continue;
+                }
 
-      /* The cpu_percent may be set already (for example by HPUX module) */
-      if (pt[i].cpu_percent  == 0 && pt[i].cputime_prev != 0 && pt[i].cputime != 0 && pt[i].cputime > pt[i].cputime_prev) {
-        pt[i].cpu_percent = (int)((1000 * (double)(pt[i].cputime - pt[i].cputime_prev) / (pt[i].time - pt[i].time_prev)) / systeminfo.cpus);
-        if (pt[i].cpu_percent > 1000)
-          pt[i].cpu_percent = 1000;
-      }
-    } else {
-      pt[i].cputime_prev = 0;
-      pt[i].time_prev    = 0.0;
-      pt[i].cpu_percent  = 0;
-    }
+                if ((pt[i].parent = findprocess(pt[i].ppid, pt, *size_r)) == -1) {
+                        /* Parent process wasn't found - on Linux this is normal: main process with PID 0 is not listed, similarly in FreeBSD jail.
+                         * We create virtual process entry for missing parent so we can have full tree-like structure with root. */
+                        int j = (*size_r)++;
 
-    if (pt[i].pid == pt[i].ppid) {
-      pt[i].parent = i;
-      continue;
-    }
+                        pt = RESIZE(*pt_r, *size_r * sizeof(ProcessTree_T));
+                        memset(&pt[j], 0, sizeof(ProcessTree_T));
+                        pt[j].ppid = pt[j].pid  = pt[i].ppid;
+                        pt[i].parent = j;
+                }
 
-    if ((pt[i].parent = findprocess(pt[i].ppid, pt, *size_r)) == -1) {
-      /* Parent process wasn't found - on Linux this is normal: main process with PID 0 is not listed, similarly in FreeBSD jail.
-       * We create virtual process entry for missing parent so we can have full tree-like structure with root. */
-      int j = (*size_r)++;
+                if (! connectchild(pt, pt[i].parent, i)) {
+                        /* connection to parent process has failed, this is usually caused in the part above */
+                        DEBUG("System statistic error -- cannot connect process id %d to its parent %d\n", pt[i].pid, pt[i].ppid);
+                        pt[i].pid = 0;
+                        continue;
+                }
+        }
 
-      pt = RESIZE(*pt_r, *size_r * sizeof(ProcessTree_T));
-      memset(&pt[j], 0, sizeof(ProcessTree_T));
-      pt[j].ppid = pt[j].pid  = pt[i].ppid;
-      pt[i].parent = j;
-    }
+        /* The main process in Solaris zones and FreeBSD host doesn't have pid 1, so try to find process which is parent of itself */
+        int root = -1;
+        for (int i = 0; i < *size_r; i++) {
+                if (pt[i].pid == pt[i].ppid) {
+                        root = i;
+                        break;
+                }
+        }
 
-    if (! connectchild(pt, pt[i].parent, i)) {
-      /* connection to parent process has failed, this is usually caused in the part above */
-      DEBUG("system statistic error -- cannot connect process id %d to its parent %d\n", pt[i].pid, pt[i].ppid);
-      pt[i].pid = 0;
-      continue;
-    }
-  }
+        if (root == -1) {
+                DEBUG("System statistic error -- cannot find root process id\n");
+                if (*oldpt_r)
+                        delprocesstree(oldpt_r, oldsize_r);
+                if (*pt_r)
+                        delprocesstree(pt_r, size_r);
+                return -1;
+        }
 
-  /* The main process in Solaris zones and FreeBSD host doesn't have pid 1, so try to find process which is parent of itself */
-  for (i = 0; i < *size_r; i++) {
-    if (pt[i].pid == pt[i].ppid) {
-      root = i;
-      break;
-    }
-  }
+        fillprocesstree(pt, root);
 
-  if (root == -1) {
-    DEBUG("system statistic error -- cannot find root process id\n");
-    return -1;
-  }
-
-  fillprocesstree(pt, root);
-
-  return *size_r;
+        return *size_r;
 }
 
 
@@ -299,80 +296,74 @@ int initprocesstree(ProcessTree_T **pt_r, int *size_r, ProcessTree_T **oldpt_r, 
  * @return process index if succeeded otherwise -1
  */
 int findprocess(int pid, ProcessTree_T *pt, int size) {
-  int i;
+        ASSERT(pt);
 
-  ASSERT(pt);
+        if (size <= 0)
+                return -1;
 
-  if (size <= 0)
-    return -1;
+        for (int i = 0; i < size; i++)
+                if (pid == pt[i].pid)
+                        return i;
 
-  for (i = 0; i < size; i++)
-    if (pid == pt[i].pid)
-      return i;
-
-  return -1;
+        return -1;
 }
 
 /**
  * Delete the process tree
  */
 void delprocesstree(ProcessTree_T **reference, int *size) {
-  int i;
-  ProcessTree_T *pt = *reference;
-  if (pt) {
-    for (i = 0; i < *size; i++) {
-      FREE(pt[i].cmdline);
-      FREE(pt[i].children);
-    }
-    FREE(pt);
-    *reference = NULL;
-    *size = 0;
-  }
-  return;
+        ProcessTree_T *pt = *reference;
+        if (pt) {
+                for (int i = 0; i < *size; i++) {
+                        FREE(pt[i].cmdline);
+                        FREE(pt[i].children);
+                }
+                FREE(pt);
+                *reference = NULL;
+                *size = 0;
+        }
 }
 
 
 void process_testmatch(char *pattern) {
 #ifdef HAVE_REGEX_H
-  regex_t *regex_comp;
-  int reg_return;
-#endif
+        regex_t *regex_comp;
+        int reg_return;
 
-#ifdef HAVE_REGEX_H
-  NEW(regex_comp);
-  if ((reg_return = regcomp(regex_comp, pattern, REG_NOSUB|REG_EXTENDED))) {
-    char errbuf[STRLEN];
-    regerror(reg_return, regex_comp, errbuf, STRLEN);
-    regfree(regex_comp);
-    FREE(regex_comp);
-    printf("Regex %s parsing error: %s\n", pattern, errbuf);
-    exit(1);
-  }
-#endif
-  initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
-  if (Run.doprocess) {
-    int i, count = 0;
-    printf("List of processes matching pattern \"%s\":\n", pattern);
-    printf("------------------------------------------\n");
-    for (i = 0; i < ptreesize; i++) {
-      int match = FALSE;
-      if (ptree[i].cmdline && ! strstr(ptree[i].cmdline, "procmatch")) {
-#ifdef HAVE_REGEX_H
-        match = regexec(regex_comp, ptree[i].cmdline, 0, NULL, 0) ? FALSE : TRUE;
-#else
-        match = strstr(ptree[i].cmdline, pattern) ? TRUE : FALSE;
-#endif
-        if (match) {
-          printf("\t%s\n", ptree[i].cmdline);
-          count++;
+        NEW(regex_comp);
+        if ((reg_return = regcomp(regex_comp, pattern, REG_NOSUB|REG_EXTENDED))) {
+                char errbuf[STRLEN];
+                regerror(reg_return, regex_comp, errbuf, STRLEN);
+                regfree(regex_comp);
+                FREE(regex_comp);
+                printf("Regex %s parsing error: %s\n", pattern, errbuf);
+                exit(1);
         }
-      }
-    }
-    printf("------------------------------------------\n");
-    printf("Total matches: %d\n", count);
-    if (count > 1)
-      printf("WARNING: multiple processes matched the pattern. The check is FIRST-MATCH based, please refine the pattern\n");
-  }
+#endif
+        initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
+        if (Run.doprocess) {
+                int count = 0;
+                printf("List of processes matching pattern \"%s\":\n", pattern);
+                printf("------------------------------------------\n");
+                for (int i = 0; i < ptreesize; i++) {
+                        int match = FALSE;
+                        if (ptree[i].cmdline && ! strstr(ptree[i].cmdline, "procmatch")) {
+#ifdef HAVE_REGEX_H
+                                match = regexec(regex_comp, ptree[i].cmdline, 0, NULL, 0) ? FALSE : TRUE;
+#else
+                                match = strstr(ptree[i].cmdline, pattern) ? TRUE : FALSE;
+#endif
+                                if (match) {
+                                        printf("\t%s\n", ptree[i].cmdline);
+                                        count++;
+                                }
+                        }
+                }
+                printf("------------------------------------------\n");
+                printf("Total matches: %d\n", count);
+                if (count > 1)
+                        printf("WARNING: multiple processes matched the pattern. The check is FIRST-MATCH based, please refine the pattern\n");
+        }
 }
 
 
