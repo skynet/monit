@@ -20,6 +20,8 @@ RST.
 
 Fixed: restart action for non-process service types.
 
+Fixed: FreeBSD jail system memory usage report.
+
 
 Version 5.8
 
