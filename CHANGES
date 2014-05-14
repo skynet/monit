@@ -4,6 +4,8 @@
 
 Version 5.9
 
+Fixed: Support TLSv1.1 and TLSv1.2 in "set mailserver".
+
 
 Version 5.8.1
 
