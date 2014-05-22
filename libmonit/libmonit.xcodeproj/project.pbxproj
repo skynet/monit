@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		522FF2F4192E700200C62A13 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52DDC12013C59D45003AA75C /* libmonit.a */; };
+		522FF2FA192E702D00C62A13 /* TimeTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F8613A5212700FC4089 /* TimeTest.c */; };
 		52936F8813A5212700FC4089 /* CommandTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F7713A5212700FC4089 /* CommandTest.c */; };
 		52936F8913A5212700FC4089 /* DirTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F7A13A5212700FC4089 /* DirTest.c */; };
 		52936F8A13A5212700FC4089 /* ExceptionTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F7B13A5212700FC4089 /* ExceptionTest.c */; };
@@ -40,6 +42,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		522FF2F5192E700200C62A13 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		52FDD6A6189C2036008E3D5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -53,6 +64,7 @@
 
 /* Begin PBXFileReference section */
 		522539AC18B91092003EB002 /* THIRDPARTY */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = THIRDPARTY; sourceTree = "<group>"; };
+		522FF2F9192E700200C62A13 /* TimeTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TimeTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5274580B13A1009C00C422FE /* bootstrap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = bootstrap; sourceTree = "<group>"; };
 		5274580C13A1009C00C422FE /* configure.ac */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = configure.ac; sourceTree = "<group>"; };
 		5274580D13A1009C00C422FE /* Makefile.am */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.am; sourceTree = "<group>"; };
@@ -116,6 +128,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		522FF2F3192E700200C62A13 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				522FF2F4192E700200C62A13 /* libmonit.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		52A12C2813A0FFAB00C6CEB7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -193,6 +213,7 @@
 				52936F9513A5216B00FC4089 /* config */,
 				527BC1F2140776E700D9D3F0 /* Products */,
 				52FDD6A8189C2036008E3D5E /* CommandTest */,
+				522FF2F9192E700200C62A13 /* TimeTest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -294,6 +315,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		522FF2F0192E700200C62A13 /* TimeTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 522FF2F6192E700200C62A13 /* Build configuration list for PBXNativeTarget "TimeTest" */;
+			buildPhases = (
+				522FF2F1192E700200C62A13 /* Sources */,
+				522FF2F3192E700200C62A13 /* Frameworks */,
+				522FF2F5192E700200C62A13 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TimeTest;
+			productName = CommandTest;
+			productReference = 522FF2F9192E700200C62A13 /* TimeTest */;
+			productType = "com.apple.product-type.tool";
+		};
 		52A12C2A13A0FFAB00C6CEB7 /* libmonit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 52A12C2F13A0FFAB00C6CEB7 /* Build configuration list for PBXNativeTarget "libmonit" */;
@@ -351,11 +389,20 @@
 			targets = (
 				52A12C2A13A0FFAB00C6CEB7 /* libmonit */,
 				52FDD6A7189C2036008E3D5E /* CommandTest */,
+				522FF2F0192E700200C62A13 /* TimeTest */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		522FF2F1192E700200C62A13 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				522FF2FA192E702D00C62A13 /* TimeTest.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		52A12C2713A0FFAB00C6CEB7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -402,6 +449,53 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		522FF2F7192E700200C62A13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = TimeTest;
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Debug;
+		};
+		522FF2F8192E700200C62A13 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = TimeTest;
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Release;
+		};
 		52A12C2D13A0FFAB00C6CEB7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -562,6 +656,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		522FF2F6192E700200C62A13 /* Build configuration list for PBXNativeTarget "TimeTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				522FF2F7192E700200C62A13 /* Debug */,
+				522FF2F8192E700200C62A13 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		52A12C2513A0FFAB00C6CEB7 /* Build configuration list for PBXProject "libmonit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
