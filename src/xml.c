@@ -149,7 +149,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                 "<monitor>%d</monitor>"
                 "<monitormode>%d</monitormode>"
                 "<pendingaction>%d</pendingaction>",
-                S->collected.tv_sec,
+                (long)S->collected.tv_sec,
                 (long)S->collected.tv_usec,
                 S->error,
                 S->error_hint,
@@ -361,7 +361,7 @@ static void status_event(Event_T E, StringBuffer_T B) {
                 "<state>%d</state>"
                 "<action>%d</action>"
                 "<message><![CDATA[",
-                tv->tv_sec,
+                (long)tv->tv_sec,
                 (long)tv->tv_usec,
                 Event_get_id(E) == Event_Instance ? "Monit" : Event_get_source_name(E),
                 Event_get_source_type(E),

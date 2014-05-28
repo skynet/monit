@@ -39,7 +39,7 @@ int main(void) {
         printf("=> Test1: get/set timeout\n");
         {
                 out = OutputStream_new(STDOUT);
-                printf("\tCurrent timeout: %ldms\n", OutputStream_getTimeout(out));
+                printf("\tCurrent timeout: %ldms\n", (long)OutputStream_getTimeout(out));
                 OutputStream_setTimeout(out, TIMEOUT);
                 assert(OutputStream_getTimeout(out) == TIMEOUT);
                 printf("\tTimeout set to:  %dms\n", TIMEOUT);
