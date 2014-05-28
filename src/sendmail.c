@@ -287,7 +287,7 @@ int sendmail(Mail_T mail) {
                         do_send(&S, "MIME-Version: 1.0\r\n");
                         do_send(&S, "Content-Type: text/plain; charset=\"iso-8859-1\"\r\n");
                         do_send(&S, "Content-Transfer-Encoding: 8bit\r\n");
-                        do_send(&S, "Message-Id: <%ld.%lu@%s>\r\n", time(NULL), random(), S.localhost);
+                        do_send(&S, "Message-Id: <%ld.%lu@%s>\r\n", (long)time(NULL), random(), S.localhost);
                         do_send(&S, "\r\n");
                         do_send(&S, "%s\r\n", m->message);
                         do_send(&S, ".\r\n");
