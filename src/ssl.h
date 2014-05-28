@@ -64,7 +64,7 @@ typedef struct my_ssl_connection {
         SSL              *handler;
         SSL_CTX          *ctx;
         X509             *cert;
-        SSL_METHOD       *method;
+        const SSL_METHOD *method;
         BIO              *socket_bio;
         const char       *cipher;
         char             *cert_subject;
@@ -80,7 +80,7 @@ typedef struct my_ssl_connection {
 
 typedef struct my_ssl_server_connection {
         int               server_socket;
-        SSL_METHOD       *method;
+        const SSL_METHOD *method;
         SSL_CTX          *ctx;
         char             *pemfile;
         char             *clientpemfile;
