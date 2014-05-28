@@ -533,7 +533,8 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                                 if ((read_timeout = timeout * 1000. - ((t_in.tv_sec - t_out.tv_sec) * 1000. + (t_in.tv_usec - t_out.tv_usec) / 1000.)) > 0)
                                         goto readnext; // Try to read next packet, but don't exceed the timeout while waiting for our response so we won't loop forever if the socket is flooded with other ICMP packets
                         } else {
-                                memcpy(&t_out, icmpin->icmp_data, sizeof(struct timeval));
+                                data = icmpin->icmp_data;
+                                memcpy(&t_out, data, sizeof(struct timeval));
                                 response = (double)(t_in.tv_sec - t_out.tv_sec) + (double)(t_in.tv_usec - t_out.tv_usec) / 1000000;
                                 DEBUG("ICMP echo response for %s %d/%d succeeded -- received id=%d sequence=%d response_time=%fs\n", hostname, i + 1, count, id_in, seq_in, response);
                                 break; // Wait for one response only
