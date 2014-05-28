@@ -43,7 +43,7 @@ int main(void) {
         {
                 assert((fd = File_open(DATA, "r")) >= 0);
                 in = InputStream_new(fd);
-                printf("\tCurrent timeout: %ldms\n", InputStream_getTimeout(in));
+                printf("\tCurrent timeout: %ldms\n", (long)InputStream_getTimeout(in));
                 InputStream_setTimeout(in, TIMEOUT);
                 assert(InputStream_getTimeout(in) == TIMEOUT);
                 printf("\tTimeout set to:  %dms\n", TIMEOUT);

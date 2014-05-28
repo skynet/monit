@@ -224,15 +224,15 @@ char *Time_uptime(time_t sec, char *result) {
                 result[0] = 0;
                 if (sec > 0) {
                         if ((r = sec/86400) > 0) {
-                                n = snprintf(result, 24, "%ldd", r);
+                                n = snprintf(result, 24, "%ldd", (long)r);
                                 sec -= r * 86400;
                         }
                         if((r = sec/3600) > 0) {
-                                n += snprintf(result + n, (24 - n), "%s%ldh", n ? ", " : "", r);
+                                n += snprintf(result + n, (24 - n), "%s%ldh", n ? ", " : "", (long)r);
                                 sec -= r * 3600;
                         }
                         r = sec/60;
-                        snprintf(result + n, (24 - n), "%s%ldm", n ? ", " : "", r);
+                        snprintf(result + n, (24 - n), "%s%ldm", n ? ", " : "", (long)r);
                 }
         }
         return result;
