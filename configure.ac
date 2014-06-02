@@ -437,8 +437,7 @@ architecture=`uname`
 if test "$architecture" = "SunOS" 
 then
    ARCH="SOLARIS"
-   CFLAGS="$CFLAGS -D _REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__ -m64"
-   LDFLAGS="$LDFLAGS -m64"
+   CFLAGS="$CFLAGS -D _REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__"
    test_kstat="true"
    AC_DEFINE([HAVE_CPU_WAIT], [1], [Define to 1 if CPU wait information is available.])
    if test `uname -m` = "i86pc"
