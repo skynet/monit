@@ -84,6 +84,7 @@
           System_State,
           Fifo_State,
           Program_State,
+          Net_State,
           None_State
   } Check_State;
 
@@ -124,10 +125,10 @@ restartarg  restart{ws}?(program)?{ws}?([=]{ws})?["]
 execarg     exec(ute)?{ws}?["]
 pathtokarg  path{ws}?["]
 percent     ("percent"|"%")
-byte        ("byte"|"b")
-kilobyte    ("kilobyte"|"kb")
-megabyte    ("megabyte"|"mb")
-gigabyte    ("gigabyte"|"gb")
+byte        ("byte"|"bytes"|"b")
+kilobyte    ("kilobyte"|"kilobytes"|"kb")
+megabyte    ("megabyte"|"megabytes"|"mb")
+gigabyte    ("gigabyte"|"gigabytes"|"gb")
 
 %x ARGUMENT_COND DEPEND_COND SERVICE_COND URL_COND STRING_COND EVERY_COND INCLUDE
 
@@ -156,6 +157,7 @@ times             {/* EMPTY */}
 but               {/* EMPTY */}
 of                {/* EMPTY */}
 does              {/* EMPTY */}
+per               {/* EMPTY */}
 
 {startarg}        { BEGIN(ARGUMENT_COND); return START; }
 {stoparg}         { BEGIN(ARGUMENT_COND); return STOP; }
@@ -186,6 +188,9 @@ syslog            { return SYSLOG; }
 facility          { return FACILITY; }
 httpd             { return HTTPD; }
 address           { return ADDRESS; }
+interface         { return INTERFACE; }
+upload(ed)        { return UPLOAD; }
+download(ed)      { return DOWNLOAD; }
 clientpemfile     { return CLIENTPEMFILE; }
 allowselfcertification  { return ALLOWSELFCERTIFICATION; }
 certmd5           { return CERTMD5; }
@@ -282,6 +287,7 @@ second(s)?        { return SECOND; }
 minute(s)?        { return MINUTE; }
 hour(s)?          { return HOUR; }
 day(s)?           { return DAY; }
+month(s)?         { return MONTH; }
 sslv2             { return SSLV2; }
 sslv3             { return SSLV3; }
 tlsv1             { return TLSV1; }
@@ -410,10 +416,10 @@ check[ \t]+host   {
                     return CHECKHOST;
                   }
 
-check[ \t]+system {
+check[ \t]+network {
                     BEGIN(SERVICE_COND);
-                    check_state = System_State;
-                    return CHECKSYSTEM;
+                    check_state = Net_State;
+                    return CHECKNET;
                   }
 
 check[ \t]+fifo   {
@@ -426,6 +432,12 @@ check[ \t]+program   {
                     BEGIN(SERVICE_COND);
                     check_state = Program_State;
                     return CHECKPROGRAM;
+                  }
+
+check[ \t]+system {
+                    BEGIN(SERVICE_COND);
+                    check_state = System_State;
+                    return CHECKSYSTEM;
                   }
 
 group[ \t]+       {

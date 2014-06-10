@@ -411,5 +411,13 @@ char *Util_portDescription(Port_T p, char *buf, int bufsize);
 int Util_getfqdnhostname(char *buf, unsigned len);
 
 
+/**
+ * Return string presentation of TIME_* unit
+ *  @param time The TIME_* unit (see monit.h)
+ *  @return string
+ */
+const char *Util_timestr(int time);
+
+
 #endif
 

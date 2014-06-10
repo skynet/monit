@@ -896,6 +896,7 @@ void Util_printService(Service_T s) {
         Timestamp_T t;
         ActionRate_T ar;
         Size_T sl;
+        Bandwidth_T bl;
         Uptime_T ul;
         Match_T ml;
         Dependant_T d;
@@ -924,7 +925,11 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Match", s->path);
                 else
                         printf(" %-20s = %s\n", "Pid file", s->path);
-        } else if (s->type != TYPE_HOST && s->type != TYPE_SYSTEM) {
+        } else if (s->type == TYPE_HOST) {
+                printf(" %-20s = %s\n", "Address", s->path);
+        } else if (s->type == TYPE_NET) {
+                printf(" %-20s = %s\n", "Interface", s->path);
+        } else if (s->type != TYPE_SYSTEM) {
                 printf(" %-20s = %s\n", "Path", s->path);
         }
         printf(" %-20s = %s\n", "Monitoring mode", modenames[s->mode]);
@@ -1071,6 +1076,16 @@ void Util_printService(Service_T s) {
                         :
                         StringBuffer_toString(Util_printRule(buf, sl->action, "if %s %llu byte(s)", operatornames[sl->operator], sl->size))
                 );
+        }
+
+        for (bl = s->uploadlist; bl; bl = bl->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Upload", StringBuffer_toString(Util_printRule(buf, bl->action, "if %s %llu byte(s) per %s", operatornames[bl->operator], bl->bytes, Util_timestr(bl->range))));
+        }
+
+        for (bl = s->downloadlist; bl; bl = bl->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Download", StringBuffer_toString(Util_printRule(buf, bl->action, "if %s %llu byte(s) per %s", operatornames[bl->operator], bl->bytes, Util_timestr(bl->range))));
         }
 
         for (ul = s->uptimelist; ul; ul = ul->next) {
@@ -1644,6 +1659,21 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.file.st_ino_prev = 0;
                         *s->inf->priv.file.cs_sum = 0;
                         break;
+                case TYPE_NET:
+                        s->inf->priv.net.stats.timestamp.last = -1LL;
+                        s->inf->priv.net.stats.timestamp.now = -1LL;
+                        s->inf->priv.net.stats.ipackets.last = -1LL;
+                        s->inf->priv.net.stats.ipackets.now = -1LL;
+                        s->inf->priv.net.stats.ibytes.last = -1LL;
+                        s->inf->priv.net.stats.ibytes.now = -1LL;
+                        s->inf->priv.net.stats.ierrors.last = -1LL;
+                        s->inf->priv.net.stats.ierrors.now = -1LL;
+                        s->inf->priv.net.stats.opackets.last = -1LL;
+                        s->inf->priv.net.stats.opackets.now = -1LL;
+                        s->inf->priv.net.stats.obytes.last = -1LL;
+                        s->inf->priv.net.stats.obytes.now = -1LL;
+                        s->inf->priv.net.stats.oerrors.last = -1LL;
+                        s->inf->priv.net.stats.oerrors.now = -1LL;
                 case TYPE_PROCESS:
                         s->inf->priv.process._pid = -1;
                         s->inf->priv.process._ppid = -1;
@@ -1858,5 +1888,26 @@ int Util_getfqdnhostname(char *buf, unsigned len) {
         if (info)
                 freeaddrinfo(info);
         return 0;
+}
+
+
+const char *Util_timestr(int time) {
+        int i = 0;
+        struct mytimetable {
+                int id;
+                char *description;
+        } tt[]= {
+                {TIME_SECOND, "second"},
+                {TIME_MINUTE, "minute"},
+                {TIME_HOUR,   "hour"},
+                {TIME_DAY,    "day"},
+                {TIME_MONTH,  "month"},
+                {0}
+        };
+        do {
+                if (time == tt[i].id)
+                        return tt[i].description;
+        } while (tt[++i].description);
+        return NULL;
 }
 

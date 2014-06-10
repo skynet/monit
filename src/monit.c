@@ -139,11 +139,11 @@ char *modenames[] = {"active", "passive", "manual"};
 char *checksumnames[] = {"UNKNOWN", "MD5", "SHA1"};
 char *operatornames[] = {"greater than", "less than", "equal to", "not equal to"};
 char *operatorshortnames[] = {">", "<", "=", "!="};
-char *statusnames[] = {"Accessible", "Accessible", "Accessible", "Running", "Online with all services", "Running", "Accessible", "Status ok"};
-char *servicetypes[] = {"Filesystem", "Directory", "File", "Process", "Remote Host", "System", "Fifo", "Program"};
+char *statusnames[] = {"Accessible", "Accessible", "Accessible", "Running", "Online with all services", "Running", "Accessible", "Status ok", "Running"};
+char *servicetypes[] = {"Filesystem", "Directory", "File", "Process", "Remote Host", "System", "Fifo", "Program", "Network"};
 char *pathnames[] = {"Path", "Path", "Path", "Pid file", "Path", "", "Path"};
 char *icmpnames[] = {"Echo Reply", "", "", "Destination Unreachable", "Source Quench", "Redirect", "", "", "Echo Request", "", "", "Time Exceeded", "Parameter Problem", "Timestamp Request", "Timestamp Reply", "Information Request", "Information Reply", "Address Mask Request", "Address Mask Reply"};
-char *sslnames[] = {"auto", "v2", "v3", "tls"};
+char *sslnames[] = {"auto", "v2", "v3", "tlsv1", "tlsv1.1", "tlsv1.2", "none"};
 
 
 

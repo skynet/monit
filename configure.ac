@@ -117,6 +117,7 @@ AC_CHECK_HEADERS([ \
 	getopt.h \
 	glob.h \
 	grp.h \
+	ifaddrs.h \
 	kvm.h \
 	paths.h \
 	kstat.h \

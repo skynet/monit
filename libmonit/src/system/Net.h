@@ -49,6 +49,23 @@
 #define NET_READ_TIMEOUT        3000
 
 
+typedef struct NetStatisticsSample_T {
+        long long last;
+        long long now;
+} NetStatisticsSample_T;
+
+
+typedef struct NetStatistics_T {
+        NetStatisticsSample_T timestamp; // Timestamp
+        NetStatisticsSample_T ipackets;  // Packets received on interface
+        NetStatisticsSample_T ierrors;   // Input errors on interface
+        NetStatisticsSample_T ibytes;    // Total number of octets received
+        NetStatisticsSample_T opackets;  // Packets sent on interface
+        NetStatisticsSample_T oerrors;   // Output errors on interface
+        NetStatisticsSample_T obytes;    // Total number of octets sent
+} NetStatistics_T;
+
+
 /**
  * Enable nonblocking i|o on the given socket.
  * @param socket A socket
@@ -139,6 +156,22 @@ int Net_shutdown(int socket, int how);
  * @return true if success otherwise false
  */
 int Net_close(int socket);
+
+
+/**
+ * Update network interface statistics.
+ * @param address IP address (e.g. "127.0.0.1" or "::1")
+ * @exception AssertException If statistics cannot be fetched or the address is invalid.
+ */
+void Net_getStatisticsByAddress(const char *address, NetStatistics_T *stats);
+
+
+/**
+ * Update network interface statistics.
+ * @param interface Network interface name (e.g. "eth0")
+ * @exception AssertException If statistics cannot be fetched or the address is invalid.
+ */
+void Net_getStatisticsByInterface(const char *interface, NetStatistics_T *stats);
 
 
 #endif

@@ -176,6 +176,26 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                 if (S->checksum)
                                         StringBuffer_append(B, "<checksum type=\"%s\">%s</checksum>", checksumnames[S->checksum->type], S->inf->priv.file.cs_sum);
                         }
+                        if (S->type == TYPE_NET) {
+                                long long delta = S->inf->priv.net.stats.timestamp.last > -1 && S->inf->priv.net.stats.timestamp.now > S->inf->priv.net.stats.timestamp.last ? (S->inf->priv.net.stats.timestamp.now - S->inf->priv.net.stats.timestamp.last) : 1;
+                                StringBuffer_append(B,
+                                        "<download>"
+                                        "<packets>%lld</packets>"
+                                        "<bytes>%lld</bytes>"
+                                        "<errors>%lld</errors>"
+                                        "</download>"
+                                        "<upload>"
+                                        "<packets>%lld</packets>"
+                                        "<bytes>%lld</bytes>"
+                                        "<errors>%lld</errors>"
+                                        "</upload>",
+                                        S->inf->priv.net.stats.ipackets.now > -1 && S->inf->priv.net.stats.ipackets.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ipackets.now - S->inf->priv.net.stats.ipackets.last) * 1000. / (double)delta) : 0LL,
+                                        S->inf->priv.net.stats.ibytes.now > -1 && S->inf->priv.net.stats.ibytes.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ibytes.now - S->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL,
+                                        S->inf->priv.net.stats.ierrors.now > -1 && S->inf->priv.net.stats.ierrors.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ierrors.now - S->inf->priv.net.stats.ierrors.last) * 1000. / (double)delta) : 0LL,
+                                        S->inf->priv.net.stats.opackets.now > -1 && S->inf->priv.net.stats.opackets.last > -1 ? (long long)((double)(S->inf->priv.net.stats.opackets.now - S->inf->priv.net.stats.opackets.last) * 1000. / (double)delta) : 0LL,
+                                        S->inf->priv.net.stats.obytes.now > -1 && S->inf->priv.net.stats.obytes.last > -1 ? (long long)((double)(S->inf->priv.net.stats.obytes.now - S->inf->priv.net.stats.obytes.last) * 1000. / (double)delta) : 0LL,
+                                        S->inf->priv.net.stats.oerrors.now > -1 && S->inf->priv.net.stats.oerrors.last > -1 ? (long long)((double)(S->inf->priv.net.stats.oerrors.now - S->inf->priv.net.stats.oerrors.last) * 1000. / (double)delta) : 0LL);
+                        }
                         if (S->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(B,
                                         "<flags>%d</flags>"
@@ -190,7 +210,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         S->inf->priv.filesystem.f_bsize > 0 ? (float)S->inf->priv.filesystem.f_blocks / (float)1048576 * (float)S->inf->priv.filesystem.f_bsize : 0);
                                 if (S->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(B,
-                                                  "<inode>"
+                                                "<inode>"
                                                 "<percent>%.1f</percent>"
                                                 "<usage>%ld</usage>"
                                                 "<total>%ld</total>"

@@ -165,6 +165,7 @@
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
+  static struct mybandwidth bandwidthset;
   static struct myuptime uptimeset;
   static struct mymatch matchset;
   static struct myicmp icmpset;
@@ -199,6 +200,7 @@
   static void  addtimestamp(Timestamp_T, int);
   static void  addactionrate(ActionRate_T);
   static void  addsize(Size_T);
+  static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
   static void  adduptime(Uptime_T);
   static void  addfilesystem(Filesystem_T);
   static void  addicmp(Icmp_T);
@@ -236,6 +238,7 @@
   static void  reset_timestampset();
   static void  reset_actionrateset();
   static void  reset_sizeset();
+  static void  reset_bandwidthset();
   static void  reset_uptimeset();
   static void  reset_checksumset();
   static void  reset_permset();
@@ -260,13 +263,14 @@
 %union {
   URL_T url;
   float real;
-  int   number;
+  int number;
   char *string;
 }
 
 %token IF ELSE THEN OR FAILED
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
+%token INTERFACE UPLOAD DOWNLOAD
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
@@ -281,13 +285,13 @@
 %token <number> REPLYLIMIT REQUESTLIMIT STARTLIMIT WAITLIMIT GRACEFULLIMIT
 %token <number> CLEANUPLIMIT
 %token <real> REAL
-%token CHECKPROC CHECKFILESYS CHECKFILE CHECKDIR CHECKHOST CHECKSYSTEM CHECKFIFO CHECKPROGRAM
+%token CHECKPROC CHECKFILESYS CHECKFILE CHECKDIR CHECKHOST CHECKSYSTEM CHECKFIFO CHECKPROGRAM CHECKNET
 %token CHILDREN SYSTEM STATUS ORIGIN VERSIONOPT
 %token RESOURCE MEMORY TOTALMEMORY LOADAVG1 LOADAVG5 LOADAVG15 SWAP
 %token MODE ACTIVE PASSIVE MANUAL CPU TOTALCPU CPUUSER CPUSYSTEM CPUWAIT
 %token GROUP REQUEST DEPENDS BASEDIR SLOT EVENTQUEUE SECRET HOSTHEADER
 %token UID EUID GID MMONIT INSTANCE USERNAME PASSWORD
-%token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY
+%token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY MONTH
 %token SSLAUTO SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
 %token INODE SPACE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
@@ -325,13 +329,14 @@ statement       : setalert
                 | setexpectbuffer
                 | setinit
                 | setfips
-                | checkproc optproclist
+                | checkfifo optfifolist
                 | checkfile optfilelist
                 | checkfilesys optfilesyslist
                 | checkdir optdirlist
                 | checkhost opthostlist
+                | checknet optnetlist
                 | checksystem optsystemlist
-                | checkfifo optfifolist
+                | checkproc optproclist
                 | checkprogram optstatuslist
                 ;
 
@@ -439,6 +444,23 @@ opthost         : start
                 | alert
                 | every
                 | mode
+                | group
+                | depend
+                ;
+
+optnetlist      : /* EMPTY */
+                | optnetlist optnet
+                ;
+
+optnet          : start
+                | stop
+                | restart
+                | exist
+                | upload
+                | download
+                | actionrate
+                | every
+                | alert
                 | group
                 | depend
                 ;
@@ -856,6 +878,14 @@ checkdir        : CHECKDIR SERVICENAME PATHTOK PATH {
 checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                     check_hostname($4);
                     createservice(TYPE_HOST, $<string>2, $4, check_remote_host);
+                  }
+                ;
+
+checknet        : CHECKNET SERVICENAME ADDRESS STRING {
+                    createservice(TYPE_NET, $<string>2, $4, check_net_address);
+                  }
+                | CHECKNET SERVICENAME INTERFACE STRING {
+                    createservice(TYPE_NET, $<string>2, $4, check_net_interface);
                   }
                 ;
 
@@ -1599,6 +1629,7 @@ time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
                 | MINUTE      { $<number>$ = TIME_MINUTE; }
                 | HOUR        { $<number>$ = TIME_HOUR; }
                 | DAY         { $<number>$ = TIME_DAY; }
+                | MONTH       { $<number>$ = TIME_MONTH; }
                 ;
 
 action          : ALERT                            { $<number>$ = ACTION_ALERT; }
@@ -1798,6 +1829,24 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
                     sizeset.test_changes = TRUE;
                     addeventaction(&(sizeset).action, $<number>6, ACTION_IGNORE);
                     addsize(&sizeset);
+                  }
+                ;
+
+upload          : IF UPLOAD operator NUMBER unit time rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>3;
+                    bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
+                    bandwidthset.range = $<number>6;
+                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addbandwidth(&(current->uploadlist), &bandwidthset);
+                  }
+                ;
+
+download        : IF DOWNLOAD operator NUMBER unit time rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>3;
+                    bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
+                    bandwidthset.range = $<number>6;
+                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addbandwidth(&(current->downloadlist), &bandwidthset);
                   }
                 ;
 
@@ -2037,6 +2086,7 @@ static void preparse() {
   reset_gidset();
   reset_statusset();
   reset_sizeset();
+  reset_bandwidthset();
   reset_mailset();
   reset_mailserverset();
   reset_portset();
@@ -2439,6 +2489,26 @@ static void addsize(Size_T ss) {
   current->sizelist = s;
 
   reset_sizeset();
+}
+
+
+/*
+ * Return Bandwidth object
+ */
+static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
+        ASSERT(list);
+        ASSERT(b);
+
+        Bandwidth_T bandwidth;
+        NEW(bandwidth);
+        bandwidth->operator = b->operator;
+        bandwidth->bytes = b->bytes;
+        bandwidth->range = b->range;
+        bandwidth->action = b->action;
+        bandwidth->next = *list;
+        *list = bandwidth;
+
+        reset_bandwidthset();
 }
 
 
@@ -3384,6 +3454,17 @@ static void reset_sizeset() {
   sizeset.size = 0;
   sizeset.test_changes = FALSE;
   sizeset.action = NULL;
+}
+
+
+/*
+ * Reset the Bandwidth set to default values
+ */
+static void reset_bandwidthset() {
+  bandwidthset.operator = Operator_Equal;
+  bandwidthset.bytes = 0ULL;
+  bandwidthset.range = 0ULL;
+  bandwidthset.action = NULL;
 }
 
 

@@ -36,6 +36,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <netinet/tcp.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -55,6 +57,9 @@
 #endif
 
 #include "system/Net.h"
+#include "system/Time.h"
+#include "system/System.h"
+#include "Str.h"
 
 
 /**
@@ -64,6 +69,95 @@
  * @see http://www.mmonit.com/
  * @file
  */
+
+
+/* ------------------------------------------------------------- Definitions */
+
+
+static struct {
+        struct ifaddrs *addrs;
+        time_t timestamp;
+} _stats;
+
+
+/* --------------------------------------- Static constructor and destructor */
+
+
+static void __attribute__ ((constructor)) _Constructor() {
+        _stats.addrs = NULL;
+}
+
+
+static void __attribute__ ((destructor)) _Destructor() {
+        if (_stats.addrs)
+                freeifaddrs(_stats.addrs);
+}
+
+
+/* --------------------------------------------------------------- Private */
+
+
+static void _refreshStats() {
+        time_t now = time(NULL);
+        if (_stats.timestamp != now || ! _stats.addrs) {
+                if (_stats.addrs)
+                        freeifaddrs(_stats.addrs);
+                if (getifaddrs(&(_stats.addrs)) == -1) {
+                        _stats.timestamp = 0;
+                        THROW(AssertException, "Cannot get network statistics -- %s", System_getError(errno));
+                }
+                _stats.timestamp = now;
+        }
+}
+
+
+static void _updateStats(const char *interface, NetStatistics_T *stats) {
+        for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
+                if (a->ifa_addr == NULL)
+                        continue;
+                if (Str_isEqual(interface, a->ifa_name) && a->ifa_addr->sa_family == PF_LINK) {
+                        struct if_data *data = (struct if_data *)a->ifa_data;
+                        stats->timestamp.last = stats->timestamp.now;
+                        stats->timestamp.now = Time_milli();
+                        stats->ipackets.last = stats->ipackets.now;
+                        stats->ipackets.now = data->ifi_ipackets;
+                        stats->ibytes.last = stats->ibytes.now;
+                        stats->ibytes.now = data->ifi_ibytes;
+                        stats->ierrors.last = stats->ierrors.now;
+                        stats->ierrors.now = data->ifi_ierrors;
+                        stats->opackets.last = stats->opackets.now;
+                        stats->opackets.now = data->ifi_opackets;
+                        stats->obytes.last = stats->obytes.now;
+                        stats->obytes.now = data->ifi_obytes;
+                        stats->oerrors.last = stats->oerrors.now;
+                        stats->oerrors.now = data->ifi_oerrors;
+                        return;
+                }
+        }
+        THROW(AssertException, "Interface %s not found", interface);
+}
+
+
+static const char *_findInterfaceForAddress(const char *address) {
+        for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
+                if (a->ifa_addr == NULL)
+                        continue;
+                int s;
+                char host[NI_MAXHOST];
+                if (a->ifa_addr->sa_family == PF_INET)
+                        s = getnameinfo(a->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+                else if (a->ifa_addr->sa_family == PF_INET6)
+                        s = getnameinfo(a->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+                else
+                        continue;
+                if (s != 0)
+                        THROW(AssertException, "Cannot translate address to name -- %s", gai_strerror(s));
+                if (Str_isEqual(address, host))
+                        return a->ifa_name;
+        }
+        THROW(AssertException, "Address %s not found", address);
+        return NULL; // Will be never reached
+}
 
 
 /* ---------------------------------------------------------------- Public */
@@ -162,3 +256,20 @@ int Net_abort(int socket) {
         } while (r == -1 && errno == EINTR);
 	return (r == 0);
 }
+
+
+void Net_getStatisticsByAddress(const char *address, NetStatistics_T *stats) {
+        assert(address);
+        assert(stats);
+        _refreshStats();
+        _updateStats(_findInterfaceForAddress(address), stats);
+}
+
+
+void Net_getStatisticsByInterface(const char *interface, NetStatistics_T *stats) {
+        assert(interface);
+        assert(stats);
+        _refreshStats();
+        _updateStats(interface, stats);
+}
+

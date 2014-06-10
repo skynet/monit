@@ -81,6 +81,7 @@
 #include "socket.h"
 
 // libmonit
+#include "system/Net.h"
 #include "system/Command.h"
 #include "system/Process.h"
 #include "util/Str.h"
@@ -163,6 +164,7 @@ typedef enum {
 #define TIME_MINUTE        60
 #define TIME_HOUR          3600
 #define TIME_DAY           86400
+#define TIME_MONTH         2678400
 
 #define ACTION_IGNORE      0
 #define ACTION_ALERT       1
@@ -181,6 +183,7 @@ typedef enum {
 #define TYPE_SYSTEM        5
 #define TYPE_FIFO          6
 #define TYPE_PROGRAM       7
+#define TYPE_NET           8
 
 #define RESOURCE_ID_CPU_PERCENT       1
 #define RESOURCE_ID_MEM_PERCENT       2
@@ -207,8 +210,8 @@ typedef enum {
 
 #define UNIT_BYTE          1
 #define UNIT_KILOBYTE      1024
-#define UNIT_MEGABYTE      1048580
-#define UNIT_GIGABYTE      1073740000
+#define UNIT_MEGABYTE      1048576
+#define UNIT_GIGABYTE      1073741824
 
 #define HASH_UNKNOWN       0
 #define HASH_MD5           1
@@ -620,6 +623,17 @@ typedef struct myprogram {
 } *Program_T;
 
 
+typedef struct mybandwidth {
+        Operator_Type operator;                           /**< Comparison operator */
+        unsigned long long bytes;                             /**< Bytes watermark */ //FIXME: can use lower resolution
+        unsigned long long range;                             /**< Range [seconds] */ //FIXME: should be hardcoded to seconds only
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mybandwidth *next;                     /**< next bandwidth in chain */
+} *Bandwidth_T;
+
+
 /** Defines size object */
 typedef struct mysize {
         Operator_Type operator;                           /**< Comparison operator */
@@ -756,6 +770,10 @@ typedef struct myinfo {
                         int    total_cpu_percent;                         /**< percentage * 10 */
                         time_t uptime;                                     /**< Process uptime */
                 } process;
+
+                struct {
+                        NetStatistics_T stats;
+                } net;
         } priv;
 } *Info_T;
 
@@ -791,6 +809,8 @@ typedef struct myservice {
         Port_T      portlist; /**< Portnumbers to check, either local or at a host */
         Resource_T  resourcelist;                          /**< Resouce check list */
         Size_T      sizelist;                                 /**< Size check list */
+        Bandwidth_T uploadlist;                             /**< Upload check list */
+        Bandwidth_T downloadlist;                         /**< Download check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */
         Match_T     matchlist;                             /**< Content Match list */
         Match_T     matchignorelist;                /**< Content Match ignore list */
@@ -799,7 +819,8 @@ typedef struct myservice {
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
         Status_T    statuslist;           /**< Program execution status check list */
-
+        Bandwidth_T upload;                                      /**< Upload check */
+        Bandwidth_T download;                                  /**< Download check */
 
         EventAction_T action_PID;                      /**< Action upon pid change */
         EventAction_T action_PPID;                    /**< Action upon ppid change */
@@ -1019,6 +1040,8 @@ int  check_remote_host(Service_T);
 int  check_system(Service_T);
 int  check_fifo(Service_T);
 int  check_program(Service_T);
+int  check_net_address(Service_T);
+int  check_net_interface(Service_T);
 int  check_URL(Service_T s);
 int  sha_md5_stream (FILE *, void *, void *);
 void reset_procinfo(Service_T);

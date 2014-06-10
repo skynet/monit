@@ -56,6 +56,7 @@ static void _gc_eventaction(EventAction_T *);
 static void _gc_inf(Info_T *);
 static void _gcpdl(Dependant_T *);
 static void _gcso(Size_T *);
+static void _gcbandwidth(Bandwidth_T *);
 static void _gcmatch(Match_T *);
 static void _gcchecksum(Checksum_T *);
 static void _gcperm(Perm_T *);
@@ -222,6 +223,12 @@ static void _gc_service(Service_T *s) {
 
         if((*s)->sizelist)
                 _gcso(&(*s)->sizelist);
+
+        if((*s)->uploadlist)
+                _gcbandwidth(&(*s)->uploadlist);
+
+        if((*s)->downloadlist)
+                _gcbandwidth(&(*s)->downloadlist);
 
         if((*s)->matchlist)
                 _gcmatch(&(*s)->matchlist);
@@ -515,6 +522,16 @@ static void _gcso(Size_T *s) {
 
         FREE(*s);
 
+}
+
+static void _gcbandwidth(Bandwidth_T *b) {
+        ASSERT(b);
+
+        if((*b)->next)
+                _gcbandwidth(&(*b)->next);
+        if((*b)->action)
+                _gc_eventaction(&(*b)->action);
+        FREE(*b);
 }
 
 static void _gcmatch(Match_T *s) {
