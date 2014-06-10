@@ -1674,6 +1674,7 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.net.stats.obytes.now = -1LL;
                         s->inf->priv.net.stats.oerrors.last = -1LL;
                         s->inf->priv.net.stats.oerrors.now = -1LL;
+                        break;
                 case TYPE_PROCESS:
                         s->inf->priv.process._pid = -1;
                         s->inf->priv.process._ppid = -1;
