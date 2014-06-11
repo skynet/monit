@@ -115,7 +115,7 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
                 if (a->ifa_addr == NULL)
                         continue;
-                if (Str_isEqual(interface, a->ifa_name) && a->ifa_addr->sa_family == PF_LINK) {
+                if (Str_isEqual(interface, a->ifa_name) && a->ifa_addr->sa_family == AF_LINK) {
                         struct if_data *data = (struct if_data *)a->ifa_data;
                         stats->timestamp.last = stats->timestamp.now;
                         stats->timestamp.now = Time_milli();
@@ -144,9 +144,9 @@ static const char *_findInterfaceForAddress(const char *address) {
                         continue;
                 int s;
                 char host[NI_MAXHOST];
-                if (a->ifa_addr->sa_family == PF_INET)
+                if (a->ifa_addr->sa_family == AF_INET)
                         s = getnameinfo(a->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-                else if (a->ifa_addr->sa_family == PF_INET6)
+                else if (a->ifa_addr->sa_family == AF_INET6)
                         s = getnameinfo(a->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
                 else
                         continue;
