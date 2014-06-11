@@ -112,6 +112,7 @@ static void _refreshStats() {
 
 
 static void _updateStats(const char *interface, NetStatistics_T *stats) {
+#if defined DARWIN || defined FREEBSD || defined OPENBSD || defined NETBSD
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
                 if (a->ifa_addr == NULL)
                         continue;
@@ -134,6 +135,41 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
                         return;
                 }
         }
+#elif defined LINUX
+        /*
+         * $ cat /proc/net/dev
+         * Inter-|   Receive                                                |  Transmit
+         *  face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+         *   eth0: 1841444   11557    0    0    0     0          0         0  1335636    7725    0    0    0     0       0          0
+         *     lo:   28760     200    0    0    0     0          0         0    28760     200    0    0    0     0       0          0
+         */
+        FILE *f = fopen("/proc/net/dev", "r");
+        if (f) {
+                char name[STRLEN];
+                long long ibytes, ipackets, ierrors, obytes, opackets, oerrors;
+                while (fscanf(f, " %256[^:]: %lld %lld %lld %*s %*s %*s %*s %*s %lld %lld %lld %*s %*s %*s %*s %*s\n", name, &ibytes, &ipackets, &ierrors, &obytes, &opackets, &oerrors) != 7 || ! Str_isEqual(name, interface)) {
+                        stats->timestamp.last = stats->timestamp.now;
+                        stats->timestamp.now = Time_milli();
+                        stats->ipackets.last = stats->ipackets.now;
+                        stats->ipackets.now = ipackets;
+                        stats->ibytes.last = stats->ibytes.now;
+                        stats->ibytes.now = ibytes;
+                        stats->ierrors.last = stats->ierrors.now;
+                        stats->ierrors.now = ierrors;
+                        stats->opackets.last = stats->opackets.now;
+                        stats->opackets.now = opackets;
+                        stats->obytes.last = stats->obytes.now;
+                        stats->obytes.now = obytes;
+                        stats->oerrors.last = stats->oerrors.now;
+                        stats->oerrors.now = oerrors;
+                        fclose(f);
+                        return;
+                }
+                fclose(f);
+        } else {
+                THROW(AssertException, "Cannot read /proc/net/dev -- %s", System_getError(errno));
+        }
+#endif
         THROW(AssertException, "Interface %s not found", interface);
 }
 
