@@ -149,8 +149,7 @@ then
 elif test "$architecture" = "SunOS"
 then
    LIBS="$LIBS -lsocket -lnsl"
-   CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__ -m64"
-   LDFLAGS="$LDFLAGS -m64"
+   CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__"
    if test `uname -m` != "i86pc"
    then
        CFLAGS="$CFLAGS -mtune=v9"
