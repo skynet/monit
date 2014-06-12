@@ -46,6 +46,9 @@
 #include <stdarg.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
+#ifdef HAVE_KSTAT_H
+#include <kstat.h>
+#endif
 #ifdef HAVE_STROPTS_H
 #include <stropts.h>
 #endif
@@ -95,6 +98,29 @@ static void __attribute__ ((destructor)) _Destructor() {
 
 
 /* --------------------------------------------------------------- Private */
+
+
+#ifdef SOLARIS
+long long _getKstatValue(kstat_t *ksp, char *value) {
+        const kstat_named_t *kdata = kstat_data_lookup(ksp, value);
+        if (kdata) {
+                switch (kdata->data_type) {
+                        case KSTAT_DATA_INT32:
+                                return (long long)kdata->value.i32;
+                        case KSTAT_DATA_UINT32:
+                                return (long long)kdata->value.ui32;
+                        case KSTAT_DATA_INT64:
+                                return (long long)kdata->value.i64;
+                        case KSTAT_DATA_UINT64:
+                                return (long long)kdata->value.ui64;
+                }
+                THROW(AssertException, "Unsupported kstat data type 0x%x", kdata->data_type);
+        } else {
+                THROW(AssertException, "Cannot read %s statistics -- %s", value, System_getError(errno));
+        }
+        return -1LL; // Will be never reached
+}
+#endif
 
 
 static void _refreshStats() {
@@ -168,6 +194,77 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
                 fclose(f);
         } else {
                 THROW(AssertException, "Cannot read /proc/net/dev -- %s", System_getError(errno));
+        }
+#elif defined SOLARIS
+        kstat_ctl_t *kc = kstat_open();
+        if (kc) {
+                TRY
+                {
+                        kstat_t *ksp;
+                        if (Str_isEqual(interface, "lo0")) {
+                                /*
+                                 * Loopback interface has special module on Solaris and provides packets statistics only.
+                                 *
+                                 * $ kstat -p -m link -n net0
+                                 * lo:0:lo0:ipackets       878
+                                 * lo:0:lo0:opackets       878
+                                 */
+                                if ((ksp = kstat_lookup(kc, "lo", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
+                                        stats->ipackets.last = stats->ipackets.now;
+                                        stats->opackets.last = stats->opackets.now;
+                                        stats->ipackets.now = _getKstatValue(ksp, "ipackets");
+                                        stats->opackets.now = _getKstatValue(ksp, "opackets");
+                                        stats->timestamp.last = stats->timestamp.now;
+                                        stats->timestamp.now = Time_milli();
+                                        kstat_close(kc);
+                                        RETURN;
+                                } else {
+                                        THROW(AssertException, "Cannot get kstat data -- %s", System_getError(errno));
+                                }
+                        } else {
+                                /*
+                                 * Use link module for all other interface types.
+                                 *
+                                 * $ kstat -p -m link -n net0
+                                 * link:0:net0:ierrors     0
+                                 * link:0:net0:ipackets    8748
+                                 * link:0:net0:ipackets64  8748
+                                 * link:0:net0:rbytes      1331127
+                                 * link:0:net0:rbytes64    1331127
+                                 * ...
+                                 * link:0:net0:oerrors     0
+                                 * link:0:net0:opackets    7560
+                                 * link:0:net0:opackets64  7560
+                                 * link:0:net0:obytes      3227785
+                                 * link:0:net0:obytes64    3227785
+                                 */
+                                if ((ksp = kstat_lookup(kc, "link", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
+                                        stats->ipackets.last = stats->ipackets.now;
+                                        stats->ibytes.last = stats->ibytes.now;
+                                        stats->ierrors.last = stats->ierrors.now;
+                                        stats->opackets.last = stats->opackets.now;
+                                        stats->obytes.last = stats->obytes.now;
+                                        stats->oerrors.last = stats->oerrors.now;
+                                        stats->ipackets.now = _getKstatValue(ksp, "ipackets64");
+                                        stats->ibytes.now = _getKstatValue(ksp, "rbytes64");
+                                        stats->ierrors.now = _getKstatValue(ksp, "ierrors");
+                                        stats->opackets.now = _getKstatValue(ksp, "opackets64");
+                                        stats->obytes.now = _getKstatValue(ksp, "obytes64");
+                                        stats->oerrors.now = _getKstatValue(ksp, "oerrors");
+                                        stats->timestamp.last = stats->timestamp.now;
+                                        stats->timestamp.now = Time_milli();
+                                        kstat_close(kc);
+                                        RETURN;
+                                } else {
+                                        THROW(AssertException, "Cannot get kstat data -- %s", System_getError(errno));
+                                }
+                        }
+                }
+                FINALLY
+                {
+                        kstat_close(kc);
+                }
+                END_TRY;
         }
 #endif
         THROW(AssertException, "Interface %s not found", interface);
