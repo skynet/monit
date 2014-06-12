@@ -148,7 +148,7 @@ then
    AC_DEFINE([DARWIN], 1, [Define to 1 if the system is OSX])
 elif test "$architecture" = "SunOS"
 then
-   LIBS="$LIBS -lsocket -lnsl"
+   LIBS="$LIBS -lsocket -lnsl -kstat"
    CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__ -m64"
    LDFLAGS="$LDFLAGS -m64"
    if test `uname -m` != "i86pc"
