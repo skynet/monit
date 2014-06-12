@@ -93,7 +93,7 @@ AC_CHECK_HEADERS([ctype.h errno.h fcntl.h limits.h pthread.h setjmp.h \
                   signal.h stdarg.h stdio.h string.h string.h strings.h \
                   sys/socket.h sys/time.h sys/types.h unistd.h execinfo.h \
                   sys/sendfile.h sys/dirent.h poll.h sys/poll.h sys/event.h \
-                  stropts.h sys/ioctl.h sys/filio.h])
+                  stropts.h sys/ioctl.h sys/filio.h kstat.h])
 
 # ------------------------------------------------------------------------
 # Functions 
@@ -148,8 +148,9 @@ then
    AC_DEFINE([DARWIN], 1, [Define to 1 if the system is OSX])
 elif test "$architecture" = "SunOS"
 then
-   LIBS="$LIBS -lsocket -lnsl"
-   CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__"
+   LIBS="$LIBS -lsocket -lnsl -lkstat"
+   CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__ -m64"
+   LDFLAGS="$LDFLAGS -m64"
    if test `uname -m` != "i86pc"
    then
        CFLAGS="$CFLAGS -mtune=v9"
