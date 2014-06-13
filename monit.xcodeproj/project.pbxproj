@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		524981F8194B37DD004A50DB /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 524981F6194B37DD004A50DB /* libcrypto.a */; };
+		524981F9194B37DD004A50DB /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 524981F7194B37DD004A50DB /* libssl.a */; };
 		52A1311D13A7886800583257 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A1311C13A7886800583257 /* libmonit.a */; };
 		52AE77CC14037DA300D2861D /* sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = 52AE77CA14037DA300D2861D /* sha1.c */; };
 		52AE77CF14037E6A00D2861D /* md5_crypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 52AE77CD14037E6A00D2861D /* md5_crypt.c */; };
@@ -75,8 +77,6 @@
 		52F6E8D113A756DB0023F87A /* libpam.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D013A756DB0023F87A /* libpam.dylib */; };
 		52F6E8D313A756EB0023F87A /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D213A756EB0023F87A /* libpthread.dylib */; };
 		52F6E8D513A757050023F87A /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D413A757050023F87A /* libresolv.dylib */; };
-		52FE3D2818CAD60E0050AA5D /* libssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8CC13A756990023F87A /* libssl.dylib */; };
-		52FE3D2918CAD61A0050AA5D /* libcrypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8CE13A756A30023F87A /* libcrypto.dylib */; };
 		9303FB8018C47E7000138D72 /* websocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 9303FB7F18C47E7000138D72 /* websocket.c */; };
 /* End PBXBuildFile section */
 
@@ -107,6 +107,13 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
+		524981EC194B368C004A50DB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 522FF2F9192E700200C62A13;
+			remoteInfo = TimeTest;
+		};
 		52DDC12913C59D46003AA75C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
@@ -149,6 +156,8 @@
 		5205879F18CF7235006296CB /* monit.service.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = monit.service.in; sourceTree = "<group>"; };
 		520587A118CF7235006296CB /* monit.upstart.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = monit.upstart.in; sourceTree = "<group>"; };
 		520587A218CF7235006296CB /* rc.monit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = rc.monit; sourceTree = "<group>"; };
+		524981F6194B37DD004A50DB /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = /opt/local/lib/libcrypto.a; sourceTree = "<absolute>"; };
+		524981F7194B37DD004A50DB /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = /opt/local/lib/libssl.a; sourceTree = "<absolute>"; };
 		528EA77213A74E05003DA4BE /* monit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = monit; sourceTree = BUILT_PRODUCTS_DIR; };
 		528F7DB318BCABC9004BF9B5 /* CONTRIBUTORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CONTRIBUTORS; sourceTree = "<group>"; };
 		52A1310B13A7882A00583257 /* libmonit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libmonit.xcodeproj; path = libmonit/libmonit.xcodeproj; sourceTree = "<group>"; };
@@ -266,8 +275,6 @@
 		52F6E7AE13A74F220023F87A /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = util.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52F6E7AF13A74F220023F87A /* validate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = validate.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52F6E7B113A74F220023F87A /* xml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = xml.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
-		52F6E8CC13A756990023F87A /* libssl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.dylib; path = usr/lib/libssl.dylib; sourceTree = SDKROOT; };
-		52F6E8CE13A756A30023F87A /* libcrypto.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.dylib; path = usr/lib/libcrypto.dylib; sourceTree = SDKROOT; };
 		52F6E8D013A756DB0023F87A /* libpam.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpam.dylib; path = usr/lib/libpam.dylib; sourceTree = SDKROOT; };
 		52F6E8D213A756EB0023F87A /* libpthread.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpthread.dylib; path = usr/lib/libpthread.dylib; sourceTree = SDKROOT; };
 		52F6E8D413A757050023F87A /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
@@ -280,8 +287,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				52FE3D2918CAD61A0050AA5D /* libcrypto.dylib in Frameworks */,
-				52FE3D2818CAD60E0050AA5D /* libssl.dylib in Frameworks */,
+				524981F8194B37DD004A50DB /* libcrypto.a in Frameworks */,
+				524981F9194B37DD004A50DB /* libssl.a in Frameworks */,
 				52A1311D13A7886800583257 /* libmonit.a in Frameworks */,
 				52F6E8D513A757050023F87A /* libresolv.dylib in Frameworks */,
 				52F6E8D313A756EB0023F87A /* libpthread.dylib in Frameworks */,
@@ -396,6 +403,7 @@
 			children = (
 				52DDC12A13C59D46003AA75C /* libmonit.a */,
 				52FDD6B6189C2762008E3D5E /* CommandTest */,
+				524981ED194B368C004A50DB /* TimeTest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -403,12 +411,12 @@
 		52A1312013A788B900583257 /* libs */ = {
 			isa = PBXGroup;
 			children = (
+				524981F6194B37DD004A50DB /* libcrypto.a */,
+				524981F7194B37DD004A50DB /* libssl.a */,
 				52A1311C13A7886800583257 /* libmonit.a */,
 				52F6E8D413A757050023F87A /* libresolv.dylib */,
 				52F6E8D213A756EB0023F87A /* libpthread.dylib */,
 				52F6E8D013A756DB0023F87A /* libpam.dylib */,
-				52F6E8CE13A756A30023F87A /* libcrypto.dylib */,
-				52F6E8CC13A756990023F87A /* libssl.dylib */,
 			);
 			name = libs;
 			sourceTree = "<group>";
@@ -635,6 +643,13 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		524981ED194B368C004A50DB /* TimeTest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = TimeTest;
+			remoteRef = 524981EC194B368C004A50DB /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		52DDC12A13C59D46003AA75C /* libmonit.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -756,6 +771,7 @@
 					$SRCROOT/libmonit/src/io,
 					$SRCROOT/libmonit/src/net,
 					$SRCROOT/libmonit/src/util,
+					/opt/local/include,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				ONLY_ACTIVE_ARCH = YES;
@@ -790,6 +806,7 @@
 					$SRCROOT/libmonit/src/io,
 					$SRCROOT/libmonit/src/net,
 					$SRCROOT/libmonit/src/util,
+					/opt/local/include,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				SDKROOT = macosx;
@@ -804,8 +821,8 @@
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				HEADER_SEARCH_PATHS = "";
-				LIBRARY_SEARCH_PATHS = /Users/hauk/src/zild/ext/repository/lib;
+				HEADER_SEARCH_PATHS = /opt/local/include;
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DDARWIN",
 					"-DSYSCONFDIR=\"\\\"/etc\\\"\"",
@@ -822,8 +839,8 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				HEADER_SEARCH_PATHS = "";
-				LIBRARY_SEARCH_PATHS = /Users/hauk/src/zild/ext/repository/lib;
+				HEADER_SEARCH_PATHS = /opt/local/include;
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DDARWIN",
 					"-DSYSCONFDIR=\"\\\"/etc\\\"\"",
