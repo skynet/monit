@@ -598,6 +598,7 @@ static void do_default() {
  */
 static void handle_options(int argc, char **argv) {
         int opt;
+        int deferred_opt = 0;
         opterr = 0;
         Run.mygroup = NULL;
         const char *shortopts = "c:d:g:l:p:s:HIirtvVh";
@@ -619,10 +620,11 @@ static void handle_options(int argc, char **argv) {
                 {"help",        no_argument,            NULL,   'h'},
                 {0}
         };
-        while ((opt = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
+        while ((opt = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1)
 #else
-        while ((opt = getopt(argc, argv, shortopts)) != -1) {
+        while ((opt = getopt(argc, argv, shortopts)) != -1)
 #endif
+        {
                 switch (opt) {
                         case 'c':
                         {
@@ -679,29 +681,17 @@ static void handle_options(int argc, char **argv) {
                         }
                         case 'i':
                         {
-                                do_init();
-                                assert(Run.id);
-                                printf("Monit ID: %s\n", Run.id);
-                                exit(0);
+                                deferred_opt = 'i';
                                 break;
                         }
                         case 'r':
                         {
-                                do_init();
-                                assert(Run.id);
-                                printf("Reset Monit Id? [Y/N]> ");
-                                if (getchar() == 'Y') {
-                                        File_delete(Run.idfile);
-                                        Util_monitId(Run.idfile);
-                                }
-                                exit(0);
+                                deferred_opt = 'r';
                                 break;
                         }
                         case 't':
                         {
-                                do_init(); // Parses control file and initialize program, exit on error
-                                printf("Control file syntax OK\n");
-                                exit(0);
+                                deferred_opt = 't';
                                 break;
                         }
                         case 'v':
@@ -750,6 +740,40 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 exit(1);
                         }
+                }
+        }
+        /* Handle deferred options to make arguments to the program positional
+         independent. These options are handled last, here as they represent exit
+         points in the application and the control-file might be set with -c and
+         these options need to respect the new control-file location as they call
+         do_init */
+        switch (deferred_opt) {
+                case 't':
+                {
+                        do_init(); // Parses control file and initialize program, exit on error
+                        printf("Control file syntax OK\n");
+                        exit(0);
+                        break;
+                }
+                case 'r':
+                {
+                        do_init();
+                        assert(Run.id);
+                        printf("Reset Monit Id? [Y/N]> ");
+                        if (getchar() == 'Y') {
+                                File_delete(Run.idfile);
+                                Util_monitId(Run.idfile);
+                        }
+                        exit(0);
+                        break;
+                }
+                case 'i':
+                {
+                        do_init();
+                        assert(Run.id);
+                        printf("Monit ID: %s\n", Run.id);
+                        exit(0);
+                        break;
                 }
         }
 }
