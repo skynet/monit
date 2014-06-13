@@ -36,7 +36,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
+#endif
 #include <net/if.h>
 #include <netinet/tcp.h>
 #include <limits.h>
@@ -92,8 +94,10 @@ static void __attribute__ ((constructor)) _Constructor() {
 
 
 static void __attribute__ ((destructor)) _Destructor() {
+#ifdef HAVE_IFADDRS_H
         if (_stats.addrs)
                 freeifaddrs(_stats.addrs);
+#endif
 }
 
 
@@ -124,6 +128,7 @@ long long _getKstatValue(kstat_t *ksp, char *value) {
 
 
 static void _refreshStats() {
+#ifdef HAVE_IFADDRS_H
         time_t now = time(NULL);
         if (_stats.timestamp != now || ! _stats.addrs) {
                 if (_stats.addrs)
@@ -134,6 +139,7 @@ static void _refreshStats() {
                 }
                 _stats.timestamp = now;
         }
+#endif
 }
 
 
@@ -272,6 +278,7 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
 
 
 static const char *_findInterfaceForAddress(const char *address) {
+#ifdef HAVE_IFADDRS_H
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
                 if (a->ifa_addr == NULL)
                         continue;
@@ -289,6 +296,9 @@ static const char *_findInterfaceForAddress(const char *address) {
                         return a->ifa_name;
         }
         THROW(AssertException, "Address %s not found", address);
+#else
+        THROW(AssertException, "The network monitoring by IP address is not supported on this platform, please use 'check network <xyz> with interface <abc>' instead");
+#endif
         return NULL; // Will be never reached
 }
 
