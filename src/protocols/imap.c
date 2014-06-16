@@ -37,44 +37,38 @@
  *  @file
  */
 int check_imap(Socket_T socket) {
+        char buf[STRLEN];
+        const char *ok = "* OK";
+        const char *bye = "* BYE";
 
-  char buf[STRLEN];
-  const char *ok = "* OK";
-  const char *bye = "* BYE";
+        ASSERT(socket);
 
+        // Read and check IMAP greeting
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "IMAP: greeting read error -- %s", STRERROR);
+                return FALSE;
+        }
+        Str_chomp(buf);
+        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
+                socket_setError(socket, "IMAP: invalid greeting -- %s", buf);
+                return FALSE;
+        }
 
-  ASSERT(socket);
+        // Logout and check response
+        if (socket_print(socket, "001 LOGOUT\r\n") < 0) {
+                socket_setError(socket, "IMAP: logout command error -- %s", STRERROR);
+                return FALSE;
+        }
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "IMAP: logout response read error -- %s", STRERROR);
+                return FALSE;
+        }
+        Str_chomp(buf);
+        if (strncasecmp(buf, bye, strlen(bye)) != 0) {
+                socket_setError(socket, "IMAP: invalid logout response: %s", buf);
+                return FALSE;
+        }
 
-  if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "IMAP: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
-
-  Str_chomp(buf);
-
-  if(strncasecmp(buf, ok, strlen(ok)) != 0) {
-    socket_setError(socket, "IMAP error: %s", buf);
-    return FALSE;
-  }
-
-  if(socket_print(socket, "001 LOGOUT\r\n") < 0) {
-    socket_setError(socket, "IMAP: error sending data -- %s", STRERROR);
-    return FALSE;
-  }
-
-  if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "IMAP: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
-
-  Str_chomp(buf);
-
-  if(strncasecmp(buf, bye, strlen(bye)) != 0) {
-    socket_setError(socket, "IMAP error: %s", buf);
-    return FALSE;
-  }
-
-  return TRUE;
-
+        return TRUE;
 }
 
