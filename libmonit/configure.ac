@@ -93,7 +93,7 @@ AC_CHECK_HEADERS([ctype.h errno.h fcntl.h limits.h pthread.h setjmp.h \
                   signal.h stdarg.h stdio.h string.h string.h strings.h \
                   sys/socket.h sys/time.h sys/types.h unistd.h execinfo.h \
                   sys/sendfile.h sys/dirent.h poll.h sys/poll.h sys/event.h \
-                  stropts.h sys/ioctl.h sys/filio.h kstat.h ifaddrs.h])
+                  stropts.h sys/ioctl.h sys/filio.h kstat.h ifaddrs.h net/if.h])
 
 # ------------------------------------------------------------------------
 # Functions 

@@ -81,7 +81,7 @@
 #include "socket.h"
 
 // libmonit
-#include "system/Net.h"
+#include "system/NetStatistics.h"
 #include "system/Command.h"
 #include "system/Process.h"
 #include "util/Str.h"

@@ -96,7 +96,7 @@
 #include "protocol.h"
 
 // libmonit
-#include "system/Net.h"
+#include "system/NetStatistics.h"
 #include "system/Time.h"
 #include "io/File.h"
 
@@ -1408,7 +1408,7 @@ int check_system(Service_T s) {
  * Validate network interface by address. In case of a fatal event FALSE is returned.
  */
 int check_net_address(Service_T s) {
-        Net_getStatisticsByAddress(s->path, &(s->inf->priv.net.stats));
+        NetStatistics_getByAddress(s->path, &(s->inf->priv.net.stats));
         DEBUG("FIXME: interface=%s: errors:  in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last, s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last);
         DEBUG("FIXME: interface=%s: bytes:   in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last, s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last);
         DEBUG("FIXME: interface=%s: packets: in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last, s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last);
@@ -1421,7 +1421,7 @@ int check_net_address(Service_T s) {
  * Validate network interface by name. In case of a fatal event FALSE is returned.
  */
 int check_net_interface(Service_T s) {
-        Net_getStatisticsByInterface(s->path, &(s->inf->priv.net.stats));
+        NetStatistics_getByInterface(s->path, &(s->inf->priv.net.stats));
         DEBUG("FIXME: interface=%s: errors:  in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last, s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last);
         DEBUG("FIXME: interface=%s: bytes:   in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last, s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last);
         DEBUG("FIXME: interface=%s: packets: in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last, s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last);
