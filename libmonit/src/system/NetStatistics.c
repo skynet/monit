@@ -60,15 +60,12 @@
 static struct {
         struct ifaddrs *addrs;
         time_t timestamp;
-} _stats;
+} _stats = {};
+
+static const int _kCacheExpireTime = 30;
 
 
-/* --------------------------------------- Static constructor and destructor */
-
-
-static void __attribute__ ((constructor)) _Constructor() {
-        _stats.addrs = NULL;
-}
+/* --------------------------------------- Static destructor */
 
 
 static void __attribute__ ((destructor)) _Destructor() {
@@ -104,20 +101,24 @@ long long _getKstatValue(kstat_t *ksp, char *value) {
 }
 #endif
 
-
-static void _refreshStats() {
+static boolean_t _refreshStats() {
 #ifdef HAVE_IFADDRS_H
-        time_t now = time(NULL);
-        if (_stats.timestamp != now || ! _stats.addrs) {
-                if (_stats.addrs)
+        time_t now = Time_now();
+        if ((_stats.timestamp < now) || ! _stats.addrs) {
+                _stats.timestamp = now + _kCacheExpireTime;
+                if (_stats.addrs) {
                         freeifaddrs(_stats.addrs);
+                        _stats.addrs = NULL;
+                }
                 if (getifaddrs(&(_stats.addrs)) == -1) {
                         _stats.timestamp = 0;
-                        THROW(AssertException, "Cannot get network statistics -- %s", System_getError(errno));
+                        ERROR("Cannot get network statistics -- %s", System_getError(errno));
+                        return false;
                 }
-                _stats.timestamp = now;
         }
+        return true;
 #endif
+        return false;
 }
 
 
@@ -254,7 +255,8 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
         THROW(AssertException, "Interface %s not found", interface);
 }
 
-
+// TODO: ifdef HAVE_IFADDRS_H needs to be used in p.y during configuration. Don't want exception thrown on each cycle if not supported
+// TODO: This method also needs to be called to verify address in p.y at configuration time
 static const char *_findInterfaceForAddress(const char *address) {
 #ifdef HAVE_IFADDRS_H
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
@@ -275,7 +277,8 @@ static const char *_findInterfaceForAddress(const char *address) {
         }
         THROW(AssertException, "Address %s not found", address);
 #else
-        THROW(AssertException, "The network monitoring by IP address is not supported on this platform, please use 'check network <xyz> with interface <abc>' instead");
+        // TODO: This should (also) be in p.y which runs first and determine if supported. 
+        THROW(AssertException, "Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
 #endif
         return NULL; // Will be never reached
 }
@@ -287,15 +290,15 @@ static const char *_findInterfaceForAddress(const char *address) {
 void NetStatistics_getByAddress(const char *address, NetStatistics_T *stats) {
         assert(address);
         assert(stats);
-        _refreshStats();
-        _updateStats(_findInterfaceForAddress(address), stats);
+        if (_refreshStats())
+                _updateStats(_findInterfaceForAddress(address), stats);
 }
 
 
 void NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats) {
         assert(interface);
         assert(stats);
-        _refreshStats();
-        _updateStats(interface, stats);
+        if (_refreshStats())
+                _updateStats(interface, stats);
 }
 
