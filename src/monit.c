@@ -764,6 +764,7 @@ static void handle_options(int argc, char **argv) {
                                 File_delete(Run.idfile);
                                 Util_monitId(Run.idfile);
                         }
+                        kill_daemon(SIGHUP); // make any runnin Monit Daemon reload the new ID-File
                         exit(0);
                         break;
                 }
