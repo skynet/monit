@@ -759,12 +759,12 @@ static void handle_options(int argc, char **argv) {
                 {
                         do_init();
                         assert(Run.id);
-                        printf("Reset Monit Id? [Y/N]> ");
-                        if (getchar() == 'Y') {
+                        printf("Reset Monit Id? [y/n]> ");
+                        if ( getchar() == 'y') {
                                 File_delete(Run.idfile);
                                 Util_monitId(Run.idfile);
+                                kill_daemon(SIGHUP); // make any running Monit Daemon reload the new ID-File
                         }
-                        kill_daemon(SIGHUP); // make any runnin Monit Daemon reload the new ID-File
                         exit(0);
                         break;
                 }
