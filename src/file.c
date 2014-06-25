@@ -112,20 +112,10 @@ void file_init() {
 
 
 /**
- * Finalize and remove temporary files and make sure Monit id file exist
+ * Finalize and remove temporary files
  */
 void file_finalize() {
   unlink(Run.pidfile);
-  // Make sure that Monit id file exist
-  if (! file_exist(Run.idfile)) {
-    FILE *f =  fopen(Run.idfile,"w");
-    if (! f) {
-      LogError("Error opening Monit id file '%s' for writing -- %s\n", Run.idfile, STRERROR);
-    } else {
-      fprintf(f, "%s\n", Run.id);
-      fclose(f);
-    }
-  }
 }
 
 
