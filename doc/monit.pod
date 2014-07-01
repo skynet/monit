@@ -1130,7 +1130,7 @@ Example:
 
  check process foobar with pidfile /var/run/foobar.pid
    start program = "/etc/init.d/foobar start" with timeout 60 seconds
-   start program = "/etc/init.d/foobar stop" 
+   stop program = "/etc/init.d/foobar stop" 
 
 
 =head1 SERVICE POLL TIME
