@@ -134,13 +134,13 @@ int Time_year(time_t time);
 
 
 /**
- * Returns a RFC1123 formated date string minus the timezone for the given
- * time. The returned string is computed in the local timezone. The result
- * buffer must be large enough to hold at least 26 bytes. Example:
+ * Returns a RFC1123 date string for the given UTC time. The returned string
+ * is computed in the local timezone. The result buffer must be large enough
+ * to hold at least 26 bytes. Example:
  * <pre>
- * Tue, 15 Sep 2009 22:01:25
+ *  Time_string(1253052085, buf) -> "Wed, 16 Sep 2009 12:01:25"
  * </pre>
- * @param time Number of seconds since the EPOCH
+ * @param time Number of time seconds since the EPOCH in UTC
  * @param result The buffer to write the date string too
  * @return a pointer to the result buffer
  */
@@ -148,14 +148,13 @@ char *Time_string(time_t time, char result[26]);
 
 
 /**
- * Returns a RFC1123 formated date string for the given time. <code>time</code>
- * is <i>converted</i> to UTC (GMT) and the returned string represent the 
- * specified time in UTC. The submitted result buffer must be large enough 
- * to hold at least 30 bytes. Result example:
+ * Returns a RFC1123 date string for the given UTC time. The returned string
+ * represent the specified time in GMT timezone. The submitted result buffer 
+ * must be large enough to hold at least 30 bytes. Example:
  * <pre>
- * Tue, 15 Sep 2009 22:01:25 GMT
+ *  Time_gmtstring(1253052085, buf) -> "Tue, 15 Sep 2009 22:01:25 GMT"
  * </pre>
- * @param time Number of localtime seconds since the EPOCH
+ * @param time Number of time seconds since the EPOCH in UTC
  * @param result The buffer to write the date string too
  * @return a pointer to the result buffer
  */
