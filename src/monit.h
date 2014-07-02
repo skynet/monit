@@ -587,7 +587,7 @@ typedef struct myactionrate {
 
 
 /** Defines when to run a check for a service. This type suports both the old
- cycle based every statement and the new cronformat version */
+ cycle based every statement and the new cron-format version */
 typedef struct myevery {
         int type; /**< 0 = not set, 1 = cycle, 2 = cron, 3 = negated cron */
         union {
