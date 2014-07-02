@@ -186,8 +186,6 @@ char *Time_gmtstring(time_t time, char *result) {
         if (result) {
                 char x[2];
                 struct tm ts;
-                /* This implementation needs to be fast and is around 50%
-                 faster than strftime */
                 gmtime_r(&time, &ts);
                 memcpy(result, "aaa, xx aaa xxxx xx:xx:xx GMT\0", 30);
                 /*              0    5  8   1214 17 20 23    29 */
