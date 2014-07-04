@@ -4,7 +4,20 @@
 
 Version 5.9
 
+New: Automatically reload Monit if ID was reset using -r CLI
+option.
+
+Fixed: If Monit ID file is missing on stop, don't create it
+again with current runtime ID (allows to reset ID without
+stopping Monit first => intuitive file removal followed by
+Monit reload works now).
+
+Fixed: MySQL protocol test anonymous login.
+
 Fixed: Support TLSv1.1 and TLSv1.2 in "set mailserver".
+
+Fixed: Sporadic "PPID changed from 0 to ..." alert after process
+restart.
 
 
 Version 5.8.1
