@@ -126,7 +126,7 @@ int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid)
                         s->inf->priv.process.mem_percent       = (int)((double)pt[leaf].mem_kbyte * 1000.0 / systeminfo.mem_kbyte_max);
                 }
         } else {
-                s->inf->priv.process.ppid              = 0;
+                s->inf->priv.process.ppid              = -1;
                 s->inf->priv.process.uid               = -1;
                 s->inf->priv.process.euid              = -1;
                 s->inf->priv.process.gid               = -1;
