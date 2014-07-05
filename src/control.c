@@ -79,42 +79,53 @@ typedef enum {
 
 
 /*
- * This function waits for the process to change state. If the process state doesn't match the expectation,
- * a failed event is posted to notify the user. The time is saved on enter so in the case that the time steps
- * backwards/forwards, the wait_process will wait for absolute time and not stall or prematurely exit.
+ * This function waits for the process to stop. If the process doesn't stop a failed event is posted
+ * to notify the user. The time is saved on enter so in the case that the time steps backwards/forwards,
+ * the wait_stop will wait for absolute time and not stall or prematurely exit.
  * @param service A Service to wait for
- * @param expect A expected state (see Process_Status)
  * @return Either Process_Started if the process is running or Process_Stopped if it's not running
  */
-static Process_Status wait_process(Service_T s, Process_Status expect) {
-        int debug = Run.debug, isrunning = FALSE;
-        unsigned long now = time(NULL) * 1000, wait = 50;
+static Process_Status wait_stop(Service_T s) {
+        unsigned long now = Time_now() * 1000, wait = 50;
+        assert(s->stop);
+        unsigned long timeout = s->stop->timeout * 1000 + now;
+        int pid = Util_isProcessRunning(s, TRUE);
+                do {
+                        Time_usleep(wait * USEC_PER_MSEC);
+                        now += wait;
+                        wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
+                        if (! pid || (getpgid(pid) == -1 && errno != EPERM)) {
+                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
+                                return Process_Stopped;
+                        }
+                } while (now < timeout && ! Run.stopped);
+                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
+                return Process_Started;
+}
+
+
+/*
+ * This function waits for the process to start. If the process doesn't start a failed event is posted
+ * to notify the user. The time is saved on enter so in the case that the time steps backwards/forwards,
+ * the wait_start will wait for absolute time and not stall or prematurely exit.
+ * @param service A Service to wait for
+ * @return Either Process_Started if the process is running or Process_Stopped if it's not running
+ */
+static Process_Status wait_start(Service_T s) {
+        unsigned long now = Time_now() * 1000, wait = 50;
         assert(s->start || s->restart);
         unsigned long timeout = (s->start ? s->start->timeout : s->restart->timeout) * 1000 + now;
-        ASSERT(s);
         do {
                 Time_usleep(wait * USEC_PER_MSEC);
-                now += wait ;
+                now += wait;
                 wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
-                isrunning = Util_isProcessRunning(s, TRUE);
-                if ((expect == Process_Stopped && ! isrunning) || (expect == Process_Started && isrunning))
-                        break;
-                Run.debug = FALSE; // Turn off debug second time through to avoid flooding the log with pid file does not exist. This poll stuff here _will_ be refactored away
-        } while (now < timeout && ! Run.stopped);
-        Run.debug = debug; // restore the debug state
-        if (isrunning) {
-                if (expect == Process_Started)
+                if (Util_isProcessRunning(s, TRUE)) {
                         Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
-                else
-                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
-                return Process_Started;
-        } else {
-                if (expect == Process_Started)
-                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start");
-                else
-                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
-                return Process_Stopped;
-        }
+                        return Process_Started;
+                }
+        } while (now < timeout && ! Run.stopped);
+        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start");
+        return Process_Stopped;
 }
 
 
@@ -142,7 +153,7 @@ static void do_start(Service_T s) {
                         spawn(s, s->start, NULL);
                         /* We only wait for a process type, other service types does not have a pid file to watch */
                         if (s->type == TYPE_PROCESS)
-                                wait_process(s, Process_Started);
+                                wait_start(s);
                 }
         } else {
                 LogDebug("'%s' start skipped -- method not defined\n", s->name);
@@ -167,7 +178,7 @@ static int do_stop(Service_T s, int flag) {
                 if (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE)) {
                         LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
                         spawn(s, s->stop, NULL);
-                        if (s->type == TYPE_PROCESS && (wait_process(s, Process_Stopped) != Process_Stopped)) // Only wait for process service types stop
+                        if (s->type == TYPE_PROCESS && (wait_stop(s) != Process_Stopped)) // Only wait for process service types stop
                                 rv = FALSE;
                 }
         } else {
@@ -192,7 +203,7 @@ static void do_restart(Service_T s) {
                 spawn(s, s->restart, NULL);
                 /* We only wait for a process type, other service types does not have a pid file to watch */
                 if (s->type == TYPE_PROCESS)
-                        wait_process(s, Process_Started);
+                        wait_start(s);
         } else {
                 LogDebug("'%s' restart skipped -- method not defined\n", s->name);
         }
