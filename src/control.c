@@ -90,17 +90,17 @@ static Process_Status wait_stop(Service_T s) {
         assert(s->stop);
         unsigned long timeout = s->stop->timeout * 1000 + now;
         int pid = Util_isProcessRunning(s, TRUE);
-                do {
-                        Time_usleep(wait * USEC_PER_MSEC);
-                        now += wait;
-                        wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
-                        if (! pid || (getpgid(pid) == -1 && errno != EPERM)) {
-                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
-                                return Process_Stopped;
-                        }
-                } while (now < timeout && ! Run.stopped);
-                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
-                return Process_Started;
+        do {
+                Time_usleep(wait * USEC_PER_MSEC);
+                now += wait;
+                wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
+                if (! pid || (getpgid(pid) == -1 && errno != EPERM)) {
+                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
+                        return Process_Stopped;
+                }
+        } while (now < timeout && ! Run.stopped);
+        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
+        return Process_Started;
 }
 
 
