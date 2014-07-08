@@ -29,11 +29,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
+#endif
+#ifdef HAVE_NET_IF_MEDIA_H
+#include <net/if_media.h>
 #endif
 #ifdef HAVE_KSTAT_H
 #include <kstat.h>
@@ -60,9 +65,10 @@
 static struct {
         struct ifaddrs *addrs;
         time_t timestamp;
-} _stats = {};
-
-static const int _kCacheExpireTime = 30;
+} _stats = {
+        NULL,
+        0
+};
 
 
 /* --------------------------------------- Static destructor */
@@ -93,44 +99,70 @@ long long _getKstatValue(kstat_t *ksp, char *value) {
                         case KSTAT_DATA_UINT64:
                                 return (long long)kdata->value.ui64;
                 }
-                THROW(AssertException, "Unsupported kstat data type 0x%x", kdata->data_type);
+                ERROR("Unsupported kstat data type 0x%x\n", kdata->data_type);
         } else {
-                THROW(AssertException, "Cannot read %s statistics -- %s", value, System_getError(errno));
+                ERROR("Cannot read %s statistics -- %s\n", value, System_getError(errno));
         }
-        return -1LL; // Will be never reached
+        return -1LL;
 }
 #endif
 
 static boolean_t _refreshStats() {
 #ifdef HAVE_IFADDRS_H
         time_t now = Time_now();
-        if ((_stats.timestamp < now) || ! _stats.addrs) {
-                _stats.timestamp = now + _kCacheExpireTime;
+        if ((_stats.timestamp != now) || ! _stats.addrs) {
+                _stats.timestamp = now;
                 if (_stats.addrs) {
                         freeifaddrs(_stats.addrs);
                         _stats.addrs = NULL;
                 }
                 if (getifaddrs(&(_stats.addrs)) == -1) {
                         _stats.timestamp = 0;
-                        ERROR("Cannot get network statistics -- %s", System_getError(errno));
+                        ERROR("Cannot get network statistics -- %s\n", System_getError(errno));
                         return false;
                 }
         }
         return true;
-#endif
+#else
+        ERROR("Cannot get network statistics -- getifaddrs not supported\n");
         return false;
+#endif
 }
 
 
-static void _updateStats(const char *interface, NetStatistics_T *stats) {
+static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
 #if defined DARWIN || defined FREEBSD || defined OPENBSD || defined NETBSD
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
                 if (a->ifa_addr == NULL)
                         continue;
                 if (Str_isEqual(interface, a->ifa_name) && a->ifa_addr->sa_family == AF_LINK) {
-                        struct if_data *data = (struct if_data *)a->ifa_data;
+                        stats->state.last = stats->state.now;
+                        int s = socket(AF_INET, SOCK_DGRAM, 0);
+                        if (s > 0) {
+                                struct ifmediareq ifmr;
+                                memset(&ifmr, 0, sizeof(ifmr));
+                                strncpy(ifmr.ifm_name, interface, sizeof(ifmr.ifm_name));
+                                // try SIOCGIFMEDIA - if not supported, assume the interface is UP
+                                if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) >= 0) {
+printf("BUBU0: interface=%s -- ifm_current=%x, ifm_mask=%x, ifm_status=%x, ifm_active=%x, ifm_count=%x ifm_ulist=%p\n", interface, ifmr.ifm_current, ifmr.ifm_mask, ifmr.ifm_status, ifmr.ifm_active, ifmr.ifm_count, ifmr.ifm_ulist);
+                                        if ((ifmr.ifm_status & IFM_AVALID) == IFM_AVALID && (ifmr.ifm_status & IFM_ACTIVE) == IFM_ACTIVE) //FIXME: use IFF_UP?
+                                                stats->state.now = 1LL;
+                                        else
+                                                stats->state.now = 0LL;
+                                }
+                                close(s);
+                        } else {
+                                stats->state.now = -1LL;
+                        }
+printf("BUBU1: interface=%s -- status=%lld\n", interface, stats->state.now);
+                        struct if_data *data = (struct if_data *)a->ifa_data; //FIXME: on MacOSX 'struct if_data64'?
                         stats->timestamp.last = stats->timestamp.now;
                         stats->timestamp.now = Time_milli();
+printf("BUBU2: interface=%s -- speed=%u, type=%x, typelen=%x, ifi_physical=%x\n", interface, data->ifi_baudrate, data->ifi_type, data->ifi_typelen, data->ifi_physical);
+                        stats->speed.last = stats->speed.now;
+                        stats->speed.now = data->ifi_baudrate;
+                        stats->duplex.last = stats->duplex.now;
+                        stats->duplex.now = -1LL; //FIXME
                         stats->ipackets.last = stats->ipackets.now;
                         stats->ipackets.now = data->ifi_ipackets;
                         stats->ibytes.last = stats->ibytes.now;
@@ -143,10 +175,55 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
                         stats->obytes.now = data->ifi_obytes;
                         stats->oerrors.last = stats->oerrors.now;
                         stats->oerrors.now = data->ifi_oerrors;
-                        return;
+                        return true;
                 }
         }
 #elif defined LINUX
+        char buf[STRLEN];
+        char path[PATH_MAX];
+        /*
+         * Get interface operation state (Optional: may not be present on older kernels).
+         * $ cat /sys/class/net/eth0/operstate
+         * up
+         */
+        snprintf(path, sizeof(path), "/sys/class/net/%s/operstate", interface);
+        FILE *f = fopen(path, "r");
+        if (f) {
+                if (fscanf(f, "%256s\n", buf) == 1) {
+                        stats->state.last = stats->state.now;
+                        stats->state.now = Str_isEqual(buf, "up") ? 1LL : 0LL;
+                }
+                fclose(f);
+        }
+        /*
+         * Get interface speed (Optional: may not be present on older kernels).
+         * $ cat /sys/class/net/eth0/speed
+         * 1000
+         */
+        snprintf(path, sizeof(path), "/sys/class/net/%s/speed", interface);
+        f = fopen(path, "r");
+        if (f) {
+                int speed;
+                if (fscanf(f, "%d\n", &speed) == 1) {
+                        stats->speed.last = stats->speed.now;
+                        stats->speed.now = speed * 1000000; // mbps -> bps
+                }
+                fclose(f);
+        }
+        /*
+         * Get interface full/half duplex status (Optional: may not be present on older kernels).
+         * $ cat /sys/class/net/eth0/duplex
+         * full
+         */
+        snprintf(path, sizeof(path), "/sys/class/net/%s/duplex", interface);
+        f = fopen(path, "r");
+        if (f) {
+                if (fscanf(f, "%256s\n", buf) == 1) {
+                        stats->duplex.last = stats->duplex.now;
+                        stats->duplex.now = Str_isEqual(buf, "full") ? 1LL : 0LL;
+                }
+                fclose(f);
+        }
         /*
          * $ cat /proc/net/dev
          * Inter-|   Receive                                                |  Transmit
@@ -154,11 +231,10 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
          *   eth0: 1841444   11557    0    0    0     0          0         0  1335636    7725    0    0    0     0       0          0
          *     lo:   28760     200    0    0    0     0          0         0    28760     200    0    0    0     0       0          0
          */
-        FILE *f = fopen("/proc/net/dev", "r");
+        f = fopen("/proc/net/dev", "r");
         if (f) {
-                char name[STRLEN];
                 long long ibytes, ipackets, ierrors, obytes, opackets, oerrors;
-                while (fscanf(f, " %256[^:]: %lld %lld %lld %*s %*s %*s %*s %*s %lld %lld %lld %*s %*s %*s %*s %*s\n", name, &ibytes, &ipackets, &ierrors, &obytes, &opackets, &oerrors) != 7 || ! Str_isEqual(name, interface)) {
+                while (fscanf(f, " %256[^:]: %lld %lld %lld %*s %*s %*s %*s %*s %lld %lld %lld %*s %*s %*s %*s %*s\n", buf, &ibytes, &ipackets, &ierrors, &obytes, &opackets, &oerrors) != 7 || ! Str_isEqual(buf, interface)) {
                         stats->timestamp.last = stats->timestamp.now;
                         stats->timestamp.now = Time_milli();
                         stats->ipackets.last = stats->ipackets.now;
@@ -174,85 +250,82 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
                         stats->oerrors.last = stats->oerrors.now;
                         stats->oerrors.now = oerrors;
                         fclose(f);
-                        return;
+                        return true;
                 }
                 fclose(f);
         } else {
-                THROW(AssertException, "Cannot read /proc/net/dev -- %s", System_getError(errno));
+                ERROR("Cannot read /proc/net/dev -- %s\n", System_getError(errno));
         }
 #elif defined SOLARIS
         kstat_ctl_t *kc = kstat_open();
         if (kc) {
-                TRY
-                {
-                        kstat_t *ksp;
-                        if (Str_isEqual(interface, "lo0")) {
-                                /*
-                                 * Loopback interface has special module on Solaris and provides packets statistics only.
-                                 *
-                                 * $ kstat -p -m link -n net0
-                                 * lo:0:lo0:ipackets       878
-                                 * lo:0:lo0:opackets       878
-                                 */
-                                if ((ksp = kstat_lookup(kc, "lo", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
-                                        stats->ipackets.last = stats->ipackets.now;
-                                        stats->opackets.last = stats->opackets.now;
-                                        stats->ipackets.now = _getKstatValue(ksp, "ipackets");
-                                        stats->opackets.now = _getKstatValue(ksp, "opackets");
-                                        stats->timestamp.last = stats->timestamp.now;
-                                        stats->timestamp.now = Time_milli();
-                                        kstat_close(kc);
-                                        RETURN;
-                                } else {
-                                        THROW(AssertException, "Cannot get kstat data -- %s", System_getError(errno));
-                                }
+                kstat_t *ksp;
+                if (Str_isEqual(interface, "lo0")) {
+                        /*
+                         * Loopback interface has special module on Solaris and provides packets statistics only.
+                         *
+                         * $ kstat -p -m link -n net0
+                         * lo:0:lo0:ipackets       878
+                         * lo:0:lo0:opackets       878
+                         */
+                        if ((ksp = kstat_lookup(kc, "lo", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
+                                stats->ipackets.last = stats->ipackets.now;
+                                stats->opackets.last = stats->opackets.now;
+                                stats->ipackets.now = _getKstatValue(ksp, "ipackets");
+                                stats->opackets.now = _getKstatValue(ksp, "opackets");
+                                stats->timestamp.last = stats->timestamp.now;
+                                stats->timestamp.now = Time_milli();
+                                kstat_close(kc);
+                                return true;
                         } else {
-                                /*
-                                 * Use link module for all other interface types.
-                                 *
-                                 * $ kstat -p -m link -n net0
-                                 * link:0:net0:ierrors     0
-                                 * link:0:net0:ipackets    8748
-                                 * link:0:net0:ipackets64  8748
-                                 * link:0:net0:rbytes      1331127
-                                 * link:0:net0:rbytes64    1331127
-                                 * ...
-                                 * link:0:net0:oerrors     0
-                                 * link:0:net0:opackets    7560
-                                 * link:0:net0:opackets64  7560
-                                 * link:0:net0:obytes      3227785
-                                 * link:0:net0:obytes64    3227785
-                                 */
-                                if ((ksp = kstat_lookup(kc, "link", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
-                                        stats->ipackets.last = stats->ipackets.now;
-                                        stats->ibytes.last = stats->ibytes.now;
-                                        stats->ierrors.last = stats->ierrors.now;
-                                        stats->opackets.last = stats->opackets.now;
-                                        stats->obytes.last = stats->obytes.now;
-                                        stats->oerrors.last = stats->oerrors.now;
-                                        stats->ipackets.now = _getKstatValue(ksp, "ipackets64");
-                                        stats->ibytes.now = _getKstatValue(ksp, "rbytes64");
-                                        stats->ierrors.now = _getKstatValue(ksp, "ierrors");
-                                        stats->opackets.now = _getKstatValue(ksp, "opackets64");
-                                        stats->obytes.now = _getKstatValue(ksp, "obytes64");
-                                        stats->oerrors.now = _getKstatValue(ksp, "oerrors");
-                                        stats->timestamp.last = stats->timestamp.now;
-                                        stats->timestamp.now = Time_milli();
-                                        kstat_close(kc);
-                                        RETURN;
-                                } else {
-                                        THROW(AssertException, "Cannot get kstat data -- %s", System_getError(errno));
-                                }
+                                ERROR("Cannot get kstat data -- %s\n", System_getError(errno));
+                                kstat_close(kc);
+                                return false;
+                        }
+                } else {
+                        /*
+                         * Use link module for all other interface types.
+                         *
+                         * $ kstat -p -m link -n net0
+                         * link:0:net0:ierrors     0
+                         * link:0:net0:ipackets    8748
+                         * link:0:net0:ipackets64  8748
+                         * link:0:net0:rbytes      1331127
+                         * link:0:net0:rbytes64    1331127
+                         * ...
+                         * link:0:net0:oerrors     0
+                         * link:0:net0:opackets    7560
+                         * link:0:net0:opackets64  7560
+                         * link:0:net0:obytes      3227785
+                         * link:0:net0:obytes64    3227785
+                         */
+                        if ((ksp = kstat_lookup(kc, "link", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
+                                stats->ipackets.last = stats->ipackets.now;
+                                stats->ibytes.last = stats->ibytes.now;
+                                stats->ierrors.last = stats->ierrors.now;
+                                stats->opackets.last = stats->opackets.now;
+                                stats->obytes.last = stats->obytes.now;
+                                stats->oerrors.last = stats->oerrors.now;
+                                stats->ipackets.now = _getKstatValue(ksp, "ipackets64");
+                                stats->ibytes.now = _getKstatValue(ksp, "rbytes64");
+                                stats->ierrors.now = _getKstatValue(ksp, "ierrors");
+                                stats->opackets.now = _getKstatValue(ksp, "opackets64");
+                                stats->obytes.now = _getKstatValue(ksp, "obytes64");
+                                stats->oerrors.now = _getKstatValue(ksp, "oerrors");
+                                stats->timestamp.last = stats->timestamp.now;
+                                stats->timestamp.now = Time_milli();
+                                kstat_close(kc);
+                                return true;;
+                        } else {
+                                ERROR("Cannot get kstat data -- %s\n", System_getError(errno));
+                                kstat_close(kc);
+                                return false;
                         }
                 }
-                FINALLY
-                {
-                        kstat_close(kc);
-                }
-                END_TRY;
         }
 #endif
-        THROW(AssertException, "Interface %s not found", interface);
+        ERROR("Cannot udate network statistics -- interface %s not found\n", interface);
+        return false;
 }
 
 // TODO: ifdef HAVE_IFADDRS_H needs to be used in p.y during configuration. Don't want exception thrown on each cycle if not supported
@@ -270,35 +343,40 @@ static const char *_findInterfaceForAddress(const char *address) {
                         s = getnameinfo(a->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
                 else
                         continue;
-                if (s != 0)
-                        THROW(AssertException, "Cannot translate address to name -- %s", gai_strerror(s));
+                if (s != 0) {
+                        ERROR("Cannot translate address to name -- %s\n", gai_strerror(s));
+                        return NULL;
+                }
                 if (Str_isEqual(address, host))
                         return a->ifa_name;
         }
-        THROW(AssertException, "Address %s not found", address);
+        ERROR("Address %s not found\n", address);
 #else
         // TODO: This should (also) be in p.y which runs first and determine if supported. 
-        THROW(AssertException, "Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
+        ERROR("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead\n");
 #endif
-        return NULL; // Will be never reached
+        return NULL;
 }
 
 
 /* ---------------------------------------------------------------- Public */
 
 
-void NetStatistics_getByAddress(const char *address, NetStatistics_T *stats) {
+int NetStatistics_getByAddress(const char *address, NetStatistics_T *stats) {
         assert(address);
         assert(stats);
-        if (_refreshStats())
-                _updateStats(_findInterfaceForAddress(address), stats);
+        if (_refreshStats()) {
+                const char *interface = _findInterfaceForAddress(address);
+                if (interface)
+                        return _updateStats(interface, stats);
+        }
+        return false;
 }
 
 
-void NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats) {
+int NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats) {
         assert(interface);
         assert(stats);
-        if (_refreshStats())
-                _updateStats(interface, stats);
+        return _refreshStats() && _updateStats(interface, stats);
 }
 

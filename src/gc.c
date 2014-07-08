@@ -56,6 +56,7 @@ static void _gc_eventaction(EventAction_T *);
 static void _gc_inf(Info_T *);
 static void _gcpdl(Dependant_T *);
 static void _gcso(Size_T *);
+static void _gclink(Link_T *);
 static void _gcbandwidth(Bandwidth_T *);
 static void _gcmatch(Match_T *);
 static void _gcchecksum(Checksum_T *);
@@ -223,6 +224,9 @@ static void _gc_service(Service_T *s) {
 
         if((*s)->sizelist)
                 _gcso(&(*s)->sizelist);
+
+        if((*s)->linklist)
+                _gclink(&(*s)->linklist);
 
         if((*s)->uploadlist)
                 _gcbandwidth(&(*s)->uploadlist);
@@ -523,6 +527,17 @@ static void _gcso(Size_T *s) {
         FREE(*s);
 
 }
+
+static void _gclink(Link_T *l) {
+        ASSERT(l);
+
+        if((*l)->next)
+                _gclink(&(*l)->next);
+        if((*l)->action)
+                _gc_eventaction(&(*l)->action);
+        FREE(*l);
+}
+
 
 static void _gcbandwidth(Bandwidth_T *b) {
         ASSERT(b);

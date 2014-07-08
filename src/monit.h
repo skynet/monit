@@ -319,7 +319,6 @@ typedef struct myeventaction {
 } *EventAction_T;
 
 
-/** Defines an url object */
 typedef struct myurl {
         char *url;                                                  /**< Full URL */
         char *protocol;                                    /**< URL protocol type */
@@ -370,7 +369,6 @@ typedef struct mymail {
 } *Mail_T;
 
 
-/** Defines a mail server address */
 typedef struct mymailserver {
         char *host;     /**< Server host address, may be a IP or a hostname string */
         int   port;                                               /**< Server port */
@@ -440,7 +438,6 @@ typedef struct mysysteminfo {
 } SystemInfo_T;
 
 
-/** Defines a protocol object with protocol functions */
 typedef struct Protocol_T {
         const char *name;                                       /**< Protocol name */
         int(*check)(Socket_T);                 /**< Protocol verification function */
@@ -459,7 +456,7 @@ typedef struct mygenericproto {
         struct mygenericproto *next;
 } *Generic_T;
 
-/** Defines a port object */
+
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         char *request;                              /**< Specific protocol request */
@@ -514,7 +511,6 @@ typedef struct myport {
 } *Port_T;
 
 
-/** Defines a ICMP object */
 typedef struct myicmp {
         int type;                                              /**< ICMP type used */
         int count;                                   /**< ICMP echo requests count */
@@ -553,7 +549,6 @@ typedef struct mydependant {
 } *Dependant_T;
 
 
-/** Defines resource data */
 typedef struct myresource {
         int  resource_id;                              /**< Which value is checked */
         long limit;                                     /**< Limit of the resource */
@@ -565,7 +560,6 @@ typedef struct myresource {
 } *Resource_T;
 
 
-/** Defines timestamp object */
 typedef struct mytimestamp {
         Operator_Type operator;                           /**< Comparison operator */
         int  time;                                        /**< Timestamp watermark */
@@ -578,7 +572,6 @@ typedef struct mytimestamp {
 } *Timestamp_T;
 
 
-/** Defines action rate object */
 typedef struct myactionrate {
         int  count;                                            /**< Action counter */
         int  cycle;                                             /**< Cycle counter */
@@ -623,10 +616,18 @@ typedef struct myprogram {
 } *Program_T;
 
 
+typedef struct mylink {
+        int test_changes;             /**< TRUE if we only should test for changes */
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mylink *next;                               /**< next link in chain */
+} *Link_T;
+
+
 typedef struct mybandwidth {
         Operator_Type operator;                           /**< Comparison operator */
-        unsigned long long bytes;                             /**< Bytes watermark */ //FIXME: can use lower resolution
-        unsigned long long range;                             /**< Range [seconds] */ //FIXME: should be hardcoded to seconds only
+        unsigned long long bytes;                             /**< Bytes watermark */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -634,7 +635,6 @@ typedef struct mybandwidth {
 } *Bandwidth_T;
 
 
-/** Defines size object */
 typedef struct mysize {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long size;                               /**< Size watermark */
@@ -647,7 +647,6 @@ typedef struct mysize {
 } *Size_T;
 
 
-/** Defines uptime object */
 typedef struct myuptime {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long uptime;                           /**< Uptime watermark */
@@ -658,7 +657,6 @@ typedef struct myuptime {
 } *Uptime_T;
 
 
-/** Defines checksum object */
 typedef struct mychecksum {
         MD_T  hash;                     /**< A checksum hash computed for the path */
         int   type;                       /**< The type of hash (e.g. md5 or sha1) */
@@ -669,13 +667,11 @@ typedef struct mychecksum {
 } *Checksum_T;
 
 
-/** Defines permission object */
 typedef struct myperm {
         int       perm;                                     /**< Access permission */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Perm_T;
 
-/** Defines match object */
 typedef struct mymatch {
         int     ignore;                                          /**< Ignore match */
         int     not;                                             /**< Invert match */
@@ -692,21 +688,18 @@ typedef struct mymatch {
 } *Match_T;
 
 
-/** Defines uid object */
 typedef struct myuid {
         uid_t     uid;                                            /**< Owner's uid */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Uid_T;
 
 
-/** Defines gid object */
 typedef struct mygid {
         gid_t     gid;                                            /**< Owner's gid */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Gid_T;
 
 
-/** Defines filesystem configuration */
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
         Operator_Type operator;                           /**< Comparison operator */
@@ -809,6 +802,7 @@ typedef struct myservice {
         Port_T      portlist; /**< Portnumbers to check, either local or at a host */
         Resource_T  resourcelist;                          /**< Resouce check list */
         Size_T      sizelist;                                 /**< Size check list */
+        Link_T      linklist;                               /**< Network link list */
         Bandwidth_T uploadlist;                             /**< Upload check list */
         Bandwidth_T downloadlist;                         /**< Download check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */

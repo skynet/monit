@@ -189,6 +189,7 @@ facility          { return FACILITY; }
 httpd             { return HTTPD; }
 address           { return ADDRESS; }
 interface         { return INTERFACE; }
+link              { return LINK; }
 upload(ed)        { return UPLOAD; }
 download(ed)      { return DOWNLOAD; }
 clientpemfile     { return CLIENTPEMFILE; }

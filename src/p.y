@@ -165,6 +165,7 @@
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
+  static struct mylink linkset;
   static struct mybandwidth bandwidthset;
   static struct myuptime uptimeset;
   static struct mymatch matchset;
@@ -200,6 +201,7 @@
   static void  addtimestamp(Timestamp_T, int);
   static void  addactionrate(ActionRate_T);
   static void  addsize(Size_T);
+  static void  addlink(Link_T);
   static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
   static void  adduptime(Uptime_T);
   static void  addfilesystem(Filesystem_T);
@@ -238,6 +240,7 @@
   static void  reset_timestampset();
   static void  reset_actionrateset();
   static void  reset_sizeset();
+  static void  reset_linkset();
   static void  reset_bandwidthset();
   static void  reset_uptimeset();
   static void  reset_checksumset();
@@ -270,7 +273,7 @@
 %token IF ELSE THEN OR FAILED
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
-%token INTERFACE UPLOAD DOWNLOAD
+%token INTERFACE LINK UPLOAD DOWNLOAD
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
@@ -455,7 +458,7 @@ optnetlist      : /* EMPTY */
 optnet          : start
                 | stop
                 | restart
-                | exist
+                | link
                 | upload
                 | download
                 | actionrate
@@ -1832,20 +1835,29 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
                   }
                 ;
 
-upload          : IF UPLOAD operator NUMBER unit time rate1 THEN action1 recovery {
+link            : IF FAILED LINK rate1 THEN action1 recovery {
+                    addeventaction(&(linkset).action, $<number>6, $<number>7);
+                    addlink(&linkset);
+                  }
+                | IF CHANGED LINK rate1 THEN action1 recovery {
+                    linkset.test_changes = TRUE;
+                    addeventaction(&(linkset).action, $<number>6, $<number>7);
+                    addlink(&linkset);
+                  }
+                ;
+
+upload          : IF UPLOAD operator NUMBER unit rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
                     bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
-                    bandwidthset.range = $<number>6;
-                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
                     addbandwidth(&(current->uploadlist), &bandwidthset);
                   }
                 ;
 
-download        : IF DOWNLOAD operator NUMBER unit time rate1 THEN action1 recovery {
+download        : IF DOWNLOAD operator NUMBER unit rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
                     bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
-                    bandwidthset.range = $<number>6;
-                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
                     addbandwidth(&(current->downloadlist), &bandwidthset);
                   }
                 ;
@@ -2086,6 +2098,7 @@ static void preparse() {
   reset_gidset();
   reset_statusset();
   reset_sizeset();
+  reset_linkset();
   reset_bandwidthset();
   reset_mailset();
   reset_mailserverset();
@@ -2493,6 +2506,24 @@ static void addsize(Size_T ss) {
 
 
 /*
+ * Add a new Link object to the current service link list
+ */
+static void addlink(Link_T L) {
+  ASSERT(L);
+
+  Link_T l;
+  NEW(l);
+  l->action       = L->action;
+  l->test_changes = L->test_changes;
+
+  l->next = current->linklist;
+  current->linklist = l;
+
+  reset_linkset();
+}
+
+
+/*
  * Return Bandwidth object
  */
 static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
@@ -2503,7 +2534,6 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
         NEW(bandwidth);
         bandwidth->operator = b->operator;
         bandwidth->bytes = b->bytes;
-        bandwidth->range = b->range;
         bandwidth->action = b->action;
         bandwidth->next = *list;
         *list = bandwidth;
@@ -3458,12 +3488,20 @@ static void reset_sizeset() {
 
 
 /*
+ * Reset the Link set to default values
+ */
+static void reset_linkset() {
+  linkset.test_changes = FALSE;
+  linkset.action = NULL;
+}
+
+
+/*
  * Reset the Bandwidth set to default values
  */
 static void reset_bandwidthset() {
   bandwidthset.operator = Operator_Equal;
   bandwidthset.bytes = 0ULL;
-  bandwidthset.range = 0ULL;
   bandwidthset.action = NULL;
 }
 

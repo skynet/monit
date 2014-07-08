@@ -1080,12 +1080,12 @@ void Util_printService(Service_T s) {
 
         for (bl = s->uploadlist; bl; bl = bl->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Upload", StringBuffer_toString(Util_printRule(buf, bl->action, "if %s %llu byte(s) per %s", operatornames[bl->operator], bl->bytes, Util_timestr(bl->range))));
+                printf(" %-20s = %s\n", "Upload", StringBuffer_toString(Util_printRule(buf, bl->action, "if %s %llu byte(s) per second", operatornames[bl->operator], bl->bytes)));
         }
 
         for (bl = s->downloadlist; bl; bl = bl->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Download", StringBuffer_toString(Util_printRule(buf, bl->action, "if %s %llu byte(s) per %s", operatornames[bl->operator], bl->bytes, Util_timestr(bl->range))));
+                printf(" %-20s = %s\n", "Download", StringBuffer_toString(Util_printRule(buf, bl->action, "if %s %llu byte(s) per second", operatornames[bl->operator], bl->bytes)));
         }
 
         for (ul = s->uptimelist; ul; ul = ul->next) {
@@ -1660,8 +1660,15 @@ void Util_resetInfo(Service_T s) {
                         *s->inf->priv.file.cs_sum = 0;
                         break;
                 case TYPE_NET:
+                        //FIXME: move this to NetStatistics_resetData + maybe add _new and _free interface
                         s->inf->priv.net.stats.timestamp.last = -1LL;
                         s->inf->priv.net.stats.timestamp.now = -1LL;
+                        s->inf->priv.net.stats.state.last = -1LL;
+                        s->inf->priv.net.stats.state.now = -1LL;
+                        s->inf->priv.net.stats.speed.last = -1LL;
+                        s->inf->priv.net.stats.speed.now = -1LL;
+                        s->inf->priv.net.stats.duplex.last = -1LL;
+                        s->inf->priv.net.stats.duplex.now = -1LL;
                         s->inf->priv.net.stats.ipackets.last = -1LL;
                         s->inf->priv.net.stats.ipackets.now = -1LL;
                         s->inf->priv.net.stats.ibytes.last = -1LL;

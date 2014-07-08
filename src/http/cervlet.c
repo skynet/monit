@@ -1149,6 +1149,7 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
                           s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
 
                 long long delta = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+//FIXME: print interface utilization if available
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
@@ -1756,7 +1757,7 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
 static void print_service_rules_upload(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->uploadlist; bl; bl = bl->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %llu byte(s) per %s", operatornames[bl->operator], bl->bytes, Util_timestr(bl->range));
+                Util_printRule(res->outputbuffer, bl->action, "If %s %llu byte(s) per second", operatornames[bl->operator], bl->bytes);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1765,7 +1766,7 @@ static void print_service_rules_upload(HttpResponse res, Service_T s) {
 static void print_service_rules_download(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->downloadlist; bl; bl = bl->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %llu byte(s) per %s", operatornames[bl->operator], bl->bytes, Util_timestr(bl->range));
+                Util_printRule(res->outputbuffer, bl->action, "If %s %llu byte(s) per second", operatornames[bl->operator], bl->bytes);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -2032,6 +2033,7 @@ static void print_service_params_gid(HttpResponse res, Service_T s) {
 static void print_service_params_net(HttpResponse res, Service_T s) {
         if (s->type == TYPE_NET) {
                 if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Link</td><td>-</td></tr>");
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download [packets/s]</td><td>-</td></tr>");
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download [B/s]</td><td>-</td></tr>");
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download [errors/s]</td><td>-</td></tr>");
@@ -2041,6 +2043,8 @@ static void print_service_params_net(HttpResponse res, Service_T s) {
                 } else {
 
                         long long delta = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+                        if (s->inf->priv.net.stats.speed.now > -1)
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.1lf Mb/s %sduplex</td></tr>", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download [packets/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last ? (long long)((double)(s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / (double)delta) : 0LL);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download [B/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download [errors/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last ? (long long)((double)(s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / (double)delta) : 0LL);
@@ -2430,6 +2434,10 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         if (s->type == TYPE_NET) {
                                 long long delta = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+                                if (s->inf->priv.net.stats.speed.now > -1)
+                                        StringBuffer_append(res->outputbuffer,
+                                                "  %-33s %.1lf Mb/s %sduplex\n",
+                                                "link speed", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
                                 StringBuffer_append(res->outputbuffer,
                                         "  %-33s %lld packets/s\n"
                                         "  %-33s %lld B/s\n"
