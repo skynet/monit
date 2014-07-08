@@ -65,10 +65,7 @@
 static struct {
         struct ifaddrs *addrs;
         time_t timestamp;
-} _stats = {
-        NULL,
-        0
-};
+} _stats = {};
 
 
 /* --------------------------------------- Static destructor */
