@@ -244,7 +244,7 @@ static void check_process_ppid(Service_T s) {
 static void check_process_resources(Service_T s, Resource_T r) {
         
         int okay = TRUE;
-        char report[STRLEN]={0};
+        char report[STRLEN]={0}, buf1[STRLEN], buf2[STRLEN];
         
         ASSERT(s && r);
         
@@ -319,16 +319,16 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case RESOURCE_ID_MEM_KBYTE:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_kbyte, r->limit)) {
-                                        snprintf(report, STRLEN, "mem amount of %ldkB matches resource limit [mem amount%s%ldkB]", systeminfo.total_mem_kbyte, operatorshortnames[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "mem amount of %s matches resource limit [mem amount%s%s]", Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                         okay = FALSE;
                                 } else
-                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%ldkB]", s->name, systeminfo.total_mem_kbyte);
+                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%s]", s->name, Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf1, sizeof(buf1)));
                         } else {
                                 if (Util_evalQExpression(r->operator, s->inf->priv.process.mem_kbyte, r->limit)) {
-                                        snprintf(report, STRLEN, "mem amount of %ldkB matches resource limit [mem amount%s%ldkB]", s->inf->priv.process.mem_kbyte, operatorshortnames[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "mem amount of %s matches resource limit [mem amount%s%s]", Str_bytesToString(s->inf->priv.process.mem_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                         okay = FALSE;
                                 } else
-                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%ldkB]", s->name, s->inf->priv.process.mem_kbyte);
+                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%s]", s->name, Str_bytesToString(s->inf->priv.process.mem_kbyte * 1024., buf1, sizeof(buf1)));
                         }
                         break;
                         
@@ -345,10 +345,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case RESOURCE_ID_SWAP_KBYTE:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_kbyte, r->limit)) {
-                                        snprintf(report, STRLEN, "swap amount of %ldkB matches resource limit [swap amount%s%ldkB]", systeminfo.total_swap_kbyte, operatorshortnames[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "swap amount of %s matches resource limit [swap amount%s%s]", Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                         okay = FALSE;
                                 } else
-                                        snprintf(report, STRLEN, "'%s' swap amount check succeeded [current swap amount=%ldkB]", s->name, systeminfo.total_swap_kbyte);
+                                        snprintf(report, STRLEN, "'%s' swap amount check succeeded [current swap amount=%s]", s->name, Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf1, sizeof(buf1)));
                         }
                         break;
                         
@@ -386,10 +386,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         
                 case RESOURCE_ID_TOTAL_MEM_KBYTE:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_kbyte, r->limit)) {
-                                snprintf(report, STRLEN, "total mem amount of %ldkB matches resource limit [total mem amount%s%ldkB]", s->inf->priv.process.total_mem_kbyte, operatorshortnames[r->operator], r->limit);
+                                snprintf(report, STRLEN, "total mem amount of %s matches resource limit [total mem amount%s%s]", Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                 okay = FALSE;
                         } else
-                                snprintf(report, STRLEN, "'%s' total mem amount check succeeded [current total mem amount=%ldkB]", s->name, s->inf->priv.process.total_mem_kbyte);
+                                snprintf(report, STRLEN, "'%s' total mem amount check succeeded [current total mem amount=%s]", s->name, Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf1, sizeof(buf1)));
                         break;
                         
                 case RESOURCE_ID_TOTAL_MEM_PERCENT:

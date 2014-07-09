@@ -903,6 +903,7 @@ void Util_printService(Service_T s) {
         ServiceGroup_T sg;
         ServiceGroupMember_T sgm;
         StringBuffer_T buf = StringBuffer_create(STRLEN);
+        char buffer[STRLEN];
 
         printf("%-21s = %s\n", StringBuffer_toString(StringBuffer_append(buf, "%s Name", servicetypes[s->type])), s->name);
 
@@ -1202,7 +1203,8 @@ void Util_printService(Service_T s) {
 
                         case RESOURCE_ID_MEM_KBYTE:
                         case RESOURCE_ID_SWAP_KBYTE:
-                                printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %ldkB", operatornames[q->operator], q->limit)));
+                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                                printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %s", operatornames[q->operator], Str_bytesToString(q->limit * 1024., buffer, sizeof(buffer)))));
                                 break;
 
                         case RESOURCE_ID_LOAD1:
@@ -1212,7 +1214,6 @@ void Util_printService(Service_T s) {
                                 break;
 
                         case RESOURCE_ID_CHILDREN:
-                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
                                 printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %ld", operatornames[q->operator], q->limit)));
                                 break;
                 }
@@ -1660,7 +1661,6 @@ void Util_resetInfo(Service_T s) {
                         *s->inf->priv.file.cs_sum = 0;
                         break;
                 case TYPE_NET:
-                        //FIXME: move this to NetStatistics_resetData + maybe add _new and _free interface
                         s->inf->priv.net.stats.timestamp.last = -1LL;
                         s->inf->priv.net.stats.timestamp.now = -1LL;
                         s->inf->priv.net.stats.state.last = -1LL;
