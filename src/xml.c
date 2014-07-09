@@ -179,6 +179,10 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                         if (S->type == TYPE_NET) {
                                 long long delta = S->inf->priv.net.stats.timestamp.last > -1 && S->inf->priv.net.stats.timestamp.now > S->inf->priv.net.stats.timestamp.last ? (S->inf->priv.net.stats.timestamp.now - S->inf->priv.net.stats.timestamp.last) : 1;
                                 StringBuffer_append(B,
+                                        "<link>"
+                                        "<state>%lld</state>"
+                                        "<speed>%lld</speed>"
+                                        "<duplex>%lld</duplex>"
                                         "<download>"
                                         "<packets>%lld</packets>"
                                         "<bytes>%lld</bytes>"
@@ -188,7 +192,11 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<packets>%lld</packets>"
                                         "<bytes>%lld</bytes>"
                                         "<errors>%lld</errors>"
-                                        "</upload>",
+                                        "</upload>"
+                                        "</link>",
+                                        S->inf->priv.net.stats.state.now,
+                                        S->inf->priv.net.stats.speed.now,
+                                        S->inf->priv.net.stats.duplex.now,
                                         S->inf->priv.net.stats.ipackets.now > -1 && S->inf->priv.net.stats.ipackets.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ipackets.now - S->inf->priv.net.stats.ipackets.last) * 1000. / (double)delta) : 0LL,
                                         S->inf->priv.net.stats.ibytes.now > -1 && S->inf->priv.net.stats.ibytes.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ibytes.now - S->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL,
                                         S->inf->priv.net.stats.ierrors.now > -1 && S->inf->priv.net.stats.ierrors.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ierrors.now - S->inf->priv.net.stats.ierrors.last) * 1000. / (double)delta) : 0LL,
