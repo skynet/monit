@@ -420,3 +420,19 @@ int Str_cmp(const void *x, const void *y) {
         return strcmp((const char *)x, (const char *)y);
 }
 
+
+char *Str_bytesToString(double value, char *s, int n) {
+        assert(s);
+        *s = 0;
+        char *suffix[9] = {"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", NULL};
+        for (int i = 0; suffix[i]; i++) {
+                if (value > 1024) {
+                        value /= 1024;
+                } else {
+                        snprintf(s, n, "%.1lf %s", value, suffix[i]);
+                        break;
+                }
+        }
+        return s;
+}
+

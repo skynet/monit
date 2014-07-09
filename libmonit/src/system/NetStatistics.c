@@ -134,32 +134,32 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                         continue;
                 if (Str_isEqual(interface, a->ifa_name) && a->ifa_addr->sa_family == AF_LINK) {
                         stats->state.last = stats->state.now;
+                        stats->duplex.last = stats->duplex.now;
                         int s = socket(AF_INET, SOCK_DGRAM, 0);
                         if (s > 0) {
                                 struct ifmediareq ifmr;
                                 memset(&ifmr, 0, sizeof(ifmr));
                                 strncpy(ifmr.ifm_name, interface, sizeof(ifmr.ifm_name));
-                                // try SIOCGIFMEDIA - if not supported, assume the interface is UP
+                                // try SIOCGIFMEDIA - if not supported, assume the interface is UP (loopback or other virtual interface)
                                 if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) >= 0) {
-printf("BUBU0: interface=%s -- ifm_current=%x, ifm_mask=%x, ifm_status=%x, ifm_active=%x, ifm_count=%x ifm_ulist=%p\n", interface, ifmr.ifm_current, ifmr.ifm_mask, ifmr.ifm_status, ifmr.ifm_active, ifmr.ifm_count, ifmr.ifm_ulist);
-                                        if ((ifmr.ifm_status & IFM_AVALID) == IFM_AVALID && (ifmr.ifm_status & IFM_ACTIVE) == IFM_ACTIVE) //FIXME: use IFF_UP?
+                                        if (ifmr.ifm_status & IFM_AVALID && ifmr.ifm_status & IFM_ACTIVE) {
                                                 stats->state.now = 1LL;
-                                        else
+                                                stats->duplex.now = ifmr.ifm_active & 0x00100000 ? 1LL : 0LL;
+                                        } else {
                                                 stats->state.now = 0LL;
+                                                stats->duplex.now = -1LL;
+                                        }
                                 }
                                 close(s);
                         } else {
                                 stats->state.now = -1LL;
+                                stats->duplex.now = -1LL;
                         }
-printf("BUBU1: interface=%s -- status=%lld\n", interface, stats->state.now);
-                        struct if_data *data = (struct if_data *)a->ifa_data; //FIXME: on MacOSX 'struct if_data64'?
+                        struct if_data *data = (struct if_data *)a->ifa_data;
                         stats->timestamp.last = stats->timestamp.now;
                         stats->timestamp.now = Time_milli();
-printf("BUBU2: interface=%s -- speed=%u, type=%x, typelen=%x, ifi_physical=%x\n", interface, data->ifi_baudrate, data->ifi_type, data->ifi_typelen, data->ifi_physical);
                         stats->speed.last = stats->speed.now;
                         stats->speed.now = data->ifi_baudrate;
-                        stats->duplex.last = stats->duplex.now;
-                        stats->duplex.now = -1LL; //FIXME
                         stats->ipackets.last = stats->ipackets.now;
                         stats->ipackets.now = data->ifi_ipackets;
                         stats->ibytes.last = stats->ibytes.now;

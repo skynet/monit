@@ -1148,14 +1148,14 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
                           on ? "class='stripe'" : "",
                           s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
 
-                long long delta = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+                long long deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
 //FIXME: print interface utilization if available
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>%lld B/s</td>", s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (long long)((double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)delta) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>%lld B/s</td>", s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL);
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%lld B/s</td>", s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (long long)((double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)deltams) : 0LL);
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%lld B/s</td>", s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)deltams) : 0LL);
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
@@ -2041,16 +2041,29 @@ static void print_service_params_net(HttpResponse res, Service_T s) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload [B/s]</td><td>-</td></tr>");
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload [errors/s]</td><td>-</td></tr>");
                 } else {
+                        char buf[STRLEN];
+                        long long deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+                        if (s->inf->priv.net.stats.speed.now > 0)
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.1lf Mb/s %s-duplex</td></tr>", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>%lld per second</td></tr>", s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last ? (long long)((double)(s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / (double)deltams) : 0LL);
 
-                        long long delta = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
-                        if (s->inf->priv.net.stats.speed.now > -1)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.1lf Mb/s %sduplex</td></tr>", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download [packets/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last ? (long long)((double)(s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / (double)delta) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download [B/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download [errors/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last ? (long long)((double)(s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / (double)delta) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload [packets/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.opackets.last > -1 && s->inf->priv.net.stats.opackets.now > s->inf->priv.net.stats.opackets.last ? (long long)((double)(s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last) * 1000. / (double)delta) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload [B/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (long long)((double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)delta) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload [errors/s]</td><td>%lld</td></tr>", s->inf->priv.net.stats.oerrors.last > -1 && s->inf->priv.net.stats.oerrors.now > s->inf->priv.net.stats.oerrors.last ? (long long)((double)(s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last) * 1000. / (double)delta) : 0LL);
+                        double ibytes = s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)deltams : 0.;
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>%s per second", Str_bytesToString(ibytes, buf, sizeof(buf)));
+                        if (s->inf->priv.net.stats.speed.now > 0 && ibytes > 0)
+                                StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * ibytes * 8 / (double)s->inf->priv.net.stats.speed.now);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>%lld per second</td></tr>", s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last ? (long long)((double)(s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / (double)deltams) : 0LL);
+
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>%lld per second</td></tr>", s->inf->priv.net.stats.opackets.last > -1 && s->inf->priv.net.stats.opackets.now > s->inf->priv.net.stats.opackets.last ? (long long)((double)(s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last) * 1000. / (double)deltams) : 0LL);
+
+                        double obytes = s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)deltams : 0.;
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>%s per second", Str_bytesToString(obytes, buf, sizeof(buf)));
+                        if (s->inf->priv.net.stats.speed.now > 0 && obytes > 0)
+                                StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * obytes * 8 / (double)s->inf->priv.net.stats.speed.now);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>%lld per second</td></tr>", s->inf->priv.net.stats.oerrors.last > -1 && s->inf->priv.net.stats.oerrors.now > s->inf->priv.net.stats.oerrors.last ? (long long)((double)(s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last) * 1000. / (double)deltams) : 0LL);
                 }
         }
 }
@@ -2433,24 +2446,43 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 }
                         }
                         if (s->type == TYPE_NET) {
-                                long long delta = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
-                                if (s->inf->priv.net.stats.speed.now > -1)
+                                long long deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+                                if (s->inf->priv.net.stats.speed.now > 0)
                                         StringBuffer_append(res->outputbuffer,
-                                                "  %-33s %.1lf Mb/s %sduplex\n",
+                                                "  %-33s %.1lf Mb/s %s-duplex\n",
                                                 "link speed", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
+
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld packets/s\n"
-                                        "  %-33s %lld B/s\n"
-                                        "  %-33s %lld errors/s\n"
-                                        "  %-33s %lld packets/s\n"
-                                        "  %-33s %lld B/s\n"
-                                        "  %-33s %lld errors/s\n",
-                                        "download", s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last ? (long long)((double)(s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / (double)delta) : 0LL,
-                                        "download", s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL,
-                                        "download", s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last ? (long long)((double)(s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / (double)delta) : 0LL,
-                                        "upload", s->inf->priv.net.stats.opackets.last > -1 && s->inf->priv.net.stats.opackets.now > s->inf->priv.net.stats.opackets.last ? (long long)((double)(s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last) * 1000. / (double)delta) : 0LL,
-                                        "upload", s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (long long)((double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)delta) : 0LL,
-                                        "upload", s->inf->priv.net.stats.oerrors.last > -1 && s->inf->priv.net.stats.oerrors.now > s->inf->priv.net.stats.oerrors.last ? (long long)((double)(s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last) * 1000. / (double)delta) : 0LL);
+                                        "  %-33s %lld per second\n",
+                                        "download packets", s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last ? (long long)((double)(s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / (double)deltams) : 0LL);
+
+                                double ibytes = s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)deltams : 0.;
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %s per second",
+                                        "download bytes", Str_bytesToString(ibytes, buf, sizeof(buf)));
+                                if (s->inf->priv.net.stats.speed.now > 0 && ibytes > 0)
+                                        StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * ibytes * 8 / (double)s->inf->priv.net.stats.speed.now);
+                                StringBuffer_append(res->outputbuffer, "\n");
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "download errors", s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last ? (long long)((double)(s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / (double)deltams) : 0LL);
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "upload packets", s->inf->priv.net.stats.opackets.last > -1 && s->inf->priv.net.stats.opackets.now > s->inf->priv.net.stats.opackets.last ? (long long)((double)(s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last) * 1000. / (double)deltams) : 0LL);
+
+                                double obytes = s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)deltams : 0.;
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %s per second",
+                                        "upload bytes", Str_bytesToString(obytes, buf, sizeof(buf)));
+                                if (s->inf->priv.net.stats.speed.now > 0 && obytes > 0)
+                                        StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * obytes * 8 / (double)s->inf->priv.net.stats.speed.now);
+                                StringBuffer_append(res->outputbuffer, "\n");
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "upload errors", s->inf->priv.net.stats.oerrors.last > -1 && s->inf->priv.net.stats.oerrors.now > s->inf->priv.net.stats.oerrors.last ? (long long)((double)(s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last) * 1000. / (double)deltams) : 0LL);
                         }
                         if (s->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(res->outputbuffer,
