@@ -1149,13 +1149,12 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
                           s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
 
                 long long deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
-//FIXME: print interface utilization if available
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>%lld B/s</td>", s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (long long)((double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)deltams) : 0LL);
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>%lld B/s</td>", s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)deltams) : 0LL);
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s per second</td>", Str_bytesToString(s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last ? (long long)((double)(s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / (double)deltams) : 0LL, buf, sizeof(buf)));
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s per second</td>", Str_bytesToString(s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last ? (long long)((double)(s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / (double)deltams) : 0LL, buf, sizeof(buf)));
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
