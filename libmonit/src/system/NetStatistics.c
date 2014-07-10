@@ -261,7 +261,7 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                         /*
                          * Loopback interface has special module on Solaris and provides packets statistics only.
                          *
-                         * $ kstat -p -m link -n net0
+                         * $ kstat -p -m lo
                          * lo:0:lo0:ipackets       878
                          * lo:0:lo0:opackets       878
                          */
@@ -284,6 +284,10 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                          * Use link module for all other interface types.
                          *
                          * $ kstat -p -m link -n net0
+                         * link:0:net0:ifspeed     1000000000
+                         * link:0:net0:link_duplex 2
+                         * link:0:net0:link_state  1
+                         * ...
                          * link:0:net0:ierrors     0
                          * link:0:net0:ipackets    8748
                          * link:0:net0:ipackets64  8748
@@ -297,12 +301,18 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                          * link:0:net0:obytes64    3227785
                          */
                         if ((ksp = kstat_lookup(kc, "link", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
+                                stats->state.last = stats->state.now;
+                                stats->speed.last = stats->speed.now;
+                                stats->duplex.last = stats->duplex.now;
                                 stats->ipackets.last = stats->ipackets.now;
                                 stats->ibytes.last = stats->ibytes.now;
                                 stats->ierrors.last = stats->ierrors.now;
                                 stats->opackets.last = stats->opackets.now;
                                 stats->obytes.last = stats->obytes.now;
                                 stats->oerrors.last = stats->oerrors.now;
+                                stats->state.now = _getKstatValue(ksp, "link_state") ? 1LL : 0LL;
+                                stats->speed.now = _getKstatValue(ksp, "ifspeed");
+                                stats->duplex.now = _getKstatValue(ksp, "link_duplex") == 2 ? 1LL : 0LL;
                                 stats->ipackets.now = _getKstatValue(ksp, "ipackets64");
                                 stats->ibytes.now = _getKstatValue(ksp, "rbytes64");
                                 stats->ierrors.now = _getKstatValue(ksp, "ierrors");
