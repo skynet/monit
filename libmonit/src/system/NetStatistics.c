@@ -34,6 +34,9 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
 #endif
