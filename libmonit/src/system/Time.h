@@ -59,19 +59,20 @@ time_t Time_build(int year, int month, int day, int hour, int min, int sec);
 
 
 /**
- * Returns the time since the Epoch (00:00:00 UTC, January 1, 1970),
- * measured in seconds. 
- * @return A time_t representing the current local time since the epoch
+ * Returns the time since the epoch measured in seconds.
+ * @return A time_t representing the systems notion of seconds since the 
+ * <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in Coordinated
+ * Universal Time (UTC).
  * @exception AssertException If time could not be obtained
  */
 time_t Time_now(void);
 
 
 /**
- * Returns the time since the Epoch (00:00:00 UTC, January 1, 1970),
- * measured in milliseconds. 
- * @return A 64 bits long representing the current local time since 
- * the epoch in milliseconds
+ * Returns the time since the epoch measured in milliseconds.
+ * @return A 64 bits long representing the systems notion of milliseconds 
+ * since the <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in 
+ * Coordinated Universal Time (UTC).
  * @exception AssertException If time could not be obtained
  */
 long long int Time_milli(void);
