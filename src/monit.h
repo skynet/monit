@@ -616,13 +616,13 @@ typedef struct myprogram {
 } *Program_T;
 
 
-typedef struct mylink {
+typedef struct mynetlink {
         int test_changes;             /**< TRUE if we only should test for changes */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
-        struct mylink *next;                               /**< next link in chain */
-} *Link_T;
+        struct mynetlink *next;                            /**< next link in chain */
+} *NetLink_T;
 
 
 typedef struct mybandwidth {
@@ -802,7 +802,7 @@ typedef struct myservice {
         Port_T      portlist; /**< Portnumbers to check, either local or at a host */
         Resource_T  resourcelist;                          /**< Resouce check list */
         Size_T      sizelist;                                 /**< Size check list */
-        Link_T      linklist;                               /**< Network link list */
+        NetLink_T   netlinklist;                            /**< Network link list */
         Bandwidth_T uploadlist;                             /**< Upload check list */
         Bandwidth_T downloadlist;                         /**< Download check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */

@@ -1542,6 +1542,8 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                 } else {
                         if (IS_EVENT_SET(r->events, Event_Action))
                                 StringBuffer_append(res->outputbuffer, "Action ");
+                        if (IS_EVENT_SET(r->events, Event_Bandwidth))
+                                StringBuffer_append(res->outputbuffer, "Bandwidth ");
                         if (IS_EVENT_SET(r->events, Event_Checksum))
                                 StringBuffer_append(res->outputbuffer, "Checksum ");
                         if (IS_EVENT_SET(r->events, Event_Connection))
@@ -1562,6 +1564,8 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                                 StringBuffer_append(res->outputbuffer, "Instance ");
                         if (IS_EVENT_SET(r->events, Event_Invalid))
                                 StringBuffer_append(res->outputbuffer, "Invalid ");
+                        if (IS_EVENT_SET(r->events, Event_Link))
+                                StringBuffer_append(res->outputbuffer, "Link ");
                         if (IS_EVENT_SET(r->events, Event_Nonexist))
                                 StringBuffer_append(res->outputbuffer, "Nonexist ");
                         if (IS_EVENT_SET(r->events, Event_Permission))

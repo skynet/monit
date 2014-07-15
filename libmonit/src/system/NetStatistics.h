@@ -59,19 +59,26 @@ typedef struct NetStatistics_T {
 
 
 /**
+ * Test if network statistics by IP address is supported.
+ * @return true if supported, false if not
+ */
+int NetStatistics_isGetByAddressSupported();
+
+
+/**
  * Update network interface statistics.
  * @param address IP address (e.g. "127.0.0.1" or "::1")
- * @return true if succeeded, false if failed (statistics cannot be fetched or the address is invalid)
+ * @exception AssertException If statistics cannot be fetched or the address is invalid.
  */
-int NetStatistics_getByAddress(const char *address, NetStatistics_T *stats);
+void NetStatistics_getByAddress(const char *address, NetStatistics_T *stats);
 
 
 /**
  * Update network interface statistics.
  * @param interface Network interface name (e.g. "eth0")
- * @return true if succeeded, false if failed (statistics cannot be fetched or the interface is invalid)
+ * @exception AssertException If statistics cannot be fetched or the interface is invalid.
  */
-int NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats);
+void NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats);
 
 
 #endif

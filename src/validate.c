@@ -99,6 +99,7 @@
 #include "system/NetStatistics.h"
 #include "system/Time.h"
 #include "io/File.h"
+#include "exceptions/AssertException.h"
 
 /**
  *  Implementation of validation engine
@@ -944,6 +945,81 @@ static int do_scheduled_action(Service_T s) {
 }
 
 
+static int check_net(Service_T s, void (*get)(const char *, NetStatistics_T *)) {
+        int havedata = TRUE;
+        TRY
+        {
+                get(s->path, &(s->inf->priv.net.stats));
+        }
+        ELSE
+        {
+                havedata = FALSE;
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        if (! link->test_changes)
+                                Event_post(s, Event_Link, STATE_FAILED, link->action, "link data gathering failed -- %s", Exception_frame.message);
+                }
+        }
+        END_TRY;
+        if (! havedata) 
+                return FALSE; // Terminate test if no data are available
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                if (! link->test_changes)
+                        Event_post(s, Event_Size, STATE_SUCCEEDED, link->action, "link data gathering succeeded");
+        }
+        // State
+        if (! s->inf->priv.net.stats.state.now) {
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        if (! link->test_changes)
+                                Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
+                }
+                return FALSE; // Terminate test if the link is down
+        } else {
+                DEBUG("Link %s up\n", s->path);
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        if (! link->test_changes)
+                                Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
+                }
+        }
+        // Speed
+        if ((s->inf->priv.net.stats.speed.last > -1 && s->inf->priv.net.stats.speed.now != s->inf->priv.net.stats.speed.last) || (s->inf->priv.net.stats.duplex.last > -1 && s->inf->priv.net.stats.duplex.now != s->inf->priv.net.stats.duplex.last)) {
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        if (link->test_changes)
+                                Event_post(s, Event_Link, STATE_FAILED, link->action, "link speed changed -- current speed %.1lf Mb/s %s-duplex", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
+                }
+        } else {
+                DEBUG("Link %s speed %.1lf Mb/s %s-duplex\n", s->path, (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        if (link->test_changes)
+                                Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link speed has not changed since last cycle");
+                }
+        }
+
+        char buf1[STRLEN], buf2[STRLEN];
+        double deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
+        // Download
+        if (s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last) {
+                double transferred = (s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / deltams;
+                for (Bandwidth_T download = s->downloadlist; download; download = download->next) {
+                        if (Util_evalQExpression(download->operator, transferred, download->bytes))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [current download rate %s %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->bytes, buf2, sizeof(buf2)));
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
+                }
+        }
+        // Upload
+        if (s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last) {
+                double transferred = (s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / deltams;
+                for (Bandwidth_T upload = s->uploadlist; upload; upload = upload->next) {
+                        if (Util_evalQExpression(upload->operator, transferred, upload->bytes))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload %s matches limit [current upload rate %s %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->bytes, buf2, sizeof(buf2)));
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload check succeeded [current upload rate %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
+                }
+        }
+        return TRUE;
+}
+
+
 /* ---------------------------------------------------------------- Public */
 
 
@@ -1392,14 +1468,9 @@ int check_remote_host(Service_T s) {
  * FALSE is returned.
  */
 int check_system(Service_T s) {
-        Resource_T r = NULL;
-
         ASSERT(s);
-
-        for (r = s->resourcelist; r; r = r->next) {
+        for (Resource_T r = s->resourcelist; r; r = r->next)
                 check_process_resources(s, r);
-        }
-
         return TRUE;
 }
 
@@ -1408,12 +1479,7 @@ int check_system(Service_T s) {
  * Validate network interface by address. In case of a fatal event FALSE is returned.
  */
 int check_net_address(Service_T s) {
-        NetStatistics_getByAddress(s->path, &(s->inf->priv.net.stats)); //FIXME: test return value
-        DEBUG("FIXME: interface=%s: errors:  in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last, s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last);
-        DEBUG("FIXME: interface=%s: bytes:   in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last, s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last);
-        DEBUG("FIXME: interface=%s: packets: in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last, s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last);
-        //FIXME: test values
-        return TRUE;
+        return check_net(s, NetStatistics_getByAddress);
 }
 
 
@@ -1421,11 +1487,6 @@ int check_net_address(Service_T s) {
  * Validate network interface by name. In case of a fatal event FALSE is returned.
  */
 int check_net_interface(Service_T s) {
-        NetStatistics_getByInterface(s->path, &(s->inf->priv.net.stats)); //FIXME: test return value
-        DEBUG("FIXME: interface=%s: errors:  in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last, s->inf->priv.net.stats.oerrors.now - s->inf->priv.net.stats.oerrors.last);
-        DEBUG("FIXME: interface=%s: bytes:   in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last, s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last);
-        DEBUG("FIXME: interface=%s: packets: in=%d, out=%d\n", s->path, s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last, s->inf->priv.net.stats.opackets.now - s->inf->priv.net.stats.opackets.last);
-        //FIXME: test values
-        return TRUE;
+        return check_net(s, NetStatistics_getByInterface);
 }
 

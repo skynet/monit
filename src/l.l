@@ -190,6 +190,7 @@ httpd             { return HTTPD; }
 address           { return ADDRESS; }
 interface         { return INTERFACE; }
 link              { return LINK; }
+bandwidth         { return BANDWIDTH; }
 upload(ed)        { return UPLOAD; }
 download(ed)      { return DOWNLOAD; }
 clientpemfile     { return CLIENTPEMFILE; }

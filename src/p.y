@@ -165,7 +165,7 @@
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
-  static struct mylink linkset;
+  static struct mynetlink netlinkset;
   static struct mybandwidth bandwidthset;
   static struct myuptime uptimeset;
   static struct mymatch matchset;
@@ -201,7 +201,7 @@
   static void  addtimestamp(Timestamp_T, int);
   static void  addactionrate(ActionRate_T);
   static void  addsize(Size_T);
-  static void  addlink(Link_T);
+  static void  addnetlink(Service_T, NetLink_T);
   static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
   static void  adduptime(Uptime_T);
   static void  addfilesystem(Filesystem_T);
@@ -240,7 +240,7 @@
   static void  reset_timestampset();
   static void  reset_actionrateset();
   static void  reset_sizeset();
-  static void  reset_linkset();
+  static void  reset_netlinkset();
   static void  reset_bandwidthset();
   static void  reset_uptimeset();
   static void  reset_checksumset();
@@ -273,7 +273,7 @@
 %token IF ELSE THEN OR FAILED
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
-%token INTERFACE LINK UPLOAD DOWNLOAD
+%token INTERFACE LINK BANDWIDTH UPLOAD DOWNLOAD
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
@@ -458,7 +458,7 @@ optnetlist      : /* EMPTY */
 optnet          : start
                 | stop
                 | restart
-                | link
+                | netlink
                 | upload
                 | download
                 | actionrate
@@ -885,7 +885,10 @@ checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                 ;
 
 checknet        : CHECKNET SERVICENAME ADDRESS STRING {
-                    createservice(TYPE_NET, $<string>2, $4, check_net_address);
+                    if (NetStatistics_isGetByAddressSupported)
+                        createservice(TYPE_NET, $<string>2, $4, check_net_address);
+                    else
+                        yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
                   }
                 | CHECKNET SERVICENAME INTERFACE STRING {
                     createservice(TYPE_NET, $<string>2, $4, check_net_interface);
@@ -1408,6 +1411,7 @@ eventoptionlist : eventoption
                 ;
 
 eventoption     : ACTION          { mailset.events |= Event_Action; }
+                | BANDWIDTH       { mailset.events |= Event_Bandwidth; }
                 | CHECKSUM        { mailset.events |= Event_Checksum; }
                 | CONNECTION      { mailset.events |= Event_Connection; }
                 | CONTENT         { mailset.events |= Event_Content; }
@@ -1418,6 +1422,7 @@ eventoption     : ACTION          { mailset.events |= Event_Action; }
                 | ICMP            { mailset.events |= Event_Icmp; }
                 | INSTANCE        { mailset.events |= Event_Instance; }
                 | INVALID         { mailset.events |= Event_Invalid; }
+                | LINK            { mailset.events |= Event_Link; }
                 | NONEXIST        { mailset.events |= Event_Nonexist; }
                 | PERMISSION      { mailset.events |= Event_Permission; }
                 | PID             { mailset.events |= Event_Pid; }
@@ -1835,29 +1840,29 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
                   }
                 ;
 
-link            : IF FAILED LINK rate1 THEN action1 recovery {
-                    addeventaction(&(linkset).action, $<number>6, $<number>7);
-                    addlink(&linkset);
+netlink         : IF FAILED LINK rate1 THEN action1 recovery {
+                    addeventaction(&(netlinkset).action, $<number>6, $<number>7);
+                    addnetlink(current, &netlinkset);
                   }
                 | IF CHANGED LINK rate1 THEN action1 recovery {
-                    linkset.test_changes = TRUE;
-                    addeventaction(&(linkset).action, $<number>6, $<number>7);
-                    addlink(&linkset);
+                    netlinkset.test_changes = TRUE;
+                    addeventaction(&(netlinkset).action, $<number>6, $<number>7);
+                    addnetlink(current, &netlinkset);
                   }
                 ;
 
-upload          : IF UPLOAD operator NUMBER unit rate1 THEN action1 recovery {
+upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
                     bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
-                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
+                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->uploadlist), &bandwidthset);
                   }
                 ;
 
-download        : IF DOWNLOAD operator NUMBER unit rate1 THEN action1 recovery {
+download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
                     bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
-                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
+                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->downloadlist), &bandwidthset);
                   }
                 ;
@@ -2098,7 +2103,7 @@ static void preparse() {
   reset_gidset();
   reset_statusset();
   reset_sizeset();
-  reset_linkset();
+  reset_netlinkset();
   reset_bandwidthset();
   reset_mailset();
   reset_mailserverset();
@@ -2153,6 +2158,10 @@ static void postparse() {
                         for (int i = 1; i < s->program->args->length; i++) {
                                 Command_appendArgument(s->program->C, s->program->args->arg[i]);
                         }
+                } else if (s->type == TYPE_NET && ! s->netlinklist) {
+                        //FIXME: add link test
+                        addeventaction(&(netlinkset).action, ACTION_ALERT, ACTION_ALERT);
+                        addnetlink(s, &netlinkset);
                 }
         }
 
@@ -2232,10 +2241,10 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
   addeventaction(&(current)->action_DATA,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_EXEC,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_INVALID,  ACTION_RESTART,   ACTION_ALERT);
-  addeventaction(&(current)->action_NONEXIST, ACTION_RESTART,   ACTION_ALERT);
   addeventaction(&(current)->action_PID,      ACTION_ALERT,     ACTION_IGNORE);
   addeventaction(&(current)->action_PPID,     ACTION_ALERT,     ACTION_IGNORE);
   addeventaction(&(current)->action_FSFLAG,   ACTION_ALERT,     ACTION_IGNORE);
+  addeventaction(&(current)->action_NONEXIST, ACTION_RESTART,   ACTION_ALERT);
 
   /* Initialize internal event handlers */
   addeventaction(&(current)->action_MONIT_START,  ACTION_START, ACTION_IGNORE);
@@ -2508,18 +2517,18 @@ static void addsize(Size_T ss) {
 /*
  * Add a new Link object to the current service link list
  */
-static void addlink(Link_T L) {
+static void addnetlink(Service_T s, NetLink_T L) {
   ASSERT(L);
 
-  Link_T l;
+  NetLink_T l;
   NEW(l);
   l->action       = L->action;
   l->test_changes = L->test_changes;
 
-  l->next = current->linklist;
-  current->linklist = l;
+  l->next = s->netlinklist;
+  s->netlinklist = l;
 
-  reset_linkset();
+  reset_netlinkset();
 }
 
 
@@ -3490,9 +3499,9 @@ static void reset_sizeset() {
 /*
  * Reset the Link set to default values
  */
-static void reset_linkset() {
-  linkset.test_changes = FALSE;
-  linkset.action = NULL;
+static void reset_netlinkset() {
+  netlinkset.test_changes = FALSE;
+  netlinkset.action = NULL;
 }
 
 

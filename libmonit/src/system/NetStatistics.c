@@ -99,15 +99,14 @@ long long _getKstatValue(kstat_t *ksp, char *value) {
                         case KSTAT_DATA_UINT64:
                                 return (long long)kdata->value.ui64;
                 }
-                ERROR("Unsupported kstat data type 0x%x\n", kdata->data_type);
-        } else {
-                ERROR("Cannot read %s statistics -- %s\n", value, System_getError(errno));
+                THROW(AssertException, "Unsupported kstat data type 0x%x", kdata->data_type);
         }
-        return -1LL;
+        THROW(AssertException, "Cannot read %s statistics -- %s", value, System_getError(errno));
+        return -1LL; // Will be never reached
 }
 #endif
 
-static boolean_t _refreshStats() {
+static void _refreshStats() {
 #ifdef HAVE_IFADDRS_H
         time_t now = Time_now();
         if ((_stats.timestamp != now) || ! _stats.addrs) {
@@ -118,19 +117,16 @@ static boolean_t _refreshStats() {
                 }
                 if (getifaddrs(&(_stats.addrs)) == -1) {
                         _stats.timestamp = 0;
-                        ERROR("Cannot get network statistics -- %s\n", System_getError(errno));
-                        return false;
+                        THROW(AssertException, "Cannot get network statistics -- %s", System_getError(errno));
                 }
         }
-        return true;
 #else
-        ERROR("Cannot get network statistics -- getifaddrs not supported\n");
-        return false;
+        THROW(AssertException, "Cannot get network statistics -- getifaddrs not supported");
 #endif
 }
 
 
-static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
+static void _updateStats(const char *interface, NetStatistics_T *stats) {
 #if defined DARWIN || defined FREEBSD || defined OPENBSD || defined NETBSD
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
                 if (a->ifa_addr == NULL)
@@ -175,7 +171,7 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                         stats->obytes.now = data->ifi_obytes;
                         stats->oerrors.last = stats->oerrors.now;
                         stats->oerrors.now = data->ifi_oerrors;
-                        return true;
+                        return;
                 }
         }
 #elif defined LINUX
@@ -250,11 +246,11 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                         stats->oerrors.last = stats->oerrors.now;
                         stats->oerrors.now = oerrors;
                         fclose(f);
-                        return true;
+                        return;
                 }
                 fclose(f);
         } else {
-                ERROR("Cannot read /proc/net/dev -- %s\n", System_getError(errno));
+                THROW(AssertException, "Cannot read /proc/net/dev -- %s", System_getError(errno));
         }
 #elif defined SOLARIS
         kstat_ctl_t *kc = kstat_open();
@@ -276,11 +272,10 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                                 stats->timestamp.last = stats->timestamp.now;
                                 stats->timestamp.now = Time_milli();
                                 kstat_close(kc);
-                                return true;
+                                return;
                         } else {
-                                ERROR("Cannot get kstat data -- %s\n", System_getError(errno));
                                 kstat_close(kc);
-                                return false;
+                                THROW(AssertException, "Cannot get kstat data -- %s\n", System_getError(errno));
                         }
                 } else {
                         /*
@@ -325,21 +320,18 @@ static boolean_t _updateStats(const char *interface, NetStatistics_T *stats) {
                                 stats->timestamp.last = stats->timestamp.now;
                                 stats->timestamp.now = Time_milli();
                                 kstat_close(kc);
-                                return true;;
+                                return;
                         } else {
-                                ERROR("Cannot get kstat data -- %s\n", System_getError(errno));
                                 kstat_close(kc);
-                                return false;
+                                THROW(AssertException, "Cannot get kstat data -- %s", System_getError(errno));
                         }
                 }
         }
 #endif
-        ERROR("Cannot udate network statistics -- interface %s not found\n", interface);
-        return false;
+        THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
 }
 
-// TODO: ifdef HAVE_IFADDRS_H needs to be used in p.y during configuration. Don't want exception thrown on each cycle if not supported
-// TODO: This method also needs to be called to verify address in p.y at configuration time
+
 static const char *_findInterfaceForAddress(const char *address) {
 #ifdef HAVE_IFADDRS_H
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
@@ -353,40 +345,43 @@ static const char *_findInterfaceForAddress(const char *address) {
                         s = getnameinfo(a->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
                 else
                         continue;
-                if (s != 0) {
-                        ERROR("Cannot translate address to name -- %s\n", gai_strerror(s));
-                        return NULL;
-                }
+                if (s != 0)
+                        THROW(AssertException, "Cannot translate address to name -- %s", gai_strerror(s));
                 if (Str_isEqual(address, host))
                         return a->ifa_name;
         }
-        ERROR("Address %s not found\n", address);
+        THROW(AssertException, "Address %s not found", address);
 #else
-        // TODO: This should (also) be in p.y which runs first and determine if supported. 
-        ERROR("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead\n");
+        THROW(AssertException, "Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
 #endif
-        return NULL;
+        return NULL; // Will be never reached
 }
 
 
 /* ---------------------------------------------------------------- Public */
 
 
-int NetStatistics_getByAddress(const char *address, NetStatistics_T *stats) {
-        assert(address);
-        assert(stats);
-        if (_refreshStats()) {
-                const char *interface = _findInterfaceForAddress(address);
-                if (interface)
-                        return _updateStats(interface, stats);
-        }
+int NetStatistics_isGetByAddressSupported() {
+#ifdef HAVE_IFADDRS_H
+        return true;
+#else
         return false;
+#endif
 }
 
 
-int NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats) {
+void NetStatistics_getByAddress(const char *address, NetStatistics_T *stats) {
+        assert(address);
+        assert(stats);
+        _refreshStats();
+        _updateStats(_findInterfaceForAddress(address), stats);
+}
+
+
+void NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats) {
         assert(interface);
         assert(stats);
-        return _refreshStats() && _updateStats(interface, stats);
+        _refreshStats();
+        _updateStats(interface, stats);
 }
 
