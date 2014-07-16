@@ -980,40 +980,78 @@ static int check_net(Service_T s, void (*get)(const char *, NetStatistics_T *)) 
                                 Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
                 }
         }
-        // Speed
-        if ((s->inf->priv.net.stats.speed.last > -1 && s->inf->priv.net.stats.speed.now != s->inf->priv.net.stats.speed.last) || (s->inf->priv.net.stats.duplex.last > -1 && s->inf->priv.net.stats.duplex.now != s->inf->priv.net.stats.duplex.last)) {
-                for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                        if (link->test_changes)
-                                Event_post(s, Event_Link, STATE_FAILED, link->action, "link speed changed -- current speed %.1lf Mb/s %s-duplex", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
-                }
-        } else {
-                DEBUG("Link %s speed %.1lf Mb/s %s-duplex\n", s->path, (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
-                for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                        if (link->test_changes)
-                                Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link speed has not changed since last cycle");
+        // Speed (test only if speed is known - not all interface support link speed)
+        if (s->inf->priv.net.stats.speed.last > 0 && s->inf->priv.net.stats.duplex.last > -1) {
+                if (s->inf->priv.net.stats.speed.now != s->inf->priv.net.stats.speed.last || s->inf->priv.net.stats.duplex.now != s->inf->priv.net.stats.duplex.last) {
+                        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                                if (link->test_changes)
+                                        Event_post(s, Event_Link, STATE_FAILED, link->action, "link speed changed -- current speed %.1lf Mb/s %s-duplex", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
+                        }
+                } else {
+                        DEBUG("Link %s speed %.1lf Mb/s %s-duplex\n", s->path, (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
+                        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                                if (link->test_changes)
+                                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link speed has not changed since last cycle");
+                        }
                 }
         }
 
         char buf1[STRLEN], buf2[STRLEN];
         double deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
-        // Download
-        if (s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last) {
-                double transferred = (s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / deltams;
-                for (Bandwidth_T download = s->downloadlist; download; download = download->next) {
-                        if (Util_evalQExpression(download->operator, transferred, download->bytes))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [current download rate %s %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->bytes, buf2, sizeof(buf2)));
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
-                }
-        }
         // Upload
         if (s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last) {
                 double transferred = (s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / deltams;
-                for (Bandwidth_T upload = s->uploadlist; upload; upload = upload->next) {
-                        if (Util_evalQExpression(upload->operator, transferred, upload->bytes))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload %s matches limit [current upload rate %s %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->bytes, buf2, sizeof(buf2)));
+                for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
+                        if (Util_evalQExpression(upload->operator, transferred, upload->limit))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload %s matches limit [upload rate %s %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->limit, buf2, sizeof(buf2)));
                         else
                                 Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload check succeeded [current upload rate %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
+                }
+        }
+        if (s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last) {
+                double count = (s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / deltams;
+                for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
+                        if (Util_evalQExpression(upload->operator, count, upload->limit))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload packets %lld matches limit [upload packets %lld per second]", count, operatorshortnames[upload->operator], upload->limit);
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload packets check succeeded [current upload packets %lld per second]", count);
+                }
+        }
+        if (s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last) {
+                double count = (s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / deltams;
+                for (Bandwidth_T upload = s->uploaderrorslist; upload; upload = upload->next) {
+                        if (Util_evalQExpression(upload->operator, count, upload->limit))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload errors %lld matches limit [upload errors %lld]", count, operatorshortnames[upload->operator], upload->limit);
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload errors check succeeded [current upload errors %lld]", count);
+                }
+        }
+        // Download
+        if (s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last) {
+                double transferred = (s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / deltams;
+                for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
+                        if (Util_evalQExpression(download->operator, transferred, download->limit))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [download rate %s %s per second]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)));
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s per second]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
+                }
+        }
+        if (s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last) {
+                double count = (s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / deltams;
+                for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
+                        if (Util_evalQExpression(download->operator, count, download->limit))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download packets %lld matches limit [download packets %lld per second]", count, operatorshortnames[download->operator], download->limit);
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download packets check succeeded [current download packets %lld per second]", count);
+                }
+        }
+        if (s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last) {
+                double count = (s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / deltams;
+                for (Bandwidth_T download = s->downloaderrorslist; download; download = download->next) {
+                        if (Util_evalQExpression(download->operator, count, download->limit))
+                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download errors %lld matches limit [download errors %lld]", count, operatorshortnames[download->operator], download->limit);
+                        else
+                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download errors check succeeded [current download errors %lld]", count);
                 }
         }
         return TRUE;

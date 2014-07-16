@@ -627,7 +627,7 @@ typedef struct mynetlink {
 
 typedef struct mybandwidth {
         Operator_Type operator;                           /**< Comparison operator */
-        unsigned long long bytes;                             /**< Bytes watermark */
+        unsigned long long limit;                              /**< Data watermark */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -803,8 +803,12 @@ typedef struct myservice {
         Resource_T  resourcelist;                          /**< Resouce check list */
         Size_T      sizelist;                                 /**< Size check list */
         NetLink_T   netlinklist;                            /**< Network link list */
-        Bandwidth_T uploadlist;                             /**< Upload check list */
-        Bandwidth_T downloadlist;                         /**< Download check list */
+        Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
+        Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
+        Bandwidth_T uploaderrorslist;                /**< Upload errors check list */
+        Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
+        Bandwidth_T downloadpacketslist;          /**< Download packets check list */
+        Bandwidth_T downloaderrorslist;            /**< Download errors check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */
         Match_T     matchlist;                             /**< Content Match list */
         Match_T     matchignorelist;                /**< Content Match ignore list */

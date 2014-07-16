@@ -190,9 +190,11 @@ httpd             { return HTTPD; }
 address           { return ADDRESS; }
 interface         { return INTERFACE; }
 link              { return LINK; }
+error(s)?         { return ERROR; }
+packet(s)?        { return PACKET; }
 bandwidth         { return BANDWIDTH; }
-upload(ed)        { return UPLOAD; }
-download(ed)      { return DOWNLOAD; }
+upload(ed)?       { return UPLOAD; }
+download(ed)?     { return DOWNLOAD; }
 clientpemfile     { return CLIENTPEMFILE; }
 allowselfcertification  { return ALLOWSELFCERTIFICATION; }
 certmd5           { return CERTMD5; }

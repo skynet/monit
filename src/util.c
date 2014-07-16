@@ -1070,14 +1070,34 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "Link", StringBuffer_toString(Util_printRule(buf, o->action, o->test_changes ? "if changed" : "if failed")));
         }
 
-        for (Bandwidth_T o = s->uploadlist; o; o = o->next) {
+        for (Bandwidth_T o = s->uploadbyteslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Upload", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s per second", operatornames[o->operator], Str_bytesToString(o->bytes, buffer, sizeof(buffer)))));
+                printf(" %-20s = %s\n", "Upload bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s per second", operatornames[o->operator], Str_bytesToString(o->limit, buffer, sizeof(buffer)))));
         }
 
-        for (Bandwidth_T o = s->downloadlist; o; o = o->next) {
+        for (Bandwidth_T o = s->uploadpacketslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Download", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s per second", operatornames[o->operator], Str_bytesToString(o->bytes, buffer, sizeof(buffer)))));
+                printf(" %-20s = %s\n", "Upload packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld packets per second", operatornames[o->operator], o->limit)));
+        }
+
+        for (Bandwidth_T o = s->uploaderrorslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Upload errors", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld errors", operatornames[o->operator], o->limit)));
+        }
+
+        for (Bandwidth_T o = s->downloadbyteslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Download bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s per second", operatornames[o->operator], Str_bytesToString(o->limit, buffer, sizeof(buffer)))));
+        }
+
+        for (Bandwidth_T o = s->downloadpacketslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Download packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld packets per second", operatornames[o->operator], o->limit)));
+        }
+
+        for (Bandwidth_T o = s->downloaderrorslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Download errors", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld errors", operatornames[o->operator], o->limit)));
         }
 
         for (Uptime_T o = s->uptimelist; o; o = o->next) {

@@ -273,7 +273,7 @@
 %token IF ELSE THEN OR FAILED
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
-%token INTERFACE LINK BANDWIDTH UPLOAD DOWNLOAD
+%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
@@ -1853,17 +1853,41 @@ netlink         : IF FAILED LINK rate1 THEN action1 recovery {
 
 upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
-                    bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
+                    bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
-                    addbandwidth(&(current->uploadlist), &bandwidthset);
+                    addbandwidth(&(current->uploadbyteslist), &bandwidthset);
+                  }
+                | IF UPLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = (unsigned long long)$5;
+                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addbandwidth(&(current->uploadpacketslist), &bandwidthset);
+                  }
+                | IF UPLOAD ERROR operator NUMBER rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = (unsigned long long)$5;
+                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
+                    addbandwidth(&(current->uploaderrorslist), &bandwidthset);
                   }
                 ;
 
 download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
-                    bandwidthset.bytes = ((unsigned long long)$4 * $<number>5);
+                    bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
-                    addbandwidth(&(current->downloadlist), &bandwidthset);
+                    addbandwidth(&(current->downloadbyteslist), &bandwidthset);
+                  }
+                | IF DOWNLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = (unsigned long long)$5;
+                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addbandwidth(&(current->downloadpacketslist), &bandwidthset);
+                  }
+                | IF DOWNLOAD ERROR operator NUMBER rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = (unsigned long long)$5;
+                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
+                    addbandwidth(&(current->downloaderrorslist), &bandwidthset);
                   }
                 ;
 
@@ -2542,7 +2566,7 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
         Bandwidth_T bandwidth;
         NEW(bandwidth);
         bandwidth->operator = b->operator;
-        bandwidth->bytes = b->bytes;
+        bandwidth->limit = b->limit;
         bandwidth->action = b->action;
         bandwidth->next = *list;
         *list = bandwidth;
@@ -3510,7 +3534,7 @@ static void reset_netlinkset() {
  */
 static void reset_bandwidthset() {
   bandwidthset.operator = Operator_Equal;
-  bandwidthset.bytes = 0ULL;
+  bandwidthset.limit = 0ULL;
   bandwidthset.action = NULL;
 }
 

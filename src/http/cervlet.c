@@ -130,8 +130,12 @@ static void print_service_rules_gid(HttpResponse, Service_T);
 static void print_service_rules_timestamp(HttpResponse, Service_T);
 static void print_service_rules_filesystem(HttpResponse, Service_T);
 static void print_service_rules_size(HttpResponse, Service_T);
-static void print_service_rules_upload(HttpResponse, Service_T);
-static void print_service_rules_download(HttpResponse, Service_T);
+static void print_service_rules_uploadbytes(HttpResponse, Service_T);
+static void print_service_rules_uploadpackets(HttpResponse, Service_T);
+static void print_service_rules_uploaderrors(HttpResponse, Service_T);
+static void print_service_rules_downloadbytes(HttpResponse, Service_T);
+static void print_service_rules_downloadpackets(HttpResponse, Service_T);
+static void print_service_rules_downloaderrors(HttpResponse, Service_T);
 static void print_service_rules_uptime(HttpResponse, Service_T);
 static void print_service_rules_match(HttpResponse, Service_T);
 static void print_service_rules_checksum(HttpResponse, Service_T);
@@ -910,8 +914,12 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_timestamp(res, s);
         print_service_rules_filesystem(res, s);
         print_service_rules_size(res, s);
-        print_service_rules_upload(res, s);
-        print_service_rules_download(res, s);
+        print_service_rules_uploadbytes(res, s);
+        print_service_rules_uploadpackets(res, s);
+        print_service_rules_uploaderrors(res, s);
+        print_service_rules_downloadbytes(res, s);
+        print_service_rules_downloadpackets(res, s);
+        print_service_rules_downloaderrors(res, s);
         print_service_rules_uptime(res, s);
         print_service_rules_match(res, s);
         print_service_rules_checksum(res, s);
@@ -1760,19 +1768,57 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_rules_upload(HttpResponse res, Service_T s) {
-        for (Bandwidth_T bl = s->uploadlist; bl; bl = bl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %llu byte(s) per second", operatornames[bl->operator], bl->bytes);
+static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
+        char buf[STRLEN];
+        for (Bandwidth_T bl = s->uploadbyteslist; bl; bl = bl->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>");
+                Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
 
-static void print_service_rules_download(HttpResponse res, Service_T s) {
-        for (Bandwidth_T bl = s->downloadlist; bl; bl = bl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %llu byte(s) per second", operatornames[bl->operator], bl->bytes);
+static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
+        for (Bandwidth_T bl = s->uploadpacketslist; bl; bl = bl->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>");
+                Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_uploaderrors(HttpResponse res, Service_T s) {
+        for (Bandwidth_T bl = s->uploaderrorslist; bl; bl = bl->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>");
+                Util_printRule(res->outputbuffer, bl->action, "If %s %lld errors per second", operatornames[bl->operator], bl->limit);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
+        char buf[STRLEN];
+        for (Bandwidth_T bl = s->downloadbyteslist; bl; bl = bl->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>");
+                Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
+        for (Bandwidth_T bl = s->downloadpacketslist; bl; bl = bl->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>");
+                Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_downloaderrors(HttpResponse res, Service_T s) {
+        for (Bandwidth_T bl = s->downloaderrorslist; bl; bl = bl->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>");
+                Util_printRule(res->outputbuffer, bl->action, "If %s %lld errors per second", operatornames[bl->operator], bl->limit);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }

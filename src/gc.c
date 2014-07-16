@@ -228,11 +228,23 @@ static void _gc_service(Service_T *s) {
         if((*s)->netlinklist)
                 _gcnetlink(&(*s)->netlinklist);
 
-        if((*s)->uploadlist)
-                _gcbandwidth(&(*s)->uploadlist);
+        if((*s)->uploadbyteslist)
+                _gcbandwidth(&(*s)->uploadbyteslist);
 
-        if((*s)->downloadlist)
-                _gcbandwidth(&(*s)->downloadlist);
+        if((*s)->uploadpacketslist)
+                _gcbandwidth(&(*s)->uploadpacketslist);
+
+        if((*s)->uploaderrorslist)
+                _gcbandwidth(&(*s)->uploaderrorslist);
+
+        if((*s)->downloadbyteslist)
+                _gcbandwidth(&(*s)->downloadbyteslist);
+
+        if((*s)->downloadpacketslist)
+                _gcbandwidth(&(*s)->downloadpacketslist);
+
+        if((*s)->downloaderrorslist)
+                _gcbandwidth(&(*s)->downloaderrorslist);
 
         if((*s)->matchlist)
                 _gcmatch(&(*s)->matchlist);
