@@ -31,10 +31,10 @@ int main(void) {
         {
                 char result[30];
                 Time_string(1267441200, result); /* 01 Mar 2010 12:00:00 */
-                printf("\tResult: local unix time 1267441200 to localtime:\n\t %s\n", result);
+                printf("\tResult: unix time 1267441200 to localtime:\n\t %s\n", result);
                 assert(Str_isEqual(result, "Mon, 01 Mar 2010 12:00:00"));
                 Time_gmtstring(1267441200, result); /* 01 Mar 2010 12:00:00 GMT */
-                printf("\tResult: local unix time 1267441200 to UTC:\n\t %s\n", result);
+                printf("\tResult: unix time 1267441200 to UTC:\n\t %s\n", result);
                 assert(Str_isEqual("Mon, 01 Mar 2010 11:00:00 GMT", result));
         }
         printf("=> Test1: OK\n\n");
