@@ -74,6 +74,7 @@
 
 EventTable_T Event_Table[] = {
   {Event_Action,     "Action done",              "Action done",                "Action done",              "Action done"},
+  {Event_Bandwidth,  "Bandwidth usage exceeded", "Bandwidth usage ok",         "Bandwidth changed",        "Bandwidth not changed"},
   {Event_Checksum,   "Checksum failed",          "Checksum succeeded",         "Checksum changed",         "Checksum not changed"},
   {Event_Connection, "Connection failed",        "Connection succeeded",       "Connection changed",       "Connection not changed"},
   {Event_Content,    "Content failed",           "Content succeeded",          "Content match",            "Content doesn't match"},
@@ -85,6 +86,7 @@ EventTable_T Event_Table[] = {
   {Event_Icmp,       "ICMP failed",              "ICMP succeeded",             "ICMP changed",             "ICMP not changed"},
   {Event_Instance,   "Monit instance failed",    "Monit instance succeeded",   "Monit instance changed",   "Monit instance not changed"},
   {Event_Invalid,    "Invalid type",             "Type succeeded",             "Type changed",             "Type not changed"},
+  {Event_Link,       "Link down",                "Link up",                    "Link changed",             "Link not changed"},
   {Event_Nonexist,   "Does not exist",           "Exists",                     "Existence changed",        "Existence not changed"},
   {Event_Permission, "Permission failed",        "Permission succeeded",       "Permission changed",       "Permission not changed"},
   {Event_Pid,        "PID failed",               "PID succeeded",              "PID changed",              "PID not changed"},
@@ -96,8 +98,6 @@ EventTable_T Event_Table[] = {
   {Event_Timestamp,  "Timestamp failed",         "Timestamp succeeded",        "Timestamp changed",        "Timestamp not changed"},
   {Event_Uid,        "UID failed",               "UID succeeded",              "UID changed",              "UID not changed"},
   {Event_Uptime,     "Uptime failed",            "Uptime succeeded",           "Uptime changed",           "Uptime not changed"},
-  {Event_Link,       "Link down",                "Link up",                    "Link changed",             "Link not changed"},
-  {Event_Bandwidth,  "Bandwidth usage exceeded", "Bandwidth usage ok",        "Bandwidth changed",        "Bandwidth not changed"},
   /* Virtual events */
   {Event_Null,       "No Event",                 "No Event",                   "No Event",                 "No Event"}
 };
