@@ -164,29 +164,35 @@
 static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout) {
         int error = 0;
         struct pollfd fds[1];
-        switch (connect(s, addr, addrlen)) {
-                case 0:
-                        return 0;
-                default:
-                        if (errno != EINPROGRESS)
-                                return -1;
-                        break;
+        error = connect(s, addr, addrlen);
+        if (error == 0) {
+                return 0;
+        } else if (errno != EINPROGRESS) {
+                LogError("Connection failed -- %s\n", STRERROR);
+                return -1;
         }
         fds[0].fd = s;
         fds[0].events = POLLIN|POLLOUT;
-        if (poll(fds, 1, timeout * 1000) == 0) {
-                errno = ETIMEDOUT;
+        error = poll(fds, 1, timeout * 1000);
+        if (error == 0) {
+                LogError("Connection timed out\n");
+                return -1;
+        } else if (error == -1) {
+                LogError("Poll failed -- %s\n", STRERROR);
                 return -1;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
                 socklen_t len = sizeof(error);
-                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
-                        return -1; // Solaris pending error
+                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+                        LogError("Cannot get socket error -- %s\n", STRERROR);
+                        return -1;
+                } else if (error) {
+                        errno = error;
+                        LogError("Socket error -- %s\n", STRERROR);
+                        return -1;
+                }
         } else {
-                return -1;
-        }
-        if (error) {
-                errno = error;
+                LogError("Socket not ready for I/O\n");
                 return -1;
         }
         return 0;
@@ -259,7 +265,7 @@ int check_udp_socket(int socket) {
 
 
 int create_socket(const char *hostname, int port, int type, int timeout) {
-        int s;
+        int s, status;
         struct sockaddr_in sin;
         struct sockaddr_in *sa;
         struct addrinfo hints;
@@ -267,10 +273,13 @@ int create_socket(const char *hostname, int port, int type, int timeout) {
         ASSERT(hostname);
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET;
-        if(getaddrinfo(hostname, NULL, &hints, &result) != 0) {
+
+        if((status = getaddrinfo(hostname, NULL, &hints, &result)) != 0) {
+                LogError("Cannot translate '%s' to IP address -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return -1;
         }
         if((s = socket(AF_INET, type, 0)) < 0) {
+                LogError("Cannot create socket -- %s\n", STRERROR);
                 freeaddrinfo(result);
                 return -1;
         }
@@ -280,11 +289,13 @@ int create_socket(const char *hostname, int port, int type, int timeout) {
         sin.sin_port = htons(port);
         freeaddrinfo(result);
         if(! Net_setNonBlocking(s)) {
+                LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
                 goto error;
         }
-        if (fcntl(s, F_SETFD, FD_CLOEXEC) == -1)
+        if (fcntl(s, F_SETFD, FD_CLOEXEC) == -1) {
+                LogError("Cannot set socket close on exec -- %s\n", STRERROR);
                 goto error;
-        
+        }
         if (do_connect(s, (struct sockaddr *)&sin, sizeof(sin), timeout) < 0) {
                 goto error;
         }
