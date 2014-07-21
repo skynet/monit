@@ -130,7 +130,7 @@ int handle_mmonit(Event_T E) {
         StringBuffer_T sb = StringBuffer_create(256);
         for (; C; C = C->next) {
                 if (! (socket = socket_create_t(C->url->hostname, C->url->port, SOCKET_TCP, C->ssl, C->timeout))) {
-                        LogError("M/Monit: cannot open a connection to %s -- %s\n", C->url->url, STRERROR);
+                        LogError("M/Monit: cannot open a connection to %s\n", C->url->url);
                         goto error;
                 }
                 if (! socket_set_tcp_nodelay(socket)) {
