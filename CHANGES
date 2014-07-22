@@ -19,6 +19,9 @@ Fixed: Support TLSv1.1 and TLSv1.2 in "set mailserver".
 Fixed: Sporadic "PPID changed from 0 to ..." alert after process
 restart.
 
+Fixed: Subtract SLAB reclaimable memory from the system memory
+usage on Linux.
+
 
 Version 5.8.1
 
