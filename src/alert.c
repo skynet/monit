@@ -254,4 +254,6 @@ static void escape(Mail_T m) {
   Util_replaceString(&m->message, "\n", "\r\n");
   // escape ^.
   Util_replaceString(&m->message, "\n.", "\n..");
+  // drop any CR|LF from the subject
+  Str_chomp(m->subject);
 }
