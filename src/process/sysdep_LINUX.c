@@ -98,14 +98,15 @@
 /* ----------------------------------------------------------------- Private */
 
 
-#define UID       "Uid:"
-#define GID       "Gid:"
-#define MEMTOTAL  "MemTotal:"
-#define MEMFREE   "MemFree:"
-#define MEMBUF    "Buffers:"
-#define MEMCACHE  "Cached:"
-#define SWAPTOTAL "SwapTotal:"
-#define SWAPFREE  "SwapFree:"
+#define UID             "Uid:"
+#define GID             "Gid:"
+#define MEMTOTAL        "MemTotal:"
+#define MEMFREE         "MemFree:"
+#define MEMBUF          "Buffers:"
+#define MEMCACHE        "Cached:"
+#define SLABRECLAIMABLE "SReclaimable:"
+#define SWAPTOTAL       "SwapTotal:"
+#define SWAPFREE        "SwapFree:"
 
 #define NSEC_PER_SEC    1000000000L
 
@@ -348,6 +349,7 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
   unsigned long  mem_free = 0UL;
   unsigned long  buffers = 0UL;
   unsigned long  cached = 0UL;
+  unsigned long  slabreclaimable = 0UL;
   unsigned long  swap_total = 0UL;
   unsigned long  swap_free = 0UL;
 
@@ -365,7 +367,9 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
     DEBUG("system statistic error -- cannot get real memory buffers amount\n");
   if (! (ptr = strstr(buf, MEMCACHE)) || sscanf(ptr + strlen(MEMCACHE), "%ld", &cached) != 1)
     DEBUG("system statistic error -- cannot get real memory cache amount\n");
-  si->total_mem_kbyte = systeminfo.mem_kbyte_max - mem_free - buffers - cached;
+  if (! (ptr = strstr(buf, SLABRECLAIMABLE)) || sscanf(ptr + strlen(SLABRECLAIMABLE), "%ld", &slabreclaimable) != 1)
+    DEBUG("system statistic error -- cannot get slab reclaimable memory amount\n");
+  si->total_mem_kbyte = systeminfo.mem_kbyte_max - mem_free - buffers - cached - slabreclaimable;
 
   /* Swap */
   if (! (ptr = strstr(buf, SWAPTOTAL)) || sscanf(ptr + strlen(SWAPTOTAL), "%ld", &swap_total) != 1) {
