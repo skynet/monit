@@ -885,7 +885,7 @@ checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                 ;
 
 checknet        : CHECKNET SERVICENAME ADDRESS STRING {
-                    if (NetStatistics_isGetByAddressSupported)
+                    if (NetStatistics_isGetByAddressSupported())
                         createservice(TYPE_NET, $<string>2, $4, check_net_address);
                     else
                         yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
