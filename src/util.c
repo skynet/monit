@@ -984,7 +984,7 @@ void Util_printService(Service_T s) {
         if (s->type == TYPE_PROGRAM) {
                 printf(" %-20s = ", "Program timeout");
                 printf("terminate the program if not finished within %d seconds\n", s->program->timeout);
-                for (Status_T o = s->statuslist; status; o = o->next) {
+                for (Status_T o = s->statuslist; o; o = o->next) {
                         StringBuffer_clear(buf);
                         printf(" %-20s = %s\n", "Status", StringBuffer_toString(Util_printRule(buf, o->action, "if exit value %s %d", operatorshortnames[o->operator], o->return_value)));
                 }
