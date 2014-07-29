@@ -187,7 +187,7 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
         if (f) {
                 if (fscanf(f, "%256s\n", buf) == 1) {
                         stats->state.last = stats->state.now;
-                        stats->state.now = Str_isEqual(buf, "up") ? 1LL : 0LL;
+                        stats->state.now = Str_isEqual(buf, "down") ? 0LL : 1LL;
                 }
                 fclose(f);
         }
@@ -230,23 +230,26 @@ static void _updateStats(const char *interface, NetStatistics_T *stats) {
         f = fopen("/proc/net/dev", "r");
         if (f) {
                 long long ibytes, ipackets, ierrors, obytes, opackets, oerrors;
-                while (fscanf(f, " %256[^:]: %lld %lld %lld %*s %*s %*s %*s %*s %lld %lld %lld %*s %*s %*s %*s %*s\n", buf, &ibytes, &ipackets, &ierrors, &obytes, &opackets, &oerrors) != 7 || ! Str_isEqual(buf, interface)) {
-                        stats->timestamp.last = stats->timestamp.now;
-                        stats->timestamp.now = Time_milli();
-                        stats->ipackets.last = stats->ipackets.now;
-                        stats->ipackets.now = ipackets;
-                        stats->ibytes.last = stats->ibytes.now;
-                        stats->ibytes.now = ibytes;
-                        stats->ierrors.last = stats->ierrors.now;
-                        stats->ierrors.now = ierrors;
-                        stats->opackets.last = stats->opackets.now;
-                        stats->opackets.now = opackets;
-                        stats->obytes.last = stats->obytes.now;
-                        stats->obytes.now = obytes;
-                        stats->oerrors.last = stats->oerrors.now;
-                        stats->oerrors.now = oerrors;
-                        fclose(f);
-                        return;
+                while (fgets(buf, sizeof(buf), f) != NULL) {
+                        char iface[STRLEN];
+                        if (sscanf(buf, "%256[^:]: %lld %lld %lld %*s %*s %*s %*s %*s %lld %lld %lld %*s %*s %*s %*s %*s", iface, &ibytes, &ipackets, &ierrors, &obytes, &opackets, &oerrors) == 7 && Str_isEqual(Str_trim(iface), interface)) {
+                                stats->timestamp.last = stats->timestamp.now;
+                                stats->timestamp.now = Time_milli();
+                                stats->ipackets.last = stats->ipackets.now;
+                                stats->ipackets.now = ipackets;
+                                stats->ibytes.last = stats->ibytes.now;
+                                stats->ibytes.now = ibytes;
+                                stats->ierrors.last = stats->ierrors.now;
+                                stats->ierrors.now = ierrors;
+                                stats->opackets.last = stats->opackets.now;
+                                stats->opackets.now = opackets;
+                                stats->obytes.last = stats->obytes.now;
+                                stats->obytes.now = obytes;
+                                stats->oerrors.last = stats->oerrors.now;
+                                stats->oerrors.now = oerrors;
+                                fclose(f);
+                                return;
+                        }
                 }
                 fclose(f);
         } else {
