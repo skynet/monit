@@ -120,7 +120,7 @@ static void _refreshStats() {
                         THROW(AssertException, "Cannot get network statistics -- %s", System_getError(errno));
                 }
         }
-#else
+#elif ! defined SOLARIS
         THROW(AssertException, "Cannot get network statistics -- getifaddrs not supported");
 #endif
 }
