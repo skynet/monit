@@ -885,13 +885,16 @@ checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                 ;
 
 checknet        : CHECKNET SERVICENAME ADDRESS STRING {
-                    if (NetStatistics_isGetByAddressSupported())
-                        createservice(TYPE_NET, $<string>2, $4, check_net_address);
-                    else
+                    if (NetStatistics_isGetByAddressSupported()) {
+                        createservice(TYPE_NET, $<string>2, $4, check_net);
+                        current->inf->priv.net.stats = NetStatistics_getByAddress($4);
+                    } else {
                         yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
+                    }
                   }
                 | CHECKNET SERVICENAME INTERFACE STRING {
-                    createservice(TYPE_NET, $<string>2, $4, check_net_interface);
+                    createservice(TYPE_NET, $<string>2, $4, check_net);
+                    current->inf->priv.net.stats = NetStatistics_getByInterface($4);
                   }
                 ;
 
@@ -1844,50 +1847,33 @@ netlink         : IF FAILED LINK rate1 THEN action1 recovery {
                     addeventaction(&(netlinkset).action, $<number>6, $<number>7);
                     addnetlink(current, &netlinkset);
                   }
-                | IF CHANGED LINK rate1 THEN action1 recovery {
-                    netlinkset.test_changes = TRUE;
-                    addeventaction(&(netlinkset).action, $<number>6, $<number>7);
-                    addnetlink(current, &netlinkset);
-                  }
                 ;
 
-upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
+upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
                     bandwidthset.operator = $<number>3;
                     bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->uploadbyteslist), &bandwidthset);
                   }
-                | IF UPLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
+                | IF UPLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
                     bandwidthset.operator = $<number>4;
                     bandwidthset.limit = (unsigned long long)$5;
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->uploadpacketslist), &bandwidthset);
                   }
-                | IF UPLOAD ERROR operator NUMBER rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = (unsigned long long)$5;
-                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
-                    addbandwidth(&(current->uploaderrorslist), &bandwidthset);
-                  }
                 ;
 
-download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
+download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
                     bandwidthset.operator = $<number>3;
                     bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->downloadbyteslist), &bandwidthset);
                   }
-                | IF DOWNLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
+                | IF DOWNLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
                     bandwidthset.operator = $<number>4;
                     bandwidthset.limit = (unsigned long long)$5;
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->downloadpacketslist), &bandwidthset);
-                  }
-                | IF DOWNLOAD ERROR operator NUMBER rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = (unsigned long long)$5;
-                    addeventaction(&(bandwidthset).action, $<number>8, $<number>9);
-                    addbandwidth(&(current->downloaderrorslist), &bandwidthset);
                   }
                 ;
 
@@ -2547,7 +2533,6 @@ static void addnetlink(Service_T s, NetLink_T L) {
   NetLink_T l;
   NEW(l);
   l->action       = L->action;
-  l->test_changes = L->test_changes;
 
   l->next = s->netlinklist;
   s->netlinklist = l;
@@ -3524,7 +3509,6 @@ static void reset_sizeset() {
  * Reset the Link set to default values
  */
 static void reset_netlinkset() {
-  netlinkset.test_changes = FALSE;
   netlinkset.action = NULL;
 }
 

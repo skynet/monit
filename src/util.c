@@ -1067,7 +1067,7 @@ void Util_printService(Service_T s) {
 
         for (NetLink_T o = s->netlinklist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Link", StringBuffer_toString(Util_printRule(buf, o->action, o->test_changes ? "if changed" : "if failed")));
+                printf(" %-20s = %s\n", "Link", StringBuffer_toString(Util_printRule(buf, o->action, "if failed")));
         }
 
         for (Bandwidth_T o = s->uploadbyteslist; o; o = o->next) {
@@ -1080,11 +1080,6 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "Upload packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld packets per second", operatornames[o->operator], o->limit)));
         }
 
-        for (Bandwidth_T o = s->uploaderrorslist; o; o = o->next) {
-                StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Upload errors", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld errors", operatornames[o->operator], o->limit)));
-        }
-
         for (Bandwidth_T o = s->downloadbyteslist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Download bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s per second", operatornames[o->operator], Str_bytesToString(o->limit, buffer, sizeof(buffer)))));
@@ -1093,11 +1088,6 @@ void Util_printService(Service_T s) {
         for (Bandwidth_T o = s->downloadpacketslist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Download packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld packets per second", operatornames[o->operator], o->limit)));
-        }
-
-        for (Bandwidth_T o = s->downloaderrorslist; o; o = o->next) {
-                StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Download errors", StringBuffer_toString(Util_printRule(buf, o->action, "if %lld errors", operatornames[o->operator], o->limit)));
         }
 
         for (Uptime_T o = s->uptimelist; o; o = o->next) {
@@ -1665,28 +1655,6 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.file.st_size  = 0;
                         s->inf->priv.file.st_ino_prev = 0;
                         *s->inf->priv.file.cs_sum = 0;
-                        break;
-                case TYPE_NET:
-                        s->inf->priv.net.stats.timestamp.last = -1LL;
-                        s->inf->priv.net.stats.timestamp.now = -1LL;
-                        s->inf->priv.net.stats.state.last = -1LL;
-                        s->inf->priv.net.stats.state.now = -1LL;
-                        s->inf->priv.net.stats.speed.last = -1LL;
-                        s->inf->priv.net.stats.speed.now = -1LL;
-                        s->inf->priv.net.stats.duplex.last = -1LL;
-                        s->inf->priv.net.stats.duplex.now = -1LL;
-                        s->inf->priv.net.stats.ipackets.last = -1LL;
-                        s->inf->priv.net.stats.ipackets.now = -1LL;
-                        s->inf->priv.net.stats.ibytes.last = -1LL;
-                        s->inf->priv.net.stats.ibytes.now = -1LL;
-                        s->inf->priv.net.stats.ierrors.last = -1LL;
-                        s->inf->priv.net.stats.ierrors.now = -1LL;
-                        s->inf->priv.net.stats.opackets.last = -1LL;
-                        s->inf->priv.net.stats.opackets.now = -1LL;
-                        s->inf->priv.net.stats.obytes.last = -1LL;
-                        s->inf->priv.net.stats.obytes.now = -1LL;
-                        s->inf->priv.net.stats.oerrors.last = -1LL;
-                        s->inf->priv.net.stats.oerrors.now = -1LL;
                         break;
                 case TYPE_PROCESS:
                         s->inf->priv.process._pid = -1;

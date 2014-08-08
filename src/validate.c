@@ -945,119 +945,6 @@ static int do_scheduled_action(Service_T s) {
 }
 
 
-static int check_net(Service_T s, void (*get)(const char *, NetStatistics_T *)) {
-        int havedata = TRUE;
-        TRY
-        {
-                get(s->path, &(s->inf->priv.net.stats));
-        }
-        ELSE
-        {
-                havedata = FALSE;
-                for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                        if (! link->test_changes)
-                                Event_post(s, Event_Link, STATE_FAILED, link->action, "link data gathering failed -- %s", Exception_frame.message);
-                }
-        }
-        END_TRY;
-        if (! havedata) 
-                return FALSE; // Terminate test if no data are available
-        for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                if (! link->test_changes)
-                        Event_post(s, Event_Size, STATE_SUCCEEDED, link->action, "link data gathering succeeded");
-        }
-        // State
-        if (! s->inf->priv.net.stats.state.now) {
-                for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                        if (! link->test_changes)
-                                Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
-                }
-                return FALSE; // Terminate test if the link is down
-        } else {
-                DEBUG("Link %s up\n", s->path);
-                for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                        if (! link->test_changes)
-                                Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
-                }
-        }
-        // Speed (test only if speed is known - not all interface support link speed)
-        if (s->inf->priv.net.stats.speed.last > 0 && s->inf->priv.net.stats.duplex.last > -1) {
-                if (s->inf->priv.net.stats.speed.now != s->inf->priv.net.stats.speed.last || s->inf->priv.net.stats.duplex.now != s->inf->priv.net.stats.duplex.last) {
-                        for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                                if (link->test_changes)
-                                        Event_post(s, Event_Link, STATE_FAILED, link->action, "link speed changed -- current speed %.1lf Mb/s %s-duplex", (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
-                        }
-                } else {
-                        DEBUG("Link %s speed %.1lf Mb/s %s-duplex\n", s->path, (double)s->inf->priv.net.stats.speed.now / 1000000., s->inf->priv.net.stats.duplex.now == 1LL ? "full" : "half");
-                        for (NetLink_T link = s->netlinklist; link; link = link->next) {
-                                if (link->test_changes)
-                                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link speed has not changed since last cycle");
-                        }
-                }
-        }
-
-        char buf1[STRLEN], buf2[STRLEN];
-        double deltams = s->inf->priv.net.stats.timestamp.last > -1 && s->inf->priv.net.stats.timestamp.now > s->inf->priv.net.stats.timestamp.last ? (s->inf->priv.net.stats.timestamp.now - s->inf->priv.net.stats.timestamp.last) : 1;
-        // Upload
-        if (s->inf->priv.net.stats.obytes.last > -1 && s->inf->priv.net.stats.obytes.now > s->inf->priv.net.stats.obytes.last) {
-                double transferred = (s->inf->priv.net.stats.obytes.now - s->inf->priv.net.stats.obytes.last) * 1000. / deltams;
-                for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
-                        if (Util_evalQExpression(upload->operator, transferred, upload->limit))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload %s matches limit [upload rate %s %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->limit, buf2, sizeof(buf2)));
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload check succeeded [current upload rate %s]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
-                }
-        }
-        if (s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last) {
-                double count = (s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / deltams;
-                for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
-                        if (Util_evalQExpression(upload->operator, count, upload->limit))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload packets %lld matches limit [upload packets %lld per second]", count, operatorshortnames[upload->operator], upload->limit);
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload packets check succeeded [current upload packets %lld per second]", count);
-                }
-        }
-        if (s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last) {
-                double count = (s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / deltams;
-                for (Bandwidth_T upload = s->uploaderrorslist; upload; upload = upload->next) {
-                        if (Util_evalQExpression(upload->operator, count, upload->limit))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload errors %lld matches limit [upload errors %lld]", count, operatorshortnames[upload->operator], upload->limit);
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload errors check succeeded [current upload errors %lld]", count);
-                }
-        }
-        // Download
-        if (s->inf->priv.net.stats.ibytes.last > -1 && s->inf->priv.net.stats.ibytes.now > s->inf->priv.net.stats.ibytes.last) {
-                double transferred = (s->inf->priv.net.stats.ibytes.now - s->inf->priv.net.stats.ibytes.last) * 1000. / deltams;
-                for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
-                        if (Util_evalQExpression(download->operator, transferred, download->limit))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [download rate %s %s per second]", Str_bytesToString(transferred, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)));
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s per second]", Str_bytesToString(transferred, buf1, sizeof(buf1)));
-                }
-        }
-        if (s->inf->priv.net.stats.ipackets.last > -1 && s->inf->priv.net.stats.ipackets.now > s->inf->priv.net.stats.ipackets.last) {
-                double count = (s->inf->priv.net.stats.ipackets.now - s->inf->priv.net.stats.ipackets.last) * 1000. / deltams;
-                for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
-                        if (Util_evalQExpression(download->operator, count, download->limit))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download packets %lld matches limit [download packets %lld per second]", count, operatorshortnames[download->operator], download->limit);
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download packets check succeeded [current download packets %lld per second]", count);
-                }
-        }
-        if (s->inf->priv.net.stats.ierrors.last > -1 && s->inf->priv.net.stats.ierrors.now > s->inf->priv.net.stats.ierrors.last) {
-                double count = (s->inf->priv.net.stats.ierrors.now - s->inf->priv.net.stats.ierrors.last) * 1000. / deltams;
-                for (Bandwidth_T download = s->downloaderrorslist; download; download = download->next) {
-                        if (Util_evalQExpression(download->operator, count, download->limit))
-                                Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download errors %lld matches limit [download errors %lld]", count, operatorshortnames[download->operator], download->limit);
-                        else
-                                Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download errors check succeeded [current download errors %lld]", count);
-                }
-        }
-        return TRUE;
-}
-
-
 /* ---------------------------------------------------------------- Public */
 
 
@@ -1513,18 +1400,82 @@ int check_system(Service_T s) {
 }
 
 
-/**
- * Validate network interface by address. In case of a fatal event FALSE is returned.
- */
-int check_net_address(Service_T s) {
-        return check_net(s, NetStatistics_getByAddress);
-}
-
-
-/**
- * Validate network interface by name. In case of a fatal event FALSE is returned.
- */
-int check_net_interface(Service_T s) {
-        return check_net(s, NetStatistics_getByInterface);
+int check_net(Service_T s) {
+        int havedata = TRUE;
+        TRY
+        {
+                NetStatistics_update(s->inf->priv.net.stats);
+        }
+        ELSE
+        {
+                havedata = FALSE;
+                for (NetLink_T link = s->netlinklist; link; link = link->next)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "link data gathering failed -- %s", Exception_frame.message);
+        }
+        END_TRY;
+        if (! havedata) 
+                return FALSE; // Terminate test if no data are available
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                Event_post(s, Event_Size, STATE_SUCCEEDED, link->action, "link data gathering succeeded");
+        }
+        // State
+        if (! NetStatistics_getState(s->inf->priv.net.stats)) {
+                for (NetLink_T link = s->netlinklist; link; link = link->next)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
+                return FALSE; // Terminate test if the link is down
+        } else {
+                DEBUG("Link %s up\n", s->path);
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
+                }
+        }
+        // Link errors
+        long long oerrors = NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats);
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                if (oerrors)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld upload errors detected", oerrors);
+                else
+                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "upload errors check succeeded");
+        }
+        long long ierrors = NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats);
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                if (ierrors)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld download errors detected", ierrors);
+                else
+                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "download errors check succeeded");
+        }
+        char buf1[STRLEN], buf2[STRLEN];
+        // Upload
+        // FIXME: "per minute+"
+        long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+        for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
+                if (Util_evalQExpression(upload->operator, obytes, upload->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload %s matches limit [upload rate %s %s]", Str_bytesToString(obytes, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->limit, buf2, sizeof(buf2)));
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload check succeeded [current upload rate %s]", Str_bytesToString(obytes, buf1, sizeof(buf1)));
+        }
+        long long opackets = NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats);
+        for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
+                if (Util_evalQExpression(upload->operator, opackets, upload->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload packets %lld matches limit [upload packets %lld per second]", opackets, operatorshortnames[upload->operator], upload->limit);
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload packets check succeeded [current upload packets %lld per second]", opackets);
+        }
+        // Download
+        long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+        for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
+                if (Util_evalQExpression(download->operator, ibytes, download->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [download rate %s %s per second]", Str_bytesToString(ibytes, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)));
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s per second]", Str_bytesToString(ibytes, buf1, sizeof(buf1)));
+        }
+        long long ipackets = NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats);
+        for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
+                if (Util_evalQExpression(download->operator, ipackets, download->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download packets %lld matches limit [download packets %lld per second]", ipackets, operatorshortnames[download->operator], download->limit);
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download packets check succeeded [current download packets %lld per second]", ipackets);
+        }
+        return TRUE;
 }
 

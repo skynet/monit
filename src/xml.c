@@ -177,12 +177,11 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         StringBuffer_append(B, "<checksum type=\"%s\">%s</checksum>", checksumnames[S->checksum->type], S->inf->priv.file.cs_sum);
                         }
                         if (S->type == TYPE_NET) {
-                                long long delta = S->inf->priv.net.stats.timestamp.last > -1 && S->inf->priv.net.stats.timestamp.now > S->inf->priv.net.stats.timestamp.last ? (S->inf->priv.net.stats.timestamp.now - S->inf->priv.net.stats.timestamp.last) : 1;
                                 StringBuffer_append(B,
                                         "<link>"
-                                        "<state>%lld</state>"
+                                        "<state>%d</state>"
                                         "<speed>%lld</speed>"
-                                        "<duplex>%lld</duplex>"
+                                        "<duplex>%d</duplex>"
                                         "<download>"
                                         "<packets>%lld</packets>"
                                         "<bytes>%lld</bytes>"
@@ -194,15 +193,15 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<errors>%lld</errors>"
                                         "</upload>"
                                         "</link>",
-                                        S->inf->priv.net.stats.state.now,
-                                        S->inf->priv.net.stats.speed.now,
-                                        S->inf->priv.net.stats.duplex.now,
-                                        S->inf->priv.net.stats.ipackets.now > -1 && S->inf->priv.net.stats.ipackets.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ipackets.now - S->inf->priv.net.stats.ipackets.last) * 1000. / (double)delta) : 0LL,
-                                        S->inf->priv.net.stats.ibytes.now > -1 && S->inf->priv.net.stats.ibytes.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ibytes.now - S->inf->priv.net.stats.ibytes.last) * 1000. / (double)delta) : 0LL,
-                                        S->inf->priv.net.stats.ierrors.now > -1 && S->inf->priv.net.stats.ierrors.last > -1 ? (long long)((double)(S->inf->priv.net.stats.ierrors.now - S->inf->priv.net.stats.ierrors.last) * 1000. / (double)delta) : 0LL,
-                                        S->inf->priv.net.stats.opackets.now > -1 && S->inf->priv.net.stats.opackets.last > -1 ? (long long)((double)(S->inf->priv.net.stats.opackets.now - S->inf->priv.net.stats.opackets.last) * 1000. / (double)delta) : 0LL,
-                                        S->inf->priv.net.stats.obytes.now > -1 && S->inf->priv.net.stats.obytes.last > -1 ? (long long)((double)(S->inf->priv.net.stats.obytes.now - S->inf->priv.net.stats.obytes.last) * 1000. / (double)delta) : 0LL,
-                                        S->inf->priv.net.stats.oerrors.now > -1 && S->inf->priv.net.stats.oerrors.last > -1 ? (long long)((double)(S->inf->priv.net.stats.oerrors.now - S->inf->priv.net.stats.oerrors.last) * 1000. / (double)delta) : 0LL);
+                                        NetStatistics_getState(S->inf->priv.net.stats),
+                                        NetStatistics_getSpeed(S->inf->priv.net.stats),
+                                        NetStatistics_getDuplex(S->inf->priv.net.stats),
+                                        NetStatistics_getPacketsInPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getBytesInPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getErrorsInPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getPacketsOutPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getBytesOutPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getErrorsOutPerSecond(S->inf->priv.net.stats));
                         }
                         if (S->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(B,

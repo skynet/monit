@@ -36,26 +36,8 @@
  */
 
 
-typedef struct NetStatisticsData_T {
-        long long last;
-        long long now;
-} NetStatisticsData_T;
-
-
-typedef struct NetStatistics_T {
-        NetStatisticsData_T timestamp; // Timestamp
-
-        NetStatisticsData_T state;     // State (0 = down, 1 = up)
-        NetStatisticsData_T speed;     // Speed [bps]
-        NetStatisticsData_T duplex;    // Duplex (0 = half, 1 = full)
-
-        NetStatisticsData_T ipackets;  // Packets received on interface
-        NetStatisticsData_T ierrors;   // Input errors on interface
-        NetStatisticsData_T ibytes;    // Total number of octets received
-        NetStatisticsData_T opackets;  // Packets sent on interface
-        NetStatisticsData_T oerrors;   // Output errors on interface
-        NetStatisticsData_T obytes;    // Total number of octets sent
-} NetStatistics_T;
+#define T NetStatistics_T
+typedef struct T *T;
 
 
 /**
@@ -66,19 +48,206 @@ int NetStatistics_isGetByAddressSupported();
 
 
 /**
- * Update network interface statistics.
+ * Get network statistics object for IP address. The object must be destroyed
+ * with NetStatistics_free() if no longer necessary.
  * @param address IP address (e.g. "127.0.0.1" or "::1")
- * @exception AssertException If statistics cannot be fetched or the address is invalid.
+ * @return Network statistics object. Use NetStatistics_update() to get the data.
  */
-void NetStatistics_getByAddress(const char *address, NetStatistics_T *stats);
+T NetStatistics_getByAddress(const char *address);
 
 
 /**
- * Update network interface statistics.
+ * Get network statistics object for interface name. The object must be destroyed
+ * with NetStatistics_free() if no longer necessary.
  * @param interface Network interface name (e.g. "eth0")
- * @exception AssertException If statistics cannot be fetched or the interface is invalid.
+ * @return Network statistics object. Use NetStatistics_update() to get the data.
  */
-void NetStatistics_getByInterface(const char *interface, NetStatistics_T *stats);
+T NetStatistics_getByInterface(const char *interface);
 
 
+/**
+ * Destroy an network statistics object and release allocated resources. 
+ * @param stats A network statistics object reference
+ */
+void NetStatistics_free(NetStatistics_T *stats);
+
+
+/**
+ * Update network statistics for object.
+ * @param stats A network statistics object
+ * @exception AssertException If statistics cannot be fetched or the address/interface
+ * is invalid.
+ */
+void NetStatistics_update(NetStatistics_T stats);
+
+
+/**
+ * Get incoming bytes per second statistics.
+ * @param stats A network statistics object
+ * @return Incoming bytes per second statistics.
+ */
+long long NetStatistics_getBytesInPerSecond(T stats);
+
+
+/**
+ * Get incoming bytes per minute statistics.
+ * @param stats A network statistics object
+ * @return Incoming bytes per minute statistics.
+ */
+long long NetStatistics_getBytesInPerMinute(T stats, int count);
+
+
+/**
+ * Get incoming bytes per hour statistics.
+ * @param stats A network statistics object
+ * @return Incoming bytes per hour statistics.
+ */
+long long NetStatistics_getBytesInPerHour(T stats, int count);
+
+
+/**
+ * Get incoming packets per second statistics.
+ * @param stats A network statistics object
+ * @return Incoming packets per second statistics.
+ */
+long long NetStatistics_getPacketsInPerSecond(T stats);
+
+
+/**
+ * Get incoming packets per minute statistics.
+ * @param stats A network statistics object
+ * @return Incoming packets per minute statistics.
+ */
+long long NetStatistics_getPacketsInPerMinute(T stats, int count);
+
+
+/**
+ * Get incoming packets per hour statistics.
+ * @param stats A network statistics object
+ * @return Incoming packets per hour statistics.
+ */
+long long NetStatistics_getPacketsInPerHour(T stats, int count);
+
+
+/**
+ * Get incoming errors per second statistics.
+ * @param stats A network statistics object
+ * @return Incoming errors per second statistics.
+ */
+long long NetStatistics_getErrorsInPerSecond(T stats);
+
+
+/**
+ * Get incoming errors per minute statistics.
+ * @param stats A network statistics object
+ * @return Incoming errors per minute statistics.
+ */
+long long NetStatistics_getErrorsInPerMinute(T stats, int count);
+
+
+/**
+ * Get incoming errors per hour statistics.
+ * @param stats A network statistics object
+ * @return Incoming errors per hour statistics.
+ */
+long long NetStatistics_getErrorsInPerHour(T stats, int count);
+
+
+/**
+ * Get outgoing bytes per second statistics.
+ * @param stats A network statistics object
+ * @return Outgoing bytes per second statistics.
+ */
+long long NetStatistics_getBytesOutPerSecond(T stats);
+
+
+/**
+ * Get outgoing bytes per minute statistics.
+ * @param stats A network statistics object
+ * @return Outgoing bytes per minute statistics.
+ */
+long long NetStatistics_getBytesOutPerMinute(T stats, int count);
+
+
+/**
+ * Get outgoing bytes per hour statistics.
+ * @param stats A network statistics object
+ * @return Outgoing bytes per hour statistics.
+ */
+long long NetStatistics_getBytesOutPerHour(T stats, int count);
+
+
+/**
+ * Get outgoing packets per second statistics.
+ * @param stats A network statistics object
+ * @return Outgoing packets per second statistics.
+ */
+long long NetStatistics_getPacketsOutPerSecond(T stats);
+
+
+/**
+ * Get outgoing packets per minute statistics.
+ * @param stats A network statistics object
+ * @return Outgoing packets per minute statistics.
+ */
+long long NetStatistics_getPacketsOutPerMinute(T stats, int count);
+
+
+/**
+ * Get outgoing packets per hour statistics.
+ * @param stats A network statistics object
+ * @return Outgoing packets per hour statistics.
+ */
+long long NetStatistics_getPacketsOutPerHour(T stats, int count);
+
+
+/**
+ * Get outgoing errors per second statistics.
+ * @param stats A network statistics object
+ * @return Outgoing errors per second.
+ */
+long long NetStatistics_getErrorsOutPerSecond(T stats);
+
+
+/**
+ * Get outgoing errors per minute statistics.
+ * @param stats A network statistics object
+ * @return Outgoing errors per minute.
+ */
+long long NetStatistics_getErrorsOutPerMinute(T stats, int count);
+
+
+/**
+ * Get outgoing errors per hour statistics.
+ * @param stats A network statistics object
+ * @return Outgoing errors per hour.
+ */
+long long NetStatistics_getErrorsOutPerHour(T stats, int count);
+
+
+/**
+ * Get interface state.
+ * @param stats A network statistics object
+ * @return Interface state (0 = down, 1 = up)
+ */
+int NetStatistics_getState(T stats);
+
+
+/**
+ * Get interface speed (note: not all interface types support speed)
+ * @param stats A network statistics object
+ * @return Interface speed [bps] (-1 = N/A)
+ */
+long long NetStatistics_getSpeed(T stats);
+
+
+/**
+ * Get interface duplex state (note: not all interface types support duplex)
+ * @param stats A network statistics object
+ * @return Duplex state (-1 = N/A, 0 = half, 1 = full)
+ */
+int NetStatistics_getDuplex(T stats);
+
+
+#undef T
 #endif

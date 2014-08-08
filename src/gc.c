@@ -53,7 +53,6 @@ static void _gcptl(Timestamp_T *);
 static void _gcparl(ActionRate_T *);
 static void _gc_action(Action_T *);
 static void _gc_eventaction(EventAction_T *);
-static void _gc_inf(Info_T *);
 static void _gcpdl(Dependant_T *);
 static void _gcso(Size_T *);
 static void _gcnetlink(NetLink_T *);
@@ -213,9 +212,6 @@ static void _gc_service(Service_T *s) {
         if((*s)->resourcelist)
                 _gcpql(&(*s)->resourcelist);
 
-        if((*s)->inf)
-                _gc_inf(&(*s)->inf);
-
         if((*s)->timestamplist)
                 _gcptl(&(*s)->timestamplist);
 
@@ -234,17 +230,11 @@ static void _gc_service(Service_T *s) {
         if((*s)->uploadpacketslist)
                 _gcbandwidth(&(*s)->uploadpacketslist);
 
-        if((*s)->uploaderrorslist)
-                _gcbandwidth(&(*s)->uploaderrorslist);
-
         if((*s)->downloadbyteslist)
                 _gcbandwidth(&(*s)->downloadbyteslist);
 
         if((*s)->downloadpacketslist)
                 _gcbandwidth(&(*s)->downloadpacketslist);
-
-        if((*s)->downloaderrorslist)
-                _gcbandwidth(&(*s)->downloaderrorslist);
 
         if((*s)->matchlist)
                 _gcmatch(&(*s)->matchlist);
@@ -317,6 +307,12 @@ static void _gc_service(Service_T *s) {
 
         if((*s)->eventlist)
                 gc_event(&(*s)->eventlist);
+
+        if((*s)->inf) {
+                if ((*s)->type == TYPE_NET)
+                        NetStatistics_free(&((*s)->inf->priv.net.stats));
+                FREE((*s)->inf);
+        }
 
         FREE((*s)->name);
         FREE((*s)->path);
@@ -491,12 +487,6 @@ static void _gcpql(Resource_T *q) {
 
         FREE(*q);
 
-}
-
-
-static void _gc_inf(Info_T *i) {
-        ASSERT(i);
-        FREE(*i);
 }
 
 

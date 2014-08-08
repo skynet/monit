@@ -617,7 +617,6 @@ typedef struct myprogram {
 
 
 typedef struct mynetlink {
-        int test_changes;             /**< TRUE if we only should test for changes */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -805,10 +804,8 @@ typedef struct myservice {
         NetLink_T   netlinklist;                            /**< Network link list */
         Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
         Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
-        Bandwidth_T uploaderrorslist;                /**< Upload errors check list */
         Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
         Bandwidth_T downloadpacketslist;          /**< Download packets check list */
-        Bandwidth_T downloaderrorslist;            /**< Download errors check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */
         Match_T     matchlist;                             /**< Content Match list */
         Match_T     matchignorelist;                /**< Content Match ignore list */
@@ -1038,8 +1035,7 @@ int  check_remote_host(Service_T);
 int  check_system(Service_T);
 int  check_fifo(Service_T);
 int  check_program(Service_T);
-int  check_net_address(Service_T);
-int  check_net_interface(Service_T);
+int  check_net(Service_T);
 int  check_URL(Service_T s);
 int  sha_md5_stream (FILE *, void *, void *);
 void reset_procinfo(Service_T);
