@@ -2479,7 +2479,7 @@ static void addchecksum(Checksum_T cs) {
       cs->type = DEFAULT_HASH;
     if ( !(Util_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
       /* If the file doesn't exist, set dummy value */
-      snprintf(cs->hash, sizeof(cs->hash), "00000000000000000000000000000000");
+      snprintf(cs->hash, sizeof(cs->hash), "0000000000000000000000000000000000000000");
       cs->initialized = FALSE;
       yywarning2("Cannot compute a checksum for file %s", current->path);
     }
