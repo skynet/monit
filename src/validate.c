@@ -1446,35 +1446,78 @@ int check_net(Service_T s) {
         }
         char buf1[STRLEN], buf2[STRLEN];
         // Upload
-        // FIXME: "per minute+"
-        long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
         for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
+                long long obytes;
+                switch (upload->range) {
+                        case TIME_MINUTE:
+                                obytes = NetStatistics_getBytesOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                obytes = NetStatistics_getBytesOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        default:
+                                obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
                 if (Util_evalQExpression(upload->operator, obytes, upload->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload %s matches limit [upload rate %s %s]", Str_bytesToString(obytes, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->limit, buf2, sizeof(buf2)));
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload %s matches limit [upload rate %s %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToString(obytes, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->limit, buf2, sizeof(buf2)), upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload check succeeded [current upload rate %s]", Str_bytesToString(obytes, buf1, sizeof(buf1)));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload check succeeded [current upload rate %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToString(obytes, buf1, sizeof(buf1)), upload->rangecount, Util_timestr(upload->range));
         }
-        long long opackets = NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats);
         for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
+                long long opackets;
+                switch (upload->range) {
+                        case TIME_MINUTE:
+                                opackets = NetStatistics_getPacketsOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                opackets = NetStatistics_getPacketsOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        default:
+                                opackets = NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
                 if (Util_evalQExpression(upload->operator, opackets, upload->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "upload packets %lld matches limit [upload packets %lld per second]", opackets, operatorshortnames[upload->operator], upload->limit);
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "upload packets check succeeded [current upload packets %lld per second]", opackets);
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
         }
         // Download
-        long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
         for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
+                long long ibytes;
+                switch (download->range) {
+                        case TIME_MINUTE:
+                                ibytes = NetStatistics_getBytesInPerMinute(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                ibytes = NetStatistics_getBytesInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        default:
+                                ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
                 if (Util_evalQExpression(download->operator, ibytes, download->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [download rate %s %s per second]", Str_bytesToString(ibytes, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)));
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [download rate %s %s in last %d %s]", Str_bytesToString(ibytes, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)), download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s per second]", Str_bytesToString(ibytes, buf1, sizeof(buf1)));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s in last %d %s]", Str_bytesToString(ibytes, buf1, sizeof(buf1)), download->rangecount, Util_timestr(download->range));
         }
-        long long ipackets = NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats);
         for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
+                long long ipackets;
+                switch (download->range) {
+                        case TIME_MINUTE:
+                                ipackets = NetStatistics_getPacketsInPerMinute(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                ipackets = NetStatistics_getPacketsInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        default:
+                                ipackets = NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
                 if (Util_evalQExpression(download->operator, ipackets, download->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download packets %lld matches limit [download packets %lld per second]", ipackets, operatorshortnames[download->operator], download->limit);
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download packets %lld matches limit [download packets %lld in last %d %s]", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download packets check succeeded [current download packets %lld per second]", ipackets);
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download packets check succeeded [current download packets %lld in last %d %s]", ipackets, download->rangecount, Util_timestr(download->range));
         }
         return TRUE;
 }

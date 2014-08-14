@@ -1766,8 +1766,13 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
 static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Bandwidth_T bl = s->uploadbyteslist; bl; bl = bl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total upload bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)), bl->rangecount, Util_timestr(bl->range));
+                }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1775,8 +1780,13 @@ static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
 
 static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->uploadpacketslist; bl; bl = bl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total upload packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
+                }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1785,8 +1795,13 @@ static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
 static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Bandwidth_T bl = s->downloadbyteslist; bl; bl = bl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total download bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)), bl->rangecount, Util_timestr(bl->range));
+                }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1794,8 +1809,13 @@ static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
 
 static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->downloadpacketslist; bl; bl = bl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>");
-                Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total download packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
+                }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }

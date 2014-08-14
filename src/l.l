@@ -158,6 +158,8 @@ but               {/* EMPTY */}
 of                {/* EMPTY */}
 does              {/* EMPTY */}
 per               {/* EMPTY */}
+in                {/* EMPTY */}
+last              {/* EMPTY */}
 
 {startarg}        { BEGIN(ARGUMENT_COND); return START; }
 {stoparg}         { BEGIN(ARGUMENT_COND); return STOP; }
@@ -195,6 +197,7 @@ packet(s)?        { return PACKET; }
 bandwidth         { return BANDWIDTH; }
 upload(ed)?       { return UPLOAD; }
 download(ed)?     { return DOWNLOAD; }
+total             { return TOTAL; }
 clientpemfile     { return CLIENTPEMFILE; }
 allowselfcertification  { return ALLOWSELFCERTIFICATION; }
 certmd5           { return CERTMD5; }

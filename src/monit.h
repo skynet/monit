@@ -627,6 +627,8 @@ typedef struct mynetlink {
 typedef struct mybandwidth {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long limit;                              /**< Data watermark */
+        int rangecount;                            /**< Time range to watch: count */
+        int range;                                  /**< Time range to watch: unit */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */

@@ -273,7 +273,7 @@
 %token IF ELSE THEN OR FAILED
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
-%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD
+%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD TOTAL
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
@@ -1643,6 +1643,10 @@ time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
                 | MONTH       { $<number>$ = TIME_MONTH; }
                 ;
 
+totaltime       : MINUTE      { $<number>$ = TIME_MINUTE; }
+                | HOUR        { $<number>$ = TIME_HOUR; }
+                ;
+
 action          : ALERT                            { $<number>$ = ACTION_ALERT; }
                 | EXEC argumentlist                { $<number>$ = ACTION_EXEC; }
                 | EXEC argumentlist useroptionlist { $<number>$ = ACTION_EXEC; }
@@ -1849,30 +1853,102 @@ netlink         : IF FAILED LINK rate1 THEN action1 recovery {
                   }
                 ;
 
-upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
+upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
                     bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = TIME_SECOND;
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->uploadbyteslist), &bandwidthset);
                   }
-                | IF UPLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
+                | IF TOTAL UPLOAD operator NUMBER unit totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = $<number>8;
+                    addeventaction(&(bandwidthset).action, $<number>10, $<number>11);
+                    addbandwidth(&(current->uploadbyteslist), &bandwidthset);
+                  }
+                | IF TOTAL UPLOAD operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
+                    bandwidthset.rangecount = $7;
+                    bandwidthset.range = $<number>8;
+                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
+                    addbandwidth(&(current->uploadbyteslist), &bandwidthset);
+                  }
+                | IF UPLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>4;
                     bandwidthset.limit = (unsigned long long)$5;
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = TIME_SECOND;
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addbandwidth(&(current->uploadpacketslist), &bandwidthset);
+                  }
+                | IF TOTAL UPLOAD PACKET operator NUMBER unit totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>5;
+                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = $<number>9;
+                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
+                    addbandwidth(&(current->uploadpacketslist), &bandwidthset);
+                  }
+                | IF TOTAL UPLOAD PACKET operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>5;
+                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
+                    bandwidthset.rangecount = $8;
+                    bandwidthset.range = $<number>9;
+                    addeventaction(&(bandwidthset).action, $<number>12, $<number>13);
                     addbandwidth(&(current->uploadpacketslist), &bandwidthset);
                   }
                 ;
 
-download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
+download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>3;
                     bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = TIME_SECOND;
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
                     addbandwidth(&(current->downloadbyteslist), &bandwidthset);
                   }
-                | IF DOWNLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery { //FIXME: for higher ranges add "TOTAL" keyword
+                | IF TOTAL DOWNLOAD operator NUMBER unit totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = $<number>8;
+                    addeventaction(&(bandwidthset).action, $<number>10, $<number>11);
+                    addbandwidth(&(current->downloadbyteslist), &bandwidthset);
+                  }
+                | IF TOTAL DOWNLOAD operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>4;
+                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
+                    bandwidthset.rangecount = $7;
+                    bandwidthset.range = $<number>8;
+                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
+                    addbandwidth(&(current->downloadbyteslist), &bandwidthset);
+                  }
+                | IF DOWNLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
                     bandwidthset.operator = $<number>4;
                     bandwidthset.limit = (unsigned long long)$5;
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = TIME_SECOND;
                     addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
+                    addbandwidth(&(current->downloadpacketslist), &bandwidthset);
+                  }
+                | IF TOTAL DOWNLOAD PACKET operator NUMBER unit totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>5;
+                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
+                    bandwidthset.rangecount = 1;
+                    bandwidthset.range = $<number>9;
+                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
+                    addbandwidth(&(current->downloadpacketslist), &bandwidthset);
+                  }
+                | IF TOTAL DOWNLOAD PACKET operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
+                    bandwidthset.operator = $<number>5;
+                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
+                    bandwidthset.rangecount = $8;
+                    bandwidthset.range = $<number>9;
+                    addeventaction(&(bandwidthset).action, $<number>12, $<number>13);
                     addbandwidth(&(current->downloadpacketslist), &bandwidthset);
                   }
                 ;
@@ -2169,7 +2245,6 @@ static void postparse() {
                                 Command_appendArgument(s->program->C, s->program->args->arg[i]);
                         }
                 } else if (s->type == TYPE_NET && ! s->netlinklist) {
-                        //FIXME: add link test
                         addeventaction(&(netlinkset).action, ACTION_ALERT, ACTION_ALERT);
                         addnetlink(s, &netlinkset);
                 }
@@ -2548,14 +2623,23 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
         ASSERT(list);
         ASSERT(b);
 
-        Bandwidth_T bandwidth;
-        NEW(bandwidth);
-        bandwidth->operator = b->operator;
-        bandwidth->limit = b->limit;
-        bandwidth->action = b->action;
-        bandwidth->next = *list;
-        *list = bandwidth;
-
+        if (b->rangecount * b->range > 24 * TIME_HOUR) {
+                yyerror2("Maximum range for total test is 24 hours");
+        } else if (b->range == TIME_MINUTE && b->rangecount > 60) {
+                yyerror2("Maximum value for [minute(s)] unit is 60");
+        } else if (b->range == TIME_HOUR && b->rangecount > 24) {
+                yyerror2("Maximum value for [hour(s)] unit is 24");
+        } else {
+                Bandwidth_T bandwidth;
+                NEW(bandwidth);
+                bandwidth->operator = b->operator;
+                bandwidth->limit = b->limit;
+                bandwidth->rangecount = b->rangecount;
+                bandwidth->range = b->range;
+                bandwidth->action = b->action;
+                bandwidth->next = *list;
+                *list = bandwidth;
+        }
         reset_bandwidthset();
 }
 
