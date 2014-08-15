@@ -68,7 +68,7 @@ static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
                               "POST %s HTTP/1.1\r\n"
                               "Host: %s:%d\r\n"
                               "Content-Type: text/xml\r\n"
-                              "Content-Length: %d\r\n"
+                              "Content-Length: %lu\r\n"
                               "Pragma: no-cache\r\n"
                               "Accept: */*\r\n"
                               "User-Agent: %s/%s\r\n"

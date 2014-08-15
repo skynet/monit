@@ -278,6 +278,8 @@ void NetStatistics_update(T stats) {
                                                 stats->state = 0LL;
                                                 stats->duplex = -1LL;
                                         }
+                                } else {
+                                        stats->state = 1LL;
                                 }
                                 close(s);
                         } else {

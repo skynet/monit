@@ -318,7 +318,7 @@ int control_service_daemon(const char *S, const char *action) {
         if (socket_print(socket,
                 "POST /%s HTTP/1.0\r\n"
                 "Content-Type: application/x-www-form-urlencoded\r\n"
-                "Content-Length: %d\r\n"
+                "Content-Length: %lu\r\n"
                 "%s"
                 "\r\n"
                 "action=%s",
@@ -448,7 +448,7 @@ int control_service(const char *S, int A) {
                         break;
 
                 default:
-                        LogError("Service '%s' -- invalid action %s\n", S, A);
+                        LogError("Service '%s' -- invalid action %d\n", S, A);
                         return FALSE;
         }
         return TRUE;

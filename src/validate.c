@@ -177,7 +177,7 @@ error:
                 }
                 p->response = -1;
                 p->is_available = FALSE;
-                Event_post(s, Event_Connection, STATE_FAILED, p->action, report);
+                Event_post(s, Event_Connection, STATE_FAILED, p->action, "%s", report);
         } else {
                 p->is_available = TRUE;
                 Event_post(s, Event_Connection, STATE_SUCCEEDED, p->action, "connection succeeded to %s", Util_portDescription(p, buf, sizeof(buf)));
@@ -626,7 +626,7 @@ static void check_size(Service_T s) {
                                         sl->size = s->inf->priv.file.st_size;
                                 } else {
                                         DEBUG("'%s' size has not changed [current size=%llu B]\n", s->name, s->inf->priv.file.st_size);
-                                        Event_post(s, Event_Size, STATE_CHANGEDNOT, sl->action, "size was not changed", s->path);
+                                        Event_post(s, Event_Size, STATE_CHANGEDNOT, sl->action, "size was not changed");
                                 }
                         }
                         break;
@@ -653,9 +653,9 @@ static void check_uptime(Service_T s) {
         
         for (ul = s->uptimelist; ul; ul = ul->next) {
                 if (Util_evalQExpression(ul->operator, s->inf->priv.process.uptime, ul->uptime))
-                        Event_post(s, Event_Uptime, STATE_FAILED, ul->action, "uptime test failed for %s -- current uptime is %llu seconds", s->path, s->inf->priv.process.uptime);
+                        Event_post(s, Event_Uptime, STATE_FAILED, ul->action, "uptime test failed for %s -- current uptime is %llu seconds", s->path, (unsigned long long)s->inf->priv.process.uptime);
                 else {
-                        DEBUG("'%s' uptime check succeeded [current uptime=%llu seconds]\n", s->name, s->inf->priv.process.uptime);
+                        DEBUG("'%s' uptime check succeeded [current uptime=%llu seconds]\n", s->name, (unsigned long long)s->inf->priv.process.uptime);
                         Event_post(s, Event_Uptime, STATE_SUCCEEDED, ul->action, "uptime succeeded");
                 }
         }
@@ -807,7 +807,7 @@ static void check_filesystem_flags(Service_T s) {
                 return;
         
         if (s->inf->priv.filesystem._flags != s->inf->priv.filesystem.flags)
-                Event_post(s, Event_Fsflag, STATE_CHANGED, s->action_FSFLAG, "filesytem flags changed to %#lx", s->inf->priv.filesystem.flags);
+                Event_post(s, Event_Fsflag, STATE_CHANGED, s->action_FSFLAG, "filesytem flags changed to %#x", s->inf->priv.filesystem.flags);
 }
 
 /**
@@ -1480,7 +1480,7 @@ int check_net(Service_T s) {
                 if (Util_evalQExpression(upload->operator, opackets, upload->limit))
                         Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
         }
         // Download
         for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
@@ -1517,7 +1517,7 @@ int check_net(Service_T s) {
                 if (Util_evalQExpression(download->operator, ipackets, download->limit))
                         Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload packets check succeeded [current download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload packets check succeeded [current download packets %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
         }
         return TRUE;
 }
