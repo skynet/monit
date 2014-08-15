@@ -1645,6 +1645,7 @@ time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
 
 totaltime       : MINUTE      { $<number>$ = TIME_MINUTE; }
                 | HOUR        { $<number>$ = TIME_HOUR; }
+                | DAY         { $<number>$ = TIME_DAY; }
                 ;
 
 action          : ALERT                            { $<number>$ = ACTION_ALERT; }
@@ -1865,7 +1866,7 @@ upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recov
                     bandwidthset.operator = $<number>4;
                     bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
                     bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>8;
+                    bandwidthset.range = $<number>7;
                     addeventaction(&(bandwidthset).action, $<number>10, $<number>11);
                     addbandwidth(&(current->uploadbyteslist), &bandwidthset);
                   }
@@ -1889,7 +1890,7 @@ upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recov
                     bandwidthset.operator = $<number>5;
                     bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
                     bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>9;
+                    bandwidthset.range = $<number>8;
                     addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
                     addbandwidth(&(current->uploadpacketslist), &bandwidthset);
                   }
@@ -1915,7 +1916,7 @@ download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 rec
                     bandwidthset.operator = $<number>4;
                     bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
                     bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>8;
+                    bandwidthset.range = $<number>7;
                     addeventaction(&(bandwidthset).action, $<number>10, $<number>11);
                     addbandwidth(&(current->downloadbyteslist), &bandwidthset);
                   }
@@ -1939,7 +1940,7 @@ download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 rec
                     bandwidthset.operator = $<number>5;
                     bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
                     bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>9;
+                    bandwidthset.range = $<number>8;
                     addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
                     addbandwidth(&(current->downloadpacketslist), &bandwidthset);
                   }
@@ -2629,6 +2630,8 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
                 yyerror2("Maximum value for [minute(s)] unit is 60");
         } else if (b->range == TIME_HOUR && b->rangecount > 24) {
                 yyerror2("Maximum value for [hour(s)] unit is 24");
+        } else if (b->range == TIME_DAY && b->rangecount > 1) {
+                yyerror2("Maximum value for [day(s)] unit is 1");
         } else {
                 Bandwidth_T bandwidth;
                 NEW(bandwidth);

@@ -1478,9 +1478,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, opackets, upload->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
         }
         // Download
         for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
@@ -1497,9 +1497,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ibytes, download->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download %s matches limit [download rate %s %s in last %d %s]", Str_bytesToString(ibytes, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)), download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload %s matches limit [download rate %s %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToString(ibytes, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)), download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download check succeeded [current download rate %s in last %d %s]", Str_bytesToString(ibytes, buf1, sizeof(buf1)), download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload check succeeded [current download rate %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToString(ibytes, buf1, sizeof(buf1)), download->rangecount, Util_timestr(download->range));
         }
         for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
                 long long ipackets;
@@ -1515,9 +1515,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ipackets, download->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "download packets %lld matches limit [download packets %lld in last %d %s]", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "download packets check succeeded [current download packets %lld in last %d %s]", ipackets, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload packets check succeeded [current download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
         }
         return TRUE;
 }
