@@ -127,7 +127,7 @@ static void set_monit_environment(Service_T S, command_t C, Event_T E, const cha
 /**
  * Execute the given command. If the execution fails, the wait_start()
  * thread in control.c should notice this and send an alert message.
- * @param P A Service object
+ * @param S A Service object
  * @param C A Command object
  * @param E An optional event object. May be NULL.
  */
@@ -248,3 +248,4 @@ void spawn(Service_T S, command_t C, Event_T E) {
          */
 
 }
+

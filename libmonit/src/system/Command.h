@@ -96,14 +96,6 @@ void Command_appendArgument(T C, const char *argument);
 
 
 /**
- * Get arguments count
- * @param C A Command object
- * @return Number of arguments
- */
-int Command_getArgumentsCount(T C);
-
-
-/**
  * Set the user id the sub-process should switch to on exec. If not set, the uid of 
  * the calling process is used. Note that this process must run with super-user
  * privileges for the sub-process to be able to switch uid
@@ -176,7 +168,7 @@ const char *Command_getDir(T C);
 
 
 /**
- * Set or replace the environment variable identified by <code>name</code>.
+ * Set or replace the environment variable.
  * The sub-process initially inherits the environment from the calling process.
  * Environment variables set with this method does not affect the parent 
  * process and only apply to the sub-process.
@@ -185,6 +177,18 @@ const char *Command_getDir(T C);
  * @param value The value
  */
 void Command_setEnv(T C, const char *name, const char *value);
+
+
+/**
+ * Set or replace the environment variable.
+ * The sub-process initially inherits the environment from the calling process.
+ * Environment variables set with this method does not affect the parent 
+ * process and only apply to the sub-process.
+ * @param C A Command object
+ * @param name The environment variable to set or replace
+ * @param value The value
+ */
+void Command_setEnvLong(T C, const char *name, long value);
 
 
 /**
@@ -226,31 +230,6 @@ List_T Command_getCommand(T C);
  * if execute failed.
  */
 Process_T Command_execute(T C);
-
-
-/** @name Event handlers */
-//@{
-
-
-/**
- * Set the event handler to call on timeout. If the subprocess has not 
- * exited within <code>timeout</code> seconds the <code>onTimeout</code>
- * method is called. The handler is passed a Process object representing
- * the subprocess and an optional application specific pointer.
- * @param C A Command object
- * @param timeout Number of seconds to wait for the subprocess to exit
- * until onTimeout is called
- * @param onTimeout The event handler to call on timeout
- * @param ap An application-specific pointer. If such a pointer is 
- * not needed, just use NULL
- * @exception AssertException if timeout is less than or equal to zero
- * @see Command_getTimeout()
- * @see Process.h
- */
-void Command_setOnTimeout(T C, int timeout, void(*onTimeout)(Process_T P, void *ap), void *ap);
-
-
-//@}
 
 
 #undef T
