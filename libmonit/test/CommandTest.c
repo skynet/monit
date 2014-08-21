@@ -20,6 +20,9 @@
  */
 
 
+boolean_t timeout_called = false;
+
+
 static void onExec(Process_T P) {
         assert(P);
         char buf[STRLEN];
@@ -68,6 +71,16 @@ static void onKill(Process_T P) {
         printf("Process exited with status: %d\n", Process_waitFor(P));
         Process_free(&P);
         assert(! P);
+}
+
+
+static void onTimeout(Process_T P, void *ap) {
+        printf("\tonTimeout called for subprocess ((pid=%d) from cwd (%s)\n", Process_getPid(P), Process_getDir(P));
+        assert(Process_isRunning(P));
+        Process_kill(P); // "Suicide Is Painless"
+        timeout_called = true;
+        printf("\tWaiting on process to terminate.. ");
+        printf("Process exited with status: %d\n", Process_waitFor(P));
 }
 
 
@@ -255,9 +268,49 @@ int main(void) {
         }
         printf("=> Test11: OK\n\n");
         
+        printf("=> Test12: set and get timeout\n");
+        {
+                Command_T c = Command_new("/bin/sh", "-c ", "sleep 30;", NULL);
+                assert(c);
+                // Check that default is 0
+                assert(Command_getTimeout(c) == 0);
+                // Set and get
+                Command_setOnTimeout(c, 10, onTimeout, NULL);
+                assert(Command_getTimeout(c) == 10);
+                // Check invalid value
+                TRY
+                {
+                        Command_setOnTimeout(c, 0, onTimeout, NULL);
+                        printf("Test failed\n");
+                        exit(1);
+                }
+                ELSE
+                {
+                        // Exception expected
+                }
+                END_TRY;
+                Command_free(&c);
+                assert(! c);
+        }
+        printf("=> Test12: OK\n\n");
+
+        printf("=> Test13: onTimeout\n");
+        {
+                Command_T c = Command_new("/bin/sh", "-c", "echo ahoj; sleep 30;", NULL);
+                assert(c);
+                Command_setDir(c, "/");
+                Command_setOnTimeout(c, 10, onTimeout, NULL);
+                // Test ontimeout
+                Command_execute(c);
+                Command_free(&c);
+                assert(timeout_called);
+                assert(! c);
+        }
+        printf("=> Test13: OK\n\n");
+
 #if ! defined(OPENBSD)
         /* FIXME: MONIT-35: OpenBSD vfork() doesn't share memory, so the current implementation of Command_execute() cannot pass the execve() error to parent. Disable the unit test on OpenBSD for now. */
-        printf("=> Test12: on execute error\n");
+        printf("=> Test14: on execute error\n");
         {
                 // Try executing a directory should produce an error
                 Command_T c = Command_new("/tmp", NULL);
@@ -268,7 +321,7 @@ int main(void) {
                 printf("\tOK, got execute error -- %s\n", System_getLastError());
                 assert(!c);
         }
-        printf("=> Test12: OK\n\n");
+        printf("=> Test14: OK\n\n");
 #endif
 
         printf("============> Command Tests: OK\n\n");
