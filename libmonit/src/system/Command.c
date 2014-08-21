@@ -41,6 +41,7 @@
 #include "system/Net.h"
 
 #include "system/System.h"
+#include "system/Time.h"
 #include "system/Command.h"
 
 
@@ -61,16 +62,23 @@
 struct T {
         uid_t uid;
         gid_t gid;
+        int timeout;
         List_T env;
         List_T args;
         char **_env;
         char **_args;
         char *working_directory;
+        // Event handlers
+        void *onTimeoutAp;
+        void(*onTimeout)(Process_T P, void *ap);
 };
+
+
 struct Process_T {
         pid_t pid;
         uid_t uid;
         gid_t gid;
+        int timeout;
         int status;
         int stdin_pipe[2];
         int stdout_pipe[2];
@@ -80,6 +88,7 @@ struct Process_T {
         OutputStream_T out;
         char *working_directory;
 };
+
 
 /* --------------------------------------------------------------- Private */
 
@@ -147,9 +156,7 @@ static inline char **_env(T C) {
 
 /* Create stdio pipes for communication between parent and child process */
 static void createPipes(Process_T P) {
-        if (pipe(P->stdin_pipe) < 0 
-            || pipe(P->stdout_pipe) < 0 
-            || pipe(P->stderr_pipe) < 0) {
+        if (pipe(P->stdin_pipe) < 0 || pipe(P->stdout_pipe) < 0 || pipe(P->stderr_pipe) < 0) {
                 ERROR("Command pipe(2): Bad file descriptors -- %s", System_getLastError());
         }
 }
@@ -385,6 +392,12 @@ void Command_appendArgument(T C, const char *argument) {
 }
 
 
+int Command_getArgumentsCount(T C) {
+        assert(C);
+        return List_length(C->args);
+}
+
+
 void Command_setUid(T C, uid_t uid) {
         assert(C);
         C->uid = uid;
@@ -394,6 +407,12 @@ void Command_setUid(T C, uid_t uid) {
 uid_t Command_getUid(T C) {
         assert(C);
         return C->uid;
+}
+
+
+int Command_getTimeout(T C) {
+        assert(C);
+        return C->timeout;
 }
 
 
@@ -474,9 +493,8 @@ Process_T Command_execute(T C) {
                 ERROR("Command: fork failed -- %s\n", System_getLastError());
                 Process_free(&P);
                 return NULL;
-        }
-        // Child
-        else if (P->pid == 0) { 
+        } else if (P->pid == 0) { 
+                // Child
                 if (C->working_directory) {
                         if (! Dir_chdir(C->working_directory)) {
                                 exec_error = errno;
@@ -515,10 +533,43 @@ Process_T Command_execute(T C) {
                 _exit(errno);
         }
         // Parent
-        if (exec_error != 0)
+        if (exec_error != 0) {
                 Process_free(&P);
-        else 
+        } else {
                 setupParentPipes(P);
+                if (C->onTimeout) {
+                        #define MAXBACKOFF 1000000 // maximum timeout check interval is 1s
+                        #define MINBACKOFF 10000   // minimum timeout check interval is 10ms
+                        int backoff = MINBACKOFF;
+                        long timeout = C->timeout * 1000000;
+                        pid_t r;
+                        while ((r = waitpid(P->pid, &(P->status), WNOHANG)) == 0) { // Non-blocking wait
+                                backoff = backoff < MAXBACKOFF ? backoff *= 2 : MAXBACKOFF; // Double the wait interval until we reach MAXBACKOFF
+                                if (timeout > 0) {
+                                        timeout -= backoff;
+                                        Time_usleep(backoff);
+                                } else {
+                                        break;
+                                }
+                        }
+                        if (r == 0)
+                                C->onTimeout(P, C->onTimeoutAp);
+                }
+        }
         errno = exec_error;
         return P;
 }
+
+
+/* -------------------------------------------------------- Event Handlers */
+
+
+void Command_setOnTimeout(T C, int timeout, void(*onTimeout)(Process_T P, void *ap), void *ap) {
+        assert(C);
+        assert(timeout > 0);
+        assert(onTimeout);
+        C->timeout = timeout;
+        C->onTimeoutAp = ap;
+        C->onTimeout = onTimeout;
+}
+
