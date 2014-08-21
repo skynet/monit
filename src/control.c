@@ -70,7 +70,7 @@
 
 
 static Process_T command_execute(Service_T S, command_t c) {
-        Command_T C = Command_new(S->path, NULL);
+        Command_T C = Command_new(c->arg[0], NULL);
         for (int i = 1; i < c->length; i++)
                 Command_appendArgument(C, c->arg[i]);
         if (c->has_uid)
@@ -149,9 +149,9 @@ static void do_start(Service_T s) {
                                                 n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
                                         if (n > 0) {
                                                 buf[n] = 0;
-                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "'%s' failed to start (exit status %d) -- %s", s->path, Process_exitStatus(P), buf);
+                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", Process_exitStatus(P), buf);
                                         } else {
-                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "'%s' failed to start (exit status %d) -- no output from the program", s->path, Process_exitStatus(P), buf);
+                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
                                         }
                                 }
                         }
@@ -188,9 +188,9 @@ static int do_stop(Service_T s, int flag) {
                                         n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
                                 if (n > 0) {
                                         buf[n] = 0;
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "'%s' failed to stop (exit status %d) -- %s", s->path, Process_exitStatus(P), buf);
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", Process_exitStatus(P), buf);
                                 } else {
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "'%s' failed to stop (exit status %d) -- no output from the program", s->path, Process_exitStatus(P), buf);
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
                                 }
                         } else {
                                 if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
@@ -239,9 +239,9 @@ static void do_restart(Service_T s) {
                                         n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
                                 if (n > 0) {
                                         buf[n] = 0;
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "'%s' failed to restart (exit status %d) -- %s", s->path, Process_exitStatus(P), buf);
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- %s", Process_exitStatus(P), buf);
                                 } else {
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "'%s' failed to restart (exit status %d) -- no output from the program", s->path, Process_exitStatus(P), buf);
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
                                 }
                         }
                 }
