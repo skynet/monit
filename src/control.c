@@ -66,66 +66,48 @@
  */
 
 
-/* ------------------------------------------------------------- Definitions */
-
-
-typedef enum {
-        Process_Stopped = 0,
-        Process_Started
-} Process_Status;
-
-
 /* ----------------------------------------------------------------- Private */
 
 
-/*
- * This function waits for the process to stop. If the process doesn't stop a failed event is posted
- * to notify the user. The time is saved on enter so in the case that the time steps backwards/forwards,
- * the wait_stop will wait for absolute time and not stall or prematurely exit.
- * @param service A Service to wait for
- * @return Either Process_Started if the process is running or Process_Stopped if it's not running
- */
-static Process_Status wait_stop(Service_T s) {
-        unsigned long now = Time_now() * 1000, wait = 50;
-        assert(s->stop);
-        unsigned long timeout = s->stop->timeout * 1000 + now;
-        int pid = Util_isProcessRunning(s, TRUE);
-        do {
-                Time_usleep(wait * USEC_PER_MSEC);
-                now += wait;
-                wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
-                if (! pid || (getpgid(pid) == -1 && errno != EPERM)) {
-                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
-                        return Process_Stopped;
+static Process_T command_execute(Service_T S, command_t c) {
+        Command_T C = Command_new(c->arg[0], NULL);
+        for (int i = 1; i < c->length; i++)
+                Command_appendArgument(C, c->arg[i]);
+        if (c->has_uid)
+                Command_setUid(C, c->uid);
+        if (c->has_gid)
+                Command_setGid(C, c->gid);
+        char date[42];
+        Time_string(Time_now(), date);
+        Command_setEnv(C, "MONIT_DATE", date);
+        Command_setEnv(C, "MONIT_SERVICE", S->name);
+        Command_setEnv(C, "MONIT_HOST", Run.system->name);
+        Command_setEnv(C, "MONIT_EVENT", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
+        Command_setEnv(C, "MONIT_DESCRIPTION", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
+        if (S->type == TYPE_PROCESS) {
+                Command_setEnvLong(C, "MONIT_PROCESS_PID", Util_isProcessRunning(S, FALSE));
+                Command_setEnvLong(C, "MONIT_PROCESS_MEMORY", S->inf->priv.process.mem_kbyte);
+                Command_setEnvLong(C, "MONIT_PROCESS_CHILDREN", S->inf->priv.process.children);
+                Command_setEnvLong(C, "MONIT_PROCESS_CPU_PERCENT", S->inf->priv.process.cpu_percent);
+        }
+        Process_T P = Command_execute(C);
+        Command_free(&C);
+        if (P) {
+                #define MINBACKOFF 10000        // minimum timeout check interval is 10ms
+                #define MAXBACKOFF USEC_PER_SEC // maximum timeout check interval is 1s
+                int backoff = MINBACKOFF;
+                long timeout = c->timeout * USEC_PER_SEC;
+                do {
+                        Time_usleep(backoff);
+                        backoff = backoff < MAXBACKOFF ? backoff *= 2 : MAXBACKOFF; // Double the wait interval until we reach MAXBACKOFF
+                        timeout -= backoff;
+                } while (Process_isRunning(P) && timeout > 0);
+                if (timeout <= 0) {
+                        LogError("Command timed out -- killing it\n");
+                        Process_kill(P);
                 }
-        } while (now < timeout && ! Run.stopped);
-        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop");
-        return Process_Started;
-}
-
-
-/*
- * This function waits for the process to start. If the process doesn't start a failed event is posted
- * to notify the user. The time is saved on enter so in the case that the time steps backwards/forwards,
- * the wait_start will wait for absolute time and not stall or prematurely exit.
- * @param service A Service to wait for
- * @return Either Process_Started if the process is running or Process_Stopped if it's not running
- */
-static Process_Status wait_start(Service_T s) {
-        unsigned long now = Time_now() * 1000, wait = 50;
-        assert(s->start || s->restart);
-        unsigned long timeout = (s->start ? s->start->timeout : s->restart->timeout) * 1000 + now;
-        do {
-                Time_usleep(wait * USEC_PER_MSEC);
-                now += wait;
-                wait = wait < 1000 ? wait * 2 : 1000; // double the wait during each cycle until 1s is reached
-                if (Util_isProcessRunning(s, TRUE)) {
-                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
-                        return Process_Started;
-                }
-        } while (now < timeout && ! Run.stopped);
-        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start");
-        return Process_Stopped;
+        }
+        return P;
 }
 
 
@@ -150,10 +132,30 @@ static void do_start(Service_T s) {
         if (s->start) {
                 if (s->type != TYPE_PROCESS || ! Util_isProcessRunning(s, FALSE)) {
                         LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
-                        spawn(s, s->start, NULL);
-                        /* We only wait for a process type, other service types does not have a pid file to watch */
-                        if (s->type == TYPE_PROCESS)
-                                wait_start(s);
+                        Process_T P = command_execute(s, s->start);
+                        if (s->type == TYPE_PROCESS) {
+                                int n = 0;
+                                char buf[STRLEN + 1];
+                                if (Util_isProcessRunning(s, TRUE)) {
+                                        if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
+                                                n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                        if (n > 0) {
+                                                buf[n] = 0;
+                                                DEBUG("Program output: %s\n", buf);
+                                        }
+                                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
+                                } else {
+                                        if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
+                                                n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                        if (n > 0) {
+                                                buf[n] = 0;
+                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", Process_exitStatus(P), buf);
+                                        } else {
+                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
+                                        }
+                                }
+                        }
+                        Process_free(&P);
                 }
         } else {
                 LogDebug("'%s' start skipped -- method not defined\n", s->name);
@@ -177,9 +179,29 @@ static int do_stop(Service_T s, int flag) {
         if (s->stop) {
                 if (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE)) {
                         LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
-                        spawn(s, s->stop, NULL);
-                        if (s->type == TYPE_PROCESS && (wait_stop(s) != Process_Stopped)) // Only wait for process service types stop
+                        Process_T P = command_execute(s, s->stop);
+                        int n = 0;
+                        char buf[STRLEN + 1];
+                        if (s->type == TYPE_PROCESS && Util_isProcessRunning(s, TRUE)) {
                                 rv = FALSE;
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                if (n > 0) {
+                                        buf[n] = 0;
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", Process_exitStatus(P), buf);
+                                } else {
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
+                                }
+                        } else {
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                if (n > 0) {
+                                        buf[n] = 0;
+                                        DEBUG("Program output: %s\n", buf);
+                                }
+                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
+                        }
+                        Process_free(&P);
                 }
         } else {
                 LogDebug("'%s' stop skipped -- method not defined\n", s->name);
@@ -200,10 +222,30 @@ static int do_stop(Service_T s, int flag) {
 static void do_restart(Service_T s) {
         if (s->restart) {
                 LogInfo("'%s' restart: %s\n", s->name, s->restart->arg[0]);
-                spawn(s, s->restart, NULL);
-                /* We only wait for a process type, other service types does not have a pid file to watch */
-                if (s->type == TYPE_PROCESS)
-                        wait_start(s);
+                Process_T P = command_execute(s, s->restart);
+                if (s->type == TYPE_PROCESS) {
+                        int n = 0;
+                        char buf[STRLEN + 1];
+                        if (Util_isProcessRunning(s, TRUE)) {
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                if (n > 0) {
+                                        buf[n] = 0;
+                                        DEBUG("Program output: %s\n", buf);
+                                }
+                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "restarted");
+                        } else {
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                if (n > 0) {
+                                        buf[n] = 0;
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- %s", Process_exitStatus(P), buf);
+                                } else {
+                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
+                                }
+                        }
+                }
+                Process_free(&P);
         } else {
                 LogDebug("'%s' restart skipped -- method not defined\n", s->name);
         }
