@@ -433,7 +433,17 @@ const char *Command_getDir(T C) {
 
 
 /* Env variables are stored in the environment list as "name=value" strings */
-void Command_setEnv(T C, const char *name, const char *value, ...) {
+void Command_setEnv(Command_T C, const char *name, const char *value) {
+        assert(C);
+        assert(name);
+        removeEnv(C, name);
+        List_append(C->env, Str_cat("%s=%s", name, value ? value : ""));
+        FREE(C->_env); // Recreate Command environment on exec
+}
+
+
+/* Env variables are stored in the environment list as "name=value" strings */
+void Command_vSetEnv(T C, const char *name, const char *value, ...) {
         assert(C);
         assert(name);
         removeEnv(C, name);

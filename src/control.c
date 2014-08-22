@@ -91,15 +91,15 @@ static int command_execute(Service_T S, command_t c, char *msg, int msglen) {
                 if (c->has_gid)
                         Command_setGid(C, c->gid);
                 Command_setEnv(C, "MONIT_DATE", Time_string(Time_now(), (char[26]){}));
-                Command_setEnv(C, "MONIT_SERVICE", "%s", S->name);
-                Command_setEnv(C, "MONIT_HOST", "%s", Run.system->name);
+                Command_setEnv(C, "MONIT_SERVICE", S->name);
+                Command_setEnv(C, "MONIT_HOST", Run.system->name);
                 Command_setEnv(C, "MONIT_EVENT", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
                 Command_setEnv(C, "MONIT_DESCRIPTION", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
                 if (S->type == TYPE_PROCESS) {
-                        Command_setEnv(C, "MONIT_PROCESS_PID", "%ld", Util_isProcessRunning(S, FALSE));
-                        Command_setEnv(C, "MONIT_PROCESS_MEMORY", "%ld", S->inf->priv.process.mem_kbyte);
-                        Command_setEnv(C, "MONIT_PROCESS_CHILDREN", "%ld", S->inf->priv.process.children);
-                        Command_setEnv(C, "MONIT_PROCESS_CPU_PERCENT", "%ld", S->inf->priv.process.cpu_percent);
+                        Command_vSetEnv(C, "MONIT_PROCESS_PID", "%ld", Util_isProcessRunning(S, FALSE));
+                        Command_vSetEnv(C, "MONIT_PROCESS_MEMORY", "%ld", S->inf->priv.process.mem_kbyte);
+                        Command_vSetEnv(C, "MONIT_PROCESS_CHILDREN", "%ld", S->inf->priv.process.children);
+                        Command_vSetEnv(C, "MONIT_PROCESS_CPU_PERCENT", "%ld", S->inf->priv.process.cpu_percent);
                 }
                 Process_T P = Command_execute(C);
                 Command_free(&C);

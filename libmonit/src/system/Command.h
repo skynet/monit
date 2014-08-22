@@ -176,7 +176,22 @@ const char *Command_getDir(T C);
  * @param name The environment variable to set or replace
  * @param value The value
  */
-void Command_setEnv(T C, const char *name, const char *value, ...) __attribute__((format (printf, 3, 4)));
+void Command_setEnv(T C, const char *name, const char *value);
+
+
+/**
+ * Set or replace the environment variable identified by <code>name</code>.
+ * The sub-process initially inherits the environment from the calling process.
+ * Environment variables set with this method does not affect the parent
+ * process and only apply to the sub-process. Example:
+ *<pre>
+ * Command_vSetEnv(C, "PID", "%ld", getpid()) -> PID=1234
+ * </pre>
+ * @param C A Command object
+ * @param name The environment variable to set or replace
+ * @param value The value
+ */
+void Command_vSetEnv(T C, const char *name, const char *value, ...) __attribute__((format (printf, 3, 4)));
 
 
 /**
