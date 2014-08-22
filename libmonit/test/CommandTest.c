@@ -20,6 +20,9 @@
  */
 
 
+boolean_t timeout_called = false;
+
+
 static void onExec(Process_T P) {
         assert(P);
         char buf[STRLEN];
@@ -164,6 +167,11 @@ int main(void) {
                 assert(Str_isEqual(Command_getEnv(c, "SHELL"), ""));
                 // Unknown variable should result in NULL
                 assert(Command_getEnv(c, "UKNOWNVARIABLE") == NULL);
+                // vSetEnv
+                Command_vSetEnv(c, "PID", "%ld", (long)getpid());
+                assert(Str_parseLLong(Command_getEnv(c, "PID")) > 1);
+                Command_vSetEnv(c, "ZERO", NULL);
+                assert(Str_isEqual(Command_getEnv(c, "ZERO"), ""));
                 Command_free(&c);
                 assert(!c);
         }
