@@ -1,8 +1,8 @@
-                     CHANGES version 5.8.2
+                     CHANGES version 5.9
 
            This file summarizes changes made since 5.0
 
-Version 5.8.2
+Version 5.9
 
 New: Automatically reload Monit if ID was reset using -r CLI
 option.
