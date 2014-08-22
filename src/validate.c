@@ -201,7 +201,7 @@ static void check_process_pid(Service_T s) {
         ASSERT(s && s->inf);
         
         /* process pid was not initialized yet */
-        if (s->inf->priv.process._pid == -1)
+        if (s->inf->priv.process._pid < 0 || s->inf->priv.process.pid < 0)
                 return;
         
         if (s->inf->priv.process._pid != s->inf->priv.process.pid)
@@ -219,7 +219,7 @@ static void check_process_ppid(Service_T s) {
         ASSERT(s && s->inf);
         
         /* process ppid was not initialized yet */
-        if (s->inf->priv.process._ppid == -1)
+        if (s->inf->priv.process._ppid < 0 || s->inf->priv.process.ppid < 0)
                 return;
         
         if (s->inf->priv.process._ppid != s->inf->priv.process.ppid)
