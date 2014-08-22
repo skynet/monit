@@ -24,8 +24,9 @@ usage on Linux.
 
 Fixed: Some systems with upstart (e.g. RHEL/CentOS) had problems
 with restart action which consisted of stop+start sequence - the pidfile
-disappeared after stop+start sequence and Monit though the process
-Monit now waits not just for process exit, but for stop/start program
+disappeared after stop+start sequence and Monit though the process is not
+running, as the pidfile was missing due to upstart's synchronization
+problems. Monit now waits not just for process exit, but for stop/start program
 finish too.
 
 Fixed: "PID/PPID changed" events were sometimes triggered after restart
