@@ -57,6 +57,7 @@
 #include "socket.h"
 #include "event.h"
 #include "system/Time.h"
+#include "exceptions/AssertException.h"
 
 
 /**
@@ -69,45 +70,63 @@
 /* ----------------------------------------------------------------- Private */
 
 
-static Process_T command_execute(Service_T S, command_t c) {
-        Command_T C = Command_new(c->arg[0], NULL);
-        for (int i = 1; i < c->length; i++)
-                Command_appendArgument(C, c->arg[i]);
-        if (c->has_uid)
-                Command_setUid(C, c->uid);
-        if (c->has_gid)
-                Command_setGid(C, c->gid);
-        char date[42];
-        Time_string(Time_now(), date);
-        Command_setEnv(C, "MONIT_DATE", date);
-        Command_setEnv(C, "MONIT_SERVICE", S->name);
-        Command_setEnv(C, "MONIT_HOST", Run.system->name);
-        Command_setEnv(C, "MONIT_EVENT", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
-        Command_setEnv(C, "MONIT_DESCRIPTION", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
-        if (S->type == TYPE_PROCESS) {
-                Command_setEnvLong(C, "MONIT_PROCESS_PID", Util_isProcessRunning(S, FALSE));
-                Command_setEnvLong(C, "MONIT_PROCESS_MEMORY", S->inf->priv.process.mem_kbyte);
-                Command_setEnvLong(C, "MONIT_PROCESS_CHILDREN", S->inf->priv.process.children);
-                Command_setEnvLong(C, "MONIT_PROCESS_CPU_PERCENT", S->inf->priv.process.cpu_percent);
+static int command_execute(Service_T S, command_t c, char *msg, int msglen) {
+        int status = -1;
+        Command_T C;
+        TRY
+        {
+                // May throw exception if the program doesn't exist (was removed while Monit was up)
+                C = Command_new(c->arg[0], NULL);
         }
-        Process_T P = Command_execute(C);
-        Command_free(&C);
-        if (P) {
-                #define MINBACKOFF 10000        // minimum timeout check interval is 10ms
-                #define MAXBACKOFF USEC_PER_SEC // maximum timeout check interval is 1s
-                int backoff = MINBACKOFF;
-                long timeout = c->timeout * USEC_PER_SEC;
-                do {
-                        Time_usleep(backoff);
-                        backoff = backoff < MAXBACKOFF ? backoff *= 2 : MAXBACKOFF; // Double the wait interval until we reach MAXBACKOFF
-                        timeout -= backoff;
-                } while (Process_isRunning(P) && timeout > 0);
-                if (timeout <= 0) {
-                        LogError("Command timed out -- killing it\n");
-                        Process_kill(P);
+        ELSE
+        {
+                snprintf(msg, msglen, "Program %s failed: %s\n", c->arg[0], Exception_frame.message);
+        }
+        END_TRY;
+        if (C) {
+                for (int i = 1; i < c->length; i++)
+                        Command_appendArgument(C, c->arg[i]);
+                if (c->has_uid)
+                        Command_setUid(C, c->uid);
+                if (c->has_gid)
+                        Command_setGid(C, c->gid);
+                char date[42];
+                Time_string(Time_now(), date);
+                Command_setEnv(C, "MONIT_DATE", date);
+                Command_setEnv(C, "MONIT_SERVICE", S->name);
+                Command_setEnv(C, "MONIT_HOST", Run.system->name);
+                Command_setEnv(C, "MONIT_EVENT", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
+                Command_setEnv(C, "MONIT_DESCRIPTION", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
+                if (S->type == TYPE_PROCESS) {
+                        Command_setEnvLong(C, "MONIT_PROCESS_PID", Util_isProcessRunning(S, FALSE));
+                        Command_setEnvLong(C, "MONIT_PROCESS_MEMORY", S->inf->priv.process.mem_kbyte);
+                        Command_setEnvLong(C, "MONIT_PROCESS_CHILDREN", S->inf->priv.process.children);
+                        Command_setEnvLong(C, "MONIT_PROCESS_CPU_PERCENT", S->inf->priv.process.cpu_percent);
+                }
+                Process_T P = Command_execute(C);
+                Command_free(&C);
+                if (P) {
+                        #define MINBACKOFF 25000        // minimum timeout check interval is 25ms
+                        #define MAXBACKOFF USEC_PER_SEC // maximum timeout check interval is 1s
+                        int backoff = MINBACKOFF;
+                        long timeout = c->timeout * USEC_PER_SEC;
+                        do {
+                                Time_usleep(backoff);
+                                backoff = backoff < MAXBACKOFF ? backoff * 2 : MAXBACKOFF; // Double the wait interval until we reach MAXBACKOFF
+                                timeout -= backoff;
+                        } while ((status = Process_exitStatus(P)) < 0 && timeout > 0);
+                        if (timeout <= 0) {
+                                snprintf(msg, msglen, "Program %s timed out\n", c->arg[0]);
+                        } else {
+                                int n;
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), msg, msglen)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), msg, msglen);
+                                msg[n > 0 ? n : 0] = 0;
+                        }
+                        Process_free(&P); // Will kill the program if still running
                 }
         }
-        return P;
+        return status;
 }
 
 
@@ -132,30 +151,14 @@ static void do_start(Service_T s) {
         if (s->start) {
                 if (s->type != TYPE_PROCESS || ! Util_isProcessRunning(s, FALSE)) {
                         LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
-                        Process_T P = command_execute(s, s->start);
-                        if (s->type == TYPE_PROCESS) {
-                                int n = 0;
-                                char buf[STRLEN + 1];
-                                if (Util_isProcessRunning(s, TRUE)) {
-                                        if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                                n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
-                                        if (n > 0) {
-                                                buf[n] = 0;
-                                                DEBUG("Program output: %s\n", buf);
-                                        }
-                                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
-                                } else {
-                                        if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                                n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
-                                        if (n > 0) {
-                                                buf[n] = 0;
-                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", Process_exitStatus(P), buf);
-                                        } else {
-                                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
-                                        }
-                                }
+                        char msg[STRLEN];
+                        int status = command_execute(s, s->start, msg, sizeof(msg));
+                        if ((s->type == TYPE_PROCESS && ! Util_isProcessRunning(s, TRUE)) || status < 0) {
+                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", status, msg);
+                        } else {
+                                DEBUG("Start program output: %s\n", msg);
+                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
                         }
-                        Process_free(&P);
                 }
         } else {
                 LogDebug("'%s' start skipped -- method not defined\n", s->name);
@@ -179,29 +182,15 @@ static int do_stop(Service_T s, int flag) {
         if (s->stop) {
                 if (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE)) {
                         LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
-                        Process_T P = command_execute(s, s->stop);
-                        int n = 0;
-                        char buf[STRLEN + 1];
-                        if (s->type == TYPE_PROCESS && Util_isProcessRunning(s, TRUE)) {
+                        char msg[STRLEN];
+                        int status = command_execute(s, s->stop, msg, sizeof(msg));
+                        if ((s->type == TYPE_PROCESS && Util_isProcessRunning(s, TRUE)) || status < 0) {
                                 rv = FALSE;
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
-                                if (n > 0) {
-                                        buf[n] = 0;
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", Process_exitStatus(P), buf);
-                                } else {
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
-                                }
+                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, msg);
                         } else {
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
-                                if (n > 0) {
-                                        buf[n] = 0;
-                                        DEBUG("Program output: %s\n", buf);
-                                }
+                                DEBUG("Stop program output: %s\n", msg);
                                 Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
                         }
-                        Process_free(&P);
                 }
         } else {
                 LogDebug("'%s' stop skipped -- method not defined\n", s->name);
@@ -222,30 +211,14 @@ static int do_stop(Service_T s, int flag) {
 static void do_restart(Service_T s) {
         if (s->restart) {
                 LogInfo("'%s' restart: %s\n", s->name, s->restart->arg[0]);
-                Process_T P = command_execute(s, s->restart);
-                if (s->type == TYPE_PROCESS) {
-                        int n = 0;
-                        char buf[STRLEN + 1];
-                        if (Util_isProcessRunning(s, TRUE)) {
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
-                                if (n > 0) {
-                                        buf[n] = 0;
-                                        DEBUG("Program output: %s\n", buf);
-                                }
-                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "restarted");
-                        } else {
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
-                                if (n > 0) {
-                                        buf[n] = 0;
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- %s", Process_exitStatus(P), buf);
-                                } else {
-                                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- no output from the program", Process_exitStatus(P), buf);
-                                }
-                        }
+                char msg[STRLEN];
+                int status = command_execute(s, s->restart, msg, sizeof(msg));
+                if ((s->type == TYPE_PROCESS && ! Util_isProcessRunning(s, TRUE)) || status < 0) {
+                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- %s", status, msg);
+                } else {
+                        DEBUG("Restart program output: %s\n", msg);
+                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "restarted");
                 }
-                Process_free(&P);
         } else {
                 LogDebug("'%s' restart skipped -- method not defined\n", s->name);
         }
