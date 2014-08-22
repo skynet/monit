@@ -1,8 +1,8 @@
-                     CHANGES version 5.9
+                     CHANGES version 5.8.2
 
            This file summarizes changes made since 5.0
 
-Version 5.9
+Version 5.8.2
 
 New: Automatically reload Monit if ID was reset using -r CLI
 option.
@@ -21,6 +21,19 @@ restart.
 
 Fixed: Subtract SLAB reclaimable memory from the system memory
 usage on Linux.
+
+Fixed: Some systems with upstart (e.g. RHEL/CentOS) had problems
+with restart action which consisted of stop+start sequence - the pidfile
+disappeared after stop+start sequence and Monit though the process is not
+running, as the pidfile was missing due to upstart's synchronization
+problems. Monit now waits not just for process exit, but for stop/start program
+finish too.
+
+Fixed: "PID/PPID changed" events were sometimes triggered after restart
+program.
+
+New: Log output from start/stop/restart programs. In the case of success
+the output is logged only in debug mode.
 
 
 Version 5.8.1

@@ -72,7 +72,7 @@
 
 static int command_execute(Service_T S, command_t c, char *msg, int msglen) {
         int status = -1;
-        Command_T C;
+        Command_T C = NULL;
         TRY
         {
                 // May throw exception if the program doesn't exist (was removed while Monit was up)
@@ -209,6 +209,7 @@ static int do_stop(Service_T s, int flag) {
 static void do_restart(Service_T s) {
         if (s->restart) {
                 LogInfo("'%s' restart: %s\n", s->name, s->restart->arg[0]);
+                Util_resetInfo(s);
                 char msg[STRLEN];
                 int status = command_execute(s, s->restart, msg, sizeof(msg));
                 if ((s->type == TYPE_PROCESS && ! Util_isProcessRunning(s, TRUE)) || status < 0) {
