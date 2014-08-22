@@ -72,7 +72,7 @@
 
 static int command_execute(Service_T S, command_t c, char *msg, int msglen) {
         int status = -1;
-        Command_T C;
+        Command_T C = NULL;
         TRY
         {
                 // May throw exception if the program doesn't exist (was removed while Monit was up)
