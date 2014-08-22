@@ -168,27 +168,15 @@ const char *Command_getDir(T C);
 
 
 /**
- * Set or replace the environment variable.
+ * Set or replace the environment variable identified by <code>name</code>.
  * The sub-process initially inherits the environment from the calling process.
- * Environment variables set with this method does not affect the parent 
+ * Environment variables set with this method does not affect the parent
  * process and only apply to the sub-process.
  * @param C A Command object
  * @param name The environment variable to set or replace
  * @param value The value
  */
-void Command_setEnv(T C, const char *name, const char *value);
-
-
-/**
- * Set or replace the environment variable.
- * The sub-process initially inherits the environment from the calling process.
- * Environment variables set with this method does not affect the parent 
- * process and only apply to the sub-process.
- * @param C A Command object
- * @param name The environment variable to set or replace
- * @param value The value
- */
-void Command_setEnvLong(T C, const char *name, long value);
+void Command_setEnv(T C, const char *name, const char *value, ...) __attribute__((format (printf, 3, 4)));
 
 
 /**

@@ -39,6 +39,7 @@
 #include "File.h"
 #include "List.h"
 #include "system/Net.h"
+#include "StringBuffer.h"
 
 #include "system/System.h"
 #include "system/Time.h"
@@ -425,33 +426,31 @@ void Command_setDir(T C, const char *dir) {
 }
 
 
-const char *Command_getDir(Command_T C) {
+const char *Command_getDir(T C) {
         assert(C);
         return C->working_directory;
 }
 
 
 /* Env variables are stored in the environment list as "name=value" strings */
-void Command_setEnv(Command_T C, const char *name, const char *value) {
+void Command_setEnv(T C, const char *name, const char *value, ...) {
         assert(C);
         assert(name);
         removeEnv(C, name);
-        List_append(C->env, Str_cat("%s=%s", name, value ? value : ""));
-        FREE(C->_env); // Recreate Command environment on exec
-}
-
-
-void Command_setEnvLong(Command_T C, const char *name, long value) {
-        assert(C);
-        assert(name);
-        removeEnv(C, name);
-        List_append(C->env, Str_cat("%s=%ld", name, value));
+        StringBuffer_T b = StringBuffer_new(name);
+        StringBuffer_append(b, "=");
+        va_list ap;
+        va_start(ap, value);
+        StringBuffer_vappend(b, value, ap);
+        va_end(ap);
+        List_append(C->env, Str_dup(StringBuffer_toString(b)));
+        StringBuffer_free(&b);
         FREE(C->_env); // Recreate Command environment on exec
 }
 
 
 /* Returns the value part from a "name=value" environment string */
-const char *Command_getEnv(Command_T C, const char *name) {
+const char *Command_getEnv(T C, const char *name) {
         assert(C);
         assert(name);
         char *e = findEnv(C, name);
