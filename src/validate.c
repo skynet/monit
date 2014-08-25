@@ -1289,8 +1289,8 @@ int check_program(Service_T s) {
                                 int n = 0;
                                 char buf[STRLEN + 1];
                                 // Read message from script
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN - 1)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN - 1);
                                 if (n > 0) {
                                         buf[n] = 0;
                                         Event_post(s, Event_Status, STATE_FAILED, status->action, "%s", buf);
