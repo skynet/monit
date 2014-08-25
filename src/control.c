@@ -77,6 +77,9 @@ static int _getOutput(InputStream_T in, char *buf, int buflen) {
 
 
 static int _commandExecute(Service_T S, command_t c, char *msg, int msglen) {
+        ASSERT(S);
+        ASSERT(c);
+        ASSERT(msg);
         msg[0] = 0;
         int status = -1;
         Command_T C = NULL;
