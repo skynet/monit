@@ -114,15 +114,10 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen) {
                 Process_T P = Command_execute(C);
                 Command_free(&C);
                 if (P) {
-                        #define MINBACKOFF 25000        // minimum timeout check interval is 25ms
-                        #define MAXBACKOFF USEC_PER_SEC // maximum timeout check interval is 1s
-                        #define MAXDEBUG 2048           // Log at maximum 2kB to debug
-                        int backoff = MINBACKOFF;
                         long timeout = c->timeout * USEC_PER_SEC;
                         do {
-                                Time_usleep(backoff);
-                                backoff = backoff < MAXBACKOFF ? backoff * 2 : MAXBACKOFF; // Double the wait interval until we reach MAXBACKOFF
-                                timeout -= backoff;
+                                Time_usleep(100000); // Check interval is 100ms
+                                timeout -= 100000;
                         } while ((status = Process_exitStatus(P)) < 0 && timeout > 0);
                         if (timeout <= 0)
                                 snprintf(msg, msglen, "Program %s timed out", c->arg[0]);
@@ -139,7 +134,7 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen) {
                                                 snprintf(msg, msglen, "%s: %s%s", c->arg[0], timeout <= 0 ? "Program timed out -- " : "", buf);
                                         total += n;
                                 }
-                        } while (n > 0 && Run.debug && total < MAXDEBUG); // Limit the debug output (if the program will have endless output, such as 'yes' utility, we have to stop at some point to not spin here forever)
+                        } while (n > 0 && Run.debug && total < 2048); // Limit the debug output (if the program will have endless output, such as 'yes' utility, we have to stop at some point to not spin here forever)
                         Process_free(&P); // Will kill the program if still running
                 }
         }
