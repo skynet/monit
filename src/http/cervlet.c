@@ -866,7 +866,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         }
 
         for (ar = s->actionratelist; ar; ar = ar->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Timeout</td><td>If restarted %d times within %d cycle(s) then", ar->count, ar->cycle);
+                StringBuffer_append(res->outputbuffer, "<tr><td>Timeout</td><td>If restarted %d times within %d cycle(s) then ", ar->count, ar->cycle);
                 Util_printAction(ar->action->failed, res->outputbuffer);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
