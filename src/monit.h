@@ -875,13 +875,13 @@ struct myrun {
         int  isdaemon;                 /**< TRUE if program should run as a daemon */
         int  polltime;        /**< In deamon mode, the sleeptime (sec) between run */
         int  startdelay;                    /**< the sleeptime (sec) after startup */
-        int  dohttpd;                    /**< TRUE if monit HTTP server should run */
-        int  httpdssl;                     /**< TRUE if monit HTTP server uses ssl */
+        int  dohttpd;                    /**< TRUE if Monit HTTP server should run */
+        int  httpdssl;                     /**< TRUE if Monit HTTP server uses ssl */
         char *httpsslpem;                       /**< PEM file for the HTTPS server */
-        int  clientssl;   /**< TRUE if monit HTTP server uses ssl with client auth */
+        int  clientssl;   /**< TRUE if Monit HTTP server uses ssl with client auth */
         char *httpsslclientpem;      /**< PEM file/dir to check against at connect */
         int  allowselfcert;   /**< TRUE if self certified client certs are allowed */
-        int  httpdsig;   /**< TRUE if monit HTTP server presents version signature */
+        int  httpdsig;   /**< TRUE if Monit HTTP server presents version signature */
         int  httpdport;                    /**< The monit http server's portnumber */
         int  once;                                       /**< TRUE - run only once */
         int  init;                   /**< TRUE - don't background to run from init */

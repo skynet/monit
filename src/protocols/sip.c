@@ -118,7 +118,7 @@ int check_sip(Socket_T socket) {
     "Contact: <%s:%s:%d>\r\n"
     "Accept: application/sdp\r\n"
     "Content-Length: 0\r\n"
-    "User-Agent: %s/%s\r\n\r\n",
+    "User-Agent: Monit/%s\r\n\r\n",
     proto,            // protocol
     request,          // to
     transport,        // via transport udp|tcp
@@ -136,7 +136,7 @@ int check_sip(Socket_T socket) {
     proto,            // protocol
     myip,             // contact host
     port,             // contact port
-    prog, VERSION     // user agent
+    VERSION           // user agent
     ) < 0) {
     socket_setError(socket, "SIP: error sending data -- %s", STRERROR);
     return FALSE;

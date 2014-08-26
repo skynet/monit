@@ -71,14 +71,14 @@ static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
                               "Content-Length: %d\r\n"
                               "Pragma: no-cache\r\n"
                               "Accept: */*\r\n"
-                              "User-Agent: %s/%s\r\n"
+                              "User-Agent: Monit/%s\r\n"
                               "%s"
                               "\r\n"
                               "%s",
                               C->url->path,
                               C->url->hostname, C->url->port,
                               strlen(D),
-                              prog, VERSION,
+                              VERSION,
                               auth?auth:"",
                               D);
         FREE(auth);
