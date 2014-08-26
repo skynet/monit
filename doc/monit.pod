@@ -806,7 +806,7 @@ Monit will raise an event in the following situations:
 
  o A service does not exist (e.g. process is not running)
  o Cannot read service data (e.g. cannot get filesystem usage)
- o Execution of service related scripts failed (e.g. start failed)
+ o Execution of a service related script failed (e.g. start failed)
  o Invalid service type (e.g. if path points to directory instead of file)
  o Custom test script returned error
  o Ping test failed
@@ -818,10 +818,10 @@ Monit will raise an event in the following situations:
  o Permission test failed (e.g. file mode doesn't match)
  o An UID test failed (e.g. file owned by different user)
  o A GID test failed (e.g. file owned by different group)
- o A process' PID changed out of Monit control
+ o A process' PID changed out of Monit's control
  o A process' PPID changed out of Monit control
  o Too many service recovery attempts failed
- o A file content matched the pattern
+ o A file content test found a match 
  o Filesystem flags changed
  o A service action was performed by administrator
  o Monit was started, stopped or reloaded

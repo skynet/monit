@@ -201,7 +201,7 @@ static void check_process_pid(Service_T s) {
         ASSERT(s && s->inf);
         
         /* process pid was not initialized yet */
-        if (s->inf->priv.process._pid == -1)
+        if (s->inf->priv.process._pid < 0 || s->inf->priv.process.pid < 0)
                 return;
         
         if (s->inf->priv.process._pid != s->inf->priv.process.pid)
@@ -219,7 +219,7 @@ static void check_process_ppid(Service_T s) {
         ASSERT(s && s->inf);
         
         /* process ppid was not initialized yet */
-        if (s->inf->priv.process._ppid == -1)
+        if (s->inf->priv.process._ppid < 0 || s->inf->priv.process.ppid < 0)
                 return;
         
         if (s->inf->priv.process._ppid != s->inf->priv.process.ppid)
@@ -1289,8 +1289,8 @@ int check_program(Service_T s) {
                                 int n = 0;
                                 char buf[STRLEN + 1];
                                 // Read message from script
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN);
+                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN - 1)) <= 0)
+                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN - 1);
                                 if (n > 0) {
                                         buf[n] = 0;
                                         Event_post(s, Event_Status, STATE_FAILED, status->action, "%s", buf);

@@ -136,6 +136,17 @@ gid_t Command_getGid(T C);
 
 
 /**
+ * Returns the Process timeout. Default is no timeout. The timeout
+ * is set with Command_setOnTimeout().
+ * @param C A Command object
+ * @return The number of seconds to wait before the Process will be
+ * destroyed. 0 means that there is no timeout.
+ * @see Command_setOnTimeout()
+ */
+int Command_getTimeout(T C);
+
+
+/**
  * Set the working directory for the sub-process. If directory cannot be changed
  * the sub-process will exit
  * @param C A Command object
@@ -159,13 +170,28 @@ const char *Command_getDir(T C);
 /**
  * Set or replace the environment variable identified by <code>name</code>.
  * The sub-process initially inherits the environment from the calling process.
- * Environment variables set with this method does not affect the parent 
+ * Environment variables set with this method does not affect the parent
  * process and only apply to the sub-process.
  * @param C A Command object
  * @param name The environment variable to set or replace
  * @param value The value
  */
 void Command_setEnv(T C, const char *name, const char *value);
+
+
+/**
+ * Set or replace the environment variable identified by <code>name</code>.
+ * The sub-process initially inherits the environment from the calling process.
+ * Environment variables set with this method does not affect the parent
+ * process and only apply to the sub-process. Example:
+ *<pre>
+ * Command_vSetEnv(C, "PID", "%ld", getpid()) -> PID=1234
+ * </pre>
+ * @param C A Command object
+ * @param name The environment variable to set or replace
+ * @param value The value
+ */
+void Command_vSetEnv(T C, const char *name, const char *value, ...) __attribute__((format (printf, 3, 4)));
 
 
 /**
