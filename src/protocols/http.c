@@ -282,9 +282,9 @@ int check_http(Socket_T socket) {
                          "GET %s HTTP/1.1\r\n"
                          "Host: %s\r\n"
                          "Accept: */*\r\n"
-                         "User-Agent: %s/%s\r\n"
+                         "User-Agent: Monit/%s\r\n"
                          "%s\r\n",
-                         request, hostheader, prog, VERSION,
+                         request, hostheader, VERSION,
                          get_auth_header(P, auth, STRLEN)) < 0) {
                 socket_setError(socket, "HTTP: error sending data -- %s", STRERROR);
                 return FALSE;

@@ -159,7 +159,7 @@ void start_httpd(int port, int backlog, char *bindAddr) {
     LogError("http server: Could not create a server socket at port %d -- %s\n",
         port, STRERROR);
 
-    LogError("monit HTTP server not available\n");
+    LogError("Monit HTTP server not available\n");
 
     if(Run.init) {
 
@@ -178,9 +178,9 @@ void start_httpd(int port, int backlog, char *bindAddr) {
 
       if(mySSLServerConnection == NULL) {
 
-        LogError("http server: Could not initialize SSL engine\n");
+        LogError("HTTP server: Could not initialize SSL engine\n");
 
-        LogError("monit HTTP server not available\n");
+        LogError("Monit HTTP server not available\n");
 
         return;
       }

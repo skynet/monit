@@ -178,7 +178,7 @@ int do_wakeupcall() {
 
         if ((pid = exist_daemon()) > 0) {
                 kill(pid, SIGUSR1);
-                LogInfo("%s daemon with PID %d awakened\n", prog, pid);
+                LogInfo("Monit daemon with PID %d awakened\n", pid);
 
                 return TRUE;
         }
@@ -323,7 +323,7 @@ static void do_reinit() {
         int status;
 
         LogInfo("Awakened by the SIGHUP signal\n");
-        LogInfo("Reinitializing %s - Control file '%s'\n", prog, Run.controlfile);
+        LogInfo("Reinitializing Monit - Control file '%s'\n", Run.controlfile);
 
         /* Wait non-blocking for any children that has exited. Since we
          reinitialize any information about children we have setup to wait
@@ -497,7 +497,7 @@ static void do_exit() {
                         heartbeatRunning = FALSE;
                 }
 
-                LogInfo("%s daemon with pid [%d] killed\n", prog, (int)getpid());
+                LogInfo("Monit daemon with pid [%d] killed\n", (int)getpid());
 
                 /* send the monit stop notification */
                 Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_STOP, "Monit stopped");
@@ -521,9 +521,10 @@ static void do_default() {
 
                 Run.once = FALSE;
                 if (can_http())
-                        LogInfo("Starting %s daemon with http interface at [%s:%d]\n", prog, Run.bind_addr?Run.bind_addr:"*", Run.httpdport);
+                        LogInfo("Starting Monit " VERSION " daemon with http interface at [%s:%d]\n",
+                                Run.bind_addr ? Run.bind_addr : "*", Run.httpdport);
                 else
-                        LogInfo("Starting %s daemon\n", prog);
+                        LogInfo("Starting Monit " VERSION " daemon\n");
 
                 if (Run.startdelay)
                         LogInfo("Monit start delay set -- pause for %ds\n", Run.startdelay);
@@ -534,7 +535,7 @@ static void do_default() {
                         Util_redirectStdFds();
 
                 if (! file_createPidFile(Run.pidfile)) {
-                        LogError("%s daemon died\n", prog);
+                        LogError("Monit daemon died\n");
                         exit(1);
                 }
 

@@ -283,7 +283,7 @@ int sendmail(Mail_T mail) {
                         do_send(&S, "To: %s\r\n", m->to);
                         do_send(&S, "Subject: %s\r\n", m->subject);
                         do_send(&S, "Date: %s\r\n", now);
-                        do_send(&S, "X-Mailer: %s %s\r\n", prog, VERSION);
+                        do_send(&S, "X-Mailer: Monit %s\r\n", VERSION);
                         do_send(&S, "MIME-Version: 1.0\r\n");
                         do_send(&S, "Content-Type: text/plain; charset=\"iso-8859-1\"\r\n");
                         do_send(&S, "Content-Transfer-Encoding: 8bit\r\n");
