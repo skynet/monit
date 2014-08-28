@@ -423,6 +423,7 @@ int Str_cmp(const void *x, const void *y) {
 
 char *Str_bytesToSize(double bytes, char s[10]) {
         assert(s);
+        assert(bytes < 9.99e+23);
         *s = 0;
         char *suffix[9] = {"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", NULL};
         for (int i = 0; suffix[i]; i++) {
