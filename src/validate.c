@@ -619,7 +619,7 @@ static void check_size(Service_T s) {
                                         /* reset expected value for next cycle */
                                         sl->size = s->inf->priv.file.st_size;
                                 } else {
-                                        DEBUG("'%s' size has not changed [current size=%llu B]\n", s->name, s->inf->priv.file.st_size);
+                                        DEBUG("'%s' size has not changed [current size=%llu B]\n", s->name, (unsigned long long)s->inf->priv.file.st_size);
                                         Event_post(s, Event_Size, STATE_CHANGEDNOT, sl->action, "size was not changed");
                                 }
                         }
@@ -628,9 +628,9 @@ static void check_size(Service_T s) {
                 
                 /* we are testing constant value for failed or succeeded state */
                 if (Util_evalQExpression(sl->operator, s->inf->priv.file.st_size, sl->size))
-                        Event_post(s, Event_Size, STATE_FAILED, sl->action, "size test failed for %s -- current size is %llu B", s->path, s->inf->priv.file.st_size);
+                        Event_post(s, Event_Size, STATE_FAILED, sl->action, "size test failed for %s -- current size is %llu B", s->path, (unsigned long long)s->inf->priv.file.st_size);
                 else {
-                        DEBUG("'%s' size check succeeded [current size=%llu B]\n", s->name, s->inf->priv.file.st_size);
+                        DEBUG("'%s' size check succeeded [current size=%llu B]\n", s->name, (unsigned long long)s->inf->priv.file.st_size);
                         Event_post(s, Event_Size, STATE_SUCCEEDED, sl->action, "size succeeded");
                 }
         }
