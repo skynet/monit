@@ -2633,6 +2633,11 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
         } else if (b->range == TIME_DAY && b->rangecount > 1) {
                 yyerror2("Maximum value for [day(s)] unit is 1");
         } else {
+                if (b->range == TIME_DAY) {
+                        // translate last day -> last 24 hours
+                        b->rangecount = 24;
+                        b->range = TIME_HOUR;
+                }
                 Bandwidth_T bandwidth;
                 NEW(bandwidth);
                 bandwidth->operator = b->operator;

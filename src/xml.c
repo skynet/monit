@@ -187,6 +187,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<bytes>%lld</bytes>"
                                         "<errors>%lld</errors>"
                                         "</download>"
+//FIXME: add total counter
                                         "<upload>"
                                         "<packets>%lld</packets>"
                                         "<bytes>%lld</bytes>"

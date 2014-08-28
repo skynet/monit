@@ -151,7 +151,13 @@ static long long _deltaSecond(T stats, NetStatisticsData_T *data) {
 static long long _deltaMinute(T stats, NetStatisticsData_T *data, int count) {
         assert(count > 0 && count <= 60);
         int stop = Time_minutes(stats->timestamp.now);
-        int start = stop - count < 0 ? 60 - stop - count : stop - count; //FIXME: if start is 0 (not initialized yet), perform start++ to until first initialized sample is found
+        int start = stop - count < 0 ? 60 - stop - count : stop - count;
+        while (data->minute[start] == 0) {
+                if (++start > 59)
+                        start = 0;
+                else if (start == stop)
+                        break;
+        }
         return data->minute[stop] - data->minute[start];
 }
 
@@ -159,7 +165,13 @@ static long long _deltaMinute(T stats, NetStatisticsData_T *data, int count) {
 static long long _deltaHour(T stats, NetStatisticsData_T *data, int count) {
         assert(count > 0 && count <= 24);
         int stop = Time_hour(stats->timestamp.now);
-        int start = stop - count < 0 ? 24 - stop - count : stop - count; //FIXME: if start is 0 (not initialized yet), perform start++ to until first initialized sample is found
+        int start = stop - count < 0 ? 24 - stop - count : stop - count;
+        while (data->minute[start] == 0) {
+                if (++start > 23)
+                        start = 0;
+                else if (start == stop)
+                        break;
+        }
         return data->hour[stop] - data->hour[start];
 }
 
