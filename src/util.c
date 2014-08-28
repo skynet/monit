@@ -1221,7 +1221,7 @@ void Util_printService(Service_T s) {
                         case RESOURCE_ID_MEM_KBYTE:
                         case RESOURCE_ID_SWAP_KBYTE:
                         case RESOURCE_ID_TOTAL_MEM_KBYTE:
-                                printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s", operatornames[o->operator], Str_bytesToString(o->limit * 1024., buffer, sizeof(buffer)))));
+                                printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s", operatornames[o->operator], Str_bytesToSize(o->limit * 1024., buffer))));
                                 break;
 
                         case RESOURCE_ID_LOAD1:
