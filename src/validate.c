@@ -56,6 +56,10 @@
 #include <sys/socket.h>
 #endif
 
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -92,8 +96,10 @@
 #include "protocol.h"
 
 // libmonit
+#include "system/NetStatistics.h"
 #include "system/Time.h"
 #include "io/File.h"
+#include "exceptions/AssertException.h"
 
 /**
  *  Implementation of validation engine
@@ -1390,6 +1396,129 @@ int check_system(Service_T s) {
         ASSERT(s);
         for (Resource_T r = s->resourcelist; r; r = r->next)
                 check_process_resources(s, r);
+        return TRUE;
+}
+
+
+int check_net(Service_T s) {
+        int havedata = TRUE;
+        TRY
+        {
+                NetStatistics_update(s->inf->priv.net.stats);
+        }
+        ELSE
+        {
+                havedata = FALSE;
+                for (NetLink_T link = s->netlinklist; link; link = link->next)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "link data gathering failed -- %s", Exception_frame.message);
+        }
+        END_TRY;
+        if (! havedata)
+                return FALSE; // Terminate test if no data are available
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                Event_post(s, Event_Size, STATE_SUCCEEDED, link->action, "link data gathering succeeded");
+        }
+        // State
+        if (! NetStatistics_getState(s->inf->priv.net.stats)) {
+                for (NetLink_T link = s->netlinklist; link; link = link->next)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
+                return FALSE; // Terminate test if the link is down
+        } else {
+                DEBUG("Link %s up\n", s->path);
+                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
+                }
+        }
+        // Link errors
+        long long oerrors = NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats);
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                if (oerrors)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld upload errors detected", oerrors);
+                else
+                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "upload errors check succeeded");
+        }
+        long long ierrors = NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats);
+        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                if (ierrors)
+                        Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld download errors detected", ierrors);
+                else
+                        Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "download errors check succeeded");
+        }
+        char buf1[STRLEN], buf2[STRLEN];
+        // Upload
+        for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
+                long long obytes;
+                switch (upload->range) {
+                        case TIME_MINUTE:
+                                obytes = NetStatistics_getBytesOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                obytes = NetStatistics_getBytesOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        default:
+                                obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
+                if (Util_evalQExpression(upload->operator, obytes, upload->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload %s matches limit [upload rate %s %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToString(obytes, buf1, sizeof(buf1)), operatorshortnames[upload->operator], Str_bytesToString(upload->limit, buf2, sizeof(buf2)), upload->rangecount, Util_timestr(upload->range));
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload check succeeded [current upload rate %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToString(obytes, buf1, sizeof(buf1)), upload->rangecount, Util_timestr(upload->range));
+        }
+        for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
+                long long opackets;
+                switch (upload->range) {
+                        case TIME_MINUTE:
+                                opackets = NetStatistics_getPacketsOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                opackets = NetStatistics_getPacketsOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                break;
+                        default:
+                                opackets = NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
+                if (Util_evalQExpression(upload->operator, opackets, upload->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
+        }
+        // Download
+        for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
+                long long ibytes;
+                switch (download->range) {
+                        case TIME_MINUTE:
+                                ibytes = NetStatistics_getBytesInPerMinute(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                ibytes = NetStatistics_getBytesInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        default:
+                                ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
+                if (Util_evalQExpression(download->operator, ibytes, download->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload %s matches limit [download rate %s %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToString(ibytes, buf1, sizeof(buf1)), operatorshortnames[download->operator], Str_bytesToString(download->limit, buf2, sizeof(buf2)), download->rangecount, Util_timestr(download->range));
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload check succeeded [current download rate %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToString(ibytes, buf1, sizeof(buf1)), download->rangecount, Util_timestr(download->range));
+        }
+        for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
+                long long ipackets;
+                switch (download->range) {
+                        case TIME_MINUTE:
+                                ipackets = NetStatistics_getPacketsInPerMinute(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        case TIME_HOUR:
+                                ipackets = NetStatistics_getPacketsInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                break;
+                        default:
+                                ipackets = NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats);
+                                break;
+                }
+                if (Util_evalQExpression(download->operator, ipackets, download->limit))
+                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
+                else
+                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload packets check succeeded [current download packets %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
+        }
         return TRUE;
 }
 

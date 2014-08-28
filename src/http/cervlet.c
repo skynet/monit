@@ -105,6 +105,7 @@ static void do_home_filesystem(HttpRequest, HttpResponse);
 static void do_home_directory(HttpRequest, HttpResponse);
 static void do_home_file(HttpRequest, HttpResponse);
 static void do_home_fifo(HttpRequest, HttpResponse);
+static void do_home_net(HttpRequest, HttpResponse);
 static void do_home_process(HttpRequest, HttpResponse);
 static void do_home_program(HttpRequest, HttpResponse);
 static void do_home_host(HttpRequest, HttpResponse);
@@ -129,6 +130,10 @@ static void print_service_rules_gid(HttpResponse, Service_T);
 static void print_service_rules_timestamp(HttpResponse, Service_T);
 static void print_service_rules_filesystem(HttpResponse, Service_T);
 static void print_service_rules_size(HttpResponse, Service_T);
+static void print_service_rules_uploadbytes(HttpResponse, Service_T);
+static void print_service_rules_uploadpackets(HttpResponse, Service_T);
+static void print_service_rules_downloadbytes(HttpResponse, Service_T);
+static void print_service_rules_downloadpackets(HttpResponse, Service_T);
 static void print_service_rules_uptime(HttpResponse, Service_T);
 static void print_service_rules_match(HttpResponse, Service_T);
 static void print_service_rules_checksum(HttpResponse, Service_T);
@@ -148,6 +153,7 @@ static void print_service_params_checksum(HttpResponse, Service_T);
 static void print_service_params_process(HttpResponse, Service_T);
 static void print_service_params_resource(HttpResponse, Service_T);
 static void print_service_params_program(HttpResponse, Service_T);
+static void print_service_params_net(HttpResponse, Service_T);
 static void print_status(HttpRequest, HttpResponse, int);
 static void status_service_txt(Service_T, HttpResponse, short);
 static char *get_monitoring_status(Service_T s, char *, int);
@@ -372,6 +378,7 @@ static void do_home(HttpRequest req, HttpResponse res) {
         do_home_file(req, res);
         do_home_fifo(req, res);
         do_home_directory(req, res);
+        do_home_net(req, res);
         do_home_host(req, res);
 
         do_foot(res);
@@ -778,6 +785,8 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>%s</td><td>%s</td></tr>", s->matchlist ? "Match" : "Pid file", s->path);
         else if (s->type == TYPE_HOST)
                 StringBuffer_append(res->outputbuffer, "<tr><td>Address</td><td>%s</td></tr>", s->path);
+        else if (s->type == TYPE_NET)
+                StringBuffer_append(res->outputbuffer, "<tr><td>Interface</td><td>%s</td></tr>", s->path);
         else if (s->type != TYPE_SYSTEM)
                 StringBuffer_append(res->outputbuffer, "<tr><td>Path</td><td>%s</td></tr>", s->path);
 
@@ -891,6 +900,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_params_process(res, s);
         print_service_params_resource(res, s);
         print_service_params_program(res, s);
+        print_service_params_net(res, s);
 
         /* Rules */
         print_service_rules_icmp(res, s);
@@ -902,6 +912,10 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_timestamp(res, s);
         print_service_rules_filesystem(res, s);
         print_service_rules_size(res, s);
+        print_service_rules_uploadbytes(res, s);
+        print_service_rules_uploadpackets(res, s);
+        print_service_rules_downloadbytes(res, s);
+        print_service_rules_downloadpackets(res, s);
         print_service_rules_uptime(res, s);
         print_service_rules_match(res, s);
         print_service_rules_checksum(res, s);
@@ -1112,6 +1126,47 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
         if (!header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
+}
+
+
+static void do_home_net(HttpRequest req, HttpResponse res) {
+        char buf[STRLEN];
+        int on = TRUE;
+        int header = TRUE;
+
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
+                if (s->type != TYPE_NET)
+                        continue;
+                if (header) {
+                        StringBuffer_append(res->outputbuffer,
+                                  "<table id='header-row'>"
+                                  "<tr>"
+                                  "<th align='left' class='first'>Net</th>"
+                                  "<th align='left'>Status</th>"
+                                  "<th align='right'>Upload</th>"
+                                  "<th align='right'>Download</th>"
+                                  "</tr>");
+                        header = FALSE;
+                }
+                StringBuffer_append(res->outputbuffer,
+                          "<tr %s>"
+                          "<td align='left'><a href='%s'>%s</a></td>"
+                          "<td align='left'>%s</td>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s&#47;s</td>", Str_bytesToString(NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats), buf, sizeof(buf)));
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s&#47;s</td>", Str_bytesToString(NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats), buf, sizeof(buf)));
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+                on = ! on;
+        }
+        if (! header)
+                StringBuffer_append(res->outputbuffer, "</table>");
 }
 
 
@@ -1490,6 +1545,8 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                 } else {
                         if (IS_EVENT_SET(r->events, Event_Action))
                                 StringBuffer_append(res->outputbuffer, "Action ");
+                        if (IS_EVENT_SET(r->events, Event_Bandwidth))
+                                StringBuffer_append(res->outputbuffer, "Bandwidth ");
                         if (IS_EVENT_SET(r->events, Event_Checksum))
                                 StringBuffer_append(res->outputbuffer, "Checksum ");
                         if (IS_EVENT_SET(r->events, Event_Connection))
@@ -1510,6 +1567,8 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                                 StringBuffer_append(res->outputbuffer, "Instance ");
                         if (IS_EVENT_SET(r->events, Event_Invalid))
                                 StringBuffer_append(res->outputbuffer, "Invalid ");
+                        if (IS_EVENT_SET(r->events, Event_Link))
+                                StringBuffer_append(res->outputbuffer, "Link ");
                         if (IS_EVENT_SET(r->events, Event_Nonexist))
                                 StringBuffer_append(res->outputbuffer, "Nonexist ");
                         if (IS_EVENT_SET(r->events, Event_Permission))
@@ -1699,6 +1758,64 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
                         Util_printRule(res->outputbuffer, sl->action, "If changed");
                 else
                         Util_printRule(res->outputbuffer, sl->action, "If %s %llu byte(s)", operatornames[sl->operator], sl->size);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
+        char buf[STRLEN];
+        for (Bandwidth_T bl = s->uploadbyteslist; bl; bl = bl->next) {
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total upload bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)), bl->rangecount, Util_timestr(bl->range));
+                }
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
+        for (Bandwidth_T bl = s->uploadpacketslist; bl; bl = bl->next) {
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total upload packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
+                }
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
+        char buf[STRLEN];
+        for (Bandwidth_T bl = s->downloadbyteslist; bl; bl = bl->next) {
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)));
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total download bytes</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToString(bl->limit, buf, sizeof(buf)), bl->rangecount, Util_timestr(bl->range));
+                }
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
+        for (Bandwidth_T bl = s->downloadpacketslist; bl; bl = bl->next) {
+                if (bl->range == TIME_SECOND) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                } else {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Total download packets</td><td>");
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
+                }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1959,6 +2076,45 @@ static void print_service_params_gid(HttpResponse res, Service_T s) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td>-</td></tr>");
                 else
                         StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td class='%s'>%d</td></tr>", (s->error & Event_Gid)?"red-text":"", (int)s->inf->st_gid);
+        }
+}
+
+
+static void print_service_params_net(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_NET) {
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Link</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>-</td></tr>");
+                } else {
+                        char buf[STRLEN];
+                        long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
+                        if (speed > 0)
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.1lf Mb&#47;s %s-duplex</td></tr>", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>%lld per second</td></tr>", NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats));
+
+                        long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>%s per second", Str_bytesToString(ibytes, buf, sizeof(buf)));
+                        if (speed > 0 && ibytes > 0)
+                                StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * ibytes * 8 / (double)speed);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>%lld per second</td></tr>", NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
+
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>%lld per second</td></tr>", NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats));
+
+                        long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>%s per second", Str_bytesToString(obytes, buf, sizeof(buf)));
+                        if (speed > 0 && obytes > 0)
+                                StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * obytes * 8 / (double)speed);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>%lld per second</td></tr>", NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
+                }
         }
 }
 
@@ -2338,6 +2494,45 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                   "checksum", s->inf->priv.file.cs_sum,
                                                   checksumnames[s->checksum->type]);
                                 }
+                        }
+                        if (s->type == TYPE_NET) {
+                                long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
+                                if (speed > 0)
+                                        StringBuffer_append(res->outputbuffer,
+                                                "  %-33s %.1lf Mb/s %s-duplex\n",
+                                                "link speed", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "download packets", NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats));
+
+                                long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %s per second",
+                                        "download bytes", Str_bytesToString(ibytes, buf, sizeof(buf)));
+                                if (speed > 0 && ibytes > 0)
+                                        StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * ibytes * 8 / (double)speed);
+                                StringBuffer_append(res->outputbuffer, "\n");
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "download errors", NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "upload packets", NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats));
+
+                                long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %s per second",
+                                        "upload bytes", Str_bytesToString(obytes, buf, sizeof(buf)));
+                                if (speed > 0 && obytes > 0)
+                                        StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * obytes * 8 / (double)speed);
+                                StringBuffer_append(res->outputbuffer, "\n");
+
+                                StringBuffer_append(res->outputbuffer,
+                                        "  %-33s %lld per second\n",
+                                        "upload errors", NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         }
                         if (s->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(res->outputbuffer,
