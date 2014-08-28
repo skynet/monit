@@ -962,10 +962,10 @@ static void do_home_system(HttpRequest req, HttpResponse res) {
                 );
                 StringBuffer_append(res->outputbuffer,
                           "<td align='right'>%.1f%% [%s]</td>",
-                          systeminfo.total_mem_percent/10., Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf, sizeof(buf)));
+                          systeminfo.total_mem_percent/10., Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf));
                 StringBuffer_append(res->outputbuffer,
                           "<td align='right'>%.1f%% [%s]</td>",
-                          systeminfo.total_swap_percent/10., Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf, sizeof(buf)));
+                          systeminfo.total_swap_percent/10., Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf));
         }
 
         StringBuffer_append(res->outputbuffer,
@@ -1040,7 +1040,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<td align='right' class='%s'>%.1f%% [%s]</td>",
                                           (s->error & Event_Resource)?"red-text":"",
-                                          s->inf->priv.process.total_mem_percent/10.0, Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf, sizeof(buf)));
+                                          s->inf->priv.process.total_mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
                         }
 
                 }
@@ -1158,7 +1158,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>%.1f%% [%s]</td>",
                                   s->inf->priv.filesystem.space_percent/10.,
-                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.space_total * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB");
+                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.space_total * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
 
                         if (s->inf->priv.filesystem.f_files > 0) {
 
@@ -1845,7 +1845,7 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
                         case RESOURCE_ID_MEM_KBYTE:
                         case RESOURCE_ID_SWAP_KBYTE:
                         case RESOURCE_ID_TOTAL_MEM_KBYTE:
-                                Util_printRule(res->outputbuffer, q->action, "If %s %s", operatornames[q->operator], Str_bytesToString(q->limit * 1024., buf, sizeof(buf)));
+                                Util_printRule(res->outputbuffer, q->action, "If %s %s", operatornames[q->operator], Str_bytesToSize(q->limit * 1024., buf));
                                 break;
 
                         case RESOURCE_ID_LOAD1:
@@ -2012,22 +2012,22 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Blocks total</td><td>%ld [%s]</td></tr>",
                                   s->inf->priv.filesystem.f_blocks,
-                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB");
+                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Blocks free for non superuser</td>"
                                   "<td>%ld [%s] [%.1f%%]</td></tr>",
                                   s->inf->priv.filesystem.f_blocksfree,
-                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB",
+                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                   s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Blocks free total</td>"
                                   "<td class='%s'>%ld [%s] [%.1f%%]</td></tr>",
                                   (s->error & Event_Resource)?"red-text":"",
                                   s->inf->priv.filesystem.f_blocksfreetotal,
-                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB",
+                                  s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                   s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
                         StringBuffer_append(res->outputbuffer,
-                                  "<tr><td>Block size</td><td>%s</td></tr>", Str_bytesToString(s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)));
+                                  "<tr><td>Block size</td><td>%s</td></tr>", Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
 
                         if (s->inf->priv.filesystem.f_files > 0) {
 
@@ -2182,11 +2182,11 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Memory usage</td><td class='%s'>%.1f%% [%s]</td></tr>",
                                           (s->error & Event_Resource)?"red-text":"",
-                                          s->inf->priv.process.mem_percent/10.0, Str_bytesToString(s->inf->priv.process.mem_kbyte * 1024., buf, sizeof(buf)));
+                                          s->inf->priv.process.mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Total memory usage (incl. children)</td><td class='%s'>%.1f%% [%s]</td></tr>",
                                           (s->error & Event_Resource)?"red-text":"",
-                                          s->inf->priv.process.total_mem_percent/10.0, Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf, sizeof(buf)));
+                                          s->inf->priv.process.total_mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
                         } else if (s->type == TYPE_SYSTEM) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Load average</td><td class='%s'>[%.2f] [%.2f] [%.2f]</td></tr>",
@@ -2210,12 +2210,12 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Memory usage</td><td class='%s'>%s [%.1f%%]</td></tr>",
                                           (s->error & Event_Resource)?"red-text":"",
-                                          Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf, sizeof(buf)),
+                                          Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf),
                                           systeminfo.total_mem_percent / 10.);
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Swap usage</td><td class='%s'>%s [%.1f%%]</td></tr>",
                                           (s->error & Event_Resource)?"red-text":"",
-                                          Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf, sizeof(buf)),
+                                          Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf),
                                           systeminfo.total_swap_percent/10.);
                         }
                 }
@@ -2346,23 +2346,23 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                           "filesystem flags",
                                           s->inf->priv.filesystem.flags,
                                           "block size",
-                                          Str_bytesToString(s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)));
+                                          Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %ld [%s]\n",
                                           "blocks total",
                                           s->inf->priv.filesystem.f_blocks,
-                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB");
+                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %ld [%s] [%.1f%%]\n",
                                           "blocks free for non superuser",
                                           s->inf->priv.filesystem.f_blocksfree,
-                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB",
+                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                           s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %ld [%s] [%.1f%%]\n",
                                           "blocks free total",
                                           s->inf->priv.filesystem.f_blocksfreetotal,
-                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToString(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf, sizeof(buf)) : "0 MB",
+                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                           s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
                                 if (s->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(res->outputbuffer,
@@ -2397,10 +2397,10 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                   "children", s->inf->priv.process.children);
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %s\n",
-                                                  "memory kilobytes", Str_bytesToString(s->inf->priv.process.mem_kbyte * 1024., buf, sizeof(buf)));
+                                                  "memory kilobytes", Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %s\n",
-                                                  "memory kilobytes total", Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf, sizeof(buf)));
+                                                  "memory kilobytes total", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %.1f%%\n"
                                                   "  %-33s %.1f%%\n"
@@ -2455,10 +2455,10 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 );
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %s [%.1f%%]\n",
-                                          "memory usage", Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf, sizeof(buf)), systeminfo.total_mem_percent/10.);
+                                          "memory usage", Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf), systeminfo.total_mem_percent/10.);
                                 StringBuffer_append(res->outputbuffer,
                                           "  %-33s %s [%.1f%%]\n",
-                                          "swap usage", Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf, sizeof(buf)), systeminfo.total_swap_percent/10.);
+                                          "swap usage", Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf), systeminfo.total_swap_percent/10.);
                         }
                         if (s->type == TYPE_PROGRAM) {
                                 if (s->program->started) {

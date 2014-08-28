@@ -421,15 +421,15 @@ int Str_cmp(const void *x, const void *y) {
 }
 
 
-char *Str_bytesToString(double value, char *s, int n) {
+char *Str_bytesToSize(double bytes, char s[10]) {
         assert(s);
         *s = 0;
         char *suffix[9] = {"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", NULL};
         for (int i = 0; suffix[i]; i++) {
-                if (value > 1024) {
-                        value /= 1024;
+                if (bytes > 1024) {
+                        bytes /= 1024;
                 } else {
-                        snprintf(s, n, "%.1lf %s", value, suffix[i]);
+                        snprintf(s, 10, "%.1lf %s", bytes, suffix[i]);
                         break;
                 }
         }

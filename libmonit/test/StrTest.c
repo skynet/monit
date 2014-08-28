@@ -401,17 +401,21 @@ int main(void) {
         }
         printf("=> Test23: OK\n\n");
 
-        printf("=> Test24: Str_bytesToString\n");
+        printf("=> Test24: Str_bytesToSize\n");
         {
-                char str[256];
-                Str_bytesToString(0, str, sizeof(str));
+                char str[10];
+                Str_bytesToSize(0, str);
                 assert(Str_isEqual(str, "0.0 B"));
-                Str_bytesToString(2048, str, sizeof(str));
+                Str_bytesToSize(2048, str);
                 assert(Str_isEqual(str, "2.0 KB"));
-                Str_bytesToString(2097152, str, sizeof(str));
+                Str_bytesToSize(2097152, str);
                 assert(Str_isEqual(str, "2.0 MB"));
-                Str_bytesToString(2621440, str, sizeof(str));
+                Str_bytesToSize(2621440, str);
                 assert(Str_isEqual(str, "2.5 MB"));
+                Str_bytesToSize(9083741824, str);
+                assert(Str_isEqual(str, "8.5 GB"));
+                Str_bytesToSize(9083741824987653, str);
+                assert(Str_isEqual(str, "8.1 PB"));
         }
         printf("=> Test24: OK\n\n");
 
