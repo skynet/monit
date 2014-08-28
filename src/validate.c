@@ -48,6 +48,10 @@
 #include <setjmp.h>
 #endif
 
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -167,7 +171,7 @@ error:
                 }
                 p->response = -1;
                 p->is_available = FALSE;
-                Event_post(s, Event_Connection, STATE_FAILED, p->action, report);
+                Event_post(s, Event_Connection, STATE_FAILED, p->action, "%s", report);
         } else {
                 p->is_available = TRUE;
                 Event_post(s, Event_Connection, STATE_SUCCEEDED, p->action, "connection succeeded to %s", Util_portDescription(p, buf, sizeof(buf)));
@@ -235,7 +239,7 @@ static void check_process_ppid(Service_T s) {
 static void check_process_resources(Service_T s, Resource_T r) {
         
         int okay = TRUE;
-        char report[STRLEN]={0};
+        char report[STRLEN]={0}, buf1[STRLEN], buf2[STRLEN];
         
         ASSERT(s && r);
         
@@ -310,16 +314,16 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case RESOURCE_ID_MEM_KBYTE:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_kbyte, r->limit)) {
-                                        snprintf(report, STRLEN, "mem amount of %ldkB matches resource limit [mem amount%s%ldkB]", systeminfo.total_mem_kbyte, operatorshortnames[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "mem amount of %s matches resource limit [mem amount%s%s]", Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                         okay = FALSE;
                                 } else
-                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%ldkB]", s->name, systeminfo.total_mem_kbyte);
+                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%s]", s->name, Str_bytesToString(systeminfo.total_mem_kbyte * 1024., buf1, sizeof(buf1)));
                         } else {
                                 if (Util_evalQExpression(r->operator, s->inf->priv.process.mem_kbyte, r->limit)) {
-                                        snprintf(report, STRLEN, "mem amount of %ldkB matches resource limit [mem amount%s%ldkB]", s->inf->priv.process.mem_kbyte, operatorshortnames[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "mem amount of %s matches resource limit [mem amount%s%s]", Str_bytesToString(s->inf->priv.process.mem_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                         okay = FALSE;
                                 } else
-                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%ldkB]", s->name, s->inf->priv.process.mem_kbyte);
+                                        snprintf(report, STRLEN, "'%s' mem amount check succeeded [current mem amount=%s]", s->name, Str_bytesToString(s->inf->priv.process.mem_kbyte * 1024., buf1, sizeof(buf1)));
                         }
                         break;
                         
@@ -336,10 +340,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case RESOURCE_ID_SWAP_KBYTE:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_kbyte, r->limit)) {
-                                        snprintf(report, STRLEN, "swap amount of %ldkB matches resource limit [swap amount%s%ldkB]", systeminfo.total_swap_kbyte, operatorshortnames[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "swap amount of %s matches resource limit [swap amount%s%s]", Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                         okay = FALSE;
                                 } else
-                                        snprintf(report, STRLEN, "'%s' swap amount check succeeded [current swap amount=%ldkB]", s->name, systeminfo.total_swap_kbyte);
+                                        snprintf(report, STRLEN, "'%s' swap amount check succeeded [current swap amount=%s]", s->name, Str_bytesToString(systeminfo.total_swap_kbyte * 1024., buf1, sizeof(buf1)));
                         }
                         break;
                         
@@ -377,10 +381,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         
                 case RESOURCE_ID_TOTAL_MEM_KBYTE:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_kbyte, r->limit)) {
-                                snprintf(report, STRLEN, "total mem amount of %ldkB matches resource limit [total mem amount%s%ldkB]", s->inf->priv.process.total_mem_kbyte, operatorshortnames[r->operator], r->limit);
+                                snprintf(report, STRLEN, "total mem amount of %s matches resource limit [total mem amount%s%s]", Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf1, sizeof(buf1)), operatorshortnames[r->operator], Str_bytesToString(r->limit * 1024., buf2, sizeof(buf2)));
                                 okay = FALSE;
                         } else
-                                snprintf(report, STRLEN, "'%s' total mem amount check succeeded [current total mem amount=%ldkB]", s->name, s->inf->priv.process.total_mem_kbyte);
+                                snprintf(report, STRLEN, "'%s' total mem amount check succeeded [current total mem amount=%s]", s->name, Str_bytesToString(s->inf->priv.process.total_mem_kbyte * 1024., buf1, sizeof(buf1)));
                         break;
                         
                 case RESOURCE_ID_TOTAL_MEM_PERCENT:
@@ -616,7 +620,7 @@ static void check_size(Service_T s) {
                                         sl->size = s->inf->priv.file.st_size;
                                 } else {
                                         DEBUG("'%s' size has not changed [current size=%llu B]\n", s->name, s->inf->priv.file.st_size);
-                                        Event_post(s, Event_Size, STATE_CHANGEDNOT, sl->action, "size was not changed", s->path);
+                                        Event_post(s, Event_Size, STATE_CHANGEDNOT, sl->action, "size was not changed");
                                 }
                         }
                         break;
@@ -643,9 +647,9 @@ static void check_uptime(Service_T s) {
         
         for (ul = s->uptimelist; ul; ul = ul->next) {
                 if (Util_evalQExpression(ul->operator, s->inf->priv.process.uptime, ul->uptime))
-                        Event_post(s, Event_Uptime, STATE_FAILED, ul->action, "uptime test failed for %s -- current uptime is %llu seconds", s->path, s->inf->priv.process.uptime);
+                        Event_post(s, Event_Uptime, STATE_FAILED, ul->action, "uptime test failed for %s -- current uptime is %llu seconds", s->path, (unsigned long long)s->inf->priv.process.uptime);
                 else {
-                        DEBUG("'%s' uptime check succeeded [current uptime=%llu seconds]\n", s->name, s->inf->priv.process.uptime);
+                        DEBUG("'%s' uptime check succeeded [current uptime=%llu seconds]\n", s->name, (unsigned long long)s->inf->priv.process.uptime);
                         Event_post(s, Event_Uptime, STATE_SUCCEEDED, ul->action, "uptime succeeded");
                 }
         }
@@ -797,7 +801,7 @@ static void check_filesystem_flags(Service_T s) {
                 return;
         
         if (s->inf->priv.filesystem._flags != s->inf->priv.filesystem.flags)
-                Event_post(s, Event_Fsflag, STATE_CHANGED, s->action_FSFLAG, "filesytem flags changed to %#lx", s->inf->priv.filesystem.flags);
+                Event_post(s, Event_Fsflag, STATE_CHANGED, s->action_FSFLAG, "filesytem flags changed to %#x", s->inf->priv.filesystem.flags);
 }
 
 /**
@@ -1383,14 +1387,9 @@ int check_remote_host(Service_T s) {
  * FALSE is returned.
  */
 int check_system(Service_T s) {
-        Resource_T r = NULL;
-
         ASSERT(s);
-
-        for (r = s->resourcelist; r; r = r->next) {
+        for (Resource_T r = s->resourcelist; r; r = r->next)
                 check_process_resources(s, r);
-        }
-
         return TRUE;
 }
 

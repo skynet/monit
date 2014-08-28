@@ -419,4 +419,15 @@ unsigned int Str_hash(const void *x);
 int Str_cmp(const void *x, const void *y);
 
 
+/**
+ * Convert the numeric bytes value to string representation scaled to
+ * human friendly storage unit [B, kB, MB, etc.].
+ * @param value A numeric value
+ * @param s A buffer to print the result to
+ * @param n A buffer size
+ * @return A buffer with string representation
+ */
+char *Str_bytesToString(double value, char *s, int n);
+
 #endif
+

@@ -888,31 +888,19 @@ void Util_printService(Service_T s) {
         ASSERT(s);
 
         int sgheader = FALSE;
-        Port_T n;
-        Icmp_T i;
-        Mail_T r;
-        Filesystem_T dl;
-        Resource_T q;
-        Timestamp_T t;
-        ActionRate_T ar;
-        Size_T sl;
-        Uptime_T ul;
-        Match_T ml;
-        Dependant_T d;
-        ServiceGroup_T sg;
-        ServiceGroupMember_T sgm;
+        char buffer[STRLEN];
         StringBuffer_T buf = StringBuffer_create(STRLEN);
 
         printf("%-21s = %s\n", StringBuffer_toString(StringBuffer_append(buf, "%s Name", servicetypes[s->type])), s->name);
 
-        for (sg = servicegrouplist; sg; sg = sg->next) {
-                for (sgm = sg->members; sgm; sgm = sgm->next) {
-                        if (! strcasecmp(sgm->name, s->name)) {
+        for (ServiceGroup_T o = servicegrouplist; o; o = o->next) {
+                for (ServiceGroupMember_T om = o->members; om; om = om->next) {
+                        if (! strcasecmp(om->name, s->name)) {
                                 if (! sgheader) {
-                                        printf(" %-20s = %s", "Group", sg->name);
+                                        printf(" %-20s = %s", "Group", o->name);
                                         sgheader = TRUE;
                                 } else
-                                        printf(", %s", sg->name);
+                                        printf(", %s", o->name);
                         }
                 }
         }
@@ -924,7 +912,9 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Match", s->path);
                 else
                         printf(" %-20s = %s\n", "Pid file", s->path);
-        } else if (s->type != TYPE_HOST && s->type != TYPE_SYSTEM) {
+        } else if (s->type == TYPE_HOST) {
+                printf(" %-20s = %s\n", "Address", s->path);
+        } else if (s->type != TYPE_SYSTEM) {
                 printf(" %-20s = %s\n", "Path", s->path);
         }
         printf(" %-20s = %s\n", "Monitoring mode", modenames[s->mode]);
@@ -969,9 +959,9 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "Existence", StringBuffer_toString(Util_printRule(buf, s->action_NONEXIST, "if does not exist")));
         }
 
-        for (d = s->dependantlist; d; d = d->next)
-                if (d->dependant != NULL)
-                        printf(" %-20s = %s\n", "Depends on Service", d->dependant);
+        for (Dependant_T o = s->dependantlist; o; o = o->next)
+                if (o->dependant != NULL)
+                        printf(" %-20s = %s\n", "Depends on Service", o->dependant);
 
         if (s->type == TYPE_PROCESS) {
                 StringBuffer_clear(buf);
@@ -988,9 +978,9 @@ void Util_printService(Service_T s) {
         if (s->type == TYPE_PROGRAM) {
                 printf(" %-20s = ", "Program timeout");
                 printf("terminate the program if not finished within %d seconds\n", s->program->timeout);
-                for (Status_T status = s->statuslist; status; status = status->next) {
+                for (Status_T o = s->statuslist; o; o = o->next) {
                         StringBuffer_clear(buf);
-                        printf(" %-20s = %s\n", "Status", StringBuffer_toString(Util_printRule(buf, status->action, "if exit value %s %d", operatorshortnames[status->operator], status->return_value)));
+                        printf(" %-20s = %s\n", "Status", StringBuffer_toString(Util_printRule(buf, o->action, "if exit value %s %d", operatorshortnames[o->operator], o->return_value)));
                 }
         }
 
@@ -1025,94 +1015,90 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "GID", StringBuffer_toString(Util_printRule(buf, s->gid->action, "if failed %d", s->gid->gid)));
         }
 
-        if (s->icmplist) {
-                for (i = s->icmplist; i; i = i->next) {
-                        StringBuffer_clear(buf);
-                        printf(" %-20s = %s\n", "ICMP", StringBuffer_toString(Util_printRule(buf, i->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout)));
+        for (Icmp_T o = s->icmplist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "ICMP", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout)));
+        }
+
+        for (Port_T o = s->portlist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                if (o->family == AF_INET) {
+                        if (o->retry > 1)
+                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d times]", o->hostname, o->port, o->request ? o->request : "", o->protocol->name, Util_portTypeDescription(o), o->timeout, o->retry)));
+                        else
+                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds]", o->hostname, o->port, o->request ? o->request : "", o->protocol->name, Util_portTypeDescription(o), o->timeout)));
+                        if (o->SSL.certmd5 != NULL)
+                                printf(" %-20s = %s\n", "Server cert md5 sum", o->SSL.certmd5);
+                } else if (o->family == AF_UNIX) {
+                        if (o->retry > 1)
+                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d times]", o->pathname, o->protocol->name, o->timeout, o->retry)));
+                        else
+                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s [protocol %s] with timeout %d seconds]", o->pathname, o->protocol->name, o->timeout, o->retry)));
                 }
         }
 
-        if (s->portlist) {
-                for (n = s->portlist; n; n = n->next) {
-                        StringBuffer_clear(buf);
-                        if (n->family == AF_INET) {
-                                if (n->retry > 1)
-                                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d times]", n->hostname, n->port, n->request ? n->request : "", n->protocol->name, Util_portTypeDescription(n), n->timeout, n->retry)));
-                                else
-                                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds]", n->hostname, n->port, n->request ? n->request : "", n->protocol->name, Util_portTypeDescription(n), n->timeout)));
-                                if (n->SSL.certmd5 != NULL)
-                                        printf(" %-20s = %s\n", "Server cert md5 sum", n->SSL.certmd5);
-                        } else if (n->family == AF_UNIX) {
-                                if (n->retry > 1)
-                                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d times]", n->pathname, n->protocol->name, n->timeout, n->retry)));
-                                else
-                                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, n->action, "if failed [%s [protocol %s] with timeout %d seconds]", n->pathname, n->protocol->name, n->timeout, n->retry)));
-                        }
-                }
-        }
-
-        for (t = s->timestamplist; t; t = t->next) {
+        for (Timestamp_T o = s->timestamplist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Timestamp",
-                        t->test_changes
+                        o->test_changes
                         ?
-                        StringBuffer_toString(Util_printRule(buf, t->action, "if changed"))
+                        StringBuffer_toString(Util_printRule(buf, o->action, "if changed"))
                         :
-                        StringBuffer_toString(Util_printRule(buf, t->action, "if %s %d second(s)", operatornames[t->operator], t->time))
+                        StringBuffer_toString(Util_printRule(buf, o->action, "if %s %d second(s)", operatornames[o->operator], o->time))
                 );
         }
 
-        for (sl = s->sizelist; sl; sl = sl->next) {
+        for (Size_T o = s->sizelist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Size",
-                        sl->test_changes
+                        o->test_changes
                         ?
-                        StringBuffer_toString(Util_printRule(buf, sl->action, "if changed"))
+                        StringBuffer_toString(Util_printRule(buf, o->action, "if changed"))
                         :
-                        StringBuffer_toString(Util_printRule(buf, sl->action, "if %s %llu byte(s)", operatornames[sl->operator], sl->size))
+                        StringBuffer_toString(Util_printRule(buf, o->action, "if %s %llu byte(s)", operatornames[o->operator], o->size))
                 );
         }
 
-        for (ul = s->uptimelist; ul; ul = ul->next) {
+        for (Uptime_T o = s->uptimelist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Uptime", StringBuffer_toString(Util_printRule(buf, ul->action, "if %s %llu second(s)", operatornames[ul->operator], ul->uptime)));
+                printf(" %-20s = %s\n", "Uptime", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %llu second(s)", operatornames[o->operator], o->uptime)));
         }
 
         if (s->type != TYPE_PROCESS) {
-                for (ml = s->matchignorelist; ml; ml = ml->next) {
+                for (Match_T o = s->matchignorelist; o; o = o->next) {
                         StringBuffer_clear(buf);
-                        printf(" %-20s = %s\n", "Ignore pattern", StringBuffer_toString(Util_printRule(buf, ml->action, "if%s match \"%s\"", ml->not ? " not" : "", ml->match_string)));
+                        printf(" %-20s = %s\n", "Ignore pattern", StringBuffer_toString(Util_printRule(buf, o->action, "if%s match \"%s\"", o->not ? " not" : "", o->match_string)));
                 }
-                for (ml = s->matchlist; ml; ml = ml->next) {
+                for (Match_T o = s->matchlist; o; o = o->next) {
                         StringBuffer_clear(buf);
-                        printf(" %-20s = %s\n", "Pattern", StringBuffer_toString(Util_printRule(buf, ml->action, "if%s match \"%s\"", ml->not ? " not" : "", ml->match_string)));
+                        printf(" %-20s = %s\n", "Pattern", StringBuffer_toString(Util_printRule(buf, o->action, "if%s match \"%s\"", o->not ? " not" : "", o->match_string)));
                 }
         }
 
-        for (dl = s->filesystemlist; dl; dl = dl->next) {
+        for (Filesystem_T o = s->filesystemlist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                if (dl->resource == RESOURCE_ID_INODE) {
+                if (o->resource == RESOURCE_ID_INODE) {
                         printf(" %-20s = %s\n", "Inodes usage limit",
-                                dl->limit_absolute > -1
+                                o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, dl->action, "if %s %ld", operatornames[dl->operator], dl->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld", operatornames[o->operator], o->limit_absolute))
                                 :
-                                StringBuffer_toString(Util_printRule(buf, dl->action, "if %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
-                } else if (dl->resource == RESOURCE_ID_SPACE) {
+                } else if (o->resource == RESOURCE_ID_SPACE) {
                         printf(" %-20s = %s\n", "Space usage limit",
-                                dl->limit_absolute > -1
+                                o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, dl->action, "if %s %ld blocks", operatornames[dl->operator], dl->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld blocks", operatornames[o->operator], o->limit_absolute))
                                 :
-                                StringBuffer_toString(Util_printRule(buf, dl->action, "if %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
                 }
         }
 
-        for (q = s->resourcelist; q; q = q->next) {
+        for (Resource_T o = s->resourcelist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                switch (q->resource_id) {
+                switch (o->resource_id) {
                         case RESOURCE_ID_CPU_PERCENT:
                                 printf(" %-20s = ", "CPU usage limit");
                                 break;
@@ -1173,7 +1159,7 @@ void Util_printService(Service_T s) {
                                 printf(" %-20s = ", "Memory usage limit (incl. children)");
                                 break;
                 }
-                switch (q->resource_id) {
+                switch (o->resource_id) {
                         case RESOURCE_ID_CPU_PERCENT:
                         case RESOURCE_ID_TOTAL_CPU_PERCENT:
                         case RESOURCE_ID_TOTAL_MEM_PERCENT:
@@ -1182,23 +1168,23 @@ void Util_printService(Service_T s) {
                         case RESOURCE_ID_CPUWAIT:
                         case RESOURCE_ID_MEM_PERCENT:
                         case RESOURCE_ID_SWAP_PERCENT:
-                                printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %.1f%%", operatornames[q->operator], q->limit / 10.0)));
+                                printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit / 10.0)));
                                 break;
 
                         case RESOURCE_ID_MEM_KBYTE:
                         case RESOURCE_ID_SWAP_KBYTE:
-                                printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %ldkB", operatornames[q->operator], q->limit)));
+                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                                printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s", operatornames[o->operator], Str_bytesToString(o->limit * 1024., buffer, sizeof(buffer)))));
                                 break;
 
                         case RESOURCE_ID_LOAD1:
                         case RESOURCE_ID_LOAD5:
                         case RESOURCE_ID_LOAD15:
-                                printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %.1f", operatornames[q->operator], q->limit / 10.0)));
+                                printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f", operatornames[o->operator], o->limit / 10.0)));
                                 break;
 
                         case RESOURCE_ID_CHILDREN:
-                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
-                                printf("%s", StringBuffer_toString(Util_printRule(buf, q->action, "if %s %ld", operatornames[q->operator], q->limit)));
+                                printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld", operatornames[o->operator], o->limit)));
                                 break;
                 }
                 printf("\n");
@@ -1211,17 +1197,17 @@ void Util_printService(Service_T s) {
         else if (s->every.type == EVERY_NOTINCRON)
                 printf(" %-20s = Don't check service every %s\n", "Every", s->every.spec.cron);
 
-        for (ar = s->actionratelist; ar; ar = ar->next) {
+        for (ActionRate_T o = s->actionratelist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = If restarted %d times within %d cycle(s) then %s\n", "Timeout", ar->count, ar->cycle, StringBuffer_toString(Util_printAction(ar->action->failed, buf)));
+                printf(" %-20s = If restarted %d times within %d cycle(s) then %s\n", "Timeout", o->count, o->cycle, StringBuffer_toString(Util_printAction(o->action->failed, buf)));
         }
 
-        for (r = s->maillist; r; r = r->next) {
-                printf(" %-20s = %s\n", "Alert mail to", is_str_defined(r->to));
+        for (Mail_T o = s->maillist; o; o = o->next) {
+                printf(" %-20s = %s\n", "Alert mail to", is_str_defined(o->to));
                 printf("   %-18s = ", "Alert on");
-                printevents(r->events);
-                if (r->reminder)
-                        printf("   %-18s = %u cycles\n", "Alert reminder", r->reminder);
+                printevents(o->events);
+                if (o->reminder)
+                        printf("   %-18s = %u cycles\n", "Alert reminder", o->reminder);
         }
 
         printf("\n");
@@ -1327,7 +1313,6 @@ pid_t Util_getPid(char *pidfile) {
 
 
 int Util_isProcessRunning(Service_T s, int refresh) {
-        int   i;
         pid_t pid = -1;
         ASSERT(s);
         errno = 0;
@@ -1338,7 +1323,7 @@ int Util_isProcessRunning(Service_T s, int refresh) {
                  * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
                  * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
                 if (Run.doprocess) {
-                        for (i = 0; i < ptreesize; i++) {
+                        for (int i = 0; i < ptreesize; i++) {
                                 int found = FALSE;
                                 if (ptree[i].cmdline) {
 #ifdef HAVE_REGEX_H
@@ -1413,9 +1398,8 @@ char *Util_getUptime(time_t delta, char *sep) {
 
 
 int Util_isurlsafe(const char *url) {
-        int i;
         ASSERT(url && *url);
-        for (i = 0; url[i]; i++)
+        for (int i = 0; url[i]; i++)
                 if (urlunsafe[(unsigned char)url[i]])
                         return FALSE;
         return TRUE;
@@ -1512,8 +1496,7 @@ char *Util_getBasicAuthHeader(char *username, char *password) {
 
 
 void Util_redirectStdFds() {
-        int i;
-        for (i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
                 if (close(i) == -1 || open("/dev/null", O_RDWR) != i) {
                         LogError("Cannot reopen standard file descriptor (%d) -- %s\n", i, STRERROR);
                 }
@@ -1535,10 +1518,8 @@ void Util_closeFds() {
 
 
 Auth_T Util_getUserCredentials(char *uname) {
-        Auth_T c;
-
         /* check allowed user names */
-        for (c = Run.credentials; c; c = c->next)
+        for (Auth_T c = Run.credentials; c; c = c->next)
                 if (c->uname && IS(c->uname, uname))
                         return c;
 

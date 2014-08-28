@@ -92,7 +92,7 @@ extern EventTable_T Event_Table[];
  * @param action Description of the event action
  * @param s Optional message describing the event
  */
-void Event_post(Service_T service, long id, short state, EventAction_T action, char *s, ...);
+void Event_post(Service_T service, long id, short state, EventAction_T action, char *s, ...) __attribute__((format (printf, 5, 6)));
 
 
 /**

@@ -212,7 +212,7 @@ const char *socket_get_local_host(Socket_T S);
  * @param error An error string to write to the socket's internal
  * buffer
  */
-void socket_setError(Socket_T S, const char *error, ...);
+void socket_setError(Socket_T S, const char *error, ...) __attribute__((format (printf, 2, 3)));
 
 
 /**
@@ -239,7 +239,7 @@ int socket_switch2ssl(Socket_T S, Ssl_T ssl);
  * @param m A String to send to the client
  * @return The bytes sent or -1 if an error occured
  */
-int socket_print(Socket_T S, const char *m, ...);
+int socket_print(Socket_T S, const char *m, ...) __attribute__((format (printf, 2, 3)));
 
 
 /**

@@ -302,8 +302,7 @@ int Process_exitStatus(Process_T P) {
 
 int Process_isRunning(Process_T P) {
         assert(P);
-        errno = 0;
-        return ((getpgid(P->pid) > -1) || (errno == EPERM));
+        return Process_exitStatus(P) < 0;
 }
 
 
