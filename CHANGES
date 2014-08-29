@@ -38,6 +38,9 @@ program.
 New: Log output from start/stop/restart programs. In the case of success
 the output is logged only in debug mode.
 
+Fixed: filesystem space usage on some network based filesystems such as
+sshfs.
+
 
 Version 5.8.1
 
