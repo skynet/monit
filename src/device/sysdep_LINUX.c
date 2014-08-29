@@ -109,7 +109,7 @@ int filesystem_usage_sysdep(Info_T inf) {
     LogError("Error getting usage statistics for filesystem '%s' -- %s\n", inf->priv.filesystem.mntpath, STRERROR);
     return FALSE;
   }
-  inf->priv.filesystem.f_bsize =           usage.f_bsize;
+  inf->priv.filesystem.f_bsize =           usage.f_frsize;
   inf->priv.filesystem.f_blocks =          usage.f_blocks;
   inf->priv.filesystem.f_blocksfree =      usage.f_bavail;
   inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree;
