@@ -152,12 +152,12 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
   kvm_t                    *kvm_handle;
 
   if (sysctl(mib_maxslp, 2, &maxslp, &size, NULL, 0) < 0) {
-    LogError("system statistic error -- vm.maxslp failed");
+    LogError("system statistic error -- vm.maxslp failed"\n);
     return FALSE;
   }
 
   if (sysctl(mib_proc, 6, NULL, &size, NULL, 0) == -1) {
-    LogError("system statistic error -- kern.proc #1 failed");
+    LogError("system statistic error -- kern.proc #1 failed\n");
     return FALSE;
   }
 
@@ -170,7 +170,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
 #endif
   if (sysctl(mib_proc, 6, pinfo, &size, NULL, 0) == -1) {
     FREE(pinfo);
-    LogError("system statistic error -- kern.proc #2 failed");
+    LogError("system statistic error -- kern.proc #2 failed\n");
     return FALSE;
   }
 
@@ -185,7 +185,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
   if (! (kvm_handle = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, buf))) {
     FREE(pinfo);
     FREE(pt);
-    LogError("system statistic error -- kvm_openfiles failed: %s", buf);
+    LogError("system statistic error -- kvm_openfiles failed: %s\n", buf);
     return FALSE;
   }
 

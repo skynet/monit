@@ -25,8 +25,8 @@
 #ifndef MONIT_DEVICE_SYSDEP_H
 #define MONIT_DEVICE_SYSDEP_H
 
-char *device_mountpoint_sysdep(Info_T, char *);
-int   filesystem_usage_sysdep(Info_T);
+char *device_mountpoint_sysdep(char *dev, char *buf, int buflen);
+int filesystem_usage_sysdep(char *mntpoint, Info_T inf);
 
 #endif
 

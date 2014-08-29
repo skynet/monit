@@ -64,63 +64,47 @@
 #include "device_sysdep.h"
 
 
-/**
- * This function validates whether given object is valid for filesystem
- * informations statistics and stores path suitable for it in given
- * filesystem information structure for later use. Filesystem must be mounted.
- *
- * Valid objects are file or directory that are part of requested
- * filesystem, device or mountpoint.
- *
- * In the case of file, directory or mountpoint the result is original
- * object, in the case of device the mountpoint is returned.
- *
- * @param inf     Information structure where resulting data will be stored
- * @param object  Identifies appropriate device object
- * @return        NULL in the case of failure otherwise filesystem path
- */
-char *device_path(Info_T inf, char *object) {
-  struct stat buf;
+int filesystem_usage(Service_T s) {
+        ASSERT(s);
 
-  ASSERT(inf);
-  ASSERT(object);
-
-  if(stat(object, &buf) != 0) {
-    LogError("Cannot stat '%s' -- %s\n", object, STRERROR);
-    return NULL;
-  }
-
-  if(S_ISREG(buf.st_mode) || S_ISDIR(buf.st_mode)) {
-    inf->priv.filesystem.mntpath = Str_dup(object);
-    return inf->priv.filesystem.mntpath;
-  } else if(S_ISBLK(buf.st_mode) || S_ISCHR(buf.st_mode)) {
-    return device_mountpoint_sysdep(inf, object);
-  }
-
-  LogError("Not file, directory or device: '%s'", object);
-
-  return NULL;
-}
-
-
-/**
- * Filesystem usage statistics. In the case of success the result is stored in the given information structure.
- *
- * @param inf Information structure where resulting data will be stored
- * @param object Identifies requested filesystem - either file, directory, device or mountpoint
- * @return TRUE if informations were succesfully read otherwise FALSE
- */
-int filesystem_usage(Info_T inf, char *object) {
-  int rv;
-
-  ASSERT(inf);
-  ASSERT(object);
-
-  if(!device_path(inf, object))
-    return FALSE;
-  inf->priv.filesystem._flags = inf->priv.filesystem.flags;
-  rv = filesystem_usage_sysdep(inf);
-  FREE(inf->priv.filesystem.mntpath);
-  return rv;
+        struct stat sb;
+        char buf[PATH_MAX+1];
+        if (lstat(s->path, &sb) == 0) {
+                if (S_ISLNK(sb.st_mode)) {
+                        // Symbolic link: dereference so we'll be able to find it in mnttab
+                        if (! realpath(s->path, buf)) {
+                                LogError("filesystem link error -- %s\n", STRERROR);
+                                return FALSE;
+                        }
+                } else if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode)) {
+                        // File or directory: we have mountpoint or filesystem subdirectory already (no need to map)
+                        snprintf(buf, sizeof(buf), "%s", s->path);
+                } else if(S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
+                        // Block or character device: look for mountpoint
+                        if (! device_mountpoint_sysdep(s->path, buf, sizeof(buf)))
+                                return FALSE;
+                } else {
+                        LogError("Cannot get filesystem for '%s' -- not file, directory nor device\n", s->path);
+                }
+        } else {
+                // Generic device string (such as sshfs connection info): look for mountpoint
+                if (! device_mountpoint_sysdep(s->path, buf, sizeof(buf)))
+                        return FALSE;
+        }
+        if (stat(buf, &sb) != 0) {
+                LogError("filesystem %s doesn't exist\n", buf);
+                return FALSE;
+        }
+        if (filesystem_usage_sysdep(buf, s->inf)) {
+                s->inf->st_mode = sb.st_mode;
+                s->inf->st_uid = sb.st_uid;
+                s->inf->st_gid = sb.st_gid;
+                s->inf->priv.filesystem.inode_percent = s->inf->priv.filesystem.f_files > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree)) / (float)s->inf->priv.filesystem.f_files) : 0;
+                s->inf->priv.filesystem.space_percent = s->inf->priv.filesystem.f_blocks > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfree)) / (float)s->inf->priv.filesystem.f_blocks) : 0;
+                s->inf->priv.filesystem.inode_total = s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree;
+                s->inf->priv.filesystem.space_total = s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfreetotal;
+                return TRUE;
+        }
+        return FALSE;
 }
 

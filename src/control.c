@@ -386,7 +386,7 @@ int control_service_daemon(const char *S, const char *action) {
                 auth ? auth : "",
                 action) < 0)
         {
-                LogError("Cannot send the command '%s' to the monit daemon -- %s", action ? action : "null", STRERROR);
+                LogError("Cannot send the command '%s' to the monit daemon -- %s\n", action ? action : "null", STRERROR);
                 goto err1;
         }
 

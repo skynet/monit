@@ -1611,7 +1611,6 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.filesystem.f_blocksfreetotal = 0L;
                         s->inf->priv.filesystem.f_files = 0L;
                         s->inf->priv.filesystem.f_filesfree = 0L;
-                        FREE(s->inf->priv.filesystem.mntpath);
                         s->inf->priv.filesystem.inode_percent = 0;
                         s->inf->priv.filesystem.inode_total = 0L;
                         s->inf->priv.filesystem.space_percent = 0;

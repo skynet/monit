@@ -556,8 +556,7 @@ static void check_gid(Service_T s) {
  * Validate timestamps of a service s
  */
 static void check_timestamp(Service_T s) {
-        Timestamp_T t;
-        time_t      now;
+        time_t now;
         
         ASSERT(s && s->timestamplist);
         
@@ -567,7 +566,7 @@ static void check_timestamp(Service_T s) {
         } else
                 Event_post(s, Event_Data, STATE_SUCCEEDED, s->action_DATA, "actual system time obtained");
         
-        for (t = s->timestamplist; t; t = t->next) {
+        for (Timestamp_T t = s->timestamplist; t; t = t->next) {
                 if (t->test_changes) {
                         
                         /* if we are testing for changes only, the value is variable */
@@ -600,11 +599,9 @@ static void check_timestamp(Service_T s) {
  * Test size
  */
 static void check_size(Service_T s) {
-        Size_T sl;
-        
         ASSERT(s && s->sizelist);
         
-        for (sl = s->sizelist; sl; sl = sl->next) {
+        for (Size_T sl = s->sizelist; sl; sl = sl->next) {
                 
                 /* if we are testing for changes only, the value is variable */
                 if (sl->test_changes) {
@@ -641,11 +638,9 @@ static void check_size(Service_T s) {
  * Test uptime
  */
 static void check_uptime(Service_T s) {
-        Uptime_T ul;
+        ASSERT(s);
         
-        ASSERT(s && s->uptimelist);
-        
-        for (ul = s->uptimelist; ul; ul = ul->next) {
+        for (Uptime_T ul = s->uptimelist; ul; ul = ul->next) {
                 if (Util_evalQExpression(ul->operator, s->inf->priv.process.uptime, ul->uptime))
                         Event_post(s, Event_Uptime, STATE_FAILED, ul->action, "uptime test failed for %s -- current uptime is %llu seconds", s->path, (unsigned long long)s->inf->priv.process.uptime);
                 else {
@@ -863,9 +858,6 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
 
 
 static void check_timeout(Service_T s) {
-        ActionRate_T ar;
-        int max = 0;
-        
         ASSERT(s);
         
         if (! s->actionratelist)
@@ -875,7 +867,8 @@ static void check_timeout(Service_T s) {
         if (s->nstart > 0)
                 s->ncycle++;
         
-        for (ar = s->actionratelist; ar; ar = ar->next) {
+        int max = 0;
+        for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next) {
                 if (max < ar->cycle)
                         max = ar->cycle;
                 if (s->nstart >= ar->count && s->ncycle <= ar->cycle)
@@ -1047,47 +1040,13 @@ int check_process(Service_T s) {
  * its configuration. In case of a fatal event FALSE is returned.
  */
 int check_filesystem(Service_T s) {
-        char *p;
-        char path_buf[PATH_MAX+1];
-        Filesystem_T td;
-        struct stat stat_buf;
-
         ASSERT(s);
 
-        p = s->path;
-
-        /* We need to resolve symbolic link so if it points to device, we'll be able to find it in mnttab */
-        if (lstat(s->path, &stat_buf) != 0) {
-                Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "filesystem doesn't exist");
+        if (! filesystem_usage(s)) {
+                Event_post(s, Event_Data, STATE_FAILED, s->action_DATA, "unable to read filesystem '%s' state", s->path);
                 return FALSE;
         }
-        if (S_ISLNK(stat_buf.st_mode)) {
-                if (! realpath(s->path, path_buf)) {
-                        Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "filesystem symbolic link error -- %s", STRERROR);
-                        return FALSE;
-                }
-                p = path_buf;
-                Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "filesystem symbolic link %s -> %s", s->path, p);
-                if (stat(p, &stat_buf) != 0) {
-                        Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "filesystem doesn't exist");
-                        return FALSE;
-                }
-        }
-        Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "filesystem exists");
-
-        s->inf->st_mode = stat_buf.st_mode;
-        s->inf->st_uid  = stat_buf.st_uid;
-        s->inf->st_gid  = stat_buf.st_gid;
-
-        if (!filesystem_usage(s->inf, p)) {
-                Event_post(s, Event_Data, STATE_FAILED, s->action_DATA, "unable to read filesystem %s state", p);
-                return FALSE;
-        }
-        s->inf->priv.filesystem.inode_percent = s->inf->priv.filesystem.f_files > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree)) / (float)s->inf->priv.filesystem.f_files) : 0;
-        s->inf->priv.filesystem.space_percent = s->inf->priv.filesystem.f_blocks > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfree)) / (float)s->inf->priv.filesystem.f_blocks) : 0;
-        s->inf->priv.filesystem.inode_total   = s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree;
-        s->inf->priv.filesystem.space_total   = s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfreetotal;
-        Event_post(s, Event_Data, STATE_SUCCEEDED, s->action_DATA, "succeeded getting filesystem statistic for %s", p);
+        Event_post(s, Event_Data, STATE_SUCCEEDED, s->action_DATA, "succeeded getting filesystem statistics for '%s'", s->path);
 
         if (s->perm)
                 check_perm(s);
@@ -1100,9 +1059,8 @@ int check_filesystem(Service_T s) {
 
         check_filesystem_flags(s);
 
-        if (s->filesystemlist)
-                for (td = s->filesystemlist; td; td = td->next)
-                        check_filesystem_resources(s, td);
+        for (Filesystem_T td = s->filesystemlist; td; td = td->next)
+                check_filesystem_resources(s, td);
 
         return TRUE;
 }
@@ -1326,56 +1284,50 @@ int check_program(Service_T s) {
  * @return FALSE if there was an error otherwise TRUE
  */
 int check_remote_host(Service_T s) {
-
-        Port_T p = NULL;
-        Icmp_T icmp = NULL;
-        Icmp_T last_ping = NULL;
-
         ASSERT(s);
 
+        Icmp_T last_ping = NULL;
+
         /* Test each icmp type in the service's icmplist */
-        if (s->icmplist) {
-                for (icmp = s->icmplist; icmp; icmp = icmp->next) {
+        for (Icmp_T icmp = s->icmplist; icmp; icmp = icmp->next) {
 
-                        switch(icmp->type) {
-                                case ICMP_ECHO:
+                switch(icmp->type) {
+                        case ICMP_ECHO:
 
-                                        icmp->response = icmp_echo(s->path, icmp->timeout, icmp->count);
+                                icmp->response = icmp_echo(s->path, icmp->timeout, icmp->count);
 
-                                        if (icmp->response == -2) {
-                                                icmp->is_available = TRUE;
-                                                DEBUG("'%s' icmp ping skipped -- the monit user has no permission to create raw socket, please run monit as root or add privilege for net_icmpaccess\n", s->name);
-                                        } else if (icmp->response == -1) {
-                                                icmp->is_available = FALSE;
-                                                DEBUG("'%s' icmp ping failed\n", s->name);
-                                                Event_post(s, Event_Icmp, STATE_FAILED, icmp->action, "failed ICMP test [%s]", icmpnames[icmp->type]);
-                                        } else {
-                                                icmp->is_available = TRUE;
-                                                DEBUG("'%s' icmp ping succeeded [response time %.3fs]\n", s->name, icmp->response);
-                                                Event_post(s, Event_Icmp, STATE_SUCCEEDED, icmp->action, "succeeded ICMP test [%s]", icmpnames[icmp->type]);
-                                        }
-                                        last_ping = icmp;
-                                        break;
+                                if (icmp->response == -2) {
+                                        icmp->is_available = TRUE;
+                                        DEBUG("'%s' icmp ping skipped -- the monit user has no permission to create raw socket, please run monit as root or add privilege for net_icmpaccess\n", s->name);
+                                } else if (icmp->response == -1) {
+                                        icmp->is_available = FALSE;
+                                        DEBUG("'%s' icmp ping failed\n", s->name);
+                                        Event_post(s, Event_Icmp, STATE_FAILED, icmp->action, "failed ICMP test [%s]", icmpnames[icmp->type]);
+                                } else {
+                                        icmp->is_available = TRUE;
+                                        DEBUG("'%s' icmp ping succeeded [response time %.3fs]\n", s->name, icmp->response);
+                                        Event_post(s, Event_Icmp, STATE_SUCCEEDED, icmp->action, "succeeded ICMP test [%s]", icmpnames[icmp->type]);
+                                }
+                                last_ping = icmp;
+                                break;
 
-                                default:
-                                        LogError("'%s' error -- unknown ICMP type: [%d]\n", s->name, icmp->type);
-                                        return FALSE;
+                        default:
+                                LogError("'%s' error -- unknown ICMP type: [%d]\n", s->name, icmp->type);
+                                return FALSE;
 
-                        }
                 }
         }
 
         /* If we could not ping the host we assume it's down and do not
          * continue to check any port connections  */
-        if (last_ping && !last_ping->is_available) {
+        if (last_ping && ! last_ping->is_available) {
                 DEBUG("'%s' icmp ping failed, skipping any port connection tests\n", s->name);
                 return FALSE;
         }
 
         /* Test each host:port and protocol in the service's portlist */
-        if (s->portlist)
-                for (p = s->portlist; p; p = p->next)
-                        check_connection(s, p);
+        for (Port_T p = s->portlist; p; p = p->next)
+                check_connection(s, p);
 
         return TRUE;
 

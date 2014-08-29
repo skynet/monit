@@ -721,7 +721,6 @@ typedef struct myinfo {
                         long   f_blocksfreetotal;               /**< Free blocks in filesystem */
                         long   f_files;                    /**< Total file nodes in filesystem */
                         long   f_filesfree;                 /**< Free file nodes in filesystem */
-                        char  *mntpath;          /**< Filesystem file, directory or mountpoint */
                         int    inode_percent;                  /**< Used inode percentage * 10 */
                         long   inode_total;                      /**< Used inode total objects */
                         int    space_percent;                  /**< Used space percentage * 10 */

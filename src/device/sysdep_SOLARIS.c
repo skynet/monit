@@ -58,32 +58,21 @@
 #include "device_sysdep.h"
 
 
-/**
- * Solaris special block device mountpoint method. Filesystem must be mounted.
- * In the case of success, mountpoint is stored in filesystem information
- * structure for later use.
- *
- * @param inf  Information structure where resulting data will be stored
- * @param blockdev Identifies block special device
- * @return         NULL in the case of failure otherwise mountpoint
- */
-char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
+char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
   struct mnttab mnt;
   FILE         *mntfd;
 
-  ASSERT(inf);
-  ASSERT(blockdev);
+  ASSERT(dev);
 
   if ((mntfd = fopen("/etc/mnttab", "r")) == NULL) {
     LogError("Cannot open /etc/mnttab file\n");
     return NULL;
   }
   while (getmntent(mntfd, &mnt) == 0) {
-    char real_mnt_special[PATH_MAX+1];
-    if (realpath(mnt.mnt_special, real_mnt_special) && IS(real_mnt_special, blockdev)) {
+    if (realpath(mnt.mnt_special, buf) && IS(buf, dev)) {
         fclose(mntfd);
-        inf->priv.filesystem.mntpath = Str_dup(mnt.mnt_mountp);
-        return inf->priv.filesystem.mntpath;
+        snprintf(buf, buflen, "%s", mnt.mnt_mountp);
+        return buf;
     }
   }
   fclose(mntfd);
@@ -91,21 +80,14 @@ char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
 }
 
 
-/**
- * Solaris filesystem usage statistics. In the case of success result is stored in
- * given information structure.
- *
- * @param inf Information structure where resulting data will be stored
- * @return TRUE if informations were succesfully read otherwise FALSE
- */
-int filesystem_usage_sysdep(Info_T inf) {
+int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
   int size;
   struct statvfs usage;
 
   ASSERT(inf);
 
-  if (statvfs(inf->priv.filesystem.mntpath, &usage) != 0) {
-    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", inf->priv.filesystem.mntpath, STRERROR);
+  if (statvfs(mntpoint, &usage) != 0) {
+    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
     return FALSE;
   }
   size =                                   usage.f_frsize ? (usage.f_bsize / usage.f_frsize) : 1;
@@ -115,6 +97,7 @@ int filesystem_usage_sysdep(Info_T inf) {
   inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree  / size;
   inf->priv.filesystem.f_files =           usage.f_files;
   inf->priv.filesystem.f_filesfree =       usage.f_ffree;
+  inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
   inf->priv.filesystem.flags =             usage.f_flag;
   return TRUE;
 }
