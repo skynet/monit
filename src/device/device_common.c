@@ -71,9 +71,14 @@ int filesystem_usage(Service_T s) {
         char buf[PATH_MAX+1];
         if (lstat(s->path, &sb) == 0) {
                 if (S_ISLNK(sb.st_mode)) {
-                        // Symbolic link: dereference so we'll be able to find it in mnttab
+                        // Symbolic link: dereference so we'll be able to find it in mnttab + get permissions of the target
                         if (! realpath(s->path, buf)) {
                                 LogError("filesystem link error -- %s\n", STRERROR);
+                                return FALSE;
+                        }
+                        // Get link target mode + permissions
+                        if (stat(buf, &sb) != 0) {
+                                LogError("filesystem %s doesn't exist\n", buf);
                                 return FALSE;
                         }
                 } else if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode)) {
@@ -90,10 +95,10 @@ int filesystem_usage(Service_T s) {
                 // Generic device string (such as sshfs connection info): look for mountpoint
                 if (! device_mountpoint_sysdep(s->path, buf, sizeof(buf)))
                         return FALSE;
-        }
-        if (stat(buf, &sb) != 0) {
-                LogError("filesystem %s doesn't exist\n", buf);
-                return FALSE;
+                if (stat(buf, &sb) != 0) {
+                        LogError("filesystem %s doesn't exist\n", buf);
+                        return FALSE;
+                }
         }
         if (filesystem_usage_sysdep(buf, s->inf)) {
                 s->inf->st_mode = sb.st_mode;
