@@ -58,63 +58,46 @@
 #include "device_sysdep.h"
 
 
-/**
- * Linux special block device mountpoint method. Filesystem must be mounted.
- * In the case of success, mountpoint is stored in filesystem information
- * structure for later use.
- *
- * @param inf  Information structure where resulting data will be stored
- * @param blockdev Identifies block special device
- * @return         NULL in the case of failure otherwise mountpoint
- */
-char *device_mountpoint_sysdep(Info_T inf, char *blockdev) {
+char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
   FILE *mntfd;
   struct mntent *mnt;
 
-  ASSERT(inf);
-  ASSERT(blockdev);
+  ASSERT(dev);
 
   if ((mntfd = setmntent("/etc/mtab", "r")) == NULL) {
     LogError("Cannot open /etc/mtab file\n");
     return NULL;
   }
   while ((mnt = getmntent(mntfd)) != NULL) {
-    char realpathbuf[PATH_MAX+1];
     /* Try to compare the the filesystem as is, if failed, try to use the symbolic link target */
-    if (IS(blockdev, mnt->mnt_fsname) || (realpath(mnt->mnt_fsname, realpathbuf) && ! strcasecmp(blockdev, realpathbuf))) {
+    if (IS(dev, mnt->mnt_fsname) || (realpath(mnt->mnt_fsname, buf) && ! strcasecmp(dev, buf))) {
+      snprintf(buf, buflen, "%s", mnt->mnt_dir);
       endmntent(mntfd);
-      inf->priv.filesystem.mntpath = Str_dup(mnt->mnt_dir);
-      return inf->priv.filesystem.mntpath;
+      return buf;
     }
   }
   endmntent(mntfd);
-  LogError("Device %s not found in /etc/mtab\n", blockdev);
+  LogError("Device %s not found in /etc/mtab\n", dev);
   return NULL;
 }
 
 
-/**
- * Linux filesystem usage statistics. In the case of success result is stored in
- * given information structure.
- *
- * @param inf Information structure where resulting data will be stored
- * @return        TRUE if informations were succesfully read otherwise FALSE
- */
-int filesystem_usage_sysdep(Info_T inf) {
+int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
   struct statvfs usage;
 
   ASSERT(inf);
 
-  if (statvfs(inf->priv.filesystem.mntpath, &usage) != 0) {
-    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", inf->priv.filesystem.mntpath, STRERROR);
+  if (statvfs(mntpoint, &usage) != 0) {
+    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
     return FALSE;
   }
-  inf->priv.filesystem.f_bsize =           usage.f_bsize;
+  inf->priv.filesystem.f_bsize =           usage.f_frsize;
   inf->priv.filesystem.f_blocks =          usage.f_blocks;
   inf->priv.filesystem.f_blocksfree =      usage.f_bavail;
   inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree;
   inf->priv.filesystem.f_files =           usage.f_files;
   inf->priv.filesystem.f_filesfree =       usage.f_ffree;
+  inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
   inf->priv.filesystem.flags =             usage.f_flag;
   return TRUE;
 }

@@ -189,7 +189,7 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
         }
 
         if (SSL_CTX_set_cipher_list(ssl->ctx, CIPHER_LIST) != 1) {
-                LogError("Error setting cipher list '%s' (no valid ciphers)", CIPHER_LIST);
+                LogError("Error setting cipher list '%s' (no valid ciphers)\n", CIPHER_LIST);
                 goto sslerror;
         }
 
@@ -334,7 +334,7 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
                 goto sslerror;
         }
         if (SSL_CTX_set_cipher_list(ssl_server->ctx, CIPHER_LIST) != 1) {
-                LogError("Error setting cipher list '%s' (no valid ciphers)", CIPHER_LIST);
+                LogError("Error setting cipher list '%s' (no valid ciphers)\n", CIPHER_LIST);
                 goto sslerror;
         }
         /* Disable session cache */
@@ -610,12 +610,12 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
 
                 case SSL_VERSION_SSLV2:
 #ifdef OPENSSL_NO_SSL2
-                        LogError("SSLv2 is not allowed - use either SSLv3 or TLSv1");
+                        LogError("SSLv2 is not allowed - use either SSLv3 or TLSv1\n");
                         goto sslerror;
 #else
 #ifdef OPENSSL_FIPS
                         if (FIPS_mode()) {
-                                LogError("SSLv2 is not allowed in FIPS mode - use TLSv1");
+                                LogError("SSLv2 is not allowed in FIPS mode - use TLSv1\n");
                                 goto sslerror;
                         } else
 #endif
@@ -626,7 +626,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 case SSL_VERSION_SSLV3:
 #ifdef OPENSSL_FIPS
                         if (FIPS_mode()) {
-                                LogError("SSLv3 is not allowed in FIPS mode - use TLSv1");
+                                LogError("SSLv3 is not allowed in FIPS mode - use TLSv1\n");
                                 goto sslerror;
                         } else
 #endif

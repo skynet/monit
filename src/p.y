@@ -871,6 +871,9 @@ checkfile       : CHECKFILE SERVICENAME PATHTOK PATH {
 checkfilesys    : CHECKFILESYS SERVICENAME PATHTOK PATH {
                     createservice(TYPE_FILESYSTEM, $<string>2, $4, check_filesystem);
                   }
+                | CHECKFILESYS SERVICENAME PATHTOK STRING {
+                    createservice(TYPE_FILESYSTEM, $<string>2, $4, check_filesystem);
+                  }
                 ;
 
 checkdir        : CHECKDIR SERVICENAME PATHTOK PATH {
@@ -1762,7 +1765,7 @@ inode           : IF INODE operator NUMBER rate1 THEN action1 recovery {
                 ;
 
 space           : IF SPACE operator value unit rate1 THEN action1 recovery {
-                    if (!filesystem_usage(current->inf, current->path))
+                    if (! filesystem_usage(current))
                       yyerror2("Cannot read usage of filesystem %s", current->path);
                     filesystemset.resource = RESOURCE_ID_SPACE;
                     filesystemset.operator = $<number>3;

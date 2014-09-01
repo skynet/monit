@@ -38,6 +38,12 @@ program.
 New: Log output from start/stop/restart programs. In the case of success
 the output is logged only in debug mode.
 
+Fixed: Linux: filesystem space usage on some network based filesystems such
+as sshfs.
+
+New: support monitoring of generic filesystems such as sshfs. Example usage:
+    check filesystem mydata with path "myuser@192.168.1.10:mydata"
+
 
 Version 5.8.1
 

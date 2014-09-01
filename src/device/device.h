@@ -25,8 +25,7 @@
 #ifndef MONIT_DEVICE_H
 #define MONIT_DEVICE_H
 
-char *device_path(Info_T, char *);
-int   filesystem_usage(Info_T, char *);
+int filesystem_usage(Service_T);
 
 #endif
 

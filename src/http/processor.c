@@ -735,14 +735,12 @@ static int basic_authenticate(HttpRequest req) {
   }
   /* Check if user exist */
   if(NULL==Util_getUserCredentials(uname)) {
-    LogError("Warning: Client '%s' supplied unknown user '%s'"
-        " accessing monit httpd\n", socket_get_remote_host(req->S), uname);
+    LogError("Warning: Client '%s' supplied unknown user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
     return FALSE;
   }
   /* Check if user has supplied the right password */
   if(! Util_checkCredentials(uname,  password)) {
-    LogError("Warning: Client '%s' supplied wrong password for user '%s'"
-        " accessing monit httpd\n", socket_get_remote_host(req->S), uname);
+    LogError("Warning: Client '%s' supplied wrong password for user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
     return FALSE;
   }
   req->remote_user = Str_dup(uname);
