@@ -382,7 +382,7 @@ int control_service_daemon(const char *S, const char *action) {
                 "\r\n"
                 "action=%s",
                 S,
-                strlen("action=") + strlen(action),
+                (unsigned long)(strlen("action=") + strlen(action)),
                 auth ? auth : "",
                 action) < 0)
         {

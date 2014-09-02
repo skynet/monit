@@ -69,7 +69,7 @@ char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
     return NULL;
   }
   while (getmntent(mntfd, &mnt) == 0) {
-    if (realpath(mnt.mnt_special, buf) && IS(buf, dev)) {
+    if ((realpath(mnt.mnt_special, buf) && IS(buf, dev)) || IS(mnt.mnt_special, dev)) {
         fclose(mntfd);
         snprintf(buf, buflen, "%s", mnt.mnt_mountp);
         return buf;

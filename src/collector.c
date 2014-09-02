@@ -77,7 +77,7 @@ static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
                               "%s",
                               C->url->path,
                               C->url->hostname, C->url->port,
-                              strlen(D),
+                              (unsigned long)strlen(D),
                               VERSION,
                               auth?auth:"",
                               D);
