@@ -53,6 +53,14 @@
  */
 
 
+/* ----------------------------------------------------------- Definitions */
+
+
+static const char *kSizeNotation[9] = {
+        "B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", NULL
+};
+
+
 /* -------------------------------------------------------- Public Methods */
 
 
@@ -421,16 +429,15 @@ int Str_cmp(const void *x, const void *y) {
 }
 
 
-char *Str_bytesToSize(long long bytes, char s[22]) {
+char *Str_bytesToSize(double bytes, char s[10]) {
         assert(s);
-        assert(bytes <= LLONG_MAX);
+        assert(bytes < 1e+23);
         *s = 0;
-        char *suffix[9] = {"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", NULL};
-        for (int i = 0; suffix[i]; i++) {
+        for (int i = 0; kSizeNotation[i]; i++) {
                 if (bytes > 1024LL) {
                         bytes /= 1024LL;
                 } else {
-                        snprintf(s, 22, "%.1lld %s", bytes, suffix[i]);
+                        snprintf(s, 22, "%.1lf %s", bytes, kSizeNotation[i]);
                         break;
                 }
         }
