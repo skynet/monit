@@ -152,7 +152,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
   kvm_t                    *kvm_handle;
 
   if (sysctl(mib_maxslp, 2, &maxslp, &size, NULL, 0) < 0) {
-    LogError("system statistic error -- vm.maxslp failed"\n);
+    LogError("system statistic error -- vm.maxslp failed\n");
     return FALSE;
   }
 
