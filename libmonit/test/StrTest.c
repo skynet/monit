@@ -416,6 +416,8 @@ int main(void) {
                 assert(Str_isEqual(str, "8.5 GB"));
                 Str_bytesToSize(9083741824987653, str);
                 assert(Str_isEqual(str, "8.1 PB"));
+                Str_bytesToSize(LLONG_MAX, str);
+                assert(Str_isEqual(str, "8.0 EB"));
         }
         printf("=> Test24: OK\n\n");
 

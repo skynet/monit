@@ -431,13 +431,13 @@ int Str_cmp(const void *x, const void *y) {
 
 char *Str_bytesToSize(double bytes, char s[10]) {
         assert(s);
-        assert(bytes < 1e+23);
+        assert(bytes < 1e+24);
         *s = 0;
         for (int i = 0; kSizeNotation[i]; i++) {
-                if (bytes > 1024LL) {
-                        bytes /= 1024LL;
+                if (bytes > 1024) {
+                        bytes /= 1024;
                 } else {
-                        snprintf(s, 22, "%.1lf %s", bytes, kSizeNotation[i]);
+                        snprintf(s, 10, "%.1lf %s", bytes, kSizeNotation[i]);
                         break;
                 }
         }
