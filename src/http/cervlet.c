@@ -271,7 +271,7 @@ static void printFavicon(HttpResponse res) {
         if (l) {
                 res->is_committed = TRUE;
                 socket_print(S, "HTTP/1.0 200 OK\r\n");
-                socket_print(S, "Content-length: %lu\r\n", l);
+                socket_print(S, "Content-length: %lu\r\n", (unsigned long)l);
                 socket_print(S, "Content-Type: image/x-icon\r\n");
                 socket_print(S, "Connection: close\r\n\r\n");
                 socket_write(S, favicon, l);

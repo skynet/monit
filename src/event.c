@@ -497,7 +497,7 @@ void Event_queue_process() {
         goto error2;
       }
       if (size != sizeof(int)) {
-        LogError("Aborting queued event %s - invalid size %lu\n", file_name, size);
+        LogError("Aborting queued event %s - invalid size %lu\n", file_name, (unsigned long)size);
         goto error3;
       }
       if (*version != EVENT_VERSION) {
