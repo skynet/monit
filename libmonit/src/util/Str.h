@@ -423,10 +423,10 @@ int Str_cmp(const void *x, const void *y);
  * Convert the numeric bytes value to a string representation scaled to
  * human friendly storage unit [B, kB, MB, etc.].
  * @param bytes Byte value to convert
- * @param s A result buffer, must be large enough to hold 10 chars
+ * @param s A result buffer, must be large enough to hold 22 chars
  * @return A pointer to s
  */
-char *Str_bytesToSize(double bytes, char s[10]);
+char *Str_bytesToSize(long long bytes, char s[22]);
 
 #endif
 

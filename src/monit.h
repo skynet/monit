@@ -715,18 +715,18 @@ typedef struct myinfo {
 
         union {
                 struct {
-                        long   f_bsize;                               /**< Transfer block size */
-                        long   f_blocks;                  /**< Total data blocks in filesystem */
-                        long   f_blocksfree;       /**< Free blocks available to non-superuser */
-                        long   f_blocksfreetotal;               /**< Free blocks in filesystem */
-                        long   f_files;                    /**< Total file nodes in filesystem */
-                        long   f_filesfree;                 /**< Free file nodes in filesystem */
-                        int    inode_percent;                  /**< Used inode percentage * 10 */
-                        long   inode_total;                      /**< Used inode total objects */
-                        int    space_percent;                  /**< Used space percentage * 10 */
-                        long   space_total;                       /**< Used space total blocks */
-                        int    _flags;                   /**< Filesystem flags from last cycle */
-                        int    flags;                  /**< Filesystem flags from actual cycle */
+                        long long  f_bsize;                           /**< Transfer block size */
+                        long long  f_blocks;              /**< Total data blocks in filesystem */
+                        long long  f_blocksfree;   /**< Free blocks available to non-superuser */
+                        long long  f_blocksfreetotal;           /**< Free blocks in filesystem */
+                        long       f_files;                /**< Total file nodes in filesystem */
+                        long       f_filesfree;             /**< Free file nodes in filesystem */
+                        int        inode_percent;              /**< Used inode percentage * 10 */
+                        long       inode_total;                  /**< Used inode total objects */
+                        int        space_percent;              /**< Used space percentage * 10 */
+                        long long  space_total;                   /**< Used space total blocks */
+                        int        _flags;               /**< Filesystem flags from last cycle */
+                        int        flags;              /**< Filesystem flags from actual cycle */
                 } filesystem;
 
                 struct {

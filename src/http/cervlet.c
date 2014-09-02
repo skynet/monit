@@ -2010,18 +2010,18 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
                                   "<tr><td>Filesystem flags</td><td>0x%x</td></tr>",
                                   s->inf->priv.filesystem.flags);
                         StringBuffer_append(res->outputbuffer,
-                                  "<tr><td>Blocks total</td><td>%ld [%s]</td></tr>",
+                                  "<tr><td>Blocks total</td><td>%lld [%s]</td></tr>",
                                   s->inf->priv.filesystem.f_blocks,
                                   s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Blocks free for non superuser</td>"
-                                  "<td>%ld [%s] [%.1f%%]</td></tr>",
+                                  "<td>%lld [%s] [%.1f%%]</td></tr>",
                                   s->inf->priv.filesystem.f_blocksfree,
                                   s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                   s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Blocks free total</td>"
-                                  "<td class='%s'>%ld [%s] [%.1f%%]</td></tr>",
+                                  "<td class='%s'>%lld [%s] [%.1f%%]</td></tr>",
                                   (s->error & Event_Resource)?"red-text":"",
                                   s->inf->priv.filesystem.f_blocksfreetotal,
                                   s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
@@ -2348,18 +2348,18 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                           "block size",
                                           Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
                                 StringBuffer_append(res->outputbuffer,
-                                          "  %-33s %ld [%s]\n",
+                                          "  %-33s %lld [%s]\n",
                                           "blocks total",
                                           s->inf->priv.filesystem.f_blocks,
-                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
+                                          s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize((long long)(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize), buf) : "0 MB");
                                 StringBuffer_append(res->outputbuffer,
-                                          "  %-33s %ld [%s] [%.1f%%]\n",
+                                          "  %-33s %lld [%s] [%.1f%%]\n",
                                           "blocks free for non superuser",
                                           s->inf->priv.filesystem.f_blocksfree,
                                           s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                           s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
                                 StringBuffer_append(res->outputbuffer,
-                                          "  %-33s %ld [%s] [%.1f%%]\n",
+                                          "  %-33s %lld [%s] [%.1f%%]\n",
                                           "blocks free total",
                                           s->inf->priv.filesystem.f_blocksfreetotal,
                                           s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
