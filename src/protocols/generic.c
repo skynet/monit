@@ -37,9 +37,9 @@
 
 /*
  Escape zero i.e. '\0' in expect buffer with "\0" so zero can be tested in expect strings
- as "\\0". If there are no zeroes '\0' in the buffer it is returned as it is
+ as "\0". If there are no '\0' in the buffer it is returned as it is
  */
-char *_escapeZeroInExpectBuffer(char *s, int n) {
+static char *_escapeZeroInExpectBuffer(char *s, int n) {
         assert(n < EXPECT_BUFFER_MAX);
         char t[n]; // VLA
         memcpy(t, s, n);

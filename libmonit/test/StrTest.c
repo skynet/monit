@@ -9,6 +9,11 @@
 #include "Str.h"
 
 
+/**
+ * Str.c unity tests
+ */
+
+
 int main(void) {
 
         Bootstrap(); // Need to initialize library
