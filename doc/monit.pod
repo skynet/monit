@@ -2431,11 +2431,6 @@ the expect buffer to read 10 kilobytes:
 
 set expectbuffer 10 kb
 
-If your system supports POSIX regular expressions, you can use
-regular expressions in the EXPECT string, see regex(7) to learn
-more about the types of regular expressions you can use in an
-expect string.
-
 You can use non-printable characters in a SEND string if needed.
 Use the hex notation, \0xHEXHEX to send any char in the range
 \0x00-\0xFF, that is, 0-255 in decimal. For example, to test a
@@ -2443,6 +2438,11 @@ Quake 3 server:
 
  send "\0xFF\0xFF\0xFF\0xFFgetstatus"
  expect "sv_floodProtect|sv_maxPing"
+
+If your system supports POSIX regular expressions, you can use
+regular expressions in the EXPECT string, see regex(7) to learn
+more about the types of regular expressions you can use in an
+expect string.
 
 Since both regex and string compare operates on a zero terminated
 string, you cannot test for '\0' in an EXPECT buffer since this

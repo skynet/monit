@@ -181,7 +181,6 @@
 		52D25EE217C0E8680039D3E4 /* monitrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = monitrc; sourceTree = "<group>"; };
 		52D25EE317C0E8680039D3E4 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		52D25EE917C0EB460039D3E4 /* monit.pod */ = {isa = PBXFileReference; lastKnownFileType = text; path = monit.pod; sourceTree = "<group>"; };
-		52D25EEA17C0EB460039D3E4 /* PLATFORMS */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLATFORMS; sourceTree = "<group>"; };
 		52F6E67B13A74F220023F87A /* monit.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = monit.pod; sourceTree = "<group>"; };
 		52F6E74413A74F220023F87A /* alert.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = alert.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52F6E74513A74F220023F87A /* alert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = alert.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -432,7 +431,6 @@
 			isa = PBXGroup;
 			children = (
 				52D25EE917C0EB460039D3E4 /* monit.pod */,
-				52D25EEA17C0EB460039D3E4 /* PLATFORMS */,
 			);
 			path = doc;
 			sourceTree = "<group>";
