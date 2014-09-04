@@ -34,6 +34,30 @@
 
 #include "protocol.h"
 
+
+/*
+ Escape zero i.e. '\0' in expect buffer with "\0" so zero can be tested in expect strings
+ as "\\0". If there are no zeroes '\0' in the buffer it is returned as it is
+ */
+char *_escapeZeroInExpectBuffer(char *s, int n) {
+        assert(n < EXPECT_BUFFER_MAX);
+        char t[n]; // VLA
+        memcpy(t, s, n);
+        for (int i = 0, j = 0; j <= n; i++, j++) {
+                if ((t[j] = s[i]) == '\0') {
+                        if (j + 2 < n) {
+                                t[j] = '\\';
+                                t[j + 1] = '0';
+                                j++;
+                        }
+                }
+        }
+        memcpy(s, t, n);
+        s[n] = 0;
+        return s;
+}
+
+
 /**
  *  Generic service test.
  *
@@ -74,15 +98,15 @@ int check_generic(Socket_T socket) {
 
     } else if (g->expect != NULL) {
       int n;
-
       /* Need read, not readln here */
-      if((n = socket_read(socket, buf, Run.expectbuffer))<0) {
+      if((n = socket_read(socket, buf, Run.expectbuffer)) < 0) {
         socket_setError(socket, "GENERIC: error receiving data -- %s", STRERROR);
         FREE(buf);
         return FALSE;
       }
       buf[n] = 0;
-
+      if (n > 0)
+              _escapeZeroInExpectBuffer(buf, n);
 #ifdef HAVE_REGEX_H
       regex_return = regexec(g->expect, buf, 0, NULL, 0);
       if (regex_return != 0) {

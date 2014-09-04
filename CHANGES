@@ -45,6 +45,15 @@ New: support monitoring of filesystems by generic device strings such as
 sshfs on Linux or ZFS filesystems on Solaris. Example usage:
     check filesystem mydata with path "myuser@192.168.1.10:mydata"
 
+New: Max value for expect buffer is 100 KB.
+
+New: You can now test for '\0' in an expect string. We escape '\0'
+as "\0", that is, a '\' followed by the ascii value for 0. For
+instance, here is how to test for an expect string that starts with
+zero followed by any number of characters: expect "^[\\]0.*". Closes
+issue #84
+
+
 
 Version 5.8.1
 

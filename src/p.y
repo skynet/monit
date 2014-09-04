@@ -523,6 +523,8 @@ startdelay      : /* EMPTY */        { $<number>$ = START_DELAY; }
 
 setexpectbuffer : SET EXPECTBUFFER NUMBER unit {
                     Run.expectbuffer = $3 * $<number>4;
+                    if (Run.expectbuffer > EXPECT_BUFFER_MAX)
+                        yyerror("Maximum value for expect buffer is 100 KB");
                   }
                 ;
 
