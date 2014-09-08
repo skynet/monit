@@ -2476,7 +2476,7 @@ Syntax:
      [REQUEST "string"]
      [STATUS operator number]
      [CHECKSUM checksum]
-     [HOSTHEADER "string"]
+     [HTTP HEADERS list of headers]
      [CONTENT {= | != } STRING]
 
 I<REQUEST> option can set an URI string specifying a document on the
@@ -2523,20 +2523,34 @@ Example:
     checksum 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
-I<HOSTHEADER> option can be used to explicit specify the HTTP
-host header in the request. If not used, Monit will use the
-hostname or IP-address of the host as specified in the statement.
-Specifying a host header is useful if you want to connect to the
-name-based virtual host.
+I<HTTP HEADERS> can be used to send a list of HTTP headers
+with a http protocol test. For instance, the host header. If the
+host header is not set, Monit will use the hostname or IP-address
+of the host as specified in the statement. Specifying a host header
+is useful if you want to connect and test a name-based virtual host.
+The syntax is
 
-For example:
+  http headers [name:value, name:value,..]
 
-  if failed 
-     host 192.168.1.100
-     port 8080
-     protocol http
-     hostheader 'example.com'
-  then alert
+where each name:value pair is separated with ','. If you need to
+use ':' in the value string, for instance to set port number for a
+host header, you must enclose the value in quotes. For example,
+
+  http headers [Host: "mmonit.com:443"]
+
+In a check host context, using this statement might look like
+
+  check host mmonit.com with address mmonit.com
+    if failed
+       port 80 protocol http
+       with http headers [Host: mmonit.com, Cache-Control: no-cache,
+         Cookie: csrftoken=nj1bI3CnMCaiNv4beqo8ZaCfAQQvpgLH]
+       and request /monit/ with content = "Monit [0-9.]+"
+    then alert
+
+Setting http headers is associated with the http protocol test
+and must come before I<request> as in the example above.
+
 
 I<CONTENT> option sets the pattern which is expected in the data
 returned by the server. If the pattern doesn't match, event is

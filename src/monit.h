@@ -461,9 +461,10 @@ typedef struct mygenericproto {
 /** Defines a port object */
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
+        List_T http_headers; /**< Optional list of HTTP headers to send with request */
         char *request;                              /**< Specific protocol request */
         char *request_checksum;     /**< The optional checksum for a req. document */
-        char *request_hostheader;            /**< The optional Host: header to use */
+        char *request_hostheader;            /**< The optional Host: header to use. Deprecated */
         char *pathname;                   /**< Pathname, in case of an UNIX socket */
         Generic_T generic;                                /**< Generic test handle */
         volatile int socket;                       /**< Socket used for connection */
