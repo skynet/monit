@@ -901,17 +901,29 @@ static void check_timeout(Service_T s) {
 }
 
 
+static int _incron(Service_T s, time_t now) {
+        time_t last_run = s->every.last_run;
+        if ((now - last_run) > 59) // Minute is the lowest resolution, so only run once per minute
+                if (Time_incron(s->every.spec.cron, now)) {
+                        s->every.last_run = now;
+                        return TRUE;
+                }
+        return FALSE;
+}
+
+
 /**
  * Returns TRUE if validation should be skiped for
  * this service in this cycle, otherwise FALSE. Handle
  * every statement
  */
-static int check_skip(Service_T s, time_t time) {
+static int check_skip(Service_T s) {
         ASSERT(s);
         if (s->visited) {
                 DEBUG("'%s' check skipped -- service already handled in a dependency chain\n", s->name);
                 return TRUE;
         }
+        time_t now = Time_now();
         if (s->every.type == EVERY_SKIPCYCLES) {
                 s->every.spec.cycle.counter++;
                 if (s->every.spec.cycle.counter < s->every.spec.cycle.number) {
@@ -920,13 +932,13 @@ static int check_skip(Service_T s, time_t time) {
                         return TRUE;
                 }
                 s->every.spec.cycle.counter = 0;
-        } else if (s->every.type == EVERY_CRON && ! Time_incron(s->every.spec.cron, time)) {
+        } else if (s->every.type == EVERY_CRON && ! _incron(s, now)) {
                 s->monitor |= MONITOR_WAITING;
-                DEBUG("'%s' test skipped as current time (%ld) does not match every's cron spec \"%s\"\n", s->name, (long)time, s->every.spec.cron);
+                DEBUG("'%s' test skipped as current time (%ld) does not match every's cron spec \"%s\"\n", s->name, (long)now, s->every.spec.cron);
                 return TRUE;
-        } else if (s->every.type == EVERY_NOTINCRON && Time_incron(s->every.spec.cron, time)) {
+        } else if (s->every.type == EVERY_NOTINCRON && _incron(s, now)) {
                 s->monitor |= MONITOR_WAITING;
-                DEBUG("'%s' test skipped as current time (%ld) matches every's cron spec \"not %s\"\n", s->name, (long)time, s->every.spec.cron);
+                DEBUG("'%s' test skipped as current time (%ld) matches every's cron spec \"not %s\"\n", s->name, (long)now, s->every.spec.cron);
                 return TRUE;
         }
         s->monitor &= ~MONITOR_WAITING;
@@ -978,11 +990,10 @@ int validate() {
         }
 
         /* Check the services */
-        time_t now = Time_now();
         for (s = servicelist; s; s = s->next) {
                 if (Run.stopped)
                         break;
-                if (! do_scheduled_action(s) && s->monitor && ! check_skip(s, now)) {
+                if (! do_scheduled_action(s) && s->monitor && ! check_skip(s)) {
                         check_timeout(s); // Can disable monitoring => need to check s->monitor again
                         if (s->monitor) {
                                 if (! s->check(s))

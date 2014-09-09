@@ -167,6 +167,7 @@
 		524981F7194B37DD004A50DB /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = /opt/local/lib/libssl.a; sourceTree = "<absolute>"; };
 		528EA77213A74E05003DA4BE /* monit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = monit; sourceTree = BUILT_PRODUCTS_DIR; };
 		528F7DB318BCABC9004BF9B5 /* CONTRIBUTORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CONTRIBUTORS; sourceTree = "<group>"; };
+		529141F519BE15A500BBF738 /* y.output */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = y.output; sourceTree = "<group>"; };
 		52A1310B13A7882A00583257 /* libmonit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libmonit.xcodeproj; path = libmonit/libmonit.xcodeproj; sourceTree = "<group>"; };
 		52A1311C13A7886800583257 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		52AE77CA14037DA300D2861D /* sha1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sha1.c; sourceTree = "<group>"; };
@@ -498,6 +499,7 @@
 				52F6E7AE13A74F220023F87A /* util.h */,
 				52F6E7AF13A74F220023F87A /* validate.c */,
 				52F6E7B113A74F220023F87A /* xml.c */,
+				529141F519BE15A500BBF738 /* y.output */,
 			);
 			path = src;
 			sourceTree = "<group>";
