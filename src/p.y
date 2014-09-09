@@ -302,7 +302,7 @@
 %token URL CONTENT PID PPID FSFLAG
 %token REGISTER CREDENTIALS
 %token <url> URLOBJECT
-%token <string> TARGET TIMESPEC
+%token <string> TARGET TIMESPEC HTTPHEADER
 %token <number> MAXFORWARD
 %token FIPS
 
@@ -548,6 +548,8 @@ startdelay      : /* EMPTY */        { $<number>$ = START_DELAY; }
 
 setexpectbuffer : SET EXPECTBUFFER NUMBER unit {
                     Run.expectbuffer = $3 * $<number>4;
+                    if (Run.expectbuffer > EXPECT_BUFFER_MAX)
+                        yyerror("Maximum value for expect buffer is 100 KB");
                   }
                 ;
 
@@ -1227,6 +1229,7 @@ http            : request
                 | responsesum
                 | status
                 | hostheader
+                | '[' httpheaderlist ']'
                 ;
 
 status          : STATUS operator NUMBER {
@@ -1249,6 +1252,15 @@ responsesum     : CHECKSUM STRING {
 hostheader      : HOSTHEADER STRING {
                     portset.request_hostheader = $2;
                   }
+                ;
+
+httpheaderlist  : /* EMPTY */
+                | httpheaderlist HTTPHEADER {
+                        if (! portset.http_headers) {
+                                portset.http_headers = List_new();
+                        }
+                        List_append(portset.http_headers, $2);
+                 }
                 ;
 
 secret          : SECRET STRING {
@@ -2461,6 +2473,7 @@ static void addport(Port_T port) {
   p->url_request        = port->url_request;
   p->request_checksum   = port->request_checksum;
   p->request_hostheader = port->request_hostheader;
+  p->http_headers       = port->http_headers;
   p->version            = port->version;
   p->operator           = port->operator;
   p->status             = port->status;

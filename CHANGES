@@ -45,6 +45,34 @@ New: support monitoring of filesystems by generic device strings such as
 sshfs on Linux or ZFS filesystems on Solaris. Example usage:
     check filesystem mydata with path "myuser@192.168.1.10:mydata"
 
+New: Max value for expect buffer is 100 KB.
+
+New: You can now test for '\0' in an expect string. We escape '\0'
+as "\0", that is, a '\' followed by the ascii value for 0. For
+instance, here is how to test for an expect string that starts with
+zero followed by any number of characters: expect "^[\\]0.*". Closes
+issue #84
+
+Fixed #55: Only run cron style checks once per minute. Minute is the
+lowest resolution in the cron string, but if poll-cycle time is lower
+than one minute the check could run several times in a minute.
+
+New: Send HTTP headers with a HTTP protocol test. The syntax is
+ http headers [name:value, name:value,..]
+where each name:value pair is separated with ','. The statement
+must come before the request statement. This statement can be used
+to send any HTTP header, for instance, a cookie or a host header. In
+a check host context, use of this statement might look like
+  check host mmonit.com with address mmonit.com
+    if failed
+       port 80 protocol http
+       with http headers [host: mmonit.com, Cache-Control: no-cache,
+           Cookie: csrftoken=nj1bI3CnMCaiNv4beqo8ZaCfAQQvpgLH]
+       and request /monit/ with content = "Monit [0-9.]+"
+    then alert
+This statement deprecate the old hostheader statement, which was
+used to only set the HTTP host header.
+
 
 Version 5.8.1
 

@@ -130,7 +130,7 @@ kilobyte    ("kilobyte"|"kilobytes"|"kb")
 megabyte    ("megabyte"|"megabytes"|"mb")
 gigabyte    ("gigabyte"|"gigabytes"|"gb")
 
-%x ARGUMENT_COND DEPEND_COND SERVICE_COND URL_COND STRING_COND EVERY_COND INCLUDE
+%x ARGUMENT_COND DEPEND_COND SERVICE_COND URL_COND STRING_COND EVERY_COND HTTP_HEADER_COND INCLUDE
 
 %%
 
@@ -452,9 +452,13 @@ group[ \t]+       {
                     return GROUP;
                   }
 
+"http headers"{ws} {
+                        BEGIN(HTTP_HEADER_COND);
+                        return '[';
+                  }
+
 [a-zA-Z0-9]+"://" {
-                    yylval.url=
-                      create_URL(Str_ndup(yytext, strlen(yytext)-3));
+                    yylval.url = create_URL(Str_ndup(yytext, strlen(yytext)-3));
                     BEGIN(URL_COND);
                   }
 
@@ -729,8 +733,41 @@ group[ \t]+       {
 
 }
 
+<HTTP_HEADER_COND>{
+        
+        {wws}   ;
+        
+        "["     ;
 
-<INITIAL,ARGUMENT_COND,SERVICE_COND,DEPEND_COND,URL_COND,STRING_COND,EVERY_COND>. {
+        [\n]    {
+                        lineno++;
+                }
+        
+        ([^\t\r\n,\[\]:]+)/[:] { // name/:
+                        save_arg();
+                }
+        
+        [:](({ws}?["][^"]+["])|([^\r\n\],:]+)) { // : value
+                        yylval.string = Str_cat("%s:%s", Str_trim(argyytext), Str_unquote(yytext + 1));
+                        save_arg();
+                        return HTTPHEADER;
+                }
+        
+        "]"     {
+                        BEGIN(INITIAL);
+                        save_arg();
+                        return ']';
+                }
+        
+        .       {
+                        BEGIN(INITIAL);
+                        yyerror("invalid HTTP header list format");
+                }
+        
+}
+
+
+<INITIAL,ARGUMENT_COND,SERVICE_COND,DEPEND_COND,URL_COND,STRING_COND,EVERY_COND,HTTP_HEADER_COND>. {
                       check_state = None_State;
                       return yytext[0];
                   }

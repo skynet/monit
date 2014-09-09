@@ -244,137 +244,132 @@ char *Time_uptime(time_t sec, char *result) {
  */
 int Time_incron(const char *cron, time_t time) {
         assert(cron);
-#define YYCTYPE char
 #define YYCURSOR cron
 #define YYLIMIT  end
-#define YYMARKER m
 #define YYTOKEN  t
-#define YYFILL(n)   ((void)0)
-	const char *m;
-	const char *t;
-	const char *end = cron + strlen(cron);
+        const char *m;
+        const char *t;
+        const char *end = cron + strlen(cron);
         int n = 0;
         int found = 0;
         int fields[] = {Time_minutes(time), Time_hour(time), Time_day(time), Time_month(time), Time_weekday(time)};
+        
 parse:
         if (YYCURSOR >= YYLIMIT)
                 return found == 5;
         YYTOKEN = YYCURSOR;
-	
+        
         {
-                YYCTYPE yych;
+                unsigned char yych;
                 static const unsigned char yybm[] = {
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        128, 128, 128, 128, 128, 128, 128, 128, 
-                        128, 128,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
-                        0,   0,   0,   0,   0,   0,   0,   0, 
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        128, 128, 128, 128, 128, 128, 128, 128,
+                        128, 128,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
+                        0,   0,   0,   0,   0,   0,   0,   0,
                 };
-                if ((YYLIMIT - YYCURSOR) < 3) YYFILL(3);
-                yych = *YYCURSOR;
+                
+                yych = *cron;
                 if (yych <= ' ') {
                         if (yych <= '\f') {
-                                if (yych <= 0x08) goto yy70;
-                                if (yych >= '\v') goto yy70;
+                                if (yych <= 0x08) goto yy10;
+                                if (yych >= '\v') goto yy10;
                         } else {
-                                if (yych <= '\r') goto yy62;
-                                if (yych <= 0x1F) goto yy70;
+                                if (yych <= '\r') goto yy2;
+                                if (yych <= 0x1F) goto yy10;
                         }
                 } else {
                         if (yych <= '+') {
-                                if (yych == '*') goto yy64;
-                                goto yy70;
+                                if (yych == '*') goto yy4;
+                                goto yy10;
                         } else {
-                                if (yych <= ',') goto yy66;
-                                if (yych <= '/') goto yy70;
-                                if (yych <= '9') goto yy68;
-                                goto yy70;
+                                if (yych <= ',') goto yy6;
+                                if (yych <= '/') goto yy10;
+                                if (yych <= '9') goto yy8;
+                                goto yy10;
                         }
                 }
-        yy62:
-                ++YYCURSOR;
+        yy2:
+                ++cron;
                 {
                         goto parse;
                 }
-        yy64:
-                ++YYCURSOR;
+        yy4:
+                ++cron;
                 {
                         n++;
                         found++;
                         goto parse;
                 }
-        yy66:
-                ++YYCURSOR;
+        yy6:
+                ++cron;
                 {
-                        n--; // backtrack on field advance
+                        n--; // backtrack on fields advance
                         assert(n < 5 && n >= 0);
                         goto parse;
                 }
-        yy68:
-                yych = *(YYMARKER = ++YYCURSOR);
-                goto yy73;
-        yy69:
+        yy8:
+                yych = *(m = ++cron);
+                goto yy13;
+        yy9:
                 {
-                        int v = Str_parseInt(YYTOKEN);
-                        if (fields[n] == v)
+                        if (fields[n] == Str_parseInt(YYTOKEN))
                                 found++;
                         n++;
                         goto parse;
                 }
-        yy70:
-                ++YYCURSOR;
+        yy10:
+                ++cron;
                 {
                         return false;
                 }
-        yy72:
-                YYMARKER = ++YYCURSOR;
-                if ((YYLIMIT - YYCURSOR) < 2) YYFILL(2);
-                yych = *YYCURSOR;
-        yy73:
+        yy12:
+                m = ++cron;
+                yych = *cron;
+        yy13:
                 if (yybm[0+yych] & 128) {
-                        goto yy72;
+                        goto yy12;
                 }
-                if (yych != '-') goto yy69;
-                yych = *++YYCURSOR;
-                if (yych <= '/') goto yy75;
-                if (yych <= '9') goto yy76;
-        yy75:
-                YYCURSOR = YYMARKER;
-                goto yy69;
-        yy76:
-                ++YYCURSOR;
-                if (YYLIMIT <= YYCURSOR) YYFILL(1);
-                yych = *YYCURSOR;
-                if (yych <= '/') goto yy78;
-                if (yych <= '9') goto yy76;
-        yy78:
+                if (yych != '-') goto yy9;
+                yych = *++cron;
+                if (yych <= '/') goto yy15;
+                if (yych <= '9') goto yy16;
+        yy15:
+                cron = m;
+                goto yy9;
+        yy16:
+                ++cron;
+                yych = *cron;
+                if (yych <= '/') goto yy18;
+                if (yych <= '9') goto yy16;
+        yy18:
                 {
                         int from = Str_parseInt(YYTOKEN);
                         int to = Str_parseInt(strchr(YYTOKEN, '-') + 1);
@@ -384,7 +379,8 @@ parse:
                         goto parse;
                 }
         }
-	return found == 5;
+        
+        return found == 5;
 }
 
 

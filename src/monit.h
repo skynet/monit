@@ -235,7 +235,9 @@ typedef enum {
 #define HANDLER_MMONIT     0x2
 #define HANDLER_MAX        HANDLER_MMONIT
 
-#define ICMP_ATTEMPT_COUNT      3
+#define ICMP_ATTEMPT_COUNT 3
+
+#define EXPECT_BUFFER_MAX (UNIT_KILOBYTE * 100 + 1)
 
 
 /** ------------------------------------------------- Special purpose macros */
@@ -459,9 +461,10 @@ typedef struct mygenericproto {
 
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
+        List_T http_headers; /**< Optional list of HTTP headers to send with request */
         char *request;                              /**< Specific protocol request */
         char *request_checksum;     /**< The optional checksum for a req. document */
-        char *request_hostheader;            /**< The optional Host: header to use */
+        char *request_hostheader;            /**< The optional Host: header to use. Deprecated */
         char *pathname;                   /**< Pathname, in case of an UNIX socket */
         Generic_T generic;                                /**< Generic test handle */
         volatile int socket;                       /**< Socket used for connection */
@@ -586,6 +589,7 @@ typedef struct myactionrate {
  cycle based every statement and the new cron-format version */
 typedef struct myevery {
         int type; /**< 0 = not set, 1 = cycle, 2 = cron, 3 = negated cron */
+        time_t last_run;
         union {
                 struct {
                         int number; /**< Check this program at a given cycles */
@@ -613,6 +617,7 @@ typedef struct myprogram {
         int timeout;          /**< How long the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
+        char output[140];                                 /**< Last program output */
 } *Program_T;
 
 

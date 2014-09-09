@@ -2424,16 +2424,12 @@ use this string when comparing the EXPECT string. You can override
 the default value by using this statement at the top of the Monit
 configuration file:
 
- SET EXPECTBUFFER <number> ["b"|"kb"|"mb"]
+ SET EXPECTBUFFER <number> ["b"|"kb"]
 
-If your system supports POSIX regular expressions, you can use
-regular expressions in the EXPECT string, see regex(7) to learn
-more about the types of regular expressions you can use in an
-expect string.
+Max value for the expect buffer is 100 kb. For example, to set
+the expect buffer to read 10 kilobytes:
 
-For example, to set the expect buffer to read 10 kilobytes:
-
- set expectbuffer 10 kb
+set expectbuffer 10 kb
 
 You can use non-printable characters in a SEND string if needed.
 Use the hex notation, \0xHEXHEX to send any char in the range
@@ -2443,7 +2439,22 @@ Quake 3 server:
  send "\0xFF\0xFF\0xFF\0xFFgetstatus"
  expect "sv_floodProtect|sv_maxPing"
 
-Simple SMTP protocol test example:
+If your system supports POSIX regular expressions, you can use
+regular expressions in the EXPECT string, see regex(7) to learn
+more about the types of regular expressions you can use in an
+expect string.
+
+Since both regex and string compare operates on a zero terminated
+string, you cannot test for '\0' in an EXPECT buffer since this
+character marks the end of the buffer. However, we escape '\0' in
+the expect buffer as "\0" which you can test for. That is, '\'
+followed by the ascii value for 0. For instance, here is how to
+test for an expect string that starts with zero followed by any
+number of characters.
+
+ expect "^[\\]0.*"
+
+Here is a simple SMTP protocol example:
 
  if failed 
     port 25 and
@@ -2465,7 +2476,7 @@ Syntax:
      [REQUEST "string"]
      [STATUS operator number]
      [CHECKSUM checksum]
-     [HOSTHEADER "string"]
+     [HTTP HEADERS list of headers]
      [CONTENT {= | != } STRING]
 
 I<REQUEST> option can set an URI string specifying a document on the
@@ -2512,20 +2523,34 @@ Example:
     checksum 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
-I<HOSTHEADER> option can be used to explicit specify the HTTP
-host header in the request. If not used, Monit will use the
-hostname or IP-address of the host as specified in the statement.
-Specifying a host header is useful if you want to connect to the
-name-based virtual host.
+I<HTTP HEADERS> can be used to send a list of HTTP headers
+with a http protocol test. For instance, the host header. If the
+host header is not set, Monit will use the hostname or IP-address
+of the host as specified in the statement. Specifying a host header
+is useful if you want to connect and test a name-based virtual host.
+The syntax is
 
-For example:
+  http headers [name:value, name:value,..]
 
-  if failed 
-     host 192.168.1.100
-     port 8080
-     protocol http
-     hostheader 'example.com'
-  then alert
+where each name:value pair is separated with ','. If you need to
+use ':' in the value string, for instance to set port number for a
+host header, you must enclose the value in quotes. For example,
+
+  http headers [Host: "mmonit.com:443"]
+
+In a check host context, using this statement might look like
+
+  check host mmonit.com with address mmonit.com
+    if failed
+       port 80 protocol http
+       with http headers [Host: mmonit.com, Cache-Control: no-cache,
+         Cookie: csrftoken=nj1bI3CnMCaiNv4beqo8ZaCfAQQvpgLH]
+       and request /monit/ with content = "Monit [0-9.]+"
+    then alert
+
+Setting http headers is associated with the http protocol test
+and must come before I<request> as in the example above.
+
 
 I<CONTENT> option sets the pattern which is expected in the data
 returned by the server. If the pattern doesn't match, event is

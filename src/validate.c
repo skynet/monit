@@ -99,6 +99,7 @@
 #include "system/NetStatistics.h"
 #include "system/Time.h"
 #include "io/File.h"
+#include "io/InputStream.h"
 
 /**
  *  Implementation of validation engine
@@ -114,6 +115,17 @@
 
 
 /* ----------------------------------------------------------------- Private */
+
+
+/**
+ * Read program output into stringbuffer. Limit the output to 140B (if the program will have endless output, such as 'yes' utility, we have to stop at some point to not spin here forever)
+ */
+static void _programOutput(InputStream_T I, char *buf, int buflen) {
+        int n;
+        InputStream_setTimeout(I, 0);
+        n = InputStream_readBytes(I, buf, buflen - 1);
+        buf[n] = 0;
+}
 
 
 /**
@@ -888,17 +900,29 @@ static void check_timeout(Service_T s) {
 }
 
 
+static int _incron(Service_T s, time_t now) {
+        time_t last_run = s->every.last_run;
+        if ((now - last_run) > 59) // Minute is the lowest resolution, so only run once per minute
+                if (Time_incron(s->every.spec.cron, now)) {
+                        s->every.last_run = now;
+                        return TRUE;
+                }
+        return FALSE;
+}
+
+
 /**
  * Returns TRUE if validation should be skiped for
  * this service in this cycle, otherwise FALSE. Handle
  * every statement
  */
-static int check_skip(Service_T s, time_t time) {
+static int check_skip(Service_T s) {
         ASSERT(s);
         if (s->visited) {
                 DEBUG("'%s' check skipped -- service already handled in a dependency chain\n", s->name);
                 return TRUE;
         }
+        time_t now = Time_now();
         if (s->every.type == EVERY_SKIPCYCLES) {
                 s->every.spec.cycle.counter++;
                 if (s->every.spec.cycle.counter < s->every.spec.cycle.number) {
@@ -907,13 +931,13 @@ static int check_skip(Service_T s, time_t time) {
                         return TRUE;
                 }
                 s->every.spec.cycle.counter = 0;
-        } else if (s->every.type == EVERY_CRON && ! Time_incron(s->every.spec.cron, time)) {
+        } else if (s->every.type == EVERY_CRON && ! _incron(s, now)) {
                 s->monitor |= MONITOR_WAITING;
-                DEBUG("'%s' test skipped as current time (%ld) does not match every's cron spec \"%s\"\n", s->name, (long)time, s->every.spec.cron);
+                DEBUG("'%s' test skipped as current time (%ld) does not match every's cron spec \"%s\"\n", s->name, (long)now, s->every.spec.cron);
                 return TRUE;
-        } else if (s->every.type == EVERY_NOTINCRON && Time_incron(s->every.spec.cron, time)) {
+        } else if (s->every.type == EVERY_NOTINCRON && _incron(s, now)) {
                 s->monitor |= MONITOR_WAITING;
-                DEBUG("'%s' test skipped as current time (%ld) matches every's cron spec \"not %s\"\n", s->name, (long)time, s->every.spec.cron);
+                DEBUG("'%s' test skipped as current time (%ld) matches every's cron spec \"not %s\"\n", s->name, (long)now, s->every.spec.cron);
                 return TRUE;
         }
         s->monitor &= ~MONITOR_WAITING;
@@ -965,11 +989,10 @@ int validate() {
         }
 
         /* Check the services */
-        time_t now = Time_now();
         for (s = servicelist; s; s = s->next) {
                 if (Run.stopped)
                         break;
-                if (! do_scheduled_action(s) && s->monitor && ! check_skip(s, now)) {
+                if (! do_scheduled_action(s) && s->monitor && ! check_skip(s)) {
                         check_timeout(s); // Can disable monitoring => need to check s->monitor again
                         if (s->monitor) {
                                 if (! s->check(s))
@@ -1248,24 +1271,19 @@ int check_program(Service_T s) {
                         }
                 }
                 s->program->exitStatus = Process_exitStatus(P); // Save exit status for web-view display
+                // Save program output
+                *s->program->output = 0;
+                _programOutput(Process_getErrorStream(P), s->program->output, sizeof(s->program->output));
+                if (! *s->program->output)
+                        _programOutput(Process_getInputStream(P), s->program->output, sizeof(s->program->output));
                 // Evaluate program's exit status against our status checks.
                 /* TODO: Multiple checks we have now should be deprecated and removed - not useful because it
                  will alert on everything if != is used other than the match or if = is used, might report nothing on error. */
                 for (Status_T status = s->statuslist; status; status = status->next) {
                         if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
-                                int n = 0;
-                                char buf[STRLEN + 1];
-                                // Read message from script
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN - 1)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN - 1);
-                                if (n > 0) {
-                                        buf[n] = 0;
-                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "%s", buf);
-                                } else {
-                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- no output from program", s->path, s->program->exitStatus);
-                                }
+                                Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, s->program->output);
                         } else {
-                                DEBUG("'%s' status check succeeded\n", s->name);
+                                DEBUG("'%s' status check succeeded -- %s\n", s->name, s->program->output);
                                 Event_post(s, Event_Status, STATE_SUCCEEDED, status->action, "status succeeded");
                         }
                 }

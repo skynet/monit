@@ -65,6 +65,19 @@
 /* ----------------------------------------------------------------- Private */
 
 
+static const char *_findHostHeaderIn(List_T list) {
+        if (list) {
+                for (list_t h = list->head; h; h = h->next) {
+                        char *header = h->e;
+                        if (Str_startsWith(header, "Host")) {
+                                return strchr(header, ':') + 1;
+                        }
+                }
+        }
+        return NULL;
+}
+
+
 static int do_regex(Socket_T socket, int content_length, Request_T R) {
         int n, size = 0, length = 0, rv = FALSE, regex_return;
         char *buf = NULL;
@@ -275,17 +288,30 @@ int check_http(Socket_T socket) {
 
         request = P->request ? P->request : "/";
 
-        Util_getHTTPHostHeader(socket, host, STRLEN);
-        hostheader = P->request_hostheader ? P->request_hostheader : host;
-
-        if (socket_print(socket,
-                         "GET %s HTTP/1.1\r\n"
-                         "Host: %s\r\n"
-                         "Accept: */*\r\n"
-                         "User-Agent: Monit/%s\r\n"
-                         "%s\r\n",
-                         request, hostheader, VERSION,
-                         get_auth_header(P, auth, STRLEN)) < 0) {
+        hostheader = _findHostHeaderIn(P->http_headers);
+        hostheader = hostheader ? hostheader : P->request_hostheader
+                                ? P->request_hostheader : Util_getHTTPHostHeader(socket, host, STRLEN); // Otherwise use deprecated request_hostheader or default host
+        StringBuffer_T sb = StringBuffer_create(168);
+        StringBuffer_append(sb,
+                            "GET %s HTTP/1.1\r\n"
+                            "Host: %s\r\n"
+                            "Accept: */*\r\n"
+                            "User-Agent: Monit/%s\r\n"
+                            "%s",
+                            request, hostheader, VERSION,
+                            get_auth_header(P, auth, STRLEN));
+        // Add headers if we have them
+        if (P->http_headers) {
+                for (list_t p = P->http_headers->head; p; p = p->next) {
+                        if (Str_startsWith(p->e, "Host")) // Already set contrived above
+                                continue;
+                        StringBuffer_append(sb, "%s\r\n", p->e);
+                }
+        }
+        StringBuffer_append(sb, "\r\n");
+        int send_status = socket_write(socket, (void*)StringBuffer_toString(sb), StringBuffer_length(sb));
+        StringBuffer_free(&sb);
+        if (send_status < 0) {
                 socket_setError(socket, "HTTP: error sending data -- %s", STRERROR);
                 return FALSE;
         }

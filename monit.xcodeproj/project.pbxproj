@@ -121,6 +121,13 @@
 			remoteGlobalIDString = 52DDC12013C59D45003AA75C;
 			remoteInfo = libmonit;
 		};
+		52F675FC19B873A100E1FF1E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 523FFE7B19AFE7610018595D;
+			remoteInfo = StrTest;
+		};
 		52FDD6B5189C2762008E3D5E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
@@ -160,6 +167,7 @@
 		524981F7194B37DD004A50DB /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = /opt/local/lib/libssl.a; sourceTree = "<absolute>"; };
 		528EA77213A74E05003DA4BE /* monit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = monit; sourceTree = BUILT_PRODUCTS_DIR; };
 		528F7DB318BCABC9004BF9B5 /* CONTRIBUTORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CONTRIBUTORS; sourceTree = "<group>"; };
+		529141F519BE15A500BBF738 /* y.output */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = y.output; sourceTree = "<group>"; };
 		52A1310B13A7882A00583257 /* libmonit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libmonit.xcodeproj; path = libmonit/libmonit.xcodeproj; sourceTree = "<group>"; };
 		52A1311C13A7886800583257 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		52AE77CA14037DA300D2861D /* sha1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sha1.c; sourceTree = "<group>"; };
@@ -174,9 +182,7 @@
 		52D25EE217C0E8680039D3E4 /* monitrc */ = {isa = PBXFileReference; lastKnownFileType = text; path = monitrc; sourceTree = "<group>"; };
 		52D25EE317C0E8680039D3E4 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		52D25EE917C0EB460039D3E4 /* monit.pod */ = {isa = PBXFileReference; lastKnownFileType = text; path = monit.pod; sourceTree = "<group>"; };
-		52D25EEA17C0EB460039D3E4 /* PLATFORMS */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLATFORMS; sourceTree = "<group>"; };
 		52F6E67B13A74F220023F87A /* monit.pod */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = monit.pod; sourceTree = "<group>"; };
-		52F6E67C13A74F220023F87A /* PLATFORMS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PLATFORMS; sourceTree = "<group>"; };
 		52F6E74413A74F220023F87A /* alert.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = alert.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52F6E74513A74F220023F87A /* alert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = alert.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52F6E74613A74F220023F87A /* collector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = collector.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
@@ -404,6 +410,7 @@
 				52DDC12A13C59D46003AA75C /* libmonit.a */,
 				52FDD6B6189C2762008E3D5E /* CommandTest */,
 				524981ED194B368C004A50DB /* TimeTest */,
+				52F675FD19B873A100E1FF1E /* StrTest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -425,7 +432,6 @@
 			isa = PBXGroup;
 			children = (
 				52D25EE917C0EB460039D3E4 /* monit.pod */,
-				52D25EEA17C0EB460039D3E4 /* PLATFORMS */,
 			);
 			path = doc;
 			sourceTree = "<group>";
@@ -441,7 +447,6 @@
 			isa = PBXGroup;
 			children = (
 				52F6E67B13A74F220023F87A /* monit.pod */,
-				52F6E67C13A74F220023F87A /* PLATFORMS */,
 			);
 			path = doc;
 			sourceTree = "<group>";
@@ -494,6 +499,7 @@
 				52F6E7AE13A74F220023F87A /* util.h */,
 				52F6E7AF13A74F220023F87A /* validate.c */,
 				52F6E7B113A74F220023F87A /* xml.c */,
+				529141F519BE15A500BBF738 /* y.output */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -655,6 +661,13 @@
 			fileType = archive.ar;
 			path = libmonit.a;
 			remoteRef = 52DDC12913C59D46003AA75C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		52F675FD19B873A100E1FF1E /* StrTest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = StrTest;
+			remoteRef = 52F675FC19B873A100E1FF1E /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52FDD6B6189C2762008E3D5E /* CommandTest */ = {

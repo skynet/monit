@@ -208,7 +208,7 @@ char *Str_replaceChar(char *s, char o, char n) {
 int Str_startsWith(const char *a, const char *b) {
 	if (a && b) {
 	        do 
-	                if (*a++ != *b++) return false;
+	                if (toupper(*a++) != toupper(*b++)) return false;
                 while (*b);
                 return true;
         }
