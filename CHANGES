@@ -77,6 +77,14 @@ New: Program check supports exit status change monitoring now. Syntax:
   check program foobar with path /usr/local/myscript.sh
     if changed status then alert
 
+New: Option to run 'check program' as a different user and/or
+group. To change uid or gid, Monit must run as root. Config
+example:
+
+  check program ls with path "/bin/ls -lrt /tmp" as uid "www"
+       ...
+
+
 
 Version 5.8.1
 

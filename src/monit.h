@@ -618,7 +618,7 @@ typedef struct mystatus {
 
 typedef struct myprogram {
         Process_T P;          /**< A Process_T object representing the sub-process */
-        Command_T C;          /**< A Command_T object for building the sub-process */
+        Command_T C;          /**< A Command_T object for creating the sub-process */
         command_t args;                                     /**< Program arguments */
         int timeout;          /**< How long the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */

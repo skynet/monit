@@ -886,7 +886,13 @@ checkprogram    : CHECKPROGRAM SERVICENAME PATHTOK argumentlist programtimeout {
                         check_exec(c->arg[0]);
                         createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
                         current->program->timeout = $<number>5;
-                  }
+                 }
+                | CHECKPROGRAM SERVICENAME PATHTOK argumentlist useroptionlist programtimeout {
+                        command_t c = command; // Current command
+                        check_exec(c->arg[0]);
+                        createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
+                        current->program->timeout = $<number>5;
+                 }
                 ;
 
 start           : START argumentlist exectimeout {
@@ -2112,6 +2118,12 @@ static void postparse() {
                         // Append any arguments
                         for (int i = 1; i < s->program->args->length; i++) {
                                 Command_appendArgument(s->program->C, s->program->args->arg[i]);
+                        }
+                        if (s->program->args->has_uid) {
+                                Command_setUid(s->program->C, s->program->args->uid);
+                        }
+                        if (s->program->args->has_gid) {
+                                Command_setGid(s->program->C, s->program->args->gid);
                         }
                 }
         }

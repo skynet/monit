@@ -2210,16 +2210,24 @@ Arguments to the program or script is a sequence of whitespace
 separated strings. In the above example the strings '-lrt' and 
 '/tmp/' are arguments to the program '/bin/ls'. If arguments are
 used, it is recommended to use quotes B<"> to enclose the string,
-otherwise quotes are not needed.
+otherwise, if no arguments are used, quotes are not needed.
 
 Notes: If the program is a script, the interpreter is required
-in first line. The program or script must also be executable.
+in the first line. The program or script must also be executable.
+
+If Monit is run as the super user, you can optionally run the
+program as a different user and/or group. In this example we
+run the I<ls> program as user www and as group staff:
+
+ check program ls with path "/bin/ls /tmp" as uid "www"
+          and gid "staff"
+       if status != 0 then alert
 
 Monit will execute the program periodically and if the exit
 status of the program does not match the expected result, Monit
 can perform an action. In the example above, Monit will raise an
-alert if the exit value of I<myscript> is different from 0. By
-convention, 0 means the program exited normally.
+alert if the exit value is different from 0. By convention, 0
+means the program exited normally.
 
 Program checks are asynchronous. Meaning that Monit will not wait
 for the program to exit, but instead, Monit will start the
