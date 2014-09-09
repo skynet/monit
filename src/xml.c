@@ -338,7 +338,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<output><![CDATA[",
                                         (unsigned long)S->program->started,
                                         S->program->exitStatus);
-                                _escapeCDATA(B, StringBuffer_toString(S->program->output));
+                                _escapeCDATA(B, S->program->output);
                                 StringBuffer_append(B,
                                         "]]></output>"
                                         "</program>");
