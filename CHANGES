@@ -73,6 +73,10 @@ a check host context, use of this statement might look like
 This statement deprecate the old hostheader statement, which was
 used to only set the HTTP host header.
 
+New: Program check supports exit status change monitoring now. Syntax:
+  check program foobar with path /usr/local/myscript.sh
+    if changed status then alert
+
 
 Version 5.8.1
 
