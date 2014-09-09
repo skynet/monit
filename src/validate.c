@@ -99,7 +99,6 @@
 #include "system/NetStatistics.h"
 #include "system/Time.h"
 #include "io/File.h"
-#include "exceptions/AssertException.h"
 
 /**
  *  Implementation of validation engine
