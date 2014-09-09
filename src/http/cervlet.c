@@ -77,7 +77,7 @@
 // libmonit
 #include "system/Time.h"
 
-#define ACTION(c) !strncasecmp(req->url, c, sizeof(c))
+#define ACTION(c) ! strncasecmp(req->url, c, sizeof(c))
 
 /* URL Commands supported */
 #define HOME        "/"
@@ -152,7 +152,6 @@ static void print_status(HttpRequest, HttpResponse, int);
 static void status_service_txt(Service_T, HttpResponse, short);
 static char *get_monitoring_status(Service_T s, char *, int);
 static char *get_service_status(Service_T, char *, int);
-static char *get_service_status_html(Service_T, char *, int);
 
 
 /**
@@ -180,6 +179,31 @@ void init_service() {
 
 
 /* ----------------------------------------------------------------- Private */
+
+
+static void _escapeHTML(StringBuffer_T sb, const char *buf) {
+        for (int i = 0; buf[i]; i++) {
+                if (buf[i] == '<')
+                        StringBuffer_append(sb, "&lt;");
+                else if (buf[i] == '>')
+                        StringBuffer_append(sb, "&gt;");
+                else if (buf[i] == '&')
+                        StringBuffer_append(sb, "&amp;");
+                else
+                        StringBuffer_append(sb, "%c", buf[i]);
+        }
+}
+
+
+static void _printServiceStatus(StringBuffer_T sb, Service_T s) {
+        ASSERT(sb);
+        ASSERT(s);
+        StringBuffer_append(sb, "<span class='%s-text'>", (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) ? "gray" : ((! s->error) ? "green" : "red"));
+        char buf[STRLEN];
+        get_service_status(s, buf, sizeof(buf));
+        _escapeHTML(sb, buf);
+        StringBuffer_append(sb, "</span>");
+}
 
 
 /**
@@ -441,12 +465,12 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                   "<tr><td>State file</td><td>%s</td></tr>", Run.statefile);
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>Debug</td><td>%s</td></tr>",
-                  Run.debug?"True":"False");
+                  Run.debug ? "True" : "False");
         StringBuffer_append(res->outputbuffer,
-                  "<tr><td>Log</td><td>%s</td></tr>", Run.dolog?"True":"False");
+                  "<tr><td>Log</td><td>%s</td></tr>", Run.dolog ? "True" : "False");
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>Use syslog</td><td>%s</td></tr>",
-                  Run.use_syslog?"True":"False");
+                  Run.use_syslog ? "True" : "False");
 
         if (Run.eventlist_dir) {
                 char slots[STRLEN];
@@ -461,29 +485,27 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
         }
 
         if (Run.mmonits) {
-                Mmonit_T c;
                 StringBuffer_append(res->outputbuffer, "<tr><td>M/Monit server(s)</td><td>");
-                for (c = Run.mmonits; c; c = c->next)
+                for (Mmonit_T c = Run.mmonits; c; c = c->next)
                 {
                         StringBuffer_append(res->outputbuffer,
                                   "%s with timeout %d seconds%s%s%s%s</td></tr>%s",
                                   c->url->url,
                                   c->timeout,
-                                  c->ssl.use_ssl?" ssl version ":"",
-                                  c->ssl.use_ssl?sslnames[c->ssl.version]:"",
-                                  c->ssl.certmd5?" server cert md5 sum ":"",
-                                  c->ssl.certmd5?c->ssl.certmd5:"",
-                                  c->next?"<tr><td>&nbsp;</td><td>":"");
+                                  c->ssl.use_ssl ? " ssl version " : "",
+                                  c->ssl.use_ssl ? sslnames[c->ssl.version] : "",
+                                  c->ssl.certmd5 ? " server cert md5 sum " : "",
+                                  c->ssl.certmd5 ? c->ssl.certmd5 : "",
+                                  c->next ? "<tr><td>&nbsp;</td><td>" : "");
                 }
                 printf("\n");
         }
 
         if (Run.mailservers) {
-                MailServer_T mta;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Mail server(s)</td><td>");
-                for (mta = Run.mailservers; mta; mta = mta->next)
+                for (MailServer_T mta = Run.mailservers; mta; mta = mta->next)
                         StringBuffer_append(res->outputbuffer, "%s:%d%s&nbsp;",
-                                  mta->host, mta->port, mta->ssl.use_ssl?"(ssl)":"");
+                                  mta->host, mta->port, mta->ssl.use_ssl ? "(ssl)" : "");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 
@@ -505,15 +527,15 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                   Run.polltime, Run.startdelay);
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>httpd bind address</td><td>%s</td></tr>",
-                  Run.bind_addr?Run.bind_addr:"Any/All");
+                  Run.bind_addr ? Run.bind_addr : "Any/All");
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>httpd portnumber</td><td>%d</td></tr>", Run.httpdport);
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>httpd signature</td><td>%s</td></tr>",
-                  Run.httpdsig?"True":"False");
+                  Run.httpdsig ? "True" : "False");
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>Use ssl encryption</td><td>%s</td></tr>",
-                  Run.httpdssl?"True":"False");
+                  Run.httpdssl ? "True" : "False");
         if (Run.httpdssl) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr><td>PEM key/certificate file</td><td>%s</td></tr>",
@@ -533,22 +555,18 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                 }
                 StringBuffer_append(res->outputbuffer,
                           "<tr><td>Allow self certified certificates "
-                          "</td><td>%s</td></tr>", Run.allowselfcert?"True":"False");
+                          "</td><td>%s</td></tr>", Run.allowselfcert ? "True" : "False");
         }
 
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>httpd auth. style</td><td>%s</td></tr>",
-                  (Run.credentials!=NULL)&&(has_hosts_allow())?
-                  "Basic Authentication and Host/Net allow list":
-                  (Run.credentials!=NULL)?"Basic Authentication":
-                  (has_hosts_allow())?"Host/Net allow list":
-                  "No authentication");
+                  (Run.credentials!=NULL) && (has_hosts_allow()) ? "Basic Authentication and Host/Net allow list" : (Run.credentials!=NULL) ? "Basic Authentication" : (has_hosts_allow()) ? "Host/Net allow list" : "No authentication");
 
         print_alerts(res, Run.maillist);
 
         StringBuffer_append(res->outputbuffer, "</table>");
 
-        if (!is_readonly(req)) {
+        if (! is_readonly(req)) {
                 StringBuffer_append(res->outputbuffer,
                           "<table id='buttons'><tr>");
                 StringBuffer_append(res->outputbuffer,
@@ -558,7 +576,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                           "<td><form method=POST action='_runtime'>Force validate now? <input type=hidden name='action' value='validate'>"
                           "<input type=submit value='Go'></form></td>");
 
-                if (Run.dolog && !Run.use_syslog) {
+                if (Run.dolog && ! Run.use_syslog) {
                         StringBuffer_append(res->outputbuffer,
                                   "<td><form method=GET action='_viewlog'>View Monit logfile? <input type=submit value='Go'></form></td>");
                 }
@@ -581,11 +599,11 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
 
         do_head(res, "_viewlog", "View log", 100);
 
-        if (Run.dolog && !Run.use_syslog) {
+        if (Run.dolog && ! Run.use_syslog) {
 
                 struct stat sb;
 
-                if (!stat(Run.logfile, &sb)) {
+                if (! stat(Run.logfile, &sb)) {
 
                         FILE *f = fopen(Run.logfile, "r");
                         if (f) {
@@ -609,7 +627,7 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
 
                 StringBuffer_append(res->outputbuffer,
                           "<b>Cannot view logfile:</b><br>");
-                if (!Run.dolog) {
+                if (! Run.dolog) {
 
                         StringBuffer_append(res->outputbuffer, "Monit was started without logging");
 
@@ -673,8 +691,6 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
         const char *token = get_parameter(req, "token");
 
         if (action) {
-                HttpParameter p;
-
                 if (is_readonly(req)) {
                         send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
@@ -684,12 +700,12 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                         return;
                 }
 
-                for (p = req->params; p; p = p->next) {
+                for (HttpParameter p = req->params; p; p = p->next) {
 
-                        if (!strcasecmp(p->name, "service")) {
+                        if (! strcasecmp(p->name, "service")) {
                                 s  = Util_getService(p->value);
 
-                                if (!s) {
+                                if (! s) {
                                         send_error(res, SC_BAD_REQUEST, "There is no service by that name");
                                         return;
                                 }
@@ -750,10 +766,6 @@ static void handle_run(HttpRequest req, HttpResponse res) {
 
 
 static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
-        Dependant_T d;
-        ActionRate_T ar;
-        ServiceGroup_T sg;
-        ServiceGroupMember_T sgm;
         char buf[STRLEN];
 
         ASSERT(s);
@@ -781,11 +793,12 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         else if (s->type != TYPE_SYSTEM)
                 StringBuffer_append(res->outputbuffer, "<tr><td>Path</td><td>%s</td></tr>", s->path);
 
-        StringBuffer_append(res->outputbuffer,
-                  "<tr><td>Status</td><td>%s</td></tr>", get_service_status_html(s, buf, sizeof(buf)));
+        StringBuffer_append(res->outputbuffer, "<tr><td>Status</td><td>");
+        _printServiceStatus(res->outputbuffer, s);
+        StringBuffer_append(res->outputbuffer, "</td></tr>");
 
-        for (sg = servicegrouplist; sg; sg = sg->next)
-                for (sgm = sg->members; sgm; sgm = sgm->next)
+        for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next)
+                for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
                         if (! strcasecmp(sgm->name, s->name))
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Group</td><td class='blue-text'>%s</td></tr>", sg->name);
 
@@ -795,7 +808,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer,
                   "<tr><td>Monitoring status</td><td>%s</td></tr>", get_monitoring_status(s, buf, sizeof(buf)));
 
-        for (d = s->dependantlist; d; d = d->next) {
+        for (Dependant_T d = s->dependantlist; d; d = d->next) {
                 if (d->dependant != NULL) {
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Depends on service </td><td> <a href=%s> %s </a></td></tr>",
@@ -823,7 +836,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         if (s->stop) {
                 int i = 0;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Stop program</td><td>'");
-                while(s->stop->arg[i]) {
+                while (s->stop->arg[i]) {
                         if (i)
                                 StringBuffer_append(res->outputbuffer, " ");
                         StringBuffer_append(res->outputbuffer, "%s", s->stop->arg[i++]);
@@ -839,7 +852,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         if (s->restart) {
                 int i = 0;
                 StringBuffer_append(res->outputbuffer, "<tr><td>Restart program</td><td>'");
-                while(s->restart->arg[i]) {
+                while (s->restart->arg[i]) {
                         if (i) StringBuffer_append(res->outputbuffer, " ");
                         StringBuffer_append(res->outputbuffer, "%s", s->restart->arg[i++]);
                 }
@@ -869,7 +882,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 
-        for (ar = s->actionratelist; ar; ar = ar->next) {
+        for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Timeout</td><td>If restarted %d times within %d cycle(s) then ", ar->count, ar->cycle);
                 Util_printAction(ar->action->failed, res->outputbuffer);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -941,8 +954,11 @@ static void do_home_system(HttpRequest req, HttpResponse res) {
                   "</tr>"
                   "<tr class='stripe'>"
                   "<td align='left'><a href='%s'>%s</a></td>"
-                  "<td align='left'>%s</td>",
-                  s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                  "<td align='left'>",
+                  s->name, s->name);
+        _printServiceStatus(res->outputbuffer, s);
+        StringBuffer_append(res->outputbuffer,
+                  "</td>");
 
         if (Run.doprocess) {
                 StringBuffer_append(res->outputbuffer,
@@ -975,13 +991,11 @@ static void do_home_system(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_process(HttpRequest req, HttpResponse res) {
-
-        Service_T      s;
         char           buf[STRLEN];
         int            on = TRUE;
         int            header = TRUE;
 
-        for (s = servicelist_conf; s; s = s->next_conf) {
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
 
                 if (s->type != TYPE_PROCESS) continue;
 
@@ -1010,11 +1024,14 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>-</td>");
@@ -1035,11 +1052,11 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                         if (Run.doprocess) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<td align='right' class='%s'>%.1f%%</td>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.process.total_cpu_percent/10.0);
                                 StringBuffer_append(res->outputbuffer,
                                           "<td align='right' class='%s'>%.1f%% [%s]</td>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.process.total_mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
                         }
 
@@ -1051,25 +1068,20 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
 
         }
 
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
 
 
 static void do_home_program(HttpRequest req, HttpResponse res) {
+        int on = TRUE;
+        int header = TRUE;
 
-        Service_T      s;
-        char           buf[STRLEN];
-        int            on = TRUE;
-        int            header = TRUE;
-
-        for (s = servicelist_conf; s; s = s->next_conf) {
-
-                if (s->type != TYPE_PROGRAM) continue;
-
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
+                if (s->type != TYPE_PROGRAM)
+                        continue;
                 if (header) {
-
                         StringBuffer_append(res->outputbuffer,
                                   "<table id='header-row'>"
                                   "<tr>"
@@ -1079,17 +1091,17 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                   "<th align='right'>Exit value</th>"
                                   "</tr>");
                         header = FALSE;
-
                 }
-
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
-
-                if (!Util_hasServiceStatus(s)) {
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
+                if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
@@ -1102,26 +1114,21 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>N/A</td>");
                         }
                 }
-
                 StringBuffer_append(res->outputbuffer, "</tr>");
-
                 on = ! on;
-
         }
-
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
 
 
 static void do_home_filesystem(HttpRequest req, HttpResponse res) {
-        Service_T     s;
         char          buf[STRLEN];
         int           on = TRUE;
         int           header = TRUE;
 
-        for (s = servicelist_conf; s; s = s->next_conf) {
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
 
                 if (s->type != TYPE_FILESYSTEM) continue;
 
@@ -1143,11 +1150,14 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>- [-]</td>"
@@ -1182,20 +1192,17 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
 
         }
 
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
 
 
 static void do_home_file(HttpRequest req, HttpResponse res) {
+        int on = TRUE;
+        int header = TRUE;
 
-        Service_T  s;
-        char       buf[STRLEN];
-        int        on = TRUE;
-        int        header = TRUE;
-
-        for (s = servicelist_conf; s; s = s->next_conf) {
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
 
                 if (s->type != TYPE_FILE) continue;
 
@@ -1219,11 +1226,14 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>-</td>"
@@ -1251,20 +1261,17 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
 
         }
 
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
 
 
 static void do_home_fifo(HttpRequest req, HttpResponse res) {
+        int on = TRUE;
+        int header = TRUE;
 
-        Service_T  s;
-        char       buf[STRLEN];
-        int        on = TRUE;
-        int        header = TRUE;
-
-        for (s = servicelist_conf; s; s = s->next_conf) {
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
 
                 if (s->type != TYPE_FIFO) continue;
 
@@ -1287,11 +1294,14 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>-</td>"
@@ -1316,20 +1326,17 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
 
         }
 
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
 
 
 static void do_home_directory(HttpRequest req, HttpResponse res) {
+        int on = TRUE;
+        int header = TRUE;
 
-        Service_T        s;
-        char             buf[STRLEN];
-        int              on = TRUE;
-        int              header = TRUE;
-
-        for (s = servicelist_conf; s; s = s->next_conf) {
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
 
                 if (s->type != TYPE_DIRECTORY) continue;
 
@@ -1352,11 +1359,14 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>-</td>"
@@ -1381,22 +1391,17 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
 
         }
 
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
 
 
 static void do_home_host(HttpRequest req, HttpResponse res) {
+        int on = TRUE;
+        int header = TRUE;
 
-        Service_T  s;
-        Icmp_T     icmp;
-        Port_T     port;
-        char       buf[STRLEN];
-        int        on = TRUE;
-        int        header = TRUE;
-
-        for (s = servicelist_conf; s; s = s->next_conf) {
+        for (Service_T s = servicelist_conf; s; s = s->next_conf) {
 
                 if (s->type != TYPE_HOST) continue;
 
@@ -1417,11 +1422,14 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr %s>"
                           "<td align='left'><a href='%s'>%s</a></td>"
-                          "<td align='left'>%s</td>",
-                          on?"class='stripe'":"",
-                          s->name, s->name, get_service_status_html(s, buf, sizeof(buf)));
+                          "<td align='left'>",
+                          on ? "class='stripe'" : "",
+                          s->name, s->name);
+                _printServiceStatus(res->outputbuffer, s);
+                StringBuffer_append(res->outputbuffer,
+                          "</td>");
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>-</td>");
@@ -1431,27 +1439,23 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer,
                                   "<td align='right'>");
 
-                        if (s->icmplist) {
-                                for (icmp = s->icmplist; icmp; icmp = icmp->next) {
-                                        if (icmp != s->icmplist)
-                                                StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
-                                        StringBuffer_append(res->outputbuffer, "<span class='%s'>[ICMP %s]</span>",
-                                                  (icmp->is_available)?"":"red-text",
-                                                  icmpnames[icmp->type]);
-                                }
+                        for (Icmp_T icmp = s->icmplist; icmp; icmp = icmp->next) {
+                                if (icmp != s->icmplist)
+                                        StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
+                                StringBuffer_append(res->outputbuffer, "<span class='%s'>[ICMP %s]</span>",
+                                          (icmp->is_available) ? "" : "red-text",
+                                          icmpnames[icmp->type]);
                         }
 
                         if (s->icmplist && s->portlist)
                                 StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
 
-                        if (s->portlist) {
-                                for (port = s->portlist; port; port = port->next) {
-                                        if (port != s->portlist)
-                                                StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
-                                        StringBuffer_append(res->outputbuffer, "<span class='%s'>[%s] at port %d</span>",
-                                                  (port->is_available)?"":"red-text",
-                                                  port->protocol->name, port->port);
-                                }
+                        for (Port_T port = s->portlist; port; port = port->next) {
+                                if (port != s->portlist)
+                                        StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
+                                StringBuffer_append(res->outputbuffer, "<span class='%s'>[%s] at port %d</span>",
+                                          (port->is_available) ? "" : "red-text",
+                                          port->protocol->name, port->port);
                         }
 
                         StringBuffer_append(res->outputbuffer, "</td>");
@@ -1464,7 +1468,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
 
         }
 
-        if (!header)
+        if (! header)
                 StringBuffer_append(res->outputbuffer, "</table>");
 
 }
@@ -1474,13 +1478,10 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
 
 
 static void print_alerts(HttpResponse res, Mail_T s) {
-
-        Mail_T r;
-
-        for (r = s; r; r = r->next) {
+        for (Mail_T r = s; r; r = r->next) {
                 StringBuffer_append(res->outputbuffer,
                           "<tr class='stripe'><td>Alert mail to</td>"
-                          "<td>%s</td></tr>", r->to?r->to:"");
+                          "<td>%s</td></tr>", r->to ? r->to : "");
                 StringBuffer_append(res->outputbuffer, "<tr><td>Alert on</td><td>");
 
                 if (r->events == Event_Null) {
@@ -1866,38 +1867,32 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
 static void print_service_params_port(HttpResponse res, Service_T s) {
 
         if ((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
-
-                Port_T p;
-
-                if (!Util_hasServiceStatus(s)) {
-
-                        for (p = s->portlist; p; p = p->next)
+                if (! Util_hasServiceStatus(s)) {
+                        for (Port_T p = s->portlist; p; p = p->next)
                                 if (p->family == AF_INET) {
                                         StringBuffer_append(res->outputbuffer, "<tr><td>Port Response time</td><td>-</td></tr>");
                                 } else if (p->family == AF_UNIX) {
                                         StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket Response time</td><td>-</td></tr>");
                                 }
-
                 } else {
-
-                        for (p = s->portlist; p; p = p->next) {
+                        for (Port_T p = s->portlist; p; p = p->next) {
                                 if (p->family == AF_INET) {
-                                        if (!p->is_available) {
+                                        if (! p->is_available) {
                                                 StringBuffer_append(res->outputbuffer,
                                                           "<tr><td>Port Response time</td>"
                                                           "<td class='red-text'>connection failed to %s:%d%s [%s via %s]</td>"
                                                           "</tr>",
-                                                          p->hostname, p->port, p->request?p->request:"",
+                                                          p->hostname, p->port, p->request ? p->request : "",
                                                           p->protocol->name, Util_portTypeDescription(p));
                                         } else {
                                                 StringBuffer_append(res->outputbuffer,
                                                           "<tr><td>Port Response time</td>"
                                                           "<td>%.3fs to %s:%d%s [%s via %s]</td></tr>",
-                                                          p->response, p->hostname, p->port, p->request?p->request:"",
+                                                          p->response, p->hostname, p->port, p->request ? p->request : "",
                                                           p->protocol->name, Util_portTypeDescription(p));
                                         }
                                 } else if (p->family == AF_UNIX) {
-                                        if (!p->is_available) {
+                                        if (! p->is_available) {
                                                 StringBuffer_append(res->outputbuffer,
                                                           "<tr><td>Unix Socket Response time</td>"
                                                           "<td class='red-text'>connection failed to %s [%s]</td>"
@@ -1938,7 +1933,7 @@ static void print_service_params_perm(HttpResponse res, Service_T s) {
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td><td>-</td></tr>");
                 else
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td><td class='%s'>%o</td></tr>", (s->error & Event_Permission)?"red-text":"", s->inf->st_mode & 07777);
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td><td class='%s'>%o</td></tr>", (s->error & Event_Permission) ? "red-text" : "", s->inf->st_mode & 07777);
         }
 }
 
@@ -1948,7 +1943,7 @@ static void print_service_params_uid(HttpResponse res, Service_T s) {
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td>-</td></tr>");
                 else
-                        StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td class='%s'>%d</td></tr>", (s->error & Event_Uid)?"red-text":"", (int)s->inf->st_uid);
+                        StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td class='%s'>%d</td></tr>", (s->error & Event_Uid) ? "red-text" : "", (int)s->inf->st_uid);
         }
 }
 
@@ -1958,7 +1953,7 @@ static void print_service_params_gid(HttpResponse res, Service_T s) {
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td>-</td></tr>");
                 else
-                        StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td class='%s'>%d</td></tr>", (s->error & Event_Gid)?"red-text":"", (int)s->inf->st_gid);
+                        StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td class='%s'>%d</td></tr>", (s->error & Event_Gid) ? "red-text" : "", (int)s->inf->st_gid);
         }
 }
 
@@ -1969,7 +1964,7 @@ static void print_service_params_timestamp(HttpResponse res, Service_T s) {
            s->type == TYPE_FIFO ||
            s->type == TYPE_DIRECTORY) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer, "<tr><td>Timestamp</td><td>-</td></tr>");
 
@@ -1977,7 +1972,7 @@ static void print_service_params_timestamp(HttpResponse res, Service_T s) {
                         char t[32];
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Timestamp</td><td class='%s'>%s</td></tr>",
-                                  (s->error & Event_Timestamp)?"red-text":"", Time_string(s->inf->timestamp, t));
+                                  (s->error & Event_Timestamp) ? "red-text" : "", Time_string(s->inf->timestamp, t));
                 }
         }
 }
@@ -1987,7 +1982,7 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILESYSTEM) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Filesystem flags</td><td>-</td></tr>");
@@ -2022,7 +2017,7 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Blocks free total</td>"
                                   "<td class='%s'>%lld [%s] [%.1f%%]</td></tr>",
-                                  (s->error & Event_Resource)?"red-text":"",
+                                  (s->error & Event_Resource) ? "red-text" : "",
                                   s->inf->priv.filesystem.f_blocksfreetotal,
                                   s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                   s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
@@ -2035,7 +2030,7 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
                                           "<tr><td>Inodes total</td><td>%ld</td></tr>", s->inf->priv.filesystem.f_files);
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Inodes free</td><td class='%s'>%ld [%.1f%%]</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.filesystem.f_filesfree,
                                           (float)100 * (float)s->inf->priv.filesystem.f_filesfree / (float)s->inf->priv.filesystem.f_files);
 
@@ -2049,7 +2044,7 @@ static void print_service_params_size(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Size</td><td>-</td></tr>");
@@ -2058,7 +2053,7 @@ static void print_service_params_size(HttpResponse res, Service_T s) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Size</td><td class='%s'>%llu B</td></tr>",
-                                  (s->error & Event_Size)?"red-text":"",
+                                  (s->error & Event_Size) ? "red-text" : "",
                                   (unsigned long long) s->inf->priv.file.st_size);
 
                 }
@@ -2069,7 +2064,7 @@ static void print_service_params_match(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Match regex</td><td>-</td></tr>");
@@ -2078,8 +2073,8 @@ static void print_service_params_match(HttpResponse res, Service_T s) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Match regex</td><td class='%s'>%s</td></tr>",
-                                  (s->error & Event_Content)?"red-text":"",
-                                  (s->error & Event_Content)?"yes":"no");
+                                  (s->error & Event_Content) ? "red-text" : "",
+                                  (s->error & Event_Content) ? "yes" : "no");
                 }
         }
 }
@@ -2089,7 +2084,7 @@ static void print_service_params_checksum(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE && s->checksum) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer, "<tr><td>Checksum</td><td>-</td></tr>");
 
@@ -2097,7 +2092,7 @@ static void print_service_params_checksum(HttpResponse res, Service_T s) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Checksum</td><td class='%s'>%s(%s)</td></tr>",
-                                  (s->error & Event_Checksum)?"red-text":"", s->inf->priv.file.cs_sum,
+                                  (s->error & Event_Checksum) ? "red-text" : "", s->inf->priv.file.cs_sum,
                                   checksumnames[s->checksum->type]);
 
                 }
@@ -2109,7 +2104,7 @@ static void print_service_params_process(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_PROCESS) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
 
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Process id </td><td>-</td></tr>"
@@ -2150,7 +2145,7 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
 
         if (Run.doprocess && (s->type == TYPE_PROCESS || s->type == TYPE_SYSTEM) ) {
 
-                if (!Util_hasServiceStatus(s)) {
+                if (! Util_hasServiceStatus(s)) {
                         if (s->type == TYPE_PROCESS) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>CPU usage</td><td>-</td></tr>"
@@ -2169,28 +2164,28 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
                         if (s->type == TYPE_PROCESS) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Children</td><td class='%s'>%d</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.process.children);
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>CPU usage</td><td class='%s'>%.1f%%  &nbsp;&nbsp;(Usage / Number of CPUs)</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.process.cpu_percent/10.0);
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Total CPU usage (incl. children)</td><td class='%s'>%.1f%%</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text"  :"",
                                           s->inf->priv.process.total_cpu_percent/10.0);
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Memory usage</td><td class='%s'>%.1f%% [%s]</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.process.mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Total memory usage (incl. children)</td><td class='%s'>%.1f%% [%s]</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.process.total_mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
                         } else if (s->type == TYPE_SYSTEM) {
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Load average</td><td class='%s'>[%.2f] [%.2f] [%.2f]</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           systeminfo.loadavg[0],
                                           systeminfo.loadavg[1],
                                           systeminfo.loadavg[2]);
@@ -2200,7 +2195,7 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
                                           " %.1f%%wa"
 #endif
                                           "%s",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent / 10. : 0,
                                           systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent / 10. : 0,
 #ifdef HAVE_CPU_WAIT
@@ -2209,12 +2204,12 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
                                           "</td></tr>");
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Memory usage</td><td class='%s'>%s [%.1f%%]</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf),
                                           systeminfo.total_mem_percent / 10.);
                                 StringBuffer_append(res->outputbuffer,
                                           "<tr><td>Swap usage</td><td class='%s'>%s [%.1f%%]</td></tr>",
-                                          (s->error & Event_Resource)?"red-text":"",
+                                          (s->error & Event_Resource) ? "red-text" : "",
                                           Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf),
                                           systeminfo.total_swap_percent/10.);
                         }
@@ -2224,23 +2219,24 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
 
 
 static void print_service_params_program(HttpResponse res, Service_T s) {
-
         if (s->type == TYPE_PROGRAM) {
-
-                if (!Util_hasServiceStatus(s)) {
-
+                if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
                                   "<tr><td>Last started</td><td>-</td></tr>"
-                                  "<tr><td>Last Exit value</td><td>-</td></tr>");
-
+                                  "<tr><td>Last exit value</td><td>-</td></tr>"
+                                  "<tr><td>Last output</td><td>-</td></tr>");
                 } else {
                         if (s->program->started) {
                                 char t[32];
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>%s</td></tr>", Time_string(s->program->started, t));
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last Exit value</td><td>%d</td></tr>", s->program->exitStatus);
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>%d</td></tr>", s->program->exitStatus);
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td><pre>");
+                                _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                StringBuffer_append(res->outputbuffer, "</pre></td></tr>");
                         } else {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>Not yet started</td></tr>");
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last Exit value</td><td>N/A</td></tr>");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>N/A</td></tr>");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td>N/A</td></tr>");
                         }
                 }
         }
@@ -2251,7 +2247,7 @@ static int is_readonly(HttpRequest req) {
 
         if (req->remote_user) {
                 Auth_T user_creds = Util_getUserCredentials(req->remote_user);
-                return ( user_creds?user_creds->is_readonly:TRUE );
+                return (user_creds ? user_creds->is_readonly : TRUE);
         }
 
         return FALSE;
@@ -2413,8 +2409,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 }
                         }
                         if (s->type == TYPE_HOST && s->icmplist) {
-                                Icmp_T i;
-                                for (i = s->icmplist; i; i = i->next) {
+                                for (Icmp_T i = s->icmplist; i; i = i->next) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %.3fs [%s]\n",
                                                   "icmp response time", i->is_available ? i->response : 0.,
@@ -2422,14 +2417,13 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 }
                         }
                         if ((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
-                                Port_T p;
-                                for (p = s->portlist; p; p = p->next) {
+                                for (Port_T p = s->portlist; p; p = p->next) {
                                         if (p->family == AF_INET) {
                                                 StringBuffer_append(res->outputbuffer,
                                                           "  %-33s %.3fs to %s:%d%s [%s via %s]\n",
                                                           "port response time", p->is_available ? p->response : 0.,
                                                           p->hostname,
-                                                          p->port, p->request?p->request:"", p->protocol->name,
+                                                          p->port, p->request ? p->request : "", p->protocol->name,
                                                           Util_portTypeDescription(p));
                                         } else if (p->family == AF_UNIX) {
                                                 StringBuffer_append(res->outputbuffer,
@@ -2501,15 +2495,25 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) {
                 get_monitoring_status(s, buf, buflen);
         } else if (s->error == 0) {
-                snprintf(buf, buflen, "%s", statusnames[s->type]);
+                if (s->type == TYPE_PROGRAM && StringBuffer_length(s->program->output)) {
+                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", StringBuffer_toString(s->program->output));
+                        Str_chomp(buf); // chop 2nd+ line
+                } else {
+                        snprintf(buf, buflen, "%s", statusnames[s->type]);
+                }
         } else {
-                // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found
-                while((*et).id) {
-                        if (s->error & (*et).id) {
-                                snprintf(buf, buflen, "%s", (s->error_hint & (*et).id) ? (*et).description_changed : (*et).description_failed);
-                                break;
+                // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found. In the case of program we prefer the program output if any.
+                if (s->type == TYPE_PROGRAM && StringBuffer_length(s->program->output)) {
+                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", StringBuffer_toString(s->program->output));
+                        Str_chomp(buf); // chop 2nd+ line
+                } else {
+                        while ((*et).id) {
+                                if (s->error & (*et).id) {
+                                        snprintf(buf, buflen, "%s", (s->error_hint & (*et).id) ? (*et).description_changed : (*et).description_failed);
+                                        break;
+                                }
+                                et++;
                         }
-                        et++;
                 }
         }
         if (s->doaction)
@@ -2518,13 +2522,4 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         return buf;
 }
 
-
-static char *get_service_status_html(Service_T s, char *buf, int buflen) {
-        ASSERT(s);
-        ASSERT(buf);
-        snprintf(buf, buflen, "<span class='%s-text'>", (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) ? "gray" : ((! s->error) ? "green" : "red"));
-        get_service_status(s, buf + strlen(buf), buflen - (int)strlen(buf));
-        snprintf(buf + strlen(buf), buflen - strlen(buf), "</span>");
-        return buf;
-}
 
