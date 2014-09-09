@@ -2165,11 +2165,19 @@ You can check the exit status of a program or a script. This test
 may only be used within a check program service entry in the Monit
 control file.
 
-Syntax:
+Syntax for testing specific exit value:
 
 =over 4
 
 =item IF STATUS operator value THEN action
+
+=back
+
+Syntax for testing any exit value change:
+
+=over 4
+
+=item IF CHANGED STATUS THEN action
 
 =back
 

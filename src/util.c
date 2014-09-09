@@ -986,7 +986,10 @@ void Util_printService(Service_T s) {
                 printf("terminate the program if not finished within %d seconds\n", s->program->timeout);
                 for (Status_T o = s->statuslist; o; o = o->next) {
                         StringBuffer_clear(buf);
-                        printf(" %-20s = %s\n", "Status", StringBuffer_toString(Util_printRule(buf, o->action, "if exit value %s %d", operatorshortnames[o->operator], o->return_value)));
+                        if (o->operator == Operator_Changed)
+                                printf(" %-20s = %s\n", "Status", StringBuffer_toString(Util_printRule(buf, o->action, "if exit value changed")));
+                        else
+                                printf(" %-20s = %s\n", "Status", StringBuffer_toString(Util_printRule(buf, o->action, "if exit value %s %d", operatorshortnames[o->operator], o->return_value)));
                 }
         }
 
@@ -1725,6 +1728,7 @@ int Util_evalQExpression(Operator_Type operator, long long left, long long right
                                 return TRUE;
                         break;
                 case Operator_NotEqual:
+                case Operator_Changed:
                         if (left != right)
                                 return TRUE;
                         break;

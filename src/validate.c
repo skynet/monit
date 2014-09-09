@@ -1281,11 +1281,26 @@ int check_program(Service_T s) {
                 /* TODO: Multiple checks we have now should be deprecated and removed - not useful because it
                  will alert on everything if != is used other than the match or if = is used, might report nothing on error. */
                 for (Status_T status = s->statuslist; status; status = status->next) {
-                        if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
-                                Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, s->program->output);
+                        if (status->operator == Operator_Changed) {
+                                if (status->initialized) {
+                                        if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
+                                                Event_post(s, Event_Status, STATE_CHANGED, status->action, "program status changed (%d -> %d) -- %s", status->return_value, s->program->exitStatus, s->program->output);
+                                                status->return_value = s->program->exitStatus;
+                                        } else {
+                                                DEBUG("'%s' program status (%d) didn't change -- %s\n", s->name, s->program->exitStatus, s->program->output);
+                                                Event_post(s, Event_Status, STATE_CHANGEDNOT, status->action, "program status didn't change (%d)", s->program->exitStatus);
+                                        }
+                                } else {
+                                        status->initialized = TRUE;
+                                        status->return_value = s->program->exitStatus;
+                                }
                         } else {
-                                DEBUG("'%s' status check succeeded -- %s\n", s->name, s->program->output);
-                                Event_post(s, Event_Status, STATE_SUCCEEDED, status->action, "status succeeded");
+                                if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
+                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, s->program->output);
+                                } else {
+                                        DEBUG("'%s' status check succeeded -- %s\n", s->name, s->program->output);
+                                        Event_post(s, Event_Status, STATE_SUCCEEDED, status->action, "status succeeded");
+                                }
                         }
                 }
                 Process_free(&s->program->P);

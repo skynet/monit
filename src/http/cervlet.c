@@ -1875,7 +1875,10 @@ static void print_service_rules_program(HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Program timeout</td><td>Terminate the program if not finished within %d seconds</td></tr>", s->program->timeout);
                 for (Status_T status = s->statuslist; status; status = status->next) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Test Exit value</td><td>");
-                        Util_printRule(res->outputbuffer, status->action, "If exit value %s %d", operatorshortnames[status->operator], status->return_value);
+                        if (status->operator == Operator_Changed)
+                                Util_printRule(res->outputbuffer, status->action, "If exit value changed");
+                        else
+                                Util_printRule(res->outputbuffer, status->action, "If exit value %s %d", operatorshortnames[status->operator], status->return_value);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
