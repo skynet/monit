@@ -1468,9 +1468,17 @@ dependant       : SERVICENAME { adddependant($<string>1); }
                 ;
 
 statusvalue     : IF STATUS operator NUMBER rate1 THEN action1 recovery {
+                        statusset.initialized = TRUE;
                         statusset.operator = $<number>3;
                         statusset.return_value = $<number>4;
                         addeventaction(&(statusset).action, $<number>7, $<number>8);
+                        addstatus(&statusset);
+                   }
+                | IF CHANGED STATUS rate1 THEN action1 {
+                        statusset.initialized = FALSE;
+                        statusset.operator = Operator_Changed;
+                        statusset.return_value = 0;
+                        addeventaction(&(statusset).action, $<number>6, ACTION_IGNORE);
                         addstatus(&statusset);
                    }
                 ;
@@ -1606,7 +1614,7 @@ operator        : /* EMPTY */ { $<number>$ = Operator_Equal; }
                 | LESS        { $<number>$ = Operator_Less; }
                 | EQUAL       { $<number>$ = Operator_Equal; }
                 | NOTEQUAL    { $<number>$ = Operator_NotEqual; }
-                | CHANGED     { $<number>$ = Operator_NotEqual; }
+                | CHANGED     { $<number>$ = Operator_Changed; }
                 ;
 
 time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
@@ -2664,6 +2672,7 @@ static void addstatus(Status_T status) {
         Status_T s;
         ASSERT(status);
         NEW(s);
+        s->initialized = status->initialized;
         s->return_value = status->return_value;
         s->operator = status->operator;
         s->action = status->action;
@@ -3437,6 +3446,7 @@ static void reset_permset() {
  * Reset the Status set to default values
  */
 static void reset_statusset() {
+        statusset.initialized = FALSE;
         statusset.return_value = 0;
         statusset.operator = Operator_Equal;
         statusset.action = NULL;

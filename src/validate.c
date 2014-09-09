@@ -94,6 +94,7 @@
 // libmonit
 #include "system/Time.h"
 #include "io/File.h"
+#include "io/InputStream.h"
 
 /**
  *  Implementation of validation engine
@@ -109,6 +110,17 @@
 
 
 /* ----------------------------------------------------------------- Private */
+
+
+/**
+ * Read program output into stringbuffer. Limit the output to 140B (if the program will have endless output, such as 'yes' utility, we have to stop at some point to not spin here forever)
+ */
+static void _programOutput(InputStream_T I, char *buf, int buflen) {
+        int n;
+        InputStream_setTimeout(I, 0);
+        n = InputStream_readBytes(I, buf, buflen - 1);
+        buf[n] = 0;
+}
 
 
 /**
@@ -1254,25 +1266,35 @@ int check_program(Service_T s) {
                         }
                 }
                 s->program->exitStatus = Process_exitStatus(P); // Save exit status for web-view display
+                // Save program output
+                *s->program->output = 0;
+                _programOutput(Process_getErrorStream(P), s->program->output, sizeof(s->program->output));
+                if (! *s->program->output)
+                        _programOutput(Process_getInputStream(P), s->program->output, sizeof(s->program->output));
                 // Evaluate program's exit status against our status checks.
                 /* TODO: Multiple checks we have now should be deprecated and removed - not useful because it
                  will alert on everything if != is used other than the match or if = is used, might report nothing on error. */
                 for (Status_T status = s->statuslist; status; status = status->next) {
-                        if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
-                                int n = 0;
-                                char buf[STRLEN + 1];
-                                // Read message from script
-                                if ((n = InputStream_readBytes(Process_getErrorStream(P), buf, STRLEN - 1)) <= 0)
-                                        n = InputStream_readBytes(Process_getInputStream(P), buf, STRLEN - 1);
-                                if (n > 0) {
-                                        buf[n] = 0;
-                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "%s", buf);
+                        if (status->operator == Operator_Changed) {
+                                if (status->initialized) {
+                                        if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
+                                                Event_post(s, Event_Status, STATE_CHANGED, status->action, "program status changed (%d -> %d) -- %s", status->return_value, s->program->exitStatus, s->program->output);
+                                                status->return_value = s->program->exitStatus;
+                                        } else {
+                                                DEBUG("'%s' program status (%d) didn't change -- %s\n", s->name, s->program->exitStatus, s->program->output);
+                                                Event_post(s, Event_Status, STATE_CHANGEDNOT, status->action, "program status didn't change (%d)", s->program->exitStatus);
+                                        }
                                 } else {
-                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- no output from program", s->path, s->program->exitStatus);
+                                        status->initialized = TRUE;
+                                        status->return_value = s->program->exitStatus;
                                 }
                         } else {
-                                DEBUG("'%s' status check succeeded\n", s->name);
-                                Event_post(s, Event_Status, STATE_SUCCEEDED, status->action, "status succeeded");
+                                if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
+                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, s->program->output);
+                                } else {
+                                        DEBUG("'%s' status check succeeded -- %s\n", s->name, s->program->output);
+                                        Event_post(s, Event_Status, STATE_SUCCEEDED, status->action, "status succeeded");
+                                }
                         }
                 }
                 Process_free(&s->program->P);

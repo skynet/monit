@@ -156,7 +156,8 @@ typedef enum {
         Operator_Greater = 0,
         Operator_Less,
         Operator_Equal,
-        Operator_NotEqual
+        Operator_NotEqual,
+        Operator_Changed
 } Operator_Type;
 
 #define TIME_SECOND        1
@@ -605,6 +606,7 @@ typedef struct myevery {
 
 
 typedef struct mystatus {
+        int  initialized;                      /**< TRUE if status was initialized */
         int return_value;                /**< Return value of the program to check */
         Operator_Type operator;                           /**< Comparison operator */
         EventAction_T action;  /**< Description of the action upon event occurence */
@@ -621,6 +623,7 @@ typedef struct myprogram {
         int timeout;          /**< How long the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
+        char output[140];                                 /**< Last program output */
 } *Program_T;
 
 

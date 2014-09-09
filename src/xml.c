@@ -61,6 +61,21 @@
 
 
 /**
+ * Escape the CDATA "]]>" stop sequence in string
+ * @param B Output StringBuffer object
+ * @param buf String to escape
+ */
+static void _escapeCDATA(StringBuffer_T B, const char *buf) {
+        for (int i = 0; buf[i]; i++) {
+                if (buf[i] == '>' && i > 1 && (buf[i - 1] == ']' && buf[i - 2] == ']'))
+                        StringBuffer_append(B, "&gt;");
+                else
+                        StringBuffer_append(B, "%c", buf[i]);
+        }
+}
+
+
+/**
  * Prints a document header into the given buffer.
  * @param B StringBuffer object
  * @param V Format version
@@ -320,9 +335,13 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<program>"
                                         "<started>%lu</started>"
                                         "<status>%d</status>"
-                                        "</program>",
+                                        "<output><![CDATA[",
                                         (unsigned long)S->program->started,
                                         S->program->exitStatus);
+                                _escapeCDATA(B, S->program->output);
+                                StringBuffer_append(B,
+                                        "]]></output>"
+                                        "</program>");
                         }
                 }
         }
@@ -368,14 +387,7 @@ static void status_event(Event_T E, StringBuffer_T B) {
                 Event_get_id(E),
                 Event_get_state(E),
                 Event_get_action(E));
-        // Escape the CDATA "]]>" stop sequence in string
-        const char *msg = Event_get_message(E);
-        for (int i = 0; msg[i]; i++) {
-                if (msg[i] == '>' && i > 1 && (msg[i - 1] == ']' && msg[i - 2] == ']'))
-                        StringBuffer_append(B, "&gt;");
-                else
-                        StringBuffer_append(B, "%c", msg[i]);
-        }
+        _escapeCDATA(B, Event_get_message(E));
         StringBuffer_append(B, "]]></message>");
         Service_T s = Event_get_source(E);
         if (s && s->token)
