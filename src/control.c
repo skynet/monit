@@ -200,7 +200,7 @@ static void _doStart(Service_T s) {
                         long timeout = s->start->timeout * USEC_PER_SEC;
                         int status = _commandExecute(s, s->start, msg, sizeof(msg), &timeout);
                         if ((s->type == TYPE_PROCESS && _waitStart(s, &timeout) != Process_Started) || status < 0)
-                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", status, msg);
+                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", status, *msg ? msg : "no output");
                         else
                                 Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
                 }
@@ -231,7 +231,7 @@ static int _doStop(Service_T s, int flag) {
                         int status = _commandExecute(s, s->stop, msg, sizeof(msg), &timeout);
                         if ((s->type == TYPE_PROCESS && _waitStop(s, &timeout) != Process_Stopped) || status < 0) {
                                 rv = FALSE;
-                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, msg);
+                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
                         } else {
                                 Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
                         }

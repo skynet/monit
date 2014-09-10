@@ -1278,10 +1278,10 @@ int check_program(Service_T s) {
                         if (status->operator == Operator_Changed) {
                                 if (status->initialized) {
                                         if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
-                                                Event_post(s, Event_Status, STATE_CHANGED, status->action, "program status changed (%d -> %d) -- %s", status->return_value, s->program->exitStatus, s->program->output);
+                                                Event_post(s, Event_Status, STATE_CHANGED, status->action, "program status changed (%d -> %d) -- %s", status->return_value, s->program->exitStatus, *s->program->output ? s->program->output : "no putput");
                                                 status->return_value = s->program->exitStatus;
                                         } else {
-                                                DEBUG("'%s' program status (%d) didn't change -- %s\n", s->name, s->program->exitStatus, s->program->output);
+                                                DEBUG("'%s' program status (%d) didn't change -- %s\n", s->name, s->program->exitStatus, *s->program->output ? s->program->output : "no putput");
                                                 Event_post(s, Event_Status, STATE_CHANGEDNOT, status->action, "program status didn't change (%d)", s->program->exitStatus);
                                         }
                                 } else {
@@ -1290,9 +1290,9 @@ int check_program(Service_T s) {
                                 }
                         } else {
                                 if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
-                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, s->program->output);
+                                        Event_post(s, Event_Status, STATE_FAILED, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, *s->program->output ? s->program->output : "no putput");
                                 } else {
-                                        DEBUG("'%s' status check succeeded -- %s\n", s->name, s->program->output);
+                                        DEBUG("'%s' status check succeeded (%d) -- %s\n", s->name, s->program->exitStatus, *s->program->output ? s->program->output : "no putput");
                                         Event_post(s, Event_Status, STATE_SUCCEEDED, status->action, "status succeeded");
                                 }
                         }
