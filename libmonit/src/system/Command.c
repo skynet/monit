@@ -502,14 +502,14 @@ Process_T Command_execute(T C) {
                                 _exit(errno);
                         }
                 }
-                if (C->uid)
-                        P->uid = (setuid(C->uid) != 0) ? ERROR("Command: Cannot change process uid to '%d' -- %s\n", C->uid, System_getLastError()), getuid() : C->uid;
-                else
-                        P->uid = getuid();
                 if (C->gid)
                         P->gid = (setgid(C->gid) != 0) ? ERROR("Command: Cannot change process gid to '%d' -- %s\n", C->gid, System_getLastError()), getgid() : C->gid;
                 else
                         P->gid = getgid();
+                if (C->uid)
+                        P->uid = (setuid(C->uid) != 0) ? ERROR("Command: Cannot change process uid to '%d' -- %s\n", C->uid, System_getLastError()), getuid() : C->uid;
+                else
+                        P->uid = getuid();
                 setsid(); // Loose controlling terminal
                 setupChildPipes(P);
                 // Close all descriptors except stdio
