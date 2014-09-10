@@ -163,8 +163,7 @@ static Process_Status _waitStart(Service_T s, long *timeout) {
 }
 
 
-static Process_Status _waitStop(Service_T s, long *timeout) {
-        int pid = Util_isProcessRunning(s, TRUE);
+static Process_Status _waitStop(int pid, long *timeout) {
         do {
                 if (! pid || (getpgid(pid) == -1 && errno != EPERM))
                         return Process_Stopped;
@@ -228,8 +227,9 @@ static int _doStop(Service_T s, int flag) {
                         LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
                         char msg[STRLEN];
                         long timeout = s->stop->timeout * USEC_PER_SEC;
+                        int pid = Util_isProcessRunning(s, TRUE);
                         int status = _commandExecute(s, s->stop, msg, sizeof(msg), &timeout);
-                        if ((s->type == TYPE_PROCESS && _waitStop(s, &timeout) != Process_Stopped) || status < 0) {
+                        if ((s->type == TYPE_PROCESS && _waitStop(pid, &timeout) != Process_Stopped) || status < 0) {
                                 rv = FALSE;
                                 Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
                         } else {
