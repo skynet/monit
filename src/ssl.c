@@ -832,13 +832,13 @@ static int handle_error(int code, ssl_connection *ssl) {
         switch (ssl_error) {
 
                 case SSL_ERROR_WANT_READ:
-                        if (can_read(ssl->socket, SSL_TIMEOUT))
+                        if (can_read(ssl->socket, SSL_TIMEOUT * 1000))
                                 return TRUE;
                         LogError("SSL read timeout error\n");
                         break;
 
                 case SSL_ERROR_WANT_WRITE:
-                        if (can_read(ssl->socket, SSL_TIMEOUT))
+                        if (can_read(ssl->socket, SSL_TIMEOUT * 1000))
                                 return TRUE;
                         LogError("SSL write timeout error\n");
                         break;

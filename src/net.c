@@ -173,7 +173,7 @@ static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int
         }
         fds[0].fd = s;
         fds[0].events = POLLIN|POLLOUT;
-        error = poll(fds, 1, timeout * 1000);
+        error = poll(fds, 1, timeout);
         if (error == 0) {
                 LogError("Connection timed out\n");
                 return -1;
@@ -381,22 +381,22 @@ error:
 
 
 int can_read(int socket, int timeout) {
-        return Net_canRead(socket, (timeout * 1000)); // TODO: Need to switch rest of Monit to ms instead of seconds
+        return Net_canRead(socket, timeout);
 }
 
 
 int can_write(int socket, int timeout) {
-        return Net_canWrite(socket, (timeout * 1000));
+        return Net_canWrite(socket, timeout);
 }
 
 
 ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout) {
-        return Net_write(socket, buffer, size, (timeout * 1000));
+        return Net_write(socket, buffer, size, timeout);
 }
 
 
 ssize_t sock_read(int socket, void *buffer, int size, int timeout) {
-        return Net_read(socket, buffer, size, (timeout * 1000));
+        return Net_read(socket, buffer, size, timeout);
 }
 
 
@@ -407,7 +407,7 @@ ssize_t sock_read(int socket, void *buffer, int size, int timeout) {
  * @param socket the socket to write to
  * @param buffer The buffer to write
  * @param size Number of bytes to send
- * @param timeout Seconds to wait for data to be written
+ * @param timeout milliseconds to wait for data to be written
  * @return The number of bytes sent or -1 if an error occured.
  */
 int udp_write(int socket, void *b, size_t len, int timeout) {
@@ -415,7 +415,7 @@ int udp_write(int socket, void *b, size_t len, int timeout) {
         ASSERT(timeout>=0);
         for(i = 4; i>=1; i--) {
                 do {
-                        n = (int)Net_write(socket, b, len, 0);
+                        n = (int)Net_write(socket, b, len, 10);
                 } while(n == -1 && errno == EINTR);
                 if(n == -1 && (errno != EAGAIN || errno != EWOULDBLOCK))
                         return -1;
@@ -435,7 +435,7 @@ int udp_write(int socket, void *b, size_t len, int timeout) {
  * Create a ICMP socket against hostname, send echo and wait for response.
  * The 'count' echo requests  is send and we expect at least one reply.
  * @param hostname The host to open a socket at
- * @param timeout If response will not come within timeout seconds abort
+ * @param timeout If response will not come within timeout milliseconds abort
  * @param count How many pings to send
  * @return response time on succes, -1 on error, -2 when monit has no
  * permissions for raw socket (normally requires root or net_icmpaccess
@@ -520,7 +520,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                         LogError("ICMP echo request for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                         continue;
                 }
-                read_timeout = timeout * 1000;
+                read_timeout = timeout;
         readnext:
                 if (Net_canRead(s, read_timeout)) {
                         socklen_t size = sizeof(struct sockaddr_in);

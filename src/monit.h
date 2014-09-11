@@ -620,7 +620,7 @@ typedef struct myprogram {
         Process_T P;          /**< A Process_T object representing the sub-process */
         Command_T C;          /**< A Command_T object for creating the sub-process */
         command_t args;                                     /**< Program arguments */
-        int timeout;          /**< How long the program may run until it is killed */
+        int timeout;           /**< Seconds the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
         char output[140];                                 /**< Last program output */
