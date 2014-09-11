@@ -43,7 +43,7 @@
 
 
 static int parse_scoreboard(Socket_T socket, char *scoreboard) {
-        int logging = 0, close = 0, dns = 0, keepalive = 0, reply = 0, request = 0, start = 0, wait = 0, graceful = 0, cleanup = 0;
+        int logging = 0, close = 0, dns = 0, keepalive = 0, reply = 0, request = 0, start = 0, wait = 0, graceful = 0, cleanup = 0, open = 0;
         for (char *state = scoreboard; *state; state++) {
                 switch (*state) {
                         case 'S':
@@ -77,12 +77,12 @@ static int parse_scoreboard(Socket_T socket, char *scoreboard) {
                                 wait++;
                                 break;
                         case '.':
-                                /* ignore open slots with no process */
+                                open++;
                                 break;
                 }
         }
 
-        int total = logging + close + dns + keepalive + reply + request + start + wait + graceful + cleanup;
+        int total = logging + close + dns + keepalive + reply + request + start + wait + graceful + cleanup + open;
         if (! total)
                 return TRUE; // Idle server
 

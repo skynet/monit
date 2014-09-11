@@ -53,9 +53,11 @@ instance, here is how to test for an expect string that starts with
 zero followed by any number of characters: expect "^[\\]0.*". Closes
 issue #84
 
-Fixed #55: Only run cron style checks once per minute. Minute is the
-lowest resolution in the cron string, but if poll-cycle time is lower
+Fixed: Issue #55: Only run cron style checks once per minute. Minute is
+the lowest resolution in the cron string, but if poll-cycle time is lower
 than one minute the check could run several times in a minute.
+
+Fixed: Issue #78: Include open slots in Apache status check calculations.
 
 New: Send HTTP headers with a HTTP protocol test. The syntax is
  http headers [name:value, name:value,..]
