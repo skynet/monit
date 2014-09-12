@@ -540,7 +540,7 @@ int send_ssl_socket(ssl_connection *ssl, void *buffer, size_t len, int timeout) 
  * @param ssl ssl connection
  * @param buffer array to hold the data
  * @param len size of the data container
- * @param timeout Seconds to wait for data to be available
+ * @param timeout milliseconds to wait for data to be available
  * @return number of bytes transmitted, -1 in case of an error
  */
 int recv_ssl_socket(ssl_connection *ssl, void *buffer, int len, int timeout) {
@@ -831,6 +831,9 @@ static int handle_error(int code, ssl_connection *ssl) {
 
         switch (ssl_error) {
 
+                case SSL_ERROR_NONE:
+                        return TRUE;
+
                 case SSL_ERROR_WANT_READ:
                         if (can_read(ssl->socket, SSL_TIMEOUT * 1000))
                                 return TRUE;
@@ -838,7 +841,7 @@ static int handle_error(int code, ssl_connection *ssl) {
                         break;
 
                 case SSL_ERROR_WANT_WRITE:
-                        if (can_read(ssl->socket, SSL_TIMEOUT * 1000))
+                        if (can_write(ssl->socket, SSL_TIMEOUT * 1000))
                                 return TRUE;
                         LogError("SSL write timeout error\n");
                         break;
