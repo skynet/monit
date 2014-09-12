@@ -142,7 +142,7 @@ static int get_next_token(char *s, int *cursor, char **r);
  */
 void *http_processor(Socket_T s) {
 
-  if(! can_read(socket_get_socket(s), REQUEST_TIMEOUT)) {
+  if(! can_read(socket_get_socket(s), REQUEST_TIMEOUT * 1000)) {
     internal_error(s, SC_REQUEST_TIMEOUT, "Time out when handling the Request");
   } else {
     do_service(s);
