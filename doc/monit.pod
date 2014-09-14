@@ -2539,12 +2539,12 @@ Example:
     checksum 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
-I<HTTP HEADERS> can be used to send a list of HTTP headers
+I<HTTP HEADERS> can be used to send a list of any HTTP headers
 with a http protocol test. For instance, the host header. If the
 host header is not set, Monit will use the hostname or IP-address
-of the host as specified in the statement. Specifying a host header
-is useful if you want to connect and test a name-based virtual host.
-The syntax is
+of the host as specified in the check host statement. Specifying 
+a host header is useful if you want to connect to and test a 
+name-based virtual host. The syntax for setting HTTP headers is
 
   http headers [name:value, name:value,..]
 
