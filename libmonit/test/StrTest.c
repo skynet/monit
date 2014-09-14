@@ -388,20 +388,7 @@ int main(void) {
         }
         printf("=> Test22: OK\n\n");
 
-        printf("=> Test23: Str_ton\n");
-        {
-                char str[43];
-                long l1 = 42, l2 = 0, l3 = -42, l4 = LONG_MAX, l5 = LONG_MIN;
-                assert(Str_isByteEqual("42", Str_ton(42, (char[43]){0})));
-                assert(Str_isByteEqual("42", Str_ton(l1, str)));
-                assert(Str_isByteEqual("0", Str_ton(l2, str)));
-                assert(Str_isByteEqual("-42", Str_ton(l3, str)));
-                assert(l4 == Str_parseLLong(Str_ton(l4, str)));
-                assert(l5 == Str_parseLLong(Str_ton(l5, str)));
-        }
-        printf("=> Test23: OK\n\n");
-
-        printf("=> Test24: Str_bytesToSize\n");
+        printf("=> Test23: Str_bytesToSize\n");
         {
                 char str[10];
                 Str_bytesToSize(0, str);
@@ -419,7 +406,7 @@ int main(void) {
                 Str_bytesToSize(LLONG_MAX, str);
                 assert(Str_isEqual(str, "8.0 EB"));
         }
-        printf("=> Test24: OK\n\n");
+        printf("=> Test23: OK\n\n");
 
 
         printf("============> Str Tests: OK\n\n");
