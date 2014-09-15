@@ -93,7 +93,7 @@ struct Socket_T {
         int socket;
         char *host;
         Port_T Port;
-        int timeout; // Internally milliseconds is used
+        int timeout; // milliseconds
         int connection_type;
         ssl_connection *ssl;
         ssl_server_connection *sslserver;
@@ -110,7 +110,7 @@ struct Socket_T {
  * Fill the internal buffer. If an error occurs or if the read
  * operation timed out -1 is returned.
  * @param S A Socket object
- * @param timeout The number of seconds to wait for data to be read
+ * @param timeout The number of milliseconds to wait for data to be read
  * @return TRUE (the length of data read) or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
@@ -156,7 +156,6 @@ Socket_T socket_create(void *port) {
         Socket_T S = NULL;
         Port_T p = port;
         ASSERT(port);
-        p->timeout = p->timeout * 1000; // Internally milliseconds is used
         switch (p->family) {
                 case AF_UNIX:
                         socket = create_unix_socket(p->pathname, p->type, p->timeout);
@@ -229,7 +228,7 @@ Socket_T socket_create_a(int socket, const char *remote_host, int port, void *ss
         S->port = port;
         S->socket = socket;
         S->type = SOCK_STREAM;
-        S->timeout = NET_TIMEOUT * 1000; // Internally milliseconds is used
+        S->timeout = NET_TIMEOUT; // milliseconds
         S->host = Str_dup(remote_host);
         S->connection_type = TYPE_ACCEPT;
         if (sslserver) {

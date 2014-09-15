@@ -1442,9 +1442,8 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                         for (Icmp_T icmp = s->icmplist; icmp; icmp = icmp->next) {
                                 if (icmp != s->icmplist)
                                         StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
-                                StringBuffer_append(res->outputbuffer, "<span class='%s'>[ICMP %s]</span>",
-                                          (icmp->is_available) ? "" : "red-text",
-                                          icmpnames[icmp->type]);
+                                StringBuffer_append(res->outputbuffer, "<span class='%s'>[Ping]</span>",
+                                          (icmp->is_available) ? "" : "red-text");
                         }
 
                         if (s->icmplist && s->portlist)
@@ -1506,7 +1505,7 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                         if (IS_EVENT_SET(r->events, Event_Gid))
                                 StringBuffer_append(res->outputbuffer, "Gid ");
                         if (IS_EVENT_SET(r->events, Event_Icmp))
-                                StringBuffer_append(res->outputbuffer, "Icmp ");
+                                StringBuffer_append(res->outputbuffer, "Ping ");
                         if (IS_EVENT_SET(r->events, Event_Instance))
                                 StringBuffer_append(res->outputbuffer, "Instance ");
                         if (IS_EVENT_SET(r->events, Event_Invalid))
@@ -1612,7 +1611,7 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
 
 static void print_service_rules_icmp(HttpResponse res, Service_T s) {
         for (Icmp_T i = s->icmplist; i; i = i->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>ICMP</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr><td>Ping</td><td>");
                 Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1918,13 +1917,13 @@ static void print_service_params_icmp(HttpResponse res, Service_T s) {
         if (s->type == TYPE_HOST && s->icmplist) {
                 if (! Util_hasServiceStatus(s)) {
                         for (Icmp_T i = s->icmplist; i; i = i->next)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td>-</td></tr>");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>-</td></tr>");
                 } else {
                         for (Icmp_T i = s->icmplist; i; i = i->next) {
                                 if (! i->is_available)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td class='red-text'>connection failed [%s]</td></tr>", icmpnames[i->type]);
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='red-text'>connection failed [%s]</td></tr>", icmpnames[i->type]);
                                 else
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td>%.3fs [%s]</td></tr>", i->response, icmpnames[i->type]);
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>%.3fs [%s]</td></tr>", i->response, icmpnames[i->type]);
                         }
                 }
         }
@@ -2415,7 +2414,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 for (Icmp_T i = s->icmplist; i; i = i->next) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %.3fs [%s]\n",
-                                                  "icmp response time", i->is_available ? i->response : 0.,
+                                                  "ping response time", i->is_available ? i->response : 0.,
                                                   icmpnames[i->type]);
                                 }
                         }

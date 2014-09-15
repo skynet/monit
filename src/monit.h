@@ -119,8 +119,8 @@
 #define PORT_HTTP          80
 #define PORT_HTTPS         443
 
-#define SSL_TIMEOUT        15
-#define SMTP_TIMEOUT       30
+#define SSL_TIMEOUT        15000
+#define SMTP_TIMEOUT       30000
 
 #define START_DELAY        0
 #define EXEC_TIMEOUT       30
@@ -474,7 +474,7 @@ typedef struct myport {
         int port;                                                  /**< Portnumber */
         int request_hashtype;   /**< The optional type of hash for a req. document */
         int maxforward;            /**< Optional max forward for protocol checking */
-        int timeout;   /**< The timeout in seconds to wait for connect or read i/o */
+        int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
         int is_available;                /**< TRUE if the server/port is available */
         int version;                                         /**< Protocol version */
@@ -515,11 +515,11 @@ typedef struct myport {
 } *Port_T;
 
 
-/** Defines a ICMP object */
+/** Defines a ICMP/Ping object */
 typedef struct myicmp {
         int type;                                              /**< ICMP type used */
         int count;                                   /**< ICMP echo requests count */
-        int timeout;              /**< The timeout in seconds to wait for response */
+        int timeout;         /**< The timeout in milliseconds to wait for response */
         int is_available;                     /**< TRUE if the server is available */
         double response;                              /**< ICMP ECHO response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
@@ -915,7 +915,7 @@ struct myrun {
         } Env;
 
         char *mail_hostname;    /**< Used in HELO/EHLO/MessageID when sending mail */
-        int mailserver_timeout;    /**< Connect and read timeout for a SMTP server */
+        int mailserver_timeout; /**< Connect and read timeout ms for a SMTP server */
         Mail_T maillist;                /**< Global alert notification mailinglist */
         MailServer_T mailservers;    /**< List of MTAs used for alert notification */
         Mmonit_T mmonits;        /**< Event notification and status receivers list */

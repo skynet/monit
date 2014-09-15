@@ -38,10 +38,10 @@
 
 
 /**
- * Standard seconds to wait for a socket connection or for socket read
+ * Standard milliseconds to wait for a socket connection or for socket read
  * i/o before aborting
  */
-#define NET_TIMEOUT 5
+#define NET_TIMEOUT 5000
 
 
 /**

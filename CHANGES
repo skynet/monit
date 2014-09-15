@@ -86,6 +86,12 @@ example:
   check program ls with path "/bin/ls -lrt /tmp" as uid "www"
        ...
 
+New: Changed name of ICMP ECHO statement to ping which is the
+more common name used for a network ping. This deprecate the
+ICMP echo name in the config file. The ping test now is written as
+  if failed ping then alert
+or with all options
+  if failed ping count 5 with timeout 10 seconds then alert
 
 
 Version 5.8.1

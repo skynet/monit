@@ -304,6 +304,7 @@ connection        { return CONNECTION; }
 unmonitor         { return UNMONITOR; }
 action            { return ACTION; }
 icmp              { return ICMP; }
+ping              { return PING; }
 echo              { return ICMPECHO; }
 send              { return SEND; }
 expect            { return EXPECT; }

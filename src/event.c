@@ -82,7 +82,7 @@ EventTable_T Event_Table[] = {
   {Event_Fsflag,     "Filesystem flags failed", "Filesystem flags succeeded", "Filesystem flags changed", "Filesystem flags not changed"},
   {Event_Gid,        "GID failed",              "GID succeeded",              "GID changed",              "GID not changed"},
   {Event_Heartbeat,  "Heartbeat failed",        "Heartbeat succeeded",        "Heartbeat changed",        "Heartbeat not changed"},
-  {Event_Icmp,       "ICMP failed",             "ICMP succeeded",             "ICMP changed",             "ICMP not changed"},
+  {Event_Icmp,       "Ping failed",             "Ping succeeded",             "Ping changed",             "Ping not changed"},
   {Event_Instance,   "Monit instance failed",   "Monit instance succeeded",   "Monit instance changed",   "Monit instance not changed"},
   {Event_Invalid,    "Invalid type",            "Type succeeded",             "Type changed",             "Type not changed"},
   {Event_Nonexist,   "Does not exist",          "Exists",                     "Existence changed",        "Existence not changed"},

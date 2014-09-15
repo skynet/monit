@@ -821,7 +821,7 @@ void Util_printRunList() {
                                mta->port,
                                mta->ssl.use_ssl?"(ssl)":"",
                                mta->next?", ":" ");
-                printf("with timeout %d seconds", Run.mailserver_timeout);
+                printf("with timeout %d seconds", Run.mailserver_timeout/1000);
                 if (Run.mail_hostname)
                         printf(" using '%s' as my hostname", Run.mail_hostname);
                 printf("\n");
@@ -1020,7 +1020,7 @@ void Util_printService(Service_T s) {
 
         for (Icmp_T o = s->icmplist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "ICMP", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout)));
+                printf(" %-20s = %s\n", "Ping", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout)));
         }
 
         for (Port_T o = s->portlist; o; o = o->next) {

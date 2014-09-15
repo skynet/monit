@@ -1331,21 +1331,21 @@ int check_remote_host(Service_T s) {
 
                                 if (icmp->response == -2) {
                                         icmp->is_available = TRUE;
-                                        DEBUG("'%s' icmp ping skipped -- the monit user has no permission to create raw socket, please run monit as root or add privilege for net_icmpaccess\n", s->name);
+                                        DEBUG("'%s' ping skipped -- the monit user has no permission to create raw socket, please run monit as root or add privilege for net_icmpaccess\n", s->name);
                                 } else if (icmp->response == -1) {
                                         icmp->is_available = FALSE;
-                                        DEBUG("'%s' icmp ping failed\n", s->name);
-                                        Event_post(s, Event_Icmp, STATE_FAILED, icmp->action, "failed ICMP test [%s]", icmpnames[icmp->type]);
+                                        DEBUG("'%s' ping failed\n", s->name);
+                                        Event_post(s, Event_Icmp, STATE_FAILED, icmp->action, "failed Ping test [%s]", icmpnames[icmp->type]);
                                 } else {
                                         icmp->is_available = TRUE;
-                                        DEBUG("'%s' icmp ping succeeded [response time %.3fs]\n", s->name, icmp->response);
-                                        Event_post(s, Event_Icmp, STATE_SUCCEEDED, icmp->action, "succeeded ICMP test [%s]", icmpnames[icmp->type]);
+                                        DEBUG("'%s' ping succeeded [response time %.3fs]\n", s->name, icmp->response);
+                                        Event_post(s, Event_Icmp, STATE_SUCCEEDED, icmp->action, "succeeded Ping test [%s]", icmpnames[icmp->type]);
                                 }
                                 last_ping = icmp;
                                 break;
 
                         default:
-                                LogError("'%s' error -- unknown ICMP type: [%d]\n", s->name, icmp->type);
+                                LogError("'%s' error -- unknown Ping type: [%d]\n", s->name, icmp->type);
                                 return FALSE;
 
                 }

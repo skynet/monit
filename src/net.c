@@ -159,7 +159,7 @@
 
 
 /*
- * Do a non blocking connect, timeout if not connected within timeout seconds
+ * Do a non blocking connect, timeout if not connected within timeout milliseconds
  */
 static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout) {
         int error = 0;
@@ -465,15 +465,15 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET;
         if ((status = getaddrinfo(hostname, NULL, &hints, &result)) != 0) {
-                LogError("ICMP echo for %s -- getaddrinfo failed: %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                LogError("Ping for %s -- getaddrinfo failed: %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return response;
         }
         if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
                 if (errno == EACCES || errno == EPERM) {
-                        DEBUG("ICMP echo for %s -- cannot create socket: %s\n", hostname, STRERROR);
+                        DEBUG("Ping for %s -- cannot create socket: %s\n", hostname, STRERROR);
                         response = -2.;
                 } else {
-                        LogError("ICMP echo for %s -- canot create socket: %s\n", hostname, STRERROR);
+                        LogError("Ping for %s -- canot create socket: %s\n", hostname, STRERROR);
                 }
                 goto error2;
         }
@@ -488,7 +488,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         }
 #endif
         if (setsockopt(s, sol_ip, IP_TTL, (char *)&ttl, sizeof(ttl)) < 0) {
-                LogError("ICMP echo for %s -- setsockopt failed: %s\n", hostname, STRERROR);
+                LogError("Ping for %s -- setsockopt failed: %s\n", hostname, STRERROR);
                 goto error1;
         }
 #endif
@@ -517,7 +517,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                         n = (int)sendto(s, (char *)icmpout, len_out, 0, (struct sockaddr *)&sout, sizeof(struct sockaddr));
                 } while(n == -1 && errno == EINTR);
                 if (n < 0) {
-                        LogError("ICMP echo request for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
+                        LogError("Ping request for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                         continue;
                 }
                 read_timeout = timeout;
@@ -528,10 +528,10 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                                 n = (int)recvfrom(s, buf, STRLEN, 0, (struct sockaddr *)&sout, &size);
                         } while(n == -1 && errno == EINTR);
                         if (n < 0) {
-                                LogError("ICMP echo response for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
+                                LogError("Ping response for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                                 continue;
                         } else if (n < len_in) {
-                                LogError("ICMP echo response for %s %d/%d failed -- received %d bytes, expected at least %d bytes\n", hostname, i + 1, count, n, len_in);
+                                LogError("Ping response for %s %d/%d failed -- received %d bytes, expected at least %d bytes\n", hostname, i + 1, count, n, len_in);
                                 continue;
                         }
                         iphdrin = (struct ip *)buf;
@@ -541,17 +541,17 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                         gettimeofday(&t_in, NULL);
                         /* The read from connection-less raw socket via recvfrom() provides messages regardless of origin, the source IP address is set in sout, we have to check the IP and skip responses belonging to other ICMP conversations */
                         if (sout.sin_addr.s_addr != sa->sin_addr.s_addr || icmpin->icmp_type != ICMP_ECHOREPLY || id_in != id_out || seq_in >= (uint16_t)count) {
-                                if ((read_timeout = timeout * 1000. - ((t_in.tv_sec - t_out.tv_sec) * 1000. + (t_in.tv_usec - t_out.tv_usec) / 1000.)) > 0)
+                                if ((read_timeout = timeout - ((t_in.tv_sec - t_out.tv_sec) + (t_in.tv_usec - t_out.tv_usec) / 1000.)) > 0)
                                         goto readnext; // Try to read next packet, but don't exceed the timeout while waiting for our response so we won't loop forever if the socket is flooded with other ICMP packets
                         } else {
                                 data = (unsigned char *)icmpin->icmp_data;
                                 memcpy(&t_out, data, sizeof(struct timeval));
                                 response = (double)(t_in.tv_sec - t_out.tv_sec) + (double)(t_in.tv_usec - t_out.tv_usec) / 1000000;
-                                DEBUG("ICMP echo response for %s %d/%d succeeded -- received id=%d sequence=%d response_time=%fs\n", hostname, i + 1, count, id_in, seq_in, response);
+                                DEBUG("Ping response for %s %d/%d succeeded -- received id=%d sequence=%d response_time=%fs\n", hostname, i + 1, count, id_in, seq_in, response);
                                 break; // Wait for one response only
                         }
                 } else
-                        LogError("ICMP echo response for %s %d/%d timed out -- no response within %d seconds\n", hostname, i + 1, count, timeout);
+                        LogError("Ping response for %s %d/%d timed out -- no response within %d seconds\n", hostname, i + 1, count, timeout);
         }
 error1:
         do {

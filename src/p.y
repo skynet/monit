@@ -291,7 +291,7 @@
 %token SSLAUTO SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
 %token INODE SPACE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
-%token EXEC UNMONITOR ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
+%token EXEC UNMONITOR PING ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
 %token URL CONTENT PID PPID FSFLAG
 %token REGISTER CREDENTIALS
 %token <url> URLOBJECT
@@ -982,14 +982,20 @@ connectionunix  : IF FAILED unixsocket type protocol nettimeout retry rate1
                   }
                 ;
 
-icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1
-                  THEN action1 recovery {
+icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action1 recovery {
                    icmpset.type = $<number>4;
                    icmpset.count = $<number>5;
                    icmpset.timeout = $<number>6;
                    addeventaction(&(icmpset).action, $<number>9, $<number>10);
                    addicmp(&icmpset);
                   }
+                | IF FAILED PING icmpcount nettimeout rate1 THEN action1 recovery {
+                        icmpset.type = ICMP_ECHO;
+                        icmpset.count = $<number>4;
+                        icmpset.timeout = $<number>5;
+                        addeventaction(&(icmpset).action, $<number>8, $<number>9);
+                        addicmp(&icmpset);
+                 }
                 ;
 
 host            : /* EMPTY */ {
@@ -1308,8 +1314,8 @@ icmpcount       : /* EMPTY */ {
                    $<number>$ = ICMP_ATTEMPT_COUNT;
                   }
                 | COUNT NUMBER {
-                   $<number>$ = $2;
-                  }
+                        $<number>$ = $2;
+                 }
                 ;
 
 exectimeout     : /* EMPTY */ {
@@ -1329,10 +1335,10 @@ programtimeout  : /* EMPTY */ {
                 ;
 
 nettimeout      : /* EMPTY */ {
-                   $<number>$ = NET_TIMEOUT;
+                   $<number>$ = NET_TIMEOUT; // timeout is in milliseconds
                   }
                 | TIMEOUT NUMBER SECOND {
-                   $<number>$ = $2;
+                   $<number>$ = $2 * 1000; // net timeout is in milliseconds internally
                   }
                 ;
 
