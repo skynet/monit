@@ -2263,11 +2263,12 @@ Multiple status tests can be used, for example:
 
 =head2 NETWORK PING TEST
 
-Monit can perform network ping testing by sending ICMP echo
-request datagram packets to a host and check for reply. This test can
+Monit can perform a network ping test by sending ICMP echo request
+datagram packets to a host and wait for the reply. This test can
 only be used within a check host statement. Monit must also run as
-root user in order to be able to perform the ping test (requires
-raw socket privileges which is usually allowed only to super user).
+the root user in order to be able to perform the ping test (because
+a ping test must use raw sockets which usually only the super user
+is allowed to do).
 
 Syntax:
 
@@ -2278,12 +2279,16 @@ Syntax:
 The B<COUNT> parameter specifies how many consecutive ping requests
 will be sent to the host in one cycle. If no reply arrive within
 B<TIMEOUT> seconds, Monit reports an error. If at least one reply
-was received, the test succeed. Monit will, by default, send I<three>
-ping request packets in one cycle to prevent false alarm (i.e. up to
-66% packet loss is tolerated). You can set the B<COUNT> option to a
-value between 1 and 20 to send more or less packets. If you require
-100% ping success, set the count to 1 (i.e. just one request will be
-sent, and if the packet was lost an error will be reported).
+was received, the ping test is considered a success. Monit will,
+by default, send I<three> ping request packets in one cycle to
+prevent false alarm (i.e. up to 66% packet loss is tolerated). You
+can set the B<COUNT> option to a value between 1 and 20 to send more
+or less packets. If you require 100% ping success, set the count to
+1 (i.e. just one request will be sent, and if the packet was lost
+an error will be reported).
+
+Note that many ISPs have started to filter out ping or ICMP packets
+now, in which case there will be no reply from the host.
 
 If a ping test is used in a check host entry, this test is run first
 and if the ping test should fail, we assume that the connection to the
@@ -2294,8 +2299,8 @@ Example:
  check host mmonit.com with address mmonit.com
        if failed ping then alert
 
-or with all parameters. Send 5 ping packets to mmonit.com
-and wait up to 10 seconds for a reply
+or with all parameters; Send 5 pings to mmonit.com and wait for up
+to 10 seconds for a reply
 
   check host mmonit.com with address mmonit.com
         if failed

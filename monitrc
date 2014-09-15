@@ -243,7 +243,7 @@ set httpd port 2812 and
 #    if failed ping then alert
 #    if failed port 3306 protocol mysql with timeout 15 seconds then alert
 #    if failed port 80 protocol http
-#       and request /monit/ with content = "Monit [0-9.]+ Download"
+#       and request /some/path with content = "a string"
 #    then alert
 #
 #
