@@ -120,11 +120,11 @@ static int fill(Socket_T S, int timeout) {
          left in the socket. This should be done with minimum of
          blocking on timeout as we might have read all */
         if (S->offset > 0)
-                timeout = 50;
+                timeout = 220;
         S->offset = 0;
         S->length = 0;
         if (S->type == SOCK_DGRAM)
-                timeout = 75;
+                timeout = 220;
         if (S->ssl) {
                 n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
         } else {
