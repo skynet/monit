@@ -400,38 +400,12 @@ ssize_t sock_read(int socket, void *buffer, int size, int timeout) {
 }
 
 
-/**
- * Write <code>size</code> bytes from the <code>buffer</code> to the
- * <code>socket</code>. The given socket <b>must</b> be a connected
- * UDP socket
- * @param socket the socket to write to
- * @param buffer The buffer to write
- * @param size Number of bytes to send
- * @param timeout milliseconds to wait for data to be written
- * @return The number of bytes sent or -1 if an error occured.
- */
 int udp_write(int socket, void *b, size_t len, int timeout) {
-        int i, n;
-        ASSERT(timeout>=0);
-        for(i = 4; i>=1; i--) {
-                do {
-                        n = (int)Net_write(socket, b, len, 10);
-                } while(n == -1 && errno == EINTR);
-                if(n == -1 && (errno != EAGAIN || errno != EWOULDBLOCK))
-                        return -1;
-                /* Simple retransmit scheme, wait for the server to reply
-                 back to our socket. This assume a request-response pattern,
-                 which really is the only pattern we can support */
-                if (can_read(socket, (int)(timeout/i)))
-                        return n;
-                DEBUG("udp_write: Resending request\n");
-        }
-        errno = EHOSTUNREACH;
-        return -1;
+        return (int)Net_write(socket, b, len, timeout);
 }
 
 
-/**
+/*
  * Create a ICMP socket against hostname, send echo and wait for response.
  * The 'count' echo requests  is send and we expect at least one reply.
  * @param hostname The host to open a socket at

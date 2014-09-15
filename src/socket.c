@@ -123,10 +123,8 @@ static int fill(Socket_T S, int timeout) {
                 timeout = 50;
         S->offset = 0;
         S->length = 0;
-        /* Optimizing, assuming a request/response pattern and that a udp_write
-         was issued before we are called, we don't have to wait (long) for data */
         if (S->type == SOCK_DGRAM)
-                timeout = 10;
+                timeout = 75;
         if (S->ssl) {
                 n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
         } else {
@@ -415,8 +413,6 @@ int socket_write(Socket_T S, void *b, size_t size) {
         ssize_t n = 0;
         void *p = b;
         ASSERT(S);
-        /* Clear any extra data read from the server */
-        socket_reset(S);
         while (size > 0) {
                 if (S->ssl) {
                         n = send_ssl_socket(S->ssl, p, size, S->timeout);
