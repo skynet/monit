@@ -878,7 +878,7 @@ the event filter:
  EXEC       | "Execution failed"        | "Execution succeeded"       
  FSFLAGS    | "Filesystem flags failed" | "Filesystem flags succeeded"
  GID        | "GID failed"              | "GID succeeded"             
- ICMP       | "ICMP failed"             | "ICMP succeeded"            
+ ICMP       | "Ping failed"             | "Ping succeeded"
  INSTANCE   | "Monit instance changed"  | "Monit instance changed not"
  INVALID    | "Invalid type"            | "Type succeeded"            
  NONEXIST   | "Does not exist"          | "Exists"                    
@@ -2261,37 +2261,51 @@ Multiple status tests can be used, for example:
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
 
 
-=head2 PING TESTING
+=head2 NETWORK PING TEST
 
-Monit can perform ICMP Echo (PING) test in the context of host
-service type. Monit must usually run as root user in order to be
-able to perform the PING test (requires raw socket privileges which
-is usually allowed only to super user).
+Monit can perform a network ping test by sending ICMP echo request
+datagram packets to a host and wait for the reply. This test can
+only be used within a check host statement. Monit must also run as
+the root user in order to be able to perform the ping test (because
+a ping test must use raw sockets which usually only the super user
+is allowed to do).
 
 Syntax:
 
-  IF FAILED ICMP TYPE ECHO
+  IF FAILED PING
      [COUNT number] [WITH] [TIMEOUT number SECONDS] 
-     THEN action
+  THEN action
 
-The B<COUNT> parameter specifies how many consecutive echo requests
-will be send to the host in one cycle. In the case that no reply
-came within B<TIMEOUT> frame, Monit reports error. When at least
-one reply was received, the test will pass. Monit sends by default
-I<three> echo requests in one cycle to prevent false alarm (i.e. up
-to 66% packet loss is tolerated). You can set the B<COUNT> option to
-a value between 1 and 20. If you require 100% ping success, set the
-count to 1 (i.e. just one request will be sent, and if the packet was
-lost an error will be reported). 
+The B<COUNT> parameter specifies how many consecutive ping requests
+will be sent to the host in one cycle. If no reply arrive within
+B<TIMEOUT> seconds, Monit reports an error. If at least one reply
+was received, the ping test is considered a success. Monit will,
+by default, send I<three> ping request packets in one cycle to
+prevent false alarm (i.e. up to 66% packet loss is tolerated). You
+can set the B<COUNT> option to a value between 1 and 20 to send more
+or less packets. If you require 100% ping success, set the count to
+1 (i.e. just one request will be sent, and if the packet was lost
+an error will be reported).
+
+Note that many ISPs have started to filter out ping or ICMP packets
+now, in which case there will be no reply from the host.
 
 If a ping test is used in a check host entry, this test is run first
-and if the ping test should fail we assume that the connection to the
+and if the ping test should fail, we assume that the connection to the
 host is down and Monit does I<not> continue to test any ports.
 
 Example:
 
- check host xyz with address xyz.org
-       if failed icmp type echo count 5 with timeout 15 seconds then alert
+ check host mmonit.com with address mmonit.com
+       if failed ping then alert
+
+or with all parameters; Send 5 pings to mmonit.com and wait for up
+to 10 seconds for a reply
+
+  check host mmonit.com with address mmonit.com
+        if failed
+           ping count 5 with timeout 10 seconds
+        then alert
 
 
 =head2 CONNECTION TESTING
@@ -2808,9 +2822,7 @@ Here we use an icmp ping test to check if a remote host is up and
 if not send an alert:
 
  check host www.tildeslash.com with address www.tildeslash.com
-       if failed 
-          icmp type echo count 5 with timeout 15 seconds
-       then alert
+       if failed ping then alert
 
 In the following example we ask Monit to compute and verify the
 checksum for the underlying apache binary used by the start and

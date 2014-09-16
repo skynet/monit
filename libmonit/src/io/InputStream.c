@@ -76,15 +76,21 @@ mode. */
 static inline int fill(T S) {
         if (S->isclosed)
                 return -1;
+        /* If offset is > 0 we have already read from this descriptor
+         and we set timeout down to minimize wait on EOF */
+        time_t timeout = S->timeout;
+        if (S->offset > 0)
+                if (timeout > 100)
+                        timeout = 100;
         S->length = 0;
-        S->offset = 0; 
+        S->offset = 0;
         errno = 0;
-        int n = (int)Net_read(S->fd, S->buffer, BUFFER_SIZE, S->timeout);
+        int n = (int)Net_read(S->fd, S->buffer, BUFFER_SIZE, timeout);
         if (n > 0)
                 S->length = n;
         else if (n < 0) {
-                n = -1; 
-                S->isclosed = true; 
+                n = -1;
+                S->isclosed = true;
                 S->offset = S->length = 0;
         } else if (! (errno == EAGAIN || errno == EWOULDBLOCK)) // peer closed connection
                 n = -1;
