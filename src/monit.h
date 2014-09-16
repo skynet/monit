@@ -703,7 +703,7 @@ typedef struct mygid {
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
         Operator_Type operator;                           /**< Comparison operator */
-        long limit_absolute;                               /**< Watermark - blocks */
+        long long limit_absolute;                          /**< Watermark - blocks */
         int  limit_percent;                               /**< Watermark - percent */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
@@ -726,10 +726,10 @@ typedef struct myinfo {
                         long long  f_blocks;              /**< Total data blocks in filesystem */
                         long long  f_blocksfree;   /**< Free blocks available to non-superuser */
                         long long  f_blocksfreetotal;           /**< Free blocks in filesystem */
-                        long       f_files;                /**< Total file nodes in filesystem */
-                        long       f_filesfree;             /**< Free file nodes in filesystem */
+                        long long  f_files;                /**< Total file nodes in filesystem */
+                        long long  f_filesfree;             /**< Free file nodes in filesystem */
                         int        inode_percent;              /**< Used inode percentage * 10 */
-                        long       inode_total;                  /**< Used inode total objects */
+                        long long  inode_total;                  /**< Used inode total objects */
                         int        space_percent;              /**< Used space percentage * 10 */
                         long long  space_total;                   /**< Used space total blocks */
                         int        _flags;               /**< Filesystem flags from last cycle */

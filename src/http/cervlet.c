@@ -1173,7 +1173,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
                         if (s->inf->priv.filesystem.f_files > 0) {
 
                                 StringBuffer_append(res->outputbuffer,
-                                          "<td align='right'>%.1f%% [%ld objects]</td>",
+                                          "<td align='right'>%.1f%% [%lld objects]</td>",
                                           s->inf->priv.filesystem.inode_percent/10.,
                                           s->inf->priv.filesystem.inode_total);
 
@@ -2030,9 +2030,9 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
                         if (s->inf->priv.filesystem.f_files > 0) {
 
                                 StringBuffer_append(res->outputbuffer,
-                                          "<tr><td>Inodes total</td><td>%ld</td></tr>", s->inf->priv.filesystem.f_files);
+                                          "<tr><td>Inodes total</td><td>%lld</td></tr>", s->inf->priv.filesystem.f_files);
                                 StringBuffer_append(res->outputbuffer,
-                                          "<tr><td>Inodes free</td><td class='%s'>%ld [%.1f%%]</td></tr>",
+                                          "<tr><td>Inodes free</td><td class='%s'>%lld [%.1f%%]</td></tr>",
                                           (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.filesystem.f_filesfree,
                                           (float)100 * (float)s->inf->priv.filesystem.f_filesfree / (float)s->inf->priv.filesystem.f_files);
@@ -2365,8 +2365,8 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                           s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
                                 if (s->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(res->outputbuffer,
-                                                  "  %-33s %ld\n"
-                                                  "  %-33s %ld [%.1f%%]\n",
+                                                  "  %-33s %lld\n"
+                                                  "  %-33s %lld [%.1f%%]\n",
                                                   "inodes total",
                                                   s->inf->priv.filesystem.f_files,
                                                   "inodes free",

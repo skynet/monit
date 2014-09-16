@@ -1608,16 +1608,16 @@ void Util_resetInfo(Service_T s) {
         s->inf->timestamp = 0;
         switch (s->type) {
                 case TYPE_FILESYSTEM:
-                        s->inf->priv.filesystem.f_bsize = 0L;
-                        s->inf->priv.filesystem.f_blocks = 0L;
-                        s->inf->priv.filesystem.f_blocksfree = 0L;
-                        s->inf->priv.filesystem.f_blocksfreetotal = 0L;
-                        s->inf->priv.filesystem.f_files = 0L;
-                        s->inf->priv.filesystem.f_filesfree = 0L;
+                        s->inf->priv.filesystem.f_bsize = 0LL;
+                        s->inf->priv.filesystem.f_blocks = 0LL;
+                        s->inf->priv.filesystem.f_blocksfree = 0LL;
+                        s->inf->priv.filesystem.f_blocksfreetotal = 0LL;
+                        s->inf->priv.filesystem.f_files = 0LL;
+                        s->inf->priv.filesystem.f_filesfree = 0LL;
                         s->inf->priv.filesystem.inode_percent = 0;
-                        s->inf->priv.filesystem.inode_total = 0L;
+                        s->inf->priv.filesystem.inode_total = 0LL;
                         s->inf->priv.filesystem.space_percent = 0;
-                        s->inf->priv.filesystem.space_total = 0L;
+                        s->inf->priv.filesystem.space_total = 0LL;
                         s->inf->priv.filesystem._flags = -1;
                         s->inf->priv.filesystem.flags = -1;
                         break;
