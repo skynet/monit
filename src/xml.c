@@ -201,8 +201,8 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "</block>",
                                         S->inf->priv.filesystem.flags,
                                         S->inf->priv.filesystem.space_percent/10.,
-                                        S->inf->priv.filesystem.f_bsize > 0 ? (float)S->inf->priv.filesystem.space_total / (float)1048576 * (float)S->inf->priv.filesystem.f_bsize : 0,
-                                        S->inf->priv.filesystem.f_bsize > 0 ? (float)S->inf->priv.filesystem.f_blocks / (float)1048576 * (float)S->inf->priv.filesystem.f_bsize : 0);
+                                        S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.space_total / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.,
+                                        S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.f_blocks / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.);
                                 if (S->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(B,
                                                 "<inode>"
