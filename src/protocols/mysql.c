@@ -55,9 +55,8 @@ typedef struct {unsigned int len:24, seq:8; unsigned char *msg; unsigned char bu
 
 static unsigned short B2(unsigned char *b) {
         unsigned short x;
-        *(((char *)&x) + 0) = 0;
-        *(((char *)&x) + 1) = b[1];
-        *(((char *)&x) + 2) = b[0];
+        *(((char *)&x) + 0) = b[1];
+        *(((char *)&x) + 1) = b[0];
         return ntohs(x);
 }
 
