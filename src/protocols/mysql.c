@@ -73,8 +73,8 @@ static unsigned int B3(unsigned char *b) {
 
 static int _response(Socket_T socket, mysql_packet_t *pkt) {
         memset(pkt, 0, sizeof *pkt);
-        if (socket_read(socket, pkt->buf, STRLEN) < 4) {
-                socket_setError(socket, "MYSQL: error receiving server response -- %s", STRERROR);
+        if (socket_read(socket, pkt->buf, STRLEN) < 5) {
+                socket_setError(socket, "Error receiving server response -- %s", STRERROR);
                 return FALSE;
         }
         pkt->len = B3(pkt->buf);
@@ -83,7 +83,7 @@ static int _response(Socket_T socket, mysql_packet_t *pkt) {
         if (*pkt->msg == MYSQL_ERROR) {
                 unsigned short code = B2(pkt->msg + 1);
                 unsigned char *err = pkt->msg + 9;
-                socket_setError(socket, "MYSQL: server returned error code %d -- %s", code, err);
+                socket_setError(socket, "Server returned error code %d -- %s", code, err);
                 return FALSE;
         }
         return TRUE;
@@ -104,10 +104,18 @@ int check_mysql(Socket_T socket) {
         ASSERT(socket);
         mysql_packet_t pkt;
         if (_response(socket, &pkt)) {
-                unsigned short protocol_version = pkt.msg[0];
+                short protocol_version = pkt.msg[0];
                 unsigned char *server_version = pkt.msg + 1;
-                DEBUG("MySQL: Protocol: %d, Server Version: %s\n", protocol_version, server_version);
-                return TRUE;
+                // Protocol is 10 for MySQL 5.x
+                if ((protocol_version > 12) || (protocol_version < 9))
+                        socket_setError(socket, "Invalid protocol version %d", protocol_version);
+                // Handshake packet should have sequence id 0
+                else if (pkt.seq != 0)
+                        socket_setError(socket, "Invalid packet sequence id %d", pkt.seq);
+                else {
+                        DEBUG("MySQL: Protocol: %d, Server Version: %s\n", protocol_version, server_version);
+                        return TRUE;
+                }
         }
         return FALSE;
 }
