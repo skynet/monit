@@ -1676,14 +1676,14 @@ static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
                 if (dl->resource == RESOURCE_ID_INODE) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Inodes usage limit</td><td>");
                         if (dl->limit_absolute > -1)
-                                Util_printRule(res->outputbuffer, dl->action, "If %s %ld", operatornames[dl->operator], dl->limit_absolute);
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %lld", operatornames[dl->operator], dl->limit_absolute);
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 } else if (dl->resource == RESOURCE_ID_SPACE) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Space usage limit</td><td>");
                         if (dl->limit_absolute > -1)
-                                Util_printRule(res->outputbuffer, dl->action, "If %s %ld blocks", operatornames[dl->operator], dl->limit_absolute);
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %lld blocks", operatornames[dl->operator], dl->limit_absolute);
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");

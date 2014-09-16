@@ -1084,7 +1084,7 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Inodes usage limit",
                                 o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld", operatornames[o->operator], o->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld", operatornames[o->operator], o->limit_absolute))
                                 :
                                 StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
@@ -1092,7 +1092,7 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Space usage limit",
                                 o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld blocks", operatornames[o->operator], o->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld blocks", operatornames[o->operator], o->limit_absolute))
                                 :
                                 StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
