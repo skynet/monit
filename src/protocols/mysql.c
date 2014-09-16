@@ -54,20 +54,14 @@ typedef struct {unsigned int len:24, seq:8; unsigned char *msg; unsigned char bu
 
 
 static unsigned short B2(unsigned char *b) {
-        unsigned short x;
-        *(((char *)&x) + 0) = b[1];
-        *(((char *)&x) + 1) = b[0];
-        return ntohs(x);
+        unsigned char x[3] = {0, b[1], b[0]};
+        return ntohs(*(unsigned short*)((unsigned char*)x));
 }
 
 
 static unsigned int B3(unsigned char *b) {
-        unsigned int x;
-        *(((char *)&x) + 0) = 0;
-        *(((char *)&x) + 1) = b[2];
-        *(((char *)&x) + 2) = b[1];
-        *(((char *)&x) + 3) = b[0];
-        return ntohl(x);
+        unsigned char x[4] = {0, b[2], b[1], b[0]};
+        return ntohl(*(unsigned int*)((unsigned char*)x));
 }
 
 
