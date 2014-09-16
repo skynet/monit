@@ -837,7 +837,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                                 }
                         } else {
                                 if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.inode_total, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, STATE_FAILED, td->action, "inode usage %ld matches resource limit [inode usage%s%ld]", s->inf->priv.filesystem.inode_total, operatorshortnames[td->operator], td->limit_absolute);
+                                        Event_post(s, Event_Resource, STATE_FAILED, td->action, "inode usage %lld matches resource limit [inode usage%s%lld]", s->inf->priv.filesystem.inode_total, operatorshortnames[td->operator], td->limit_absolute);
                                         return;
                                 }
                         }
@@ -853,7 +853,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                                 }
                         } else {
                                 if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.space_total, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, STATE_FAILED, td->action, "space usage %lld blocks matches resource limit [space usage%s%ld blocks]", s->inf->priv.filesystem.space_total, operatorshortnames[td->operator], td->limit_absolute);
+                                        Event_post(s, Event_Resource, STATE_FAILED, td->action, "space usage %lld blocks matches resource limit [space usage%s%lld blocks]", s->inf->priv.filesystem.space_total, operatorshortnames[td->operator], td->limit_absolute);
                                         return;
                                 }
                         }

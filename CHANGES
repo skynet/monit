@@ -41,6 +41,8 @@ the output is logged only in debug mode.
 Fixed: Linux: filesystem space usage on some network based filesystems such
 as sshfs.
 
+Fixed: large filesystems monitoring on 32-bit platforms.
+
 New: support monitoring of filesystems by generic device strings such as
 sshfs on Linux or ZFS filesystems on Solaris. Example usage:
     check filesystem mydata with path "myuser@192.168.1.10:mydata"

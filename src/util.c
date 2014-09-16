@@ -1084,7 +1084,7 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Inodes usage limit",
                                 o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld", operatornames[o->operator], o->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld", operatornames[o->operator], o->limit_absolute))
                                 :
                                 StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
@@ -1092,7 +1092,7 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Space usage limit",
                                 o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld blocks", operatornames[o->operator], o->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld blocks", operatornames[o->operator], o->limit_absolute))
                                 :
                                 StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
@@ -1608,16 +1608,16 @@ void Util_resetInfo(Service_T s) {
         s->inf->timestamp = 0;
         switch (s->type) {
                 case TYPE_FILESYSTEM:
-                        s->inf->priv.filesystem.f_bsize = 0L;
-                        s->inf->priv.filesystem.f_blocks = 0L;
-                        s->inf->priv.filesystem.f_blocksfree = 0L;
-                        s->inf->priv.filesystem.f_blocksfreetotal = 0L;
-                        s->inf->priv.filesystem.f_files = 0L;
-                        s->inf->priv.filesystem.f_filesfree = 0L;
+                        s->inf->priv.filesystem.f_bsize = 0LL;
+                        s->inf->priv.filesystem.f_blocks = 0LL;
+                        s->inf->priv.filesystem.f_blocksfree = 0LL;
+                        s->inf->priv.filesystem.f_blocksfreetotal = 0LL;
+                        s->inf->priv.filesystem.f_files = 0LL;
+                        s->inf->priv.filesystem.f_filesfree = 0LL;
                         s->inf->priv.filesystem.inode_percent = 0;
-                        s->inf->priv.filesystem.inode_total = 0L;
+                        s->inf->priv.filesystem.inode_total = 0LL;
                         s->inf->priv.filesystem.space_percent = 0;
-                        s->inf->priv.filesystem.space_total = 0L;
+                        s->inf->priv.filesystem.space_total = 0LL;
                         s->inf->priv.filesystem._flags = -1;
                         s->inf->priv.filesystem.flags = -1;
                         break;

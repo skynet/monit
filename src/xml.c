@@ -207,8 +207,8 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         StringBuffer_append(B,
                                                 "<inode>"
                                                 "<percent>%.1f</percent>"
-                                                "<usage>%ld</usage>"
-                                                "<total>%ld</total>"
+                                                "<usage>%lld</usage>"
+                                                "<total>%lld</total>"
                                                 "</inode>",
                                                 S->inf->priv.filesystem.inode_percent/10.,
                                                 S->inf->priv.filesystem.inode_total,
