@@ -115,16 +115,10 @@ struct Socket_T {
  */
 static int fill(Socket_T S, int timeout) {
         int n;
-        /* if offset is > 0 it means we have read before and
-         now will call read again to see if there is anything
-         left in the socket. This should be done with minimum of
-         blocking on timeout as we might have read all */
-        if (S->offset > 0)
-                timeout = 220;
         S->offset = 0;
         S->length = 0;
         if (S->type == SOCK_DGRAM)
-                timeout = 220;
+                timeout = 500;
         if (S->ssl) {
                 n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
         } else {

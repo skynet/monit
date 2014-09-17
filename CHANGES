@@ -95,9 +95,6 @@ ICMP echo name in the config file. The ping test now is written as
 or with all options
   if failed ping count 5 with timeout 3 seconds then alert
 
-Fixed: Improved network connection timeout handling which should
-speed up connection tests.
-
 
 Version 5.8.1
 
