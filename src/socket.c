@@ -267,13 +267,13 @@ void socket_free(Socket_T *S) {
 
 void socket_setTimeout(Socket_T S, int timeout) {
         ASSERT(S);
-        S->timeout = timeout * 1000; // Internally milliseconds is used
+        S->timeout = timeout;
 }
 
 
 int socket_getTimeout(Socket_T S) {
         ASSERT(S);
-        return S->timeout/1000; // Internally milliseconds is used
+        return S->timeout;
 }
 
 
