@@ -325,8 +325,10 @@ short Event_check_state(Event_T E, short S) {
   }
 
   /* the internal instance and action events are handled as changed any time since we need to deliver alert whenever it occurs */
-  if (E->id == Event_Instance || E->id == Event_Action || (count >= action->count && (S != E->state || S == STATE_CHANGED)))
+  if (E->id == Event_Instance || E->id == Event_Action || (count >= action->count && (S != E->state || S == STATE_CHANGED))) {
+    memset(&(E->state_map), state, sizeof(E->state_map)); // Restart state map on state change, so we'll not flicker on multiple-failures condition (next state change requires full number of cycles to pass)
     return TRUE;
+  }
 
   return FALSE;
 }
