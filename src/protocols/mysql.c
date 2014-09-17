@@ -73,13 +73,18 @@ static unsigned int B3(unsigned char *b) {
 
 static int _response(Socket_T socket, mysql_packet_t *pkt) {
         memset(pkt, 0, sizeof *pkt);
-        if (socket_read(socket, pkt->buf, STRLEN) < 5) {
+        if (socket_read(socket, pkt->buf, 4) < 4) {
                 socket_setError(socket, "Error receiving server response -- %s", STRERROR);
                 return FALSE;
         }
         pkt->len = B3(pkt->buf);
+        pkt->len = pkt->len > STRLEN ? STRLEN : pkt->len; // Adjust packet length for this buffer
         pkt->seq = pkt->buf[3];
         pkt->msg = pkt->buf + 4;
+        if (socket_read(socket, pkt->msg, pkt->len) != pkt->len) {
+                socket_setError(socket, "Error receiving server response -- %s", STRERROR);
+                return FALSE;
+        }
         if (*pkt->msg == MYSQL_ERROR) {
                 unsigned short code = B2(pkt->msg + 1);
                 unsigned char *err = pkt->msg + 9;
