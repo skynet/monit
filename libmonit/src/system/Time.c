@@ -149,8 +149,8 @@ int Time_year(time_t time) {
 }
 
 
-char *Time_string(time_t time, char *result) {
 #define i2a(i) (x[0]=(i/10)+'0', x[1]=(i%10)+'0')
+char *Time_string(time_t time, char *result) {
         if (result) {
                 char x[2];
                 struct tm ts;
@@ -211,6 +211,17 @@ char *Time_gmtstring(time_t time, char *result) {
                 result[24] = x[1];
         }
 	return result;     
+}
+
+
+char *Time_fmt(char *result, int size, const char *format, time_t time) {
+        struct tm tm;
+        assert(result);
+        assert(format);
+        localtime_r((const time_t *)&time, &tm);
+        if (strftime(result, size, format, &tm) == 0)
+                *result = 0;
+        return result;
 }
 
 

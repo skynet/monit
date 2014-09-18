@@ -1107,7 +1107,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                 } else {
                         if (s->program->started) {
                                 char t[32];
-                                StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_string(s->program->started, t));
+                                StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_fmt(t, sizeof(t), "%d %b %Y %H:%M:%S", s->program->started));
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>%d</td>", s->program->exitStatus);
                         } else {
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>Not yet started</td>");

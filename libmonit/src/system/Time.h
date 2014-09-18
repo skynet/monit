@@ -163,6 +163,24 @@ char *Time_gmtstring(time_t time, char result[30]);
 
 
 /**
+ * Returns <code>time</code> as a date string. The <code>format</code> 
+ * parameter determines the format of the string. The format specifiers 
+ * are the same as those used by <code>strftime(3)</code>. For instance to
+ * specify a RFC822 time string on the format "Wed, 05 Feb 2003 01:16:44
+ * +0100" the following format string is used:
+ * <code>"%a, %d %b %Y %H:%M:%S %z"</code>
+ * @param result The buffer to write the date string too
+ * @param size Size of the result buffer
+ * @param format A <code>strftime</code> format string
+ * @param time seconds since ephoc to convert to a date string
+ * @return A pointer to the result buffer
+ * @exception AssertException If <code>format</code> or <code>result</code>
+ * is NULL
+ */
+char *Time_fmt(char *result, int size, const char *format, time_t time);
+
+
+/**
  * Returns a uptime formated string for the given seconds. That is, convert
  * <code>sec</code> to days, hours and minutes and return a string on the 
  * form, <code>7d, 17h, 34m</code>. The submitted result buffer must be
