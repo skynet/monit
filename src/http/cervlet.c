@@ -2245,7 +2245,7 @@ static void print_service_params_program(HttpResponse res, Service_T s) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td>");
                                 if (StringBuffer_length(s->program->output)) {
                                         // If the output contains multiple line, wrap use <pre>, otherwise keep as is
-                                        int multiline = StringBuffer_lastIndexOf(StringBuffer_trim(s->program->output), "\n") > 0;
+                                        int multiline = StringBuffer_lastIndexOf(s->program->output, "\n") > 0;
                                         if (multiline)
                                                 StringBuffer_append(res->outputbuffer, "<pre>");
                                         _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
