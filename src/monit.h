@@ -623,7 +623,7 @@ typedef struct myprogram {
         int timeout;           /**< Seconds the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
-        char output[140];                                 /**< Last program output */
+        StringBuffer_T output;                            /**< Last program output */
 } *Program_T;
 
 

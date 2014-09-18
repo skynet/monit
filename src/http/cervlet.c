@@ -2233,7 +2233,7 @@ static void print_service_params_program(HttpResponse res, Service_T s) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>%s</td></tr>", Time_string(s->program->started, t));
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>%d</td></tr>", s->program->exitStatus);
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td><pre>");
-                                _escapeHTML(res->outputbuffer, s->program->output);
+                                _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
                                 StringBuffer_append(res->outputbuffer, "</pre></td></tr>");
                         } else {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>Not yet started</td></tr>");
@@ -2497,16 +2497,16 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) {
                 get_monitoring_status(s, buf, buflen);
         } else if (s->error == 0) {
-                if (s->type == TYPE_PROGRAM && *s->program->output) {
-                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", s->program->output);
+                if (s->type == TYPE_PROGRAM && StringBuffer_length(s->program->output)) {
+                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", StringBuffer_toString(s->program->output));
                         Str_chomp(buf); // chop 2nd+ line
                 } else {
                         snprintf(buf, buflen, "%s", statusnames[s->type]);
                 }
         } else {
                 // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found. In the case of program we prefer the program output if any.
-                if (s->type == TYPE_PROGRAM && *s->program->output) {
-                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", s->program->output);
+                if (s->type == TYPE_PROGRAM && StringBuffer_length(s->program->output)) {
+                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", StringBuffer_toString(s->program->output));
                         Str_chomp(buf); // chop 2nd+ line
                 } else {
                         while ((*et).id) {
