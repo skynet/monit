@@ -323,6 +323,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                 " .gray-text {color:#999999;} "\
                 " .blue-text {color:#0000ff;} "\
                 " .orange-text {color:#ff8800;} "\
+                " .short {overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;}"\
                 " #wrap {min-height: 100%%;} "\
                 " #main {overflow:auto; padding-bottom:50px;} "\
                 " /*Opera Fix*/body:before {content:\"\";height:100%%;float:left;width:0;margin-top:-32767px;/} "\
@@ -1087,6 +1088,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                   "<tr>"
                                   "<th align='left' class='first'>Program</th>"
                                   "<th align='left'>Status</th>"
+                                  "<th align='right'>Output</th>"
                                   "<th align='right'>Last started</th>"
                                   "<th align='right'>Exit value</th>"
                                   "</tr>");
@@ -1104,12 +1106,20 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
                         if (s->program->started) {
                                 char t[32];
+                                StringBuffer_append(res->outputbuffer, "<td align='right' class='short'>");
+                                if (StringBuffer_length(s->program->output))
+                                        _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                else
+                                        StringBuffer_append(res->outputbuffer, "no output");
+                                StringBuffer_append(res->outputbuffer, "</td>");
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_fmt(t, sizeof(t), "%d %b %Y %H:%M:%S", s->program->started));
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>%d</td>", s->program->exitStatus);
                         } else {
+                                StringBuffer_append(res->outputbuffer, "<td align='right'>N/A</td>");
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>Not yet started</td>");
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>N/A</td>");
                         }
@@ -2508,25 +2518,15 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) {
                 get_monitoring_status(s, buf, buflen);
         } else if (s->error == 0) {
-                if (s->type == TYPE_PROGRAM && StringBuffer_length(s->program->output)) {
-                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", StringBuffer_toString(s->program->output));
-                        Str_chomp(buf); // chop 2nd+ line
-                } else {
-                        snprintf(buf, buflen, "%s", statusnames[s->type]);
-                }
+                snprintf(buf, buflen, "%s", statusnames[s->type]);
         } else {
-                // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found. In the case of program we prefer the program output if any.
-                if (s->type == TYPE_PROGRAM && StringBuffer_length(s->program->output)) {
-                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", StringBuffer_toString(s->program->output));
-                        Str_chomp(buf); // chop 2nd+ line
-                } else {
-                        while ((*et).id) {
-                                if (s->error & (*et).id) {
-                                        snprintf(buf, buflen, "%s", (s->error_hint & (*et).id) ? (*et).description_changed : (*et).description_failed);
-                                        break;
-                                }
-                                et++;
+                // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found
+                while ((*et).id) {
+                        if (s->error & (*et).id) {
+                                snprintf(buf, buflen, "%s", (s->error_hint & (*et).id) ? (*et).description_changed : (*et).description_failed);
+                                break;
                         }
+                        et++;
                 }
         }
         if (s->doaction)
