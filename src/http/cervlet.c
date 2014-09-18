@@ -323,7 +323,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                 " .gray-text {color:#999999;} "\
                 " .blue-text {color:#0000ff;} "\
                 " .orange-text {color:#ff8800;} "\
-                " .short {overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;}"\
+                " .short {overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 350px;}"\
                 " #wrap {min-height: 100%%;} "\
                 " #main {overflow:auto; padding-bottom:50px;} "\
                 " /*Opera Fix*/body:before {content:\"\";height:100%%;float:left;width:0;margin-top:-32767px;/} "\
@@ -1088,7 +1088,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                   "<tr>"
                                   "<th align='left' class='first'>Program</th>"
                                   "<th align='left'>Status</th>"
-                                  "<th align='right'>Output</th>"
+                                  "<th align='left'>Output</th>"
                                   "<th align='right'>Last started</th>"
                                   "<th align='right'>Exit value</th>"
                                   "</tr>");
@@ -1104,13 +1104,13 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "</td>");
                 if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
+                        StringBuffer_append(res->outputbuffer, "<td align='left'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
                         if (s->program->started) {
                                 char t[32];
-                                StringBuffer_append(res->outputbuffer, "<td align='right' class='short'>");
+                                StringBuffer_append(res->outputbuffer, "<td align='left' class='short'>");
                                 if (StringBuffer_length(s->program->output))
                                         _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
                                 else
@@ -2242,14 +2242,13 @@ static void print_service_params_program(HttpResponse res, Service_T s) {
                                 char t[32];
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>%s</td></tr>", Time_string(s->program->started, t));
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>%d</td></tr>", s->program->exitStatus);
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td><pre>");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td>");
                                 if (StringBuffer_length(s->program->output)) {
-                                        const char *output = StringBuffer_toString(s->program->output);
                                         // If the output contains multiple line, wrap use <pre>, otherwise keep as is
-                                        int multiline = StringBuffer_indexOf(s->program->output, "\n") ? TRUE : FALSE;
+                                        int multiline = StringBuffer_lastIndexOf(StringBuffer_trim(s->program->output), "\n") > 0;
                                         if (multiline)
                                                 StringBuffer_append(res->outputbuffer, "<pre>");
-                                        _escapeHTML(res->outputbuffer, output);
+                                        _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
                                         if (multiline)
                                                 StringBuffer_append(res->outputbuffer, "</pre>");
                                 } else {

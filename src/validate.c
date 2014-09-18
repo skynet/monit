@@ -113,7 +113,7 @@
 
 
 /**
- * Read program output into stringbuffer. Limit the output to 1kB (if the program will have endless output, such as 'yes' utility, we have to stop at some point to not spin here forever)
+ * Read program output into stringbuffer. Limit the output to 1kB
  */
 static void _programOutput(InputStream_T I, StringBuffer_T S) {
         int n;
