@@ -2233,7 +2233,7 @@ static void print_service_params_program(HttpResponse res, Service_T s) {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>%s</td></tr>", Time_string(s->program->started, t));
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>%d</td></tr>", s->program->exitStatus);
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td><pre>");
-                                _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                _escapeHTML(res->outputbuffer, StringBuffer_length(s->program->output) ? StringBuffer_toString(s->program->output) : "no output");
                                 StringBuffer_append(res->outputbuffer, "</pre></td></tr>");
                         } else {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>Not yet started</td></tr>");
