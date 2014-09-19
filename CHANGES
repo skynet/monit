@@ -97,6 +97,21 @@ or with all options
 
 Fixed: Improved speed of send/expect protocol test
 
+New: Simplified protocol test with SSL. Instead of writing:
+  if failed
+     port 443 with type TCPSSL tlsv1 protocol http
+  then alert
+You can now write the following instead
+  if failed
+     port 443 with protocol https
+  then alert
+The SSL version is auto-detected. The old version can still be
+used if SSL version needs to be specified. The same short version
+is also provided for SMTP:
+  if failed
+     port 465 with protocol smtps
+  then alert
+
 
 Version 5.8.1
 

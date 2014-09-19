@@ -273,7 +273,7 @@
 %token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
-%token DEFAULT HTTP APACHESTATUS FTP SMTP POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
+%token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
 %token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE
 %token <string> STRING PATH MAILADDR MAILFROM MAILREPLYTO MAILSUBJECT
 %token <string> MAILBODY SERVICENAME STRINGNAME
@@ -1080,8 +1080,14 @@ protocol        : /* EMPTY */  {
                     portset.protocol = Protocol_get(Protocol_FTP);
                   }
                 | PROTOCOL HTTP httplist {
-                    portset.protocol = Protocol_get(Protocol_HTTP);
+                        portset.protocol = Protocol_get(Protocol_HTTP);
                   }
+                | PROTOCOL HTTPS httplist {
+                        portset.type = SOCK_STREAM;
+                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.protocol = Protocol_get(Protocol_HTTP);
+                 }
                 | PROTOCOL IMAP {
                     portset.protocol = Protocol_get(Protocol_IMAP);
                   }
@@ -1116,6 +1122,12 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL SMTP {
                     portset.protocol = Protocol_get(Protocol_SMTP);
                   }
+                | PROTOCOL SMTPS {
+                        portset.type = SOCK_STREAM;
+                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.protocol = Protocol_get(Protocol_SMTP);
+                 }
                 | PROTOCOL SSH  {
                     portset.protocol = Protocol_get(Protocol_SSH);
                   }

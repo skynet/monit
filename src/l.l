@@ -222,9 +222,11 @@ status            { return STATUS; }
 system            { return SYSTEM; }
 default           { return DEFAULT; }
 http              { return HTTP; }
+https             { return HTTPS; }
 apache-status     { return APACHESTATUS; }
 ftp               { return FTP; }
 smtp              { return SMTP; }
+smtps             { return SMTPS; }
 postfix-policy    { return POSTFIXPOLICY; }
 pop               { return POP; }
 imap              { return IMAP; }
