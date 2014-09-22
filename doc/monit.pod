@@ -351,7 +351,8 @@ to process name (command line) from process table instead of pidfile.
 The first match is used so this form of check is useful for unique
 pattern matching - the pidfile should be used where possible as it
 defines expected pid exactly (pattern matching won't be useful for
-Apache in most cases for example).
+Apache in most cases or for processes which start child processes using
+fork/clone as the child will match the same pattern temporarily).
 The pattern can be obtained using I<monit procmatch ".*"> CLI command
 which lists all processes visible to Monit or using the I<ps> utility.
 The "procmatch" CLI command can be used to test your pattern as well.
@@ -422,7 +423,8 @@ also as initial name of the host entry in M/Monit.
 <path> is the absolute path to the executable program or script.
 The I<status> test allows one to check the program's exit status. If
 program will not finish within <number> seconds, Monit will terminate
-it. The default program timeout is 600 seconds (5 minutes).
+it. The default program timeout is 600 seconds (5 minutes). The output
+of the program is recorded (up to 1kB).
 
 =back
 
@@ -826,13 +828,17 @@ Monit will raise an event in the following situations:
  o A service action was performed by administrator
  o Monit was started, stopped or reloaded
 
-To get an alert via e-mail, set the alert target using I<set alert>
-statement.
+To get an alert via e-mail, set the alert target using global I<set alert>
+statement (for all services) or using I<alert> statement in the context
+of the service entry (for single service).
 
 
 =head2 Setting an alert recipient
 
-If an event occurred, Monit will send an alert to all recipients. Syntax:
+If an event occurred, Monit will send an alert. There are two kinds of alert
+statement: global and local.
+
+Global syntax:
 
 =over 4
 
@@ -849,6 +855,25 @@ any service.
 
 If you want to send alert messages to more email addresses, add a
 I<set alert 'email'> statement for each address.
+
+It is also possible to use the local alert statement in the context of some service
+to enable alert for the given service only:
+
+=over 4
+
+=item ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
+
+=back
+
+Example:
+
+ check host myhost with address 1.2.3.4
+     if failed port 25 protocol http then alert
+     if failed port 80 protocol http then alert
+     alert foo@bar
+
+You can combine global and local alert statements. In the case of conflict, the local
+alert has precedence and overrides the global statement.
 
 
 =head3 Setting an event filter
