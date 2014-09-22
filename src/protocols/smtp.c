@@ -53,7 +53,7 @@ static int expect(Socket_T socket, int expect, int log) {
                 }
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
-        if (sscanf(buf, "%d", &status) != 1) {
+        if (sscanf(buf, "%d", &status) != 1 || status != expect) {
                 if(log)
                         socket_setError(socket, "SMTP error: %s", buf);
                 return FALSE;
