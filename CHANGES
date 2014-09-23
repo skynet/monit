@@ -97,6 +97,8 @@ or with all options
 
 Fixed: Improved speed of send/expect protocol test
 
+Fixed: SMTP protocol test: check the response code.
+
 New: Simplified protocol test with SSL. Instead of writing:
   if failed
      port 443 with type TCPSSL tlsv1 protocol http
