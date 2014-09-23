@@ -100,7 +100,7 @@ int check_generic(Socket_T socket) {
                         /* Since the protocol is unknown we need to wait on EOF. To avoid waiting
                          timeout seconds on EOF we first read one byte to fill the socket's read 
                          buffer and then set a low timeout on next read which reads remaining bytes 
-                         as well as waiting on EOF */
+                         as well as wait on EOF */
                         *buf = socket_read_byte(socket);
                         if (*buf < 0) {
                                 socket_setError(socket, "GENERIC: error receiving data -- %s", STRERROR);
@@ -113,7 +113,7 @@ int check_generic(Socket_T socket) {
                         buf[n] = 0;
                         if (n > 0)
                                 _escapeZeroInExpectBuffer(buf, n);
-                        socket_setTimeout(socket, timeout); // Reset original timeout
+                        socket_setTimeout(socket, timeout); // Reset back original timeout for next send/expect
 #ifdef HAVE_REGEX_H
                         regex_return = regexec(g->expect, buf, 0, NULL, 0);
                         if (regex_return != 0) {
