@@ -1253,12 +1253,13 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
 
                 } else {
 
+                        char buf[STRLEN];
                         StringBuffer_append(res->outputbuffer,
-                                  "<td align='right'>%llu B</td>"
+                                  "<td align='right'>%s</td>"
                                   "<td align='right'>%04o</td>"
                                   "<td align='right'>%d</td>"
                                   "<td align='right'>%d</td>",
-                                  (unsigned long long)s->inf->priv.file.st_size,
+                                  Str_bytesToSize(s->inf->priv.file.st_size, buf),
                                   s->inf->st_mode & 07777,
                                   s->inf->st_uid,
                                   s->inf->st_gid);
@@ -2063,10 +2064,11 @@ static void print_service_params_size(HttpResponse res, Service_T s) {
 
                 } else {
 
+                        char buf[STRLEN];
                         StringBuffer_append(res->outputbuffer,
-                                  "<tr><td>Size</td><td class='%s'>%llu B</td></tr>",
+                                  "<tr><td>Size</td><td class='%s'>%s</td></tr>",
                                   (s->error & Event_Size) ? "red-text" : "",
-                                  (unsigned long long) s->inf->priv.file.st_size);
+                                  Str_bytesToSize(s->inf->priv.file.st_size, buf));
 
                 }
         }
@@ -2348,8 +2350,8 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         if (s->type == TYPE_FILE) {
                                 StringBuffer_append(res->outputbuffer,
-                                          "  %-33s %llu B\n",
-                                          "size", (unsigned long long) s->inf->priv.file.st_size);
+                                          "  %-33s %s\n",
+                                          "size", Str_bytesToSize(s->inf->priv.file.st_size, buf));
                                 if (s->checksum) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %s (%s)\n",
