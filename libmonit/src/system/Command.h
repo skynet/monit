@@ -136,6 +136,22 @@ gid_t Command_getGid(T C);
 
 
 /**
+ * Set the file creation mode mask the sub-process should switch to on exec.
+ * @param C A Command object
+ * @param umask The file creation mode mask the sub-process should switch to when executed
+ */
+void Command_setUmask(T C, mode_t umask);
+
+
+/**
+ * Returns the file creation mode mask the Command should switch to on exec.
+ * @param C A Command object
+ * @return The umask the sub-process should switch to when executed
+ */
+mode_t Command_getUmask(T C);
+
+
+/**
  * Returns the Process timeout. Default is no timeout. The timeout
  * is set with Command_setOnTimeout().
  * @param C A Command object

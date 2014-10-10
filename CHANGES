@@ -1,6 +1,12 @@
-                     CHANGES version 5.9
+                     CHANGES version 5.10
 
            This file summarizes changes made since 5.0
+
+Version 5.10
+
+Fixed: Restore the umask to the value Monit was started with
+when executing start/stop/restart and check programs.
+
 
 Version 5.9
 

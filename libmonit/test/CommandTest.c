@@ -104,18 +104,21 @@ int main(void) {
         }
         printf("=> Test1: OK\n\n");
 
-        printf("=> Test2: set and get uid/gid\n");
+        printf("=> Test2: set and get uid/gid/umask\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "ps -aef|grep monit", NULL);
                 assert(c);
                 // Check that default is 0
                 assert(Command_getUid(c) == 0);
                 assert(Command_getGid(c) == 0);
+                assert(Command_getUmask(c) == 0);
                 // set and test uid and gid
                 Command_setUid(c,42);
                 assert(Command_getUid(c) == 42);
                 Command_setGid(c,148);
                 assert(Command_getGid(c) == 148);
+                Command_setUmask(c,0222);
+                assert(Command_getUmask(c) == 0222);
                 Command_free(&c);
                 assert(!c);
         }

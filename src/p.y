@@ -2145,6 +2145,7 @@ static void postparse() {
                         if (s->program->args->has_gid) {
                                 Command_setGid(s->program->C, s->program->args->gid);
                         }
+                        Command_setUmask(s->program->C, Run.umask);
                 }
         }
 

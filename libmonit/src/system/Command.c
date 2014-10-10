@@ -63,6 +63,7 @@
 struct T {
         uid_t uid;
         gid_t gid;
+        mode_t umask;
         List_T env;
         List_T args;
         char **_env;
@@ -75,6 +76,7 @@ struct Process_T {
         pid_t pid;
         uid_t uid;
         gid_t gid;
+        mode_t umask;
         int status;
         int stdin_pipe[2];
         int stdout_pipe[2];
@@ -252,6 +254,12 @@ gid_t Process_getGid(Process_T P) {
 }
 
 
+mode_t Process_getUmask(Process_T P) {
+        assert(P);
+        return P->umask;
+}
+
+
 const char *Process_getDir(Process_T P) {
         assert(P);
         if (! P->working_directory) {
@@ -411,6 +419,18 @@ gid_t Command_getGid(T C) {
 }
 
 
+void Command_setUmask(T C, mode_t umask) {
+        assert(C);
+        C->umask = umask;
+}
+
+
+mode_t Command_getUmask(T C) {
+        assert(C);
+        return C->umask;
+}
+
+
 void Command_setDir(T C, const char *dir) {
         assert(C);
         if (dir) { // Allow to set a NULL directory, meaning the calling process's current directory
@@ -510,6 +530,10 @@ Process_T Command_execute(T C) {
                         P->uid = (setuid(C->uid) != 0) ? ERROR("Command: Cannot change process uid to '%d' -- %s\n", C->uid, System_getLastError()), getuid() : C->uid;
                 else
                         P->uid = getuid();
+                if (C->umask) {
+                        P->umask = C->umask;
+                        umask(P->umask);
+                }
                 setsid(); // Loose controlling terminal
                 setupChildPipes(P);
                 // Close all descriptors except stdio
