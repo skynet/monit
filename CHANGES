@@ -4,8 +4,8 @@
 
 Version 5.10
 
-Fixed: Restore the umask to the value Monit was started with
-when executing start/stop/restart and check programs.
+Fixed: Keep umask Monit was started with when executing
+start/stop/restart programs, check programs and creating files.
 
 
 Version 5.9

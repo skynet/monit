@@ -1242,9 +1242,7 @@ char *Util_monitId(char *idfile) {
                 md5_context_t ctx;
                 char buf[STRLEN];
                 MD_T digest;
-                mode_t mask = umask(PRIVATEMASK);
                 file = fopen(idfile, "w");
-                umask(mask);
                 if (! file) {
                         LogError("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
                         return NULL;

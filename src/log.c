@@ -344,8 +344,8 @@ static int open_log() {
   if (Run.use_syslog) {
     openlog(prog, LOG_PID, Run.facility);
   } else {
-    umask(LOGMASK);
-    if ((LOG = fopen(Run.logfile,"a+")) == (FILE *)NULL) {
+    LOG = fopen(Run.logfile, "a+");
+    if (! LOG) {
       LogError("Error opening the log file '%s' for writing -- %s\n", Run.logfile, STRERROR);
       return(FALSE);
     }

@@ -76,9 +76,6 @@
 /* ------------------------------------------------------------------ Public */
 
 
-/**
- * Initialize the programs file variables
- */
 void file_init() {
 
   char pidfile[STRLEN];
@@ -111,21 +108,11 @@ void file_init() {
 }
 
 
-/**
- * Finalize and remove temporary files
- */
 void file_finalize() {
   unlink(Run.pidfile);
 }
 
 
-/**
- * Get a object's last modified timestamp.
- * @param object A object to stat
- * @param type Requested object's type
- * @return Max of either st_mtime or st_ctime or
- * FALSE if not found or different type of object
- */
 time_t file_getTimestamp(char *object, mode_t type) {
 
   struct stat buf;
@@ -149,13 +136,6 @@ time_t file_getTimestamp(char *object, mode_t type) {
 }
 
 
-/**
- * Search the system for the monit control file. Try first ~/.monitrc,
- * if that fails try /etc/monitrc, then SYSCONFDIR/monitrc (default:
- * /usr/local/etc/monitrc) and finally ./monitrc.
- * Exit the application if the control file was not found.
- * @return The location of monits control file (monitrc)
- */
 char *file_findControlFile() {
 
   char *rcfile = CALLOC(sizeof(char), STRLEN + 1);
@@ -186,21 +166,12 @@ char *file_findControlFile() {
 }
 
 
-/**
- * Create a program's pidfile - Such a file is created when in daemon
- * mode. The file is created with mask = MYPIDMASK (usually 644).
- * @param pidfile The name of the pidfile to create
- * @return TRUE if the file was created, otherwise FALSE.
- */
 int file_createPidFile(char *pidfile) {
-
-  FILE *F = NULL;
-
   ASSERT(pidfile);
 
-  umask(MYPIDMASK);
   unlink(pidfile);
-  if ((F = fopen(pidfile,"w")) == (FILE *)NULL) {
+  FILE *F = fopen(pidfile, "w");
+  if (! F) {
     LogError("Error opening pidfile '%s' for writing -- %s\n", pidfile, STRERROR);
     return(FALSE);
   }
@@ -212,11 +183,6 @@ int file_createPidFile(char *pidfile) {
 }
 
 
-/**
- * Check if the file is a regular file
- * @param file A path to the file to check
- * @return TRUE if file exist and is a regular file, otherwise FALSE
- */
 int file_isFile(char *file) {
 
   struct stat buf;
@@ -228,12 +194,6 @@ int file_isFile(char *file) {
 }
 
 
-/**
- * Check if this is a directory.
- * @param dir An absolute  directory path
- * @return TRUE if dir exist and is a regular directory, otherwise
- * FALSE
- */
 int file_isDirectory(char *dir) {
 
         struct stat buf;
@@ -245,11 +205,6 @@ int file_isDirectory(char *dir) {
 }
 
 
-/**
- * Check if this is a fifo
- * @param fifo A path to the fifo to check
- * @return TRUE if fifo exist, otherwise FALSE
- */
 int file_isFifo(char *fifo) {
 
   struct stat buf;
@@ -261,11 +216,6 @@ int file_isFifo(char *fifo) {
 }
 
 
-/**
- * Check if the file exist on the system
- * @file A path to the file to check
- * @return TRUE if file exist otherwise FALSE
- */
 int file_exist(char *file) {
 
   struct stat buf;
@@ -277,15 +227,6 @@ int file_exist(char *file) {
 }
 
 
-/**
- * Security check for files. The files must have the same uid as the
- * REAL uid of this process, it must have permissions no greater than
- * "maxpermission".
- * @param filename The filename of the checked file
- * @param description The description of the checked file
- * @param permmask The permission mask for the file
- * @return TRUE if the test succeeded otherwise FALSE
- */
 int file_checkStat(char *filename, char *description, int permmask) {
   struct stat buf;
   errno = 0;
@@ -345,23 +286,12 @@ int file_checkStat(char *filename, char *description, int permmask) {
 }
 
 
-/**
- * Check whether the specified directory exist or create it using
- * specified mode.
- * @param path The fully qualified path to the directory
- * @param mode The permission for the directory
- * @return TRUE if the succeeded otherwise FALSE
- */
-int file_checkQueueDirectory(char *path, mode_t mode) {
+int file_checkQueueDirectory(char *path) {
   struct stat st;
 
   if(stat(path, &st)) {
     if(errno == ENOENT) {
-      int rv;
-      mode_t mask = umask(QUEUEMASK);
-      rv = mkdir(path, mode);
-      umask(mask);
-      if(rv) {
+      if(mkdir(path, 0700)) {
         LogError("Cannot create the event queue directory %s -- %s\n", path, STRERROR);
         return FALSE;
       }
@@ -377,12 +307,6 @@ int file_checkQueueDirectory(char *path, mode_t mode) {
 }
 
 
-/**
- * Check the queue size limit.
- * @param path The fully qualified path to the directory
- * @param limit The queue limit
- * @return TRUE if the succeeded otherwise FALSE
- */
 int file_checkQueueLimit(char *path, int limit) {
   int            used = 0;
   DIR           *dir = NULL;
@@ -409,13 +333,6 @@ int file_checkQueueLimit(char *path, int limit) {
 }
 
 
-/**
- * Write data to the queue file
- * @param file Filedescriptor to write to
- * @param data Data to be written
- * @param size Size of the data to be written
- * @return TRUE if the succeeded otherwise FALSE
- */
 int file_writeQueue(FILE *file, void *data, size_t size) {
   size_t rv;
 
@@ -445,13 +362,6 @@ int file_writeQueue(FILE *file, void *data, size_t size) {
 }
 
 
-/**
- * Read the data from the queue file's actual position
- * @param file Filedescriptor to read from
- * @param size Size of the data read
- * @return The data read if any or NULL. The size parameter is set
- * appropriately.
- */
 void *file_readQueue(FILE *file, size_t *size) {
   size_t rv;
   void *data = NULL;

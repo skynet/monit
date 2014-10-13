@@ -109,7 +109,6 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen, long
                         Command_setUid(C, c->uid);
                 if (c->has_gid)
                         Command_setGid(C, c->gid);
-                Command_setUmask(C, Run.umask);
                 Command_setEnv(C, "MONIT_DATE", Time_string(Time_now(), (char[26]){}));
                 Command_setEnv(C, "MONIT_SERVICE", S->name);
                 Command_setEnv(C, "MONIT_HOST", Run.system->name);

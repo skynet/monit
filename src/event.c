@@ -718,17 +718,15 @@ static void handle_action(Event_T E, Action_T A) {
  * @param E An event object
  */
 static void Event_queue_add(Event_T E) {
-  FILE        *file = NULL;
   char         file_name[STRLEN];
   int          version = EVENT_VERSION;
   short        action = Event_get_action(E);
   int          rv = FALSE;
-  mode_t       mask;
 
   ASSERT(E);
   ASSERT(E->flag != HANDLER_SUCCEEDED);
 
-  if (!file_checkQueueDirectory(Run.eventlist_dir, 0700)) {
+  if (!file_checkQueueDirectory(Run.eventlist_dir)) {
     LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
     return;
   }
@@ -743,9 +741,7 @@ static void Event_queue_add(Event_T E) {
 
   DEBUG("Adding event to the queue file %s for later delivery\n", file_name);
 
-  mask = umask(QUEUEMASK);
-  file = fopen(file_name, "w");
-  umask(mask);
+  FILE *file = fopen(file_name, "w");
   if (! file) {
     LogError("Aborting event - cannot open the event file %s -- %s\n", file_name, STRERROR);
     return;
@@ -794,27 +790,22 @@ static void Event_queue_add(Event_T E) {
  * @param file_name File name
  */
 static void Event_queue_update(Event_T E, const char *file_name) {
-  FILE        *file = NULL;
   int          version = EVENT_VERSION;
   short        action = Event_get_action(E);
   int          rv = FALSE;
-  mode_t       mask;
 
   ASSERT(E);
   ASSERT(E->flag != HANDLER_SUCCEEDED);
 
-  if (!file_checkQueueDirectory(Run.eventlist_dir, 0700)) {
+  if (!file_checkQueueDirectory(Run.eventlist_dir)) {
     LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
     return;
   }
 
   DEBUG("Updating event in the queue file %s for later delivery\n", file_name);
 
-  mask = umask(QUEUEMASK);
-  file = fopen(file_name, "w");
-  umask(mask);
-  if (! file)
-  {
+  FILE *file = fopen(file_name, "w");
+  if (! file) {
     LogError("Aborting event - cannot open the event file %s -- %s\n", file_name, STRERROR);
     return;
   }

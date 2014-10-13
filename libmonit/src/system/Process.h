@@ -91,14 +91,6 @@ gid_t Process_getGid(T P);
 
 
 /**
- * Returns the file creation mode mask of the sub-process
- * @param P A Process object
- * @return The umask of the sub-process
- */
-mode_t Process_getUmask(T P);
-
-
-/**
  * Returns the Process timeout. 
  * @param P A Process object
  * @return The number of seconds this Process has until exit before
