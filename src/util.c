@@ -1350,7 +1350,7 @@ int Util_isProcessRunning(Service_T s, int refresh) {
         if (pid > 0) {
                 if ((getpgid(pid) > -1) || (errno == EPERM))
                         return pid;
-                DEBUG("'%s' Error testing process id [%d] -- %s\n", s->name, pid, STRERROR);
+                DEBUG("'%s' process test failed [pid=%d] -- %s\n", s->name, pid, STRERROR);
         }
         Util_resetInfo(s);
         return 0;
