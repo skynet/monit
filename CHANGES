@@ -4,7 +4,7 @@
 
 Version 5.10
 
-Fixed: Keep umask Monit was started with when executing
+Fixed: Issue #104: Keep umask Monit was started with when executing
 start/stop/restart programs, check programs and creating files.
 
 Fixed: Issue #101: Manual-mode monitored services state may not be
