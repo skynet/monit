@@ -128,6 +128,7 @@
 #include "alert.h"
 #include "process.h"
 #include "event.h"
+#include "state.h"
 
 
 struct ad_user {
@@ -1698,6 +1699,7 @@ void Util_monitorSet(Service_T s) {
         if (s->monitor == MONITOR_NOT) {
                 s->monitor = MONITOR_INIT;
                 DEBUG("'%s' monitoring enabled\n", s->name);
+                State_save();
         }
 }
 
@@ -1716,6 +1718,7 @@ void Util_monitorUnset(Service_T s) {
         if (s->eventlist)
                 gc_event(&s->eventlist);
         Util_resetInfo(s);
+        State_save();
 }
 
 

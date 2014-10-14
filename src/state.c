@@ -229,6 +229,8 @@ void State_save() {
                         if (write(file, &state, sizeof(state)) != sizeof(state))
                                 THROW(IOException, "Unable to write service state");
                 }
+                if (fsync(file))
+                        THROW(IOException, "Unable to sync -- %s", STRERROR);
         }
         ELSE
         {
