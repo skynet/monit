@@ -165,8 +165,6 @@
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
-  static struct mynetlink netlinkset;
-  static struct mybandwidth bandwidthset;
   static struct myuptime uptimeset;
   static struct mymatch matchset;
   static struct myicmp icmpset;
@@ -201,8 +199,6 @@
   static void  addtimestamp(Timestamp_T, int);
   static void  addactionrate(ActionRate_T);
   static void  addsize(Size_T);
-  static void  addnetlink(Service_T, NetLink_T);
-  static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
   static void  adduptime(Uptime_T);
   static void  addfilesystem(Filesystem_T);
   static void  addicmp(Icmp_T);
@@ -240,8 +236,6 @@
   static void  reset_timestampset();
   static void  reset_actionrateset();
   static void  reset_sizeset();
-  static void  reset_netlinkset();
-  static void  reset_bandwidthset();
   static void  reset_uptimeset();
   static void  reset_checksumset();
   static void  reset_permset();
@@ -266,21 +260,20 @@
 %union {
   URL_T url;
   float real;
-  int number;
+  int   number;
   char *string;
 }
 
 %token IF ELSE THEN OR FAILED
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
-%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD TOTAL
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
 %token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
-%token DEFAULT HTTP APACHESTATUS FTP SMTP POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
+%token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
 %token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE
 %token <string> STRING PATH MAILADDR MAILFROM MAILREPLYTO MAILSUBJECT
 %token <string> MAILBODY SERVICENAME STRINGNAME
@@ -288,17 +281,17 @@
 %token <number> REPLYLIMIT REQUESTLIMIT STARTLIMIT WAITLIMIT GRACEFULLIMIT
 %token <number> CLEANUPLIMIT
 %token <real> REAL
-%token CHECKPROC CHECKFILESYS CHECKFILE CHECKDIR CHECKHOST CHECKSYSTEM CHECKFIFO CHECKPROGRAM CHECKNET
+%token CHECKPROC CHECKFILESYS CHECKFILE CHECKDIR CHECKHOST CHECKSYSTEM CHECKFIFO CHECKPROGRAM
 %token CHILDREN SYSTEM STATUS ORIGIN VERSIONOPT
 %token RESOURCE MEMORY TOTALMEMORY LOADAVG1 LOADAVG5 LOADAVG15 SWAP
 %token MODE ACTIVE PASSIVE MANUAL CPU TOTALCPU CPUUSER CPUSYSTEM CPUWAIT
 %token GROUP REQUEST DEPENDS BASEDIR SLOT EVENTQUEUE SECRET HOSTHEADER
 %token UID EUID GID MMONIT INSTANCE USERNAME PASSWORD
-%token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY MONTH
+%token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY
 %token SSLAUTO SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
 %token INODE SPACE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
-%token EXEC UNMONITOR ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
+%token EXEC UNMONITOR PING ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
 %token URL CONTENT PID PPID FSFLAG
 %token REGISTER CREDENTIALS
 %token <url> URLOBJECT
@@ -332,14 +325,13 @@ statement       : setalert
                 | setexpectbuffer
                 | setinit
                 | setfips
-                | checkfifo optfifolist
+                | checkproc optproclist
                 | checkfile optfilelist
                 | checkfilesys optfilesyslist
                 | checkdir optdirlist
                 | checkhost opthostlist
-                | checknet optnetlist
                 | checksystem optsystemlist
-                | checkproc optproclist
+                | checkfifo optfifolist
                 | checkprogram optstatuslist
                 ;
 
@@ -447,23 +439,6 @@ opthost         : start
                 | alert
                 | every
                 | mode
-                | group
-                | depend
-                ;
-
-optnetlist      : /* EMPTY */
-                | optnetlist optnet
-                ;
-
-optnet          : start
-                | stop
-                | restart
-                | netlink
-                | upload
-                | download
-                | actionrate
-                | every
-                | alert
                 | group
                 | depend
                 ;
@@ -889,20 +864,6 @@ checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                   }
                 ;
 
-checknet        : CHECKNET SERVICENAME ADDRESS STRING {
-                    if (NetStatistics_isGetByAddressSupported()) {
-                        createservice(TYPE_NET, $<string>2, $4, check_net);
-                        current->inf->priv.net.stats = NetStatistics_getByAddress($4);
-                    } else {
-                        yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
-                    }
-                  }
-                | CHECKNET SERVICENAME INTERFACE STRING {
-                    createservice(TYPE_NET, $<string>2, $4, check_net);
-                    current->inf->priv.net.stats = NetStatistics_getByInterface($4);
-                  }
-                ;
-
 checksystem     : CHECKSYSTEM SERVICENAME {
                     char hostname[STRLEN];
                     if (Util_getfqdnhostname(hostname, sizeof(hostname))) {
@@ -925,7 +886,15 @@ checkprogram    : CHECKPROGRAM SERVICENAME PATHTOK argumentlist programtimeout {
                         check_exec(c->arg[0]);
                         createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
                         current->program->timeout = $<number>5;
-                  }
+                        current->program->output = StringBuffer_create(64);
+                 }
+                | CHECKPROGRAM SERVICENAME PATHTOK argumentlist useroptionlist programtimeout {
+                        command_t c = command; // Current command
+                        check_exec(c->arg[0]);
+                        createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
+                        current->program->timeout = $<number>5;
+                        current->program->output = StringBuffer_create(64);
+                 }
                 ;
 
 start           : START argumentlist exectimeout {
@@ -1015,14 +984,20 @@ connectionunix  : IF FAILED unixsocket type protocol nettimeout retry rate1
                   }
                 ;
 
-icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1
-                  THEN action1 recovery {
+icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action1 recovery {
                    icmpset.type = $<number>4;
                    icmpset.count = $<number>5;
                    icmpset.timeout = $<number>6;
                    addeventaction(&(icmpset).action, $<number>9, $<number>10);
                    addicmp(&icmpset);
                   }
+                | IF FAILED PING icmpcount nettimeout rate1 THEN action1 recovery {
+                        icmpset.type = ICMP_ECHO;
+                        icmpset.count = $<number>4;
+                        icmpset.timeout = $<number>5;
+                        addeventaction(&(icmpset).action, $<number>8, $<number>9);
+                        addicmp(&icmpset);
+                 }
                 ;
 
 host            : /* EMPTY */ {
@@ -1105,8 +1080,14 @@ protocol        : /* EMPTY */  {
                     portset.protocol = Protocol_get(Protocol_FTP);
                   }
                 | PROTOCOL HTTP httplist {
-                    portset.protocol = Protocol_get(Protocol_HTTP);
+                        portset.protocol = Protocol_get(Protocol_HTTP);
                   }
+                | PROTOCOL HTTPS httplist {
+                        portset.type = SOCK_STREAM;
+                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.protocol = Protocol_get(Protocol_HTTP);
+                 }
                 | PROTOCOL IMAP {
                     portset.protocol = Protocol_get(Protocol_IMAP);
                   }
@@ -1141,6 +1122,12 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL SMTP {
                     portset.protocol = Protocol_get(Protocol_SMTP);
                   }
+                | PROTOCOL SMTPS {
+                        portset.type = SOCK_STREAM;
+                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.protocol = Protocol_get(Protocol_SMTP);
+                 }
                 | PROTOCOL SSH  {
                     portset.protocol = Protocol_get(Protocol_SSH);
                   }
@@ -1341,8 +1328,8 @@ icmpcount       : /* EMPTY */ {
                    $<number>$ = ICMP_ATTEMPT_COUNT;
                   }
                 | COUNT NUMBER {
-                   $<number>$ = $2;
-                  }
+                        $<number>$ = $2;
+                 }
                 ;
 
 exectimeout     : /* EMPTY */ {
@@ -1362,10 +1349,10 @@ programtimeout  : /* EMPTY */ {
                 ;
 
 nettimeout      : /* EMPTY */ {
-                   $<number>$ = NET_TIMEOUT;
+                   $<number>$ = NET_TIMEOUT; // timeout is in milliseconds
                   }
                 | TIMEOUT NUMBER SECOND {
-                   $<number>$ = $2;
+                   $<number>$ = $2 * 1000; // net timeout is in milliseconds internally
                   }
                 ;
 
@@ -1429,7 +1416,6 @@ eventoptionlist : eventoption
                 ;
 
 eventoption     : ACTION          { mailset.events |= Event_Action; }
-                | BANDWIDTH       { mailset.events |= Event_Bandwidth; }
                 | CHECKSUM        { mailset.events |= Event_Checksum; }
                 | CONNECTION      { mailset.events |= Event_Connection; }
                 | CONTENT         { mailset.events |= Event_Content; }
@@ -1440,7 +1426,6 @@ eventoption     : ACTION          { mailset.events |= Event_Action; }
                 | ICMP            { mailset.events |= Event_Icmp; }
                 | INSTANCE        { mailset.events |= Event_Instance; }
                 | INVALID         { mailset.events |= Event_Invalid; }
-                | LINK            { mailset.events |= Event_Link; }
                 | NONEXIST        { mailset.events |= Event_Nonexist; }
                 | PERMISSION      { mailset.events |= Event_Permission; }
                 | PID             { mailset.events |= Event_Pid; }
@@ -1663,12 +1648,6 @@ time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
                 | MINUTE      { $<number>$ = TIME_MINUTE; }
                 | HOUR        { $<number>$ = TIME_HOUR; }
                 | DAY         { $<number>$ = TIME_DAY; }
-                | MONTH       { $<number>$ = TIME_MONTH; }
-                ;
-
-totaltime       : MINUTE      { $<number>$ = TIME_MINUTE; }
-                | HOUR        { $<number>$ = TIME_HOUR; }
-                | DAY         { $<number>$ = TIME_DAY; }
                 ;
 
 action          : ALERT                            { $<number>$ = ACTION_ALERT; }
@@ -1789,7 +1768,7 @@ space           : IF SPACE operator value unit rate1 THEN action1 recovery {
                       yyerror2("Cannot read usage of filesystem %s", current->path);
                     filesystemset.resource = RESOURCE_ID_SPACE;
                     filesystemset.operator = $<number>3;
-                    filesystemset.limit_absolute = (int)((float)$<real>4 / (float)current->inf->priv.filesystem.f_bsize * (float)$<number>5);
+                    filesystemset.limit_absolute = (long long)((double)$<real>4 / (double)current->inf->priv.filesystem.f_bsize * (double)$<number>5);
                     addeventaction(&(filesystemset).action, $<number>8, $<number>9);
                     addfilesystem(&filesystemset);
                   }
@@ -1868,112 +1847,6 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
                     sizeset.test_changes = TRUE;
                     addeventaction(&(sizeset).action, $<number>6, ACTION_IGNORE);
                     addsize(&sizeset);
-                  }
-                ;
-
-netlink         : IF FAILED LINK rate1 THEN action1 recovery {
-                    addeventaction(&(netlinkset).action, $<number>6, $<number>7);
-                    addnetlink(current, &netlinkset);
-                  }
-                ;
-
-upload          : IF UPLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>3;
-                    bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = TIME_SECOND;
-                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
-                    addbandwidth(&(current->uploadbyteslist), &bandwidthset);
-                  }
-                | IF TOTAL UPLOAD operator NUMBER unit totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>7;
-                    addeventaction(&(bandwidthset).action, $<number>10, $<number>11);
-                    addbandwidth(&(current->uploadbyteslist), &bandwidthset);
-                  }
-                | IF TOTAL UPLOAD operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
-                    bandwidthset.rangecount = $7;
-                    bandwidthset.range = $<number>8;
-                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
-                    addbandwidth(&(current->uploadbyteslist), &bandwidthset);
-                  }
-                | IF UPLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = (unsigned long long)$5;
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = TIME_SECOND;
-                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
-                    addbandwidth(&(current->uploadpacketslist), &bandwidthset);
-                  }
-                | IF TOTAL UPLOAD PACKET operator NUMBER unit totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>5;
-                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>8;
-                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
-                    addbandwidth(&(current->uploadpacketslist), &bandwidthset);
-                  }
-                | IF TOTAL UPLOAD PACKET operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>5;
-                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
-                    bandwidthset.rangecount = $8;
-                    bandwidthset.range = $<number>9;
-                    addeventaction(&(bandwidthset).action, $<number>12, $<number>13);
-                    addbandwidth(&(current->uploadpacketslist), &bandwidthset);
-                  }
-                ;
-
-download        : IF DOWNLOAD operator NUMBER unit SECOND rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>3;
-                    bandwidthset.limit = ((unsigned long long)$4 * $<number>5);
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = TIME_SECOND;
-                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
-                    addbandwidth(&(current->downloadbyteslist), &bandwidthset);
-                  }
-                | IF TOTAL DOWNLOAD operator NUMBER unit totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>7;
-                    addeventaction(&(bandwidthset).action, $<number>10, $<number>11);
-                    addbandwidth(&(current->downloadbyteslist), &bandwidthset);
-                  }
-                | IF TOTAL DOWNLOAD operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = ((unsigned long long)$5 * $<number>6);
-                    bandwidthset.rangecount = $7;
-                    bandwidthset.range = $<number>8;
-                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
-                    addbandwidth(&(current->downloadbyteslist), &bandwidthset);
-                  }
-                | IF DOWNLOAD PACKET operator NUMBER SECOND rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>4;
-                    bandwidthset.limit = (unsigned long long)$5;
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = TIME_SECOND;
-                    addeventaction(&(bandwidthset).action, $<number>9, $<number>10);
-                    addbandwidth(&(current->downloadpacketslist), &bandwidthset);
-                  }
-                | IF TOTAL DOWNLOAD PACKET operator NUMBER unit totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>5;
-                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
-                    bandwidthset.rangecount = 1;
-                    bandwidthset.range = $<number>8;
-                    addeventaction(&(bandwidthset).action, $<number>11, $<number>12);
-                    addbandwidth(&(current->downloadpacketslist), &bandwidthset);
-                  }
-                | IF TOTAL DOWNLOAD PACKET operator NUMBER unit NUMBER totaltime rate1 THEN action1 recovery {
-                    bandwidthset.operator = $<number>5;
-                    bandwidthset.limit = ((unsigned long long)$6 * $<number>7);
-                    bandwidthset.rangecount = $8;
-                    bandwidthset.range = $<number>9;
-                    addeventaction(&(bandwidthset).action, $<number>12, $<number>13);
-                    addbandwidth(&(current->downloadpacketslist), &bandwidthset);
                   }
                 ;
 
@@ -2213,8 +2086,6 @@ static void preparse() {
   reset_gidset();
   reset_statusset();
   reset_sizeset();
-  reset_netlinkset();
-  reset_bandwidthset();
   reset_mailset();
   reset_mailserverset();
   reset_portset();
@@ -2268,9 +2139,12 @@ static void postparse() {
                         for (int i = 1; i < s->program->args->length; i++) {
                                 Command_appendArgument(s->program->C, s->program->args->arg[i]);
                         }
-                } else if (s->type == TYPE_NET && ! s->netlinklist) {
-                        addeventaction(&(netlinkset).action, ACTION_ALERT, ACTION_ALERT);
-                        addnetlink(s, &netlinkset);
+                        if (s->program->args->has_uid) {
+                                Command_setUid(s->program->C, s->program->args->uid);
+                        }
+                        if (s->program->args->has_gid) {
+                                Command_setGid(s->program->C, s->program->args->gid);
+                        }
                 }
         }
 
@@ -2350,10 +2224,10 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
   addeventaction(&(current)->action_DATA,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_EXEC,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_INVALID,  ACTION_RESTART,   ACTION_ALERT);
+  addeventaction(&(current)->action_NONEXIST, ACTION_RESTART,   ACTION_ALERT);
   addeventaction(&(current)->action_PID,      ACTION_ALERT,     ACTION_IGNORE);
   addeventaction(&(current)->action_PPID,     ACTION_ALERT,     ACTION_IGNORE);
   addeventaction(&(current)->action_FSFLAG,   ACTION_ALERT,     ACTION_IGNORE);
-  addeventaction(&(current)->action_NONEXIST, ACTION_RESTART,   ACTION_ALERT);
 
   /* Initialize internal event handlers */
   addeventaction(&(current)->action_MONIT_START,  ACTION_START, ACTION_IGNORE);
@@ -2621,58 +2495,6 @@ static void addsize(Size_T ss) {
   current->sizelist = s;
 
   reset_sizeset();
-}
-
-
-/*
- * Add a new Link object to the current service link list
- */
-static void addnetlink(Service_T s, NetLink_T L) {
-  ASSERT(L);
-
-  NetLink_T l;
-  NEW(l);
-  l->action       = L->action;
-
-  l->next = s->netlinklist;
-  s->netlinklist = l;
-
-  reset_netlinkset();
-}
-
-
-/*
- * Return Bandwidth object
- */
-static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
-        ASSERT(list);
-        ASSERT(b);
-
-        if (b->rangecount * b->range > 24 * TIME_HOUR) {
-                yyerror2("Maximum range for total test is 24 hours");
-        } else if (b->range == TIME_MINUTE && b->rangecount > 60) {
-                yyerror2("Maximum value for [minute(s)] unit is 60");
-        } else if (b->range == TIME_HOUR && b->rangecount > 24) {
-                yyerror2("Maximum value for [hour(s)] unit is 24");
-        } else if (b->range == TIME_DAY && b->rangecount > 1) {
-                yyerror2("Maximum value for [day(s)] unit is 1");
-        } else {
-                if (b->range == TIME_DAY) {
-                        // translate last day -> last 24 hours
-                        b->rangecount = 24;
-                        b->range = TIME_HOUR;
-                }
-                Bandwidth_T bandwidth;
-                NEW(bandwidth);
-                bandwidth->operator = b->operator;
-                bandwidth->limit = b->limit;
-                bandwidth->rangecount = b->rangecount;
-                bandwidth->range = b->range;
-                bandwidth->action = b->action;
-                bandwidth->next = *list;
-                *list = bandwidth;
-        }
-        reset_bandwidthset();
 }
 
 
@@ -3619,24 +3441,6 @@ static void reset_sizeset() {
   sizeset.size = 0;
   sizeset.test_changes = FALSE;
   sizeset.action = NULL;
-}
-
-
-/*
- * Reset the Link set to default values
- */
-static void reset_netlinkset() {
-  netlinkset.action = NULL;
-}
-
-
-/*
- * Reset the Bandwidth set to default values
- */
-static void reset_bandwidthset() {
-  bandwidthset.operator = Operator_Equal;
-  bandwidthset.limit = 0ULL;
-  bandwidthset.action = NULL;
 }
 
 

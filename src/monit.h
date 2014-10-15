@@ -81,7 +81,6 @@
 #include "socket.h"
 
 // libmonit
-#include "system/NetStatistics.h"
 #include "system/Command.h"
 #include "system/Process.h"
 #include "util/Str.h"
@@ -99,14 +98,6 @@
 
 #define ARGMAX             64
 #define HTTP_CONTENT_MAX   (1024*1000)
-/* Set event queue directory mode: "drwx------" */
-#define QUEUEMASK          0077
-/* Set file mode: "drw-------" */
-#define PRIVATEMASK        0177
-/* Set log file mode: "-rw-r-----" */
-#define LOGMASK            0137
-/* Set pid file mode: "-rw-r--r--" */
-#define MYPIDMASK          0122
 #define MYPIDDIR           PIDDIR
 #define MYPIDFILE          "monit.pid"
 #define MYSTATEFILE        "monit.state"
@@ -120,8 +111,8 @@
 #define PORT_HTTP          80
 #define PORT_HTTPS         443
 
-#define SSL_TIMEOUT        15
-#define SMTP_TIMEOUT       30
+#define SSL_TIMEOUT        15000
+#define SMTP_TIMEOUT       30000
 
 #define START_DELAY        0
 #define EXEC_TIMEOUT       30
@@ -165,7 +156,6 @@ typedef enum {
 #define TIME_MINUTE        60
 #define TIME_HOUR          3600
 #define TIME_DAY           86400
-#define TIME_MONTH         2678400
 
 #define ACTION_IGNORE      0
 #define ACTION_ALERT       1
@@ -184,7 +174,6 @@ typedef enum {
 #define TYPE_SYSTEM        5
 #define TYPE_FIFO          6
 #define TYPE_PROGRAM       7
-#define TYPE_NET           8
 
 #define RESOURCE_ID_CPU_PERCENT       1
 #define RESOURCE_ID_MEM_PERCENT       2
@@ -211,8 +200,8 @@ typedef enum {
 
 #define UNIT_BYTE          1
 #define UNIT_KILOBYTE      1024
-#define UNIT_MEGABYTE      1048576
-#define UNIT_GIGABYTE      1073741824
+#define UNIT_MEGABYTE      1048580
+#define UNIT_GIGABYTE      1073740000
 
 #define HASH_UNKNOWN       0
 #define HASH_MD5           1
@@ -322,6 +311,7 @@ typedef struct myeventaction {
 } *EventAction_T;
 
 
+/** Defines an url object */
 typedef struct myurl {
         char *url;                                                  /**< Full URL */
         char *protocol;                                    /**< URL protocol type */
@@ -372,6 +362,7 @@ typedef struct mymail {
 } *Mail_T;
 
 
+/** Defines a mail server address */
 typedef struct mymailserver {
         char *host;     /**< Server host address, may be a IP or a hostname string */
         int   port;                                               /**< Server port */
@@ -441,6 +432,7 @@ typedef struct mysysteminfo {
 } SystemInfo_T;
 
 
+/** Defines a protocol object with protocol functions */
 typedef struct Protocol_T {
         const char *name;                                       /**< Protocol name */
         int(*check)(Socket_T);                 /**< Protocol verification function */
@@ -459,7 +451,7 @@ typedef struct mygenericproto {
         struct mygenericproto *next;
 } *Generic_T;
 
-
+/** Defines a port object */
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         List_T http_headers; /**< Optional list of HTTP headers to send with request */
@@ -474,7 +466,7 @@ typedef struct myport {
         int port;                                                  /**< Portnumber */
         int request_hashtype;   /**< The optional type of hash for a req. document */
         int maxforward;            /**< Optional max forward for protocol checking */
-        int timeout;   /**< The timeout in seconds to wait for connect or read i/o */
+        int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
         int is_available;                /**< TRUE if the server/port is available */
         int version;                                         /**< Protocol version */
@@ -515,10 +507,11 @@ typedef struct myport {
 } *Port_T;
 
 
+/** Defines a ICMP/Ping object */
 typedef struct myicmp {
         int type;                                              /**< ICMP type used */
         int count;                                   /**< ICMP echo requests count */
-        int timeout;              /**< The timeout in seconds to wait for response */
+        int timeout;         /**< The timeout in milliseconds to wait for response */
         int is_available;                     /**< TRUE if the server is available */
         double response;                              /**< ICMP ECHO response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
@@ -553,6 +546,7 @@ typedef struct mydependant {
 } *Dependant_T;
 
 
+/** Defines resource data */
 typedef struct myresource {
         int  resource_id;                              /**< Which value is checked */
         long limit;                                     /**< Limit of the resource */
@@ -564,6 +558,7 @@ typedef struct myresource {
 } *Resource_T;
 
 
+/** Defines timestamp object */
 typedef struct mytimestamp {
         Operator_Type operator;                           /**< Comparison operator */
         int  time;                                        /**< Timestamp watermark */
@@ -576,6 +571,7 @@ typedef struct mytimestamp {
 } *Timestamp_T;
 
 
+/** Defines action rate object */
 typedef struct myactionrate {
         int  count;                                            /**< Action counter */
         int  cycle;                                             /**< Cycle counter */
@@ -614,35 +610,16 @@ typedef struct mystatus {
 
 typedef struct myprogram {
         Process_T P;          /**< A Process_T object representing the sub-process */
-        Command_T C;          /**< A Command_T object for building the sub-process */
+        Command_T C;          /**< A Command_T object for creating the sub-process */
         command_t args;                                     /**< Program arguments */
-        int timeout;          /**< How long the program may run until it is killed */
+        int timeout;           /**< Seconds the program may run until it is killed */
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
-        char output[140];                                 /**< Last program output */
+        StringBuffer_T output;                            /**< Last program output */
 } *Program_T;
 
 
-typedef struct mynetlink {
-        EventAction_T action;  /**< Description of the action upon event occurence */
-
-        /** For internal use */
-        struct mynetlink *next;                            /**< next link in chain */
-} *NetLink_T;
-
-
-typedef struct mybandwidth {
-        Operator_Type operator;                           /**< Comparison operator */
-        unsigned long long limit;                              /**< Data watermark */
-        int rangecount;                            /**< Time range to watch: count */
-        int range;                                  /**< Time range to watch: unit */
-        EventAction_T action;  /**< Description of the action upon event occurence */
-
-        /** For internal use */
-        struct mybandwidth *next;                     /**< next bandwidth in chain */
-} *Bandwidth_T;
-
-
+/** Defines size object */
 typedef struct mysize {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long size;                               /**< Size watermark */
@@ -655,6 +632,7 @@ typedef struct mysize {
 } *Size_T;
 
 
+/** Defines uptime object */
 typedef struct myuptime {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long uptime;                           /**< Uptime watermark */
@@ -665,6 +643,7 @@ typedef struct myuptime {
 } *Uptime_T;
 
 
+/** Defines checksum object */
 typedef struct mychecksum {
         MD_T  hash;                     /**< A checksum hash computed for the path */
         int   type;                       /**< The type of hash (e.g. md5 or sha1) */
@@ -675,11 +654,13 @@ typedef struct mychecksum {
 } *Checksum_T;
 
 
+/** Defines permission object */
 typedef struct myperm {
         int       perm;                                     /**< Access permission */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Perm_T;
 
+/** Defines match object */
 typedef struct mymatch {
         int     ignore;                                          /**< Ignore match */
         int     not;                                             /**< Invert match */
@@ -696,22 +677,25 @@ typedef struct mymatch {
 } *Match_T;
 
 
+/** Defines uid object */
 typedef struct myuid {
         uid_t     uid;                                            /**< Owner's uid */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Uid_T;
 
 
+/** Defines gid object */
 typedef struct mygid {
         gid_t     gid;                                            /**< Owner's gid */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Gid_T;
 
 
+/** Defines filesystem configuration */
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
         Operator_Type operator;                           /**< Comparison operator */
-        long limit_absolute;                               /**< Watermark - blocks */
+        long long limit_absolute;                          /**< Watermark - blocks */
         int  limit_percent;                               /**< Watermark - percent */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
@@ -734,10 +718,10 @@ typedef struct myinfo {
                         long long  f_blocks;              /**< Total data blocks in filesystem */
                         long long  f_blocksfree;   /**< Free blocks available to non-superuser */
                         long long  f_blocksfreetotal;           /**< Free blocks in filesystem */
-                        long       f_files;                /**< Total file nodes in filesystem */
-                        long       f_filesfree;             /**< Free file nodes in filesystem */
+                        long long  f_files;                /**< Total file nodes in filesystem */
+                        long long  f_filesfree;             /**< Free file nodes in filesystem */
                         int        inode_percent;              /**< Used inode percentage * 10 */
-                        long       inode_total;                  /**< Used inode total objects */
+                        long long  inode_total;                  /**< Used inode total objects */
                         int        space_percent;              /**< Used space percentage * 10 */
                         long long  space_total;                   /**< Used space total blocks */
                         int        _flags;               /**< Filesystem flags from last cycle */
@@ -770,10 +754,6 @@ typedef struct myinfo {
                         int    total_cpu_percent;                         /**< percentage * 10 */
                         time_t uptime;                                     /**< Process uptime */
                 } process;
-
-                struct {
-                        NetStatistics_T stats;
-                } net;
         } priv;
 } *Info_T;
 
@@ -809,11 +789,6 @@ typedef struct myservice {
         Port_T      portlist; /**< Portnumbers to check, either local or at a host */
         Resource_T  resourcelist;                          /**< Resouce check list */
         Size_T      sizelist;                                 /**< Size check list */
-        NetLink_T   netlinklist;                            /**< Network link list */
-        Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
-        Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
-        Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
-        Bandwidth_T downloadpacketslist;          /**< Download packets check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */
         Match_T     matchlist;                             /**< Content Match list */
         Match_T     matchignorelist;                /**< Content Match ignore list */
@@ -822,8 +797,7 @@ typedef struct myservice {
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
         Status_T    statuslist;           /**< Program execution status check list */
-        Bandwidth_T upload;                                      /**< Upload check */
-        Bandwidth_T download;                                  /**< Download check */
+
 
         EventAction_T action_PID;                      /**< Action upon pid change */
         EventAction_T action_PPID;                    /**< Action upon ppid change */
@@ -915,7 +889,6 @@ struct myrun {
         volatile int  doreload;    /**< TRUE if a monit daemon should reinitialize */
         volatile int  dowakeup;  /**< TRUE if a monit daemon was wake up by signal */
         int  doaction;             /**< TRUE if some service(s) has action pending */
-        mode_t umask;                /**< The initial umask monit was started with */
         time_t incarnation;              /**< Unique ID for running monit instance */
         int  handler_init;                  /**< The handlers queue initialization */
         int  handler_flag;                            /**< The handlers state flag */
@@ -933,7 +906,7 @@ struct myrun {
         } Env;
 
         char *mail_hostname;    /**< Used in HELO/EHLO/MessageID when sending mail */
-        int mailserver_timeout;    /**< Connect and read timeout for a SMTP server */
+        int mailserver_timeout; /**< Connect and read timeout ms for a SMTP server */
         Mail_T maillist;                /**< Global alert notification mailinglist */
         MailServer_T mailservers;    /**< List of MTAs used for alert notification */
         Mmonit_T mmonits;        /**< Event notification and status receivers list */
@@ -1009,7 +982,7 @@ void  LogNotice(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogInfo(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogDebug(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  vLogError(const char *s, va_list ap);
-void vLogAbortHandler(const char *s, va_list ap);
+void  vLogAbortHandler(const char *s, va_list ap);
 void  log_close();
 #ifndef HAVE_VSYSLOG
 #ifdef HAVE_SYSLOG
@@ -1043,7 +1016,6 @@ int  check_remote_host(Service_T);
 int  check_system(Service_T);
 int  check_fifo(Service_T);
 int  check_program(Service_T);
-int  check_net(Service_T);
 int  check_URL(Service_T s);
 int  sha_md5_stream (FILE *, void *, void *);
 void reset_procinfo(Service_T);
