@@ -229,14 +229,14 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "</block>",
                                         S->inf->priv.filesystem.flags,
                                         S->inf->priv.filesystem.space_percent/10.,
-                                        S->inf->priv.filesystem.f_bsize > 0 ? (float)S->inf->priv.filesystem.space_total / (float)1048576 * (float)S->inf->priv.filesystem.f_bsize : 0,
-                                        S->inf->priv.filesystem.f_bsize > 0 ? (float)S->inf->priv.filesystem.f_blocks / (float)1048576 * (float)S->inf->priv.filesystem.f_bsize : 0);
+                                        S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.space_total / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.,
+                                        S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.f_blocks / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.);
                                 if (S->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(B,
                                                 "<inode>"
                                                 "<percent>%.1f</percent>"
-                                                "<usage>%ld</usage>"
-                                                "<total>%ld</total>"
+                                                "<usage>%lld</usage>"
+                                                "<total>%lld</total>"
                                                 "</inode>",
                                                 S->inf->priv.filesystem.inode_percent/10.,
                                                 S->inf->priv.filesystem.inode_total,
@@ -366,7 +366,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<output><![CDATA[",
                                         (unsigned long)S->program->started,
                                         S->program->exitStatus);
-                                _escapeCDATA(B, S->program->output);
+                                _escapeCDATA(B, StringBuffer_toString(S->program->output));
                                 StringBuffer_append(B,
                                         "]]></output>"
                                         "</program>");

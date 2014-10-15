@@ -303,9 +303,10 @@ int check_http(Socket_T socket) {
         // Add headers if we have them
         if (P->http_headers) {
                 for (list_t p = P->http_headers->head; p; p = p->next) {
-                        if (Str_startsWith(p->e, "Host")) // Already set contrived above
+			char *header = p->e;
+                        if (Str_startsWith(header, "Host")) // Already set contrived above
                                 continue;
-                        StringBuffer_append(sb, "%s\r\n", p->e);
+                        StringBuffer_append(sb, "%s\r\n", header);
                 }
         }
         StringBuffer_append(sb, "\r\n");

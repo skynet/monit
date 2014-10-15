@@ -77,7 +77,7 @@ void Process_free(T *P);
 /**
  * Returns the user id of the sub-process
  * @param P A Process object
- * @return The user id the sub-process
+ * @return The user id of the sub-process
  */
 uid_t Process_getUid(T P);
 
@@ -85,7 +85,7 @@ uid_t Process_getUid(T P);
 /**
  * Returns the group id of the sub-process
  * @param P A Process object
- * @return The group id the sub-process
+ * @return The group id of the sub-process
  */
 gid_t Process_getGid(T P);
 

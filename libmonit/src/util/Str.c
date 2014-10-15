@@ -136,26 +136,6 @@ char *Str_toUpper(char *s) {
 }
 
 
-char *Str_ton(long n, char s[43]) {
-        assert(s);
-        s[42] = 0;
-        char *t = s + 42;
-        unsigned long m;
-        if (n == LONG_MIN)
-                m = LONG_MAX + 1UL;
-        else if (n < 0)
-                m = -n;
-        else
-                m = n;
-        do
-                *--t = m % 10 + '0';
-        while ((m /= 10) > 0);
-        if (n < 0)
-                *--t = '-';
-        return t;
-}
-
-
 int Str_parseInt(const char *s) {
         int i;
         char *e;

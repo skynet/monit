@@ -114,17 +114,6 @@ char *Str_toUpper(char *s);
 
 
 /**
- * Converts a number to a string. The given <code>s</code> buffer
- * is returned with the string representation of <code>n</code>.
- * @param n The number (long) to convert to a string
- * @param s A buffer to write the string representation of <code>n</code>
- * into. The buffer must be of size 43 bytes or more
- * @return A pointer to <code>s</code>
- */
-char *Str_ton(long n, char s[43]);
-
-
-/**
  * Parses the string argument as a signed decimal integer.
  * @param s A string
  * @return The integer represented by the string argument

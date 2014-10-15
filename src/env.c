@@ -102,8 +102,6 @@ void init_env() {
         if (! Dir_cwd(t, PATH_MAX))
                 THROW(AssertException, "Monit: Cannot read current directory -- %s\n", STRERROR);
         Run.Env.cwd = Str_dup(t);
-        // Save and clear file creation mask
-        Run.umask = umask(0);
 }
 
 

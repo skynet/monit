@@ -1,6 +1,16 @@
-                     CHANGES version 5.9
+                     CHANGES version 5.10
 
            This file summarizes changes made since 5.0
+
+Version 5.10
+
+Fixed: Issue #104: Keep umask Monit was started with when executing
+start/stop/restart programs, check programs and creating files.
+
+Fixed: Issue #101: Manual-mode monitored services state may not be
+restored if the monitoring state was changed by user right before
+the system died.
+
 
 Version 5.9
 
@@ -41,6 +51,8 @@ the output is logged only in debug mode.
 Fixed: Linux: filesystem space usage on some network based filesystems such
 as sshfs.
 
+Fixed: large filesystems monitoring on 32-bit platforms.
+
 New: support monitoring of filesystems by generic device strings such as
 sshfs on Linux or ZFS filesystems on Solaris. Example usage:
     check filesystem mydata with path "myuser@192.168.1.10:mydata"
@@ -53,9 +65,11 @@ instance, here is how to test for an expect string that starts with
 zero followed by any number of characters: expect "^[\\]0.*". Closes
 issue #84
 
-Fixed #55: Only run cron style checks once per minute. Minute is the
-lowest resolution in the cron string, but if poll-cycle time is lower
+Fixed: Issue #55: Only run cron style checks once per minute. Minute is
+the lowest resolution in the cron string, but if poll-cycle time is lower
 than one minute the check could run several times in a minute.
+
+Fixed: Issue #78: Include open slots in Apache status check calculations.
 
 New: Send HTTP headers with a HTTP protocol test. The syntax is
  http headers [name:value, name:value,..]
@@ -76,6 +90,39 @@ used to only set the HTTP host header.
 New: Program check supports exit status change monitoring now. Syntax:
   check program foobar with path /usr/local/myscript.sh
     if changed status then alert
+
+New: Option to run 'check program' as a different user and/or
+group. To change uid or gid, Monit must run as root. Config
+example:
+
+  check program ls with path "/bin/ls -lrt /tmp" as uid "www"
+       ...
+
+New: Changed name of ICMP ECHO statement to ping which is the
+more common name used for a network ping. This deprecate the
+ICMP echo name in the config file. The ping test now is written as
+  if failed ping then alert
+or with all options
+  if failed ping count 5 with timeout 3 seconds then alert
+
+Fixed: Improved speed of send/expect protocol test
+
+Fixed: SMTP protocol test: check the response code.
+
+New: Simplified protocol test with SSL. Instead of writing:
+  if failed
+     port 443 with type TCPSSL tlsv1 protocol http
+  then alert
+You can now write the following instead
+  if failed
+     port 443 with protocol https
+  then alert
+The SSL version is auto-detected. The old version can still be
+used if SSL version needs to be specified. The same short version
+is also provided for SMTP:
+  if failed
+     port 465 with protocol smtps
+  then alert
 
 
 Version 5.8.1

@@ -128,6 +128,7 @@
 #include "alert.h"
 #include "process.h"
 #include "event.h"
+#include "state.h"
 
 
 struct ad_user {
@@ -825,7 +826,7 @@ void Util_printRunList() {
                                mta->port,
                                mta->ssl.use_ssl?"(ssl)":"",
                                mta->next?", ":" ");
-                printf("with timeout %d seconds", Run.mailserver_timeout);
+                printf("with timeout %d seconds", Run.mailserver_timeout/1000);
                 if (Run.mail_hostname)
                         printf(" using '%s' as my hostname", Run.mail_hostname);
                 printf("\n");
@@ -1026,7 +1027,7 @@ void Util_printService(Service_T s) {
 
         for (Icmp_T o = s->icmplist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "ICMP", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout)));
+                printf(" %-20s = %s\n", "Ping", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout)));
         }
 
         for (Port_T o = s->portlist; o; o = o->next) {
@@ -1131,7 +1132,7 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Inodes usage limit",
                                 o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld", operatornames[o->operator], o->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld", operatornames[o->operator], o->limit_absolute))
                                 :
                                 StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
@@ -1139,7 +1140,7 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Space usage limit",
                                 o->limit_absolute > -1
                                 ?
-                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld blocks", operatornames[o->operator], o->limit_absolute))
+                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld blocks", operatornames[o->operator], o->limit_absolute))
                                 :
                                 StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                         );
@@ -1289,9 +1290,7 @@ char *Util_monitId(char *idfile) {
                 md5_context_t ctx;
                 char buf[STRLEN];
                 MD_T digest;
-                mode_t mask = umask(PRIVATEMASK);
                 file = fopen(idfile, "w");
-                umask(mask);
                 if (! file) {
                         LogError("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
                         return NULL;
@@ -1398,7 +1397,7 @@ int Util_isProcessRunning(Service_T s, int refresh) {
         if (pid > 0) {
                 if ((getpgid(pid) > -1) || (errno == EPERM))
                         return pid;
-                DEBUG("'%s' Error testing process id [%d] -- %s\n", s->name, pid, STRERROR);
+                DEBUG("'%s' process test failed [pid=%d] -- %s\n", s->name, pid, STRERROR);
         }
         Util_resetInfo(s);
         return 0;
@@ -1655,16 +1654,16 @@ void Util_resetInfo(Service_T s) {
         s->inf->timestamp = 0;
         switch (s->type) {
                 case TYPE_FILESYSTEM:
-                        s->inf->priv.filesystem.f_bsize = 0L;
-                        s->inf->priv.filesystem.f_blocks = 0L;
-                        s->inf->priv.filesystem.f_blocksfree = 0L;
-                        s->inf->priv.filesystem.f_blocksfreetotal = 0L;
-                        s->inf->priv.filesystem.f_files = 0L;
-                        s->inf->priv.filesystem.f_filesfree = 0L;
+                        s->inf->priv.filesystem.f_bsize = 0LL;
+                        s->inf->priv.filesystem.f_blocks = 0LL;
+                        s->inf->priv.filesystem.f_blocksfree = 0LL;
+                        s->inf->priv.filesystem.f_blocksfreetotal = 0LL;
+                        s->inf->priv.filesystem.f_files = 0LL;
+                        s->inf->priv.filesystem.f_filesfree = 0LL;
                         s->inf->priv.filesystem.inode_percent = 0;
-                        s->inf->priv.filesystem.inode_total = 0L;
+                        s->inf->priv.filesystem.inode_total = 0LL;
                         s->inf->priv.filesystem.space_percent = 0;
-                        s->inf->priv.filesystem.space_total = 0L;
+                        s->inf->priv.filesystem.space_total = 0LL;
                         s->inf->priv.filesystem._flags = -1;
                         s->inf->priv.filesystem.flags = -1;
                         break;
@@ -1747,6 +1746,7 @@ void Util_monitorSet(Service_T s) {
         if (s->monitor == MONITOR_NOT) {
                 s->monitor = MONITOR_INIT;
                 DEBUG("'%s' monitoring enabled\n", s->name);
+                State_save();
         }
 }
 
@@ -1765,6 +1765,7 @@ void Util_monitorUnset(Service_T s) {
         if (s->eventlist)
                 gc_event(&s->eventlist);
         Util_resetInfo(s);
+        State_save();
 }
 
 

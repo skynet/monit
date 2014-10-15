@@ -329,6 +329,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                 " .gray-text {color:#999999;} "\
                 " .blue-text {color:#0000ff;} "\
                 " .orange-text {color:#ff8800;} "\
+                " .short {overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 350px;}"\
                 " #wrap {min-height: 100%%;} "\
                 " #main {overflow:auto; padding-bottom:50px;} "\
                 " /*Opera Fix*/body:before {content:\"\";height:100%%;float:left;width:0;margin-top:-32767px;/} "\
@@ -1101,6 +1102,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                   "<tr>"
                                   "<th align='left' class='first'>Program</th>"
                                   "<th align='left'>Status</th>"
+                                  "<th align='left'>Output</th>"
                                   "<th align='right'>Last started</th>"
                                   "<th align='right'>Exit value</th>"
                                   "</tr>");
@@ -1116,14 +1118,22 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                           "</td>");
                 if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td align='left'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
                         if (s->program->started) {
                                 char t[32];
-                                StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_string(s->program->started, t));
+                                StringBuffer_append(res->outputbuffer, "<td align='left' class='short'>");
+                                if (StringBuffer_length(s->program->output))
+                                        _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                else
+                                        StringBuffer_append(res->outputbuffer, "no output");
+                                StringBuffer_append(res->outputbuffer, "</td>");
+                                StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_fmt(t, sizeof(t), "%d %b %Y %H:%M:%S", s->program->started));
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>%d</td>", s->program->exitStatus);
                         } else {
+                                StringBuffer_append(res->outputbuffer, "<td align='right'>N/A</td>");
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>Not yet started</td>");
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>N/A</td>");
                         }
@@ -1228,7 +1238,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
                         if (s->inf->priv.filesystem.f_files > 0) {
 
                                 StringBuffer_append(res->outputbuffer,
-                                          "<td align='right'>%.1f%% [%ld objects]</td>",
+                                          "<td align='right'>%.1f%% [%lld objects]</td>",
                                           s->inf->priv.filesystem.inode_percent/10.,
                                           s->inf->priv.filesystem.inode_total);
 
@@ -1298,12 +1308,13 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
 
                 } else {
 
+                        char buf[STRLEN];
                         StringBuffer_append(res->outputbuffer,
-                                  "<td align='right'>%llu B</td>"
+                                  "<td align='right'>%s</td>"
                                   "<td align='right'>%04o</td>"
                                   "<td align='right'>%d</td>"
                                   "<td align='right'>%d</td>",
-                                  (unsigned long long)s->inf->priv.file.st_size,
+                                  Str_bytesToSize(s->inf->priv.file.st_size, buf),
                                   s->inf->st_mode & 07777,
                                   s->inf->st_uid,
                                   s->inf->st_gid);
@@ -1497,9 +1508,8 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                         for (Icmp_T icmp = s->icmplist; icmp; icmp = icmp->next) {
                                 if (icmp != s->icmplist)
                                         StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;");
-                                StringBuffer_append(res->outputbuffer, "<span class='%s'>[ICMP %s]</span>",
-                                          (icmp->is_available) ? "" : "red-text",
-                                          icmpnames[icmp->type]);
+                                StringBuffer_append(res->outputbuffer, "<span class='%s'>[Ping]</span>",
+                                          (icmp->is_available) ? "" : "red-text");
                         }
 
                         if (s->icmplist && s->portlist)
@@ -1563,7 +1573,7 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                         if (IS_EVENT_SET(r->events, Event_Gid))
                                 StringBuffer_append(res->outputbuffer, "Gid ");
                         if (IS_EVENT_SET(r->events, Event_Icmp))
-                                StringBuffer_append(res->outputbuffer, "Icmp ");
+                                StringBuffer_append(res->outputbuffer, "Ping ");
                         if (IS_EVENT_SET(r->events, Event_Instance))
                                 StringBuffer_append(res->outputbuffer, "Instance ");
                         if (IS_EVENT_SET(r->events, Event_Invalid))
@@ -1671,7 +1681,7 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
 
 static void print_service_rules_icmp(HttpResponse res, Service_T s) {
         for (Icmp_T i = s->icmplist; i; i = i->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>ICMP</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr><td>Ping</td><td>");
                 Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1736,14 +1746,14 @@ static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
                 if (dl->resource == RESOURCE_ID_INODE) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Inodes usage limit</td><td>");
                         if (dl->limit_absolute > -1)
-                                Util_printRule(res->outputbuffer, dl->action, "If %s %ld", operatornames[dl->operator], dl->limit_absolute);
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %lld", operatornames[dl->operator], dl->limit_absolute);
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 } else if (dl->resource == RESOURCE_ID_SPACE) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Space usage limit</td><td>");
                         if (dl->limit_absolute > -1)
-                                Util_printRule(res->outputbuffer, dl->action, "If %s %ld blocks", operatornames[dl->operator], dl->limit_absolute);
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %lld blocks", operatornames[dl->operator], dl->limit_absolute);
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -2035,13 +2045,13 @@ static void print_service_params_icmp(HttpResponse res, Service_T s) {
         if (s->type == TYPE_HOST && s->icmplist) {
                 if (! Util_hasServiceStatus(s)) {
                         for (Icmp_T i = s->icmplist; i; i = i->next)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td>-</td></tr>");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>-</td></tr>");
                 } else {
                         for (Icmp_T i = s->icmplist; i; i = i->next) {
                                 if (! i->is_available)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td class='red-text'>connection failed [%s]</td></tr>", icmpnames[i->type]);
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='red-text'>connection failed [%s]</td></tr>", icmpnames[i->type]);
                                 else
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>ICMP Response time</td><td>%.3fs [%s]</td></tr>", i->response, icmpnames[i->type]);
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>%.3fs [%s]</td></tr>", i->response, icmpnames[i->type]);
                         }
                 }
         }
@@ -2186,9 +2196,9 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
                         if (s->inf->priv.filesystem.f_files > 0) {
 
                                 StringBuffer_append(res->outputbuffer,
-                                          "<tr><td>Inodes total</td><td>%ld</td></tr>", s->inf->priv.filesystem.f_files);
+                                          "<tr><td>Inodes total</td><td>%lld</td></tr>", s->inf->priv.filesystem.f_files);
                                 StringBuffer_append(res->outputbuffer,
-                                          "<tr><td>Inodes free</td><td class='%s'>%ld [%.1f%%]</td></tr>",
+                                          "<tr><td>Inodes free</td><td class='%s'>%lld [%.1f%%]</td></tr>",
                                           (s->error & Event_Resource) ? "red-text" : "",
                                           s->inf->priv.filesystem.f_filesfree,
                                           (float)100 * (float)s->inf->priv.filesystem.f_filesfree / (float)s->inf->priv.filesystem.f_files);
@@ -2210,10 +2220,11 @@ static void print_service_params_size(HttpResponse res, Service_T s) {
 
                 } else {
 
+                        char buf[STRLEN];
                         StringBuffer_append(res->outputbuffer,
-                                  "<tr><td>Size</td><td class='%s'>%llu B</td></tr>",
+                                  "<tr><td>Size</td><td class='%s'>%s</td></tr>",
                                   (s->error & Event_Size) ? "red-text" : "",
-                                  (unsigned long long) s->inf->priv.file.st_size);
+                                  Str_bytesToSize(s->inf->priv.file.st_size, buf));
 
                 }
         }
@@ -2389,9 +2400,19 @@ static void print_service_params_program(HttpResponse res, Service_T s) {
                                 char t[32];
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>%s</td></tr>", Time_string(s->program->started, t));
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>%d</td></tr>", s->program->exitStatus);
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td><pre>");
-                                _escapeHTML(res->outputbuffer, s->program->output);
-                                StringBuffer_append(res->outputbuffer, "</pre></td></tr>");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td>");
+                                if (StringBuffer_length(s->program->output)) {
+                                        // If the output contains multiple line, wrap use <pre>, otherwise keep as is
+                                        int multiline = StringBuffer_lastIndexOf(s->program->output, "\n") > 0;
+                                        if (multiline)
+                                                StringBuffer_append(res->outputbuffer, "<pre>");
+                                        _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                        if (multiline)
+                                                StringBuffer_append(res->outputbuffer, "</pre>");
+                                } else {
+                                        StringBuffer_append(res->outputbuffer, "no output");
+                                }
+                                StringBuffer_append(res->outputbuffer, "</td></tr>");
                         } else {
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>Not yet started</td></tr>");
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>N/A</td></tr>");
@@ -2485,8 +2506,8 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         if (s->type == TYPE_FILE) {
                                 StringBuffer_append(res->outputbuffer,
-                                          "  %-33s %llu B\n",
-                                          "size", (unsigned long long) s->inf->priv.file.st_size);
+                                          "  %-33s %s\n",
+                                          "size", Str_bytesToSize(s->inf->priv.file.st_size, buf));
                                 if (s->checksum) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %s (%s)\n",
@@ -2560,8 +2581,8 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                           s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
                                 if (s->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(res->outputbuffer,
-                                                  "  %-33s %ld\n"
-                                                  "  %-33s %ld [%.1f%%]\n",
+                                                  "  %-33s %lld\n"
+                                                  "  %-33s %lld [%.1f%%]\n",
                                                   "inodes total",
                                                   s->inf->priv.filesystem.f_files,
                                                   "inodes free",
@@ -2610,7 +2631,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 for (Icmp_T i = s->icmplist; i; i = i->next) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %.3fs [%s]\n",
-                                                  "icmp response time", i->is_available ? i->response : 0.,
+                                                  "ping response time", i->is_available ? i->response : 0.,
                                                   icmpnames[i->type]);
                                 }
                         }
@@ -2693,25 +2714,15 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) {
                 get_monitoring_status(s, buf, buflen);
         } else if (s->error == 0) {
-                if (s->type == TYPE_PROGRAM && *s->program->output) {
-                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", s->program->output);
-                        Str_chomp(buf); // chop 2nd+ line
-                } else {
-                        snprintf(buf, buflen, "%s", statusnames[s->type]);
-                }
+                snprintf(buf, buflen, "%s", statusnames[s->type]);
         } else {
-                // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found. In the case of program we prefer the program output if any.
-                if (s->type == TYPE_PROGRAM && *s->program->output) {
-                        snprintf(buf, buflen > 64 ? 64 : buflen, "%s", s->program->output);
-                        Str_chomp(buf); // chop 2nd+ line
-                } else {
-                        while ((*et).id) {
-                                if (s->error & (*et).id) {
-                                        snprintf(buf, buflen, "%s", (s->error_hint & (*et).id) ? (*et).description_changed : (*et).description_failed);
-                                        break;
-                                }
-                                et++;
+                // In the case that the service has actualy some failure, error will be non zero. We will check the bitmap and print the description of the first error found
+                while ((*et).id) {
+                        if (s->error & (*et).id) {
+                                snprintf(buf, buflen, "%s", (s->error_hint & (*et).id) ? (*et).description_changed : (*et).description_failed);
+                                break;
                         }
+                        et++;
                 }
         }
         if (s->doaction)

@@ -93,7 +93,7 @@ struct Socket_T {
         int socket;
         char *host;
         Port_T Port;
-        int timeout;
+        int timeout; // milliseconds
         int connection_type;
         ssl_connection *ssl;
         ssl_server_connection *sslserver;
@@ -110,35 +110,27 @@ struct Socket_T {
  * Fill the internal buffer. If an error occurs or if the read
  * operation timed out -1 is returned.
  * @param S A Socket object
- * @param timeout The number of seconds to wait for data to be read
+ * @param timeout The number of milliseconds to wait for data to be read
  * @return TRUE (the length of data read) or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
         int n;
         S->offset = 0;
         S->length = 0;
-        /* Optimizing, assuming a request/response pattern and that a udp_write
-         was issued before we are called, we don't have to wait for data */
         if (S->type == SOCK_DGRAM)
-                timeout = 0;
-        /* Read as much as we can, but only block on the first read */
-        while (RBUFFER_SIZE > S->length) {
-                if (S->ssl) {
-                        n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
-                } else {
-                        n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE-S->length, timeout);
-                }
-                timeout = 0;
-                if (n > 0) {
-                        S->length += n;
-                        continue;
-                }  else if (n < 0) {
-                        if (errno == EAGAIN || errno == EWOULDBLOCK || S->type == SOCK_DGRAM) break;
-                        return -1;
-                } else
-                        break;
+                timeout = 500;
+        if (S->ssl) {
+                n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
+        } else {
+                n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE-S->length, timeout);
         }
-        return S->length;
+        if (n > 0) {
+                S->length += n;
+        }  else if (n < 0) {
+                return -1;
+        } else if (! (errno == EAGAIN || errno == EWOULDBLOCK)) // Peer closed connection
+                return -1;
+        return n;
 }
 
 
@@ -200,6 +192,7 @@ Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int ti
                 ASSERT(type == SOCKET_TCP);
         }
         ASSERT(timeout>0);
+        timeout = timeout * 1000; // Internally milliseconds is used
         if ((s = create_socket(host, port, proto, timeout)) != -1) {
                 Socket_T S = NULL;
                 NEW(S);
@@ -227,7 +220,7 @@ Socket_T socket_create_a(int socket, const char *remote_host, int port, void *ss
         S->port = port;
         S->socket = socket;
         S->type = SOCK_STREAM;
-        S->timeout = NET_TIMEOUT;
+        S->timeout = NET_TIMEOUT; // milliseconds
         S->host = Str_dup(remote_host);
         S->connection_type = TYPE_ACCEPT;
         if (sslserver) {
@@ -414,8 +407,6 @@ int socket_write(Socket_T S, void *b, size_t size) {
         ssize_t n = 0;
         void *p = b;
         ASSERT(S);
-        /* Clear any extra data read from the server */
-        socket_reset(S);
         while (size > 0) {
                 if (S->ssl) {
                         n = send_ssl_socket(S->ssl, p, size, S->timeout);

@@ -611,7 +611,7 @@ static Socket_T socket_producer(int server, int port, void *sslserver) {
   struct sockaddr_in in;
   socklen_t len = sizeof(struct sockaddr_in);
 
-  if(can_read(server, 1)) {
+  if(can_read(server, 1000)) {
 
     if( (client = accept(server, (struct sockaddr*)&in, &len)) < 0) {
 

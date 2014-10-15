@@ -142,7 +142,7 @@ char *operatorshortnames[] = {">", "<", "=", "!=", "<>"};
 char *statusnames[] = {"Accessible", "Accessible", "Accessible", "Running", "Online with all services", "Running", "Accessible", "Status ok", "UP"};
 char *servicetypes[] = {"Filesystem", "Directory", "File", "Process", "Remote Host", "System", "Fifo", "Program", "Network"};
 char *pathnames[] = {"Path", "Path", "Path", "Pid file", "Path", "", "Path"};
-char *icmpnames[] = {"Echo Reply", "", "", "Destination Unreachable", "Source Quench", "Redirect", "", "", "Echo Request", "", "", "Time Exceeded", "Parameter Problem", "Timestamp Request", "Timestamp Reply", "Information Request", "Information Reply", "Address Mask Request", "Address Mask Reply"};
+char *icmpnames[] = {"Reply", "", "", "Destination Unreachable", "Source Quench", "Redirect", "", "", "Ping", "", "", "Time Exceeded", "Parameter Problem", "Timestamp Request", "Timestamp Reply", "Information Request", "Information Reply", "Address Mask Request", "Address Mask Reply"};
 char *sslnames[] = {"auto", "v2", "v3", "tlsv1", "tlsv1.1", "tlsv1.2", "none"};
 
 

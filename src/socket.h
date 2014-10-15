@@ -52,7 +52,7 @@ typedef struct Socket_T *Socket_T;
  * @param port The port number to connect to
  * @param type The socket type to use (SOCKET_TCP or SOCKET_UPD)
  * @param use_ssl if TRUE the socket is created supporting SSL
- * @param timeout The timeout value in seconds
+ * @param timeout The timeout value in milliseconds
  * @return The connected Socket or NULL if an error occurred
  */
 Socket_T socket_new(const char *host, int port, int type, int use_ssl, int timeout);
@@ -74,7 +74,7 @@ Socket_T socket_create(void *port);
  * @param port The port number to connect to
  * @param type The socket type to use (SOCKET_TCP or SOCKET_UPD)
  * @param ssl Options for SSL
- * @param timeout The timeout value in seconds
+ * @param timeout The timeout value in milliseconds
  * @return The connected Socket or NULL if an error occurred
  */
 Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int timeout);

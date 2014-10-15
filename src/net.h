@@ -38,10 +38,10 @@
 
 
 /**
- * Standard seconds to wait for a socket connection or for socket read
+ * Standard milliseconds to wait for a socket connection or for socket read
  * i/o before aborting
  */
-#define NET_TIMEOUT 5
+#define NET_TIMEOUT 5000
 
 
 /**
@@ -77,7 +77,7 @@ int check_udp_socket(int socket);
  * @param hostname The host to open a socket at
  * @param port The port number to connect to
  * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
- * @param timeout If not connected within timeout seconds abort and return -1
+ * @param timeout If not connected within timeout milliseconds abort and return -1
  * @return The socket or -1 if an error occured.
  */
 int create_socket(const char *hostname, int port, int type, int timeout);
@@ -87,7 +87,7 @@ int create_socket(const char *hostname, int port, int type, int timeout);
  * Create a non-blocking UNIX socket.
  * @param pathname The pathname to use for the unix socket
  * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
- * @param timeout If not connected within timeout seconds abort and return -1
+ * @param timeout If not connected within timeout milliseconds abort and return -1
  * @return The socket or -1 if an error occured.
  */
 int create_unix_socket(const char *pathname, int type, int timeout);
@@ -109,10 +109,10 @@ int create_server_socket(int port, int backlog, const char *bindAddr);
 
 
 /**
- * Check if data is available, if not, wait timeout seconds for data
+ * Check if data is available, if not, wait timeout milliseconds for data
  * to be present.
  * @param socket A socket
- * @param timeout How long to wait before timeout (value in seconds)
+ * @param timeout How long to wait before timeout (value in milliseconds)
  * @return Return TRUE if the event occured, otherwise FALSE.
  */
 int can_read(int socket, int timeout);
@@ -120,9 +120,9 @@ int can_read(int socket, int timeout);
 
 /**
  * Check if data can be sent to the socket, if not, wait timeout
- * seconds for the socket to be ready.
+ * milliseconds for the socket to be ready.
  * @param socket A socket
- * @param timeout How long to wait before timeout (value in seconds)
+ * @param timeout How long to wait before timeout (value in milliseconds)
  * @return Return TRUE if the event occured, otherwise FALSE.
  */
 int can_write(int socket, int timeout);
@@ -134,7 +134,7 @@ int can_write(int socket, int timeout);
  * @param socket the socket to write to
  * @param buffer The buffer to write
  * @param size Number of bytes to send
- * @param timeout Seconds to wait for data to be written
+ * @param timeout Milliseconds to wait for data to be written
  * @return The number of bytes sent or -1 if an error occured.
  */
 ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout);
@@ -143,11 +143,11 @@ ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout);
 /**
  * Read up to size bytes from the <code>socket</code> into the
  * <code>buffer</code>. If data is not available wait for
- * <code>timeout</code> seconds.
+ * <code>timeout</code> milliseconds.
  * @param socket the Socket to read data from
  * @param buffer The buffer to write the data to
  * @param size Number of bytes to read from the socket
- * @param timeout Seconds to wait for data to be available
+ * @param timeout Milliseconds to wait for data to be available
  * @return The number of bytes read or -1 if an error occured.
 */
 ssize_t sock_read(int socket, void *buffer, int size, int timeout);
@@ -160,7 +160,7 @@ ssize_t sock_read(int socket, void *buffer, int size, int timeout);
  * @param socket the socket to write to
  * @param buffer The buffer to write
  * @param size Number of bytes to send
- * @param timeout Seconds to wait for data to be written
+ * @param timeout Milliseconds to wait for data to be written
  * @return The number of bytes sent or -1 if an error occured.
  */
 int udp_write(int socket, void *b, size_t len, int timeout);
@@ -170,7 +170,7 @@ int udp_write(int socket, void *b, size_t len, int timeout);
  * Create a ICMP socket against hostname, send echo and wait for response.
  * The 'count' echo requests  is send and we expect at least one reply.
  * @param hostname The host to open a socket at
- * @param timeout If response will not come within timeout seconds abort
+ * @param timeout If response will not come within timeout milliseconds abort
  * @param count How many pings to send
  * @return response time on succes, -1 on error
  */

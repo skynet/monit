@@ -91,11 +91,11 @@ int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
     return FALSE;
   }
   inf->priv.filesystem.f_bsize =           usage.f_bsize;
-  inf->priv.filesystem.f_blocks =          (long)usage.f_blocks;
-  inf->priv.filesystem.f_blocksfree =      (long)usage.f_bavail;
-  inf->priv.filesystem.f_blocksfreetotal = (long)usage.f_bfree;
-  inf->priv.filesystem.f_files =           (long)usage.f_files;
-  inf->priv.filesystem.f_filesfree =       (long)usage.f_ffree;
+  inf->priv.filesystem.f_blocks =          usage.f_blocks;
+  inf->priv.filesystem.f_blocksfree =      usage.f_bavail;
+  inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree;
+  inf->priv.filesystem.f_files =           usage.f_files;
+  inf->priv.filesystem.f_filesfree =       usage.f_ffree;
   inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
   inf->priv.filesystem.flags =             usage.f_flags;
   return TRUE;

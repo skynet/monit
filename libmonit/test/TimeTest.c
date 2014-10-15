@@ -29,13 +29,19 @@ int main(void) {
 
         printf("=> Test1: check string ouput\n");
         {
-                char result[30];
+                char result[STRLEN];
                 Time_string(1267441200, result); /* 01 Mar 2010 12:00:00 */
                 printf("\tResult: unix time 1267441200 to localtime:\n\t %s\n", result);
                 assert(Str_isEqual(result, "Mon, 01 Mar 2010 12:00:00"));
                 Time_gmtstring(1267441200, result); /* 01 Mar 2010 12:00:00 GMT */
                 printf("\tResult: unix time 1267441200 to UTC:\n\t %s\n", result);
                 assert(Str_isEqual("Mon, 01 Mar 2010 11:00:00 GMT", result));
+                Time_fmt(result, STRLEN, "%D %T", 1267441200);
+                printf("\tResult: 1267441200 -> %s\n", result);
+                assert(Str_isEqual(result, "03/01/10 12:00:00"));
+                Time_fmt(result, STRLEN, "%D %z", 1267441200);
+                printf("\tResult: 1267441200 -> %s\n", result);
+                assert(Str_startsWith(result, "03/01/10 +"));
         }
         printf("=> Test1: OK\n\n");
 

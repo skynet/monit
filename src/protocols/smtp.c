@@ -31,9 +31,38 @@
 #include "protocol.h"
 
 
-/* Private prototypes */
-static int say(Socket_T s, char *msg);
-static int expect(Socket_T s, int expect, int log);
+/* --------------------------------------------------------------- Private */
+
+
+static int say(Socket_T socket, char *msg) {
+        if (socket_write(socket, msg, strlen(msg)) < 0) {
+                socket_setError(socket, "SMTP: error sending data -- %s", STRERROR);
+                return FALSE;
+        }
+        return TRUE;
+}
+
+
+static int expect(Socket_T socket, int expect, int log) {
+        int status;
+        char buf[STRLEN];
+        do {
+                if (! socket_readln(socket, buf, STRLEN)) {
+                        socket_setError(socket, "SMTP: error receiving data -- %s", STRERROR);
+                        return FALSE;
+                }
+                Str_chomp(buf);
+        } while (buf[3] == '-'); // Discard multi-line response
+        if (sscanf(buf, "%d", &status) != 1 || status != expect) {
+                if(log)
+                        socket_setError(socket, "SMTP error: %s", buf);
+                return FALSE;
+        }
+        return TRUE;
+}
+
+
+/* --------------------------------------------------------------- Public */
 
 
 /**
@@ -54,36 +83,3 @@ int check_smtp(Socket_T socket) {
 
         return FALSE;
 }
-
-
-/* --------------------------------------------------------------- Private */
-
-
-static int say(Socket_T socket, char *msg) {
-        if (socket_write(socket, msg, strlen(msg)) < 0) {
-                socket_setError(socket, "SMTP: error sending data -- %s", STRERROR);
-                return FALSE;
-        }
-        return TRUE;
-}
-
-
-static int expect(Socket_T socket, int expect, int log) {
-        int status;
-        char buf[STRLEN];
-
-        do {
-                if (! socket_readln(socket, buf, STRLEN)) {
-                        socket_setError(socket, "SMTP: error receiving data -- %s", STRERROR);
-                        return FALSE;
-                }
-                Str_chomp(buf);
-        } while (buf[3] == '-'); // Discard multi-line response
-        if (sscanf(buf, "%d", &status) != 1) {
-                if(log)
-                        socket_setError(socket, "SMTP error: %s", buf);
-                return FALSE;
-        }
-        return TRUE;
-}
-

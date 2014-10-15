@@ -351,7 +351,8 @@ to process name (command line) from process table instead of pidfile.
 The first match is used so this form of check is useful for unique
 pattern matching - the pidfile should be used where possible as it
 defines expected pid exactly (pattern matching won't be useful for
-Apache in most cases for example).
+Apache in most cases or for processes which start child processes using
+fork/clone as the child will match the same pattern temporarily).
 The pattern can be obtained using I<monit procmatch ".*"> CLI command
 which lists all processes visible to Monit or using the I<ps> utility.
 The "procmatch" CLI command can be used to test your pattern as well.
@@ -422,7 +423,8 @@ also as initial name of the host entry in M/Monit.
 <path> is the absolute path to the executable program or script.
 The I<status> test allows one to check the program's exit status. If
 program will not finish within <number> seconds, Monit will terminate
-it. The default program timeout is 600 seconds (5 minutes).
+it. The default program timeout is 600 seconds (5 minutes). The output
+of the program is recorded (up to 1kB).
 
 =back
 
@@ -826,13 +828,17 @@ Monit will raise an event in the following situations:
  o A service action was performed by administrator
  o Monit was started, stopped or reloaded
 
-To get an alert via e-mail, set the alert target using I<set alert>
-statement.
+To get an alert via e-mail, set the alert target using global I<set alert>
+statement (for all services) or using I<alert> statement in the context
+of the service entry (for single service).
 
 
 =head2 Setting an alert recipient
 
-If an event occurred, Monit will send an alert to all recipients. Syntax:
+If an event occurred, Monit will send an alert. There are two kinds of alert
+statement: global and local.
+
+Global syntax:
 
 =over 4
 
@@ -849,6 +855,25 @@ any service.
 
 If you want to send alert messages to more email addresses, add a
 I<set alert 'email'> statement for each address.
+
+It is also possible to use the local alert statement in the context of some service
+to enable alert for the given service only:
+
+=over 4
+
+=item ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
+
+=back
+
+Example:
+
+ check host myhost with address 1.2.3.4
+     if failed port 25 protocol http then alert
+     if failed port 80 protocol http then alert
+     alert foo@bar
+
+You can combine global and local alert statements. In the case of conflict, the local
+alert has precedence and overrides the global statement.
 
 
 =head3 Setting an event filter
@@ -878,7 +903,7 @@ the event filter:
  EXEC       | "Execution failed"        | "Execution succeeded"       
  FSFLAGS    | "Filesystem flags failed" | "Filesystem flags succeeded"
  GID        | "GID failed"              | "GID succeeded"             
- ICMP       | "ICMP failed"             | "ICMP succeeded"            
+ ICMP       | "Ping failed"             | "Ping succeeded"
  INSTANCE   | "Monit instance changed"  | "Monit instance changed not"
  INVALID    | "Invalid type"            | "Type succeeded"            
  NONEXIST   | "Does not exist"          | "Exists"                    
@@ -1610,6 +1635,8 @@ Example which sets multiple error levels and actions:
   if space usage > 80% for 5 times within 15 cycles then alert
   if space usage > 90% for 5 cycles then exec '/try/to/free/the/space'
 
+Note: the maximum number of cycles option value is 64.
+
 
 =head2 EXISTENCE TESTING
 
@@ -2210,16 +2237,24 @@ Arguments to the program or script is a sequence of whitespace
 separated strings. In the above example the strings '-lrt' and 
 '/tmp/' are arguments to the program '/bin/ls'. If arguments are
 used, it is recommended to use quotes B<"> to enclose the string,
-otherwise quotes are not needed.
+otherwise, if no arguments are used, quotes are not needed.
 
 Notes: If the program is a script, the interpreter is required
-in first line. The program or script must also be executable.
+in the first line. The program or script must also be executable.
+
+If Monit is run as the super user, you can optionally run the
+program as a different user and/or group. In this example we
+run the I<ls> program as user www and as group staff:
+
+ check program ls with path "/bin/ls /tmp" as uid "www"
+          and gid "staff"
+       if status != 0 then alert
 
 Monit will execute the program periodically and if the exit
 status of the program does not match the expected result, Monit
 can perform an action. In the example above, Monit will raise an
-alert if the exit value of I<myscript> is different from 0. By
-convention, 0 means the program exited normally.
+alert if the exit value is different from 0. By convention, 0
+means the program exited normally.
 
 Program checks are asynchronous. Meaning that Monit will not wait
 for the program to exit, but instead, Monit will start the
@@ -2253,37 +2288,51 @@ Multiple status tests can be used, for example:
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
 
 
-=head2 PING TESTING
+=head2 NETWORK PING TEST
 
-Monit can perform ICMP Echo (PING) test in the context of host
-service type. Monit must usually run as root user in order to be
-able to perform the PING test (requires raw socket privileges which
-is usually allowed only to super user).
+Monit can perform a network ping test by sending ICMP echo request
+datagram packets to a host and wait for the reply. This test can
+only be used within a check host statement. Monit must also run as
+the root user in order to be able to perform the ping test (because
+a ping test must use raw sockets which usually only the super user
+is allowed to do).
 
 Syntax:
 
-  IF FAILED ICMP TYPE ECHO
+  IF FAILED PING
      [COUNT number] [WITH] [TIMEOUT number SECONDS] 
-     THEN action
+  THEN action
 
-The B<COUNT> parameter specifies how many consecutive echo requests
-will be send to the host in one cycle. In the case that no reply
-came within B<TIMEOUT> frame, Monit reports error. When at least
-one reply was received, the test will pass. Monit sends by default
-I<three> echo requests in one cycle to prevent false alarm (i.e. up
-to 66% packet loss is tolerated). You can set the B<COUNT> option to
-a value between 1 and 20. If you require 100% ping success, set the
-count to 1 (i.e. just one request will be sent, and if the packet was
-lost an error will be reported). 
+The B<COUNT> parameter specifies how many consecutive ping requests
+will be sent to the host in one cycle. If no reply arrive within
+B<TIMEOUT> seconds, Monit reports an error. If at least one reply
+was received, the ping test is considered a success. Monit will,
+by default, send I<three> ping request packets in one cycle to
+prevent false alarm (i.e. up to 66% packet loss is tolerated). You
+can set the B<COUNT> option to a value between 1 and 20 to send more
+or less packets. If you require 100% ping success, set the count to
+1 (i.e. just one request will be sent, and if the packet was lost
+an error will be reported).
+
+Note that many ISPs have started to filter out ping or ICMP packets
+now, in which case there will be no reply from the host.
 
 If a ping test is used in a check host entry, this test is run first
-and if the ping test should fail we assume that the connection to the
+and if the ping test should fail, we assume that the connection to the
 host is down and Monit does I<not> continue to test any ports.
 
 Example:
 
- check host xyz with address xyz.org
-       if failed icmp type echo count 5 with timeout 15 seconds then alert
+ check host mmonit.com with address mmonit.com
+       if failed ping then alert
+
+or with all parameters; Send 5 pings to mmonit.com and wait for up
+to 10 seconds for a reply
+
+  check host mmonit.com with address mmonit.com
+        if failed
+           ping count 5 with timeout 10 seconds
+        then alert
 
 
 =head2 CONNECTION TESTING
@@ -2531,12 +2580,12 @@ Example:
     checksum 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
-I<HTTP HEADERS> can be used to send a list of HTTP headers
+I<HTTP HEADERS> can be used to send a list of any HTTP headers
 with a http protocol test. For instance, the host header. If the
 host header is not set, Monit will use the hostname or IP-address
-of the host as specified in the statement. Specifying a host header
-is useful if you want to connect and test a name-based virtual host.
-The syntax is
+of the host as specified in the check host statement. Specifying 
+a host header is useful if you want to connect to and test a 
+name-based virtual host. The syntax for setting HTTP headers is
 
   http headers [name:value, name:value,..]
 
@@ -2800,9 +2849,7 @@ Here we use an icmp ping test to check if a remote host is up and
 if not send an alert:
 
  check host www.tildeslash.com with address www.tildeslash.com
-       if failed 
-          icmp type echo count 5 with timeout 15 seconds
-       then alert
+       if failed ping then alert
 
 In the following example we ask Monit to compute and verify the
 checksum for the underlying apache binary used by the start and

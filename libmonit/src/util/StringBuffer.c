@@ -207,7 +207,7 @@ int StringBuffer_indexOf(T S, const char *s) {
         assert(S);
         if (STR_DEF(s)) {
                 int i, j;
-                for (i = 0; i <= S->used; i++) {
+                for (i = 0; i < S->used; i++) {
                         if (S->buffer[i] == *s) {
                                 j = 0;
                                 do
@@ -225,7 +225,7 @@ int StringBuffer_lastIndexOf(T S, const char *s) {
         assert(S);
         if (STR_DEF(s)) {
                 int i, j;
-                for (i = S->used; i >= 0; i--) {
+                for (i = S->used - 1; i >= 0; i--) {
                         if (S->buffer[i] == *s) {
                                 j = 0;
                                 do
