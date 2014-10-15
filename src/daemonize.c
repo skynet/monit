@@ -84,11 +84,6 @@ void  daemonize() {
   pid_t pid;
 
   /*
-   * Clear file creation mask
-   */
-  umask(0);
-
-  /*
    * Become a session leader to lose our controlling terminal
    */
   if((pid = fork ()) < 0) {

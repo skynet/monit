@@ -1,6 +1,16 @@
-                     CHANGES version 5.9
+                     CHANGES version 5.10
 
            This file summarizes changes made since 5.0
+
+Version 5.10
+
+Fixed: Issue #104: Keep umask Monit was started with when executing
+start/stop/restart programs, check programs and creating files.
+
+Fixed: Issue #101: Manual-mode monitored services state may not be
+restored if the monitoring state was changed by user right before
+the system died.
+
 
 Version 5.9
 

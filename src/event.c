@@ -104,7 +104,7 @@ EventTable_T Event_Table[] = {
 /* -------------------------------------------------------------- Prototypes */
 
 
-static void handle_event(Event_T);
+static void handle_event(Service_T, Event_T);
 static void handle_action(Event_T, Action_T);
 static void Event_queue_add(Event_T);
 static void Event_queue_update(Event_T, const char *);
@@ -122,17 +122,24 @@ static void Event_queue_update(Event_T, const char *);
  * @param s Optional message describing the event
  */
 void Event_post(Service_T service, long id, short state, EventAction_T action, char *s, ...) {
-  Event_T e;
-
   ASSERT(service);
   ASSERT(action);
+  ASSERT(s);
   ASSERT(state == STATE_FAILED || state == STATE_SUCCEEDED || state == STATE_CHANGED || state == STATE_CHANGEDNOT);
 
-  if ((e = service->eventlist) == NULL) {
-    /* Only first failed/changed event can initialize the queue for given event type,
-     * thus succeeded events are ignored until first error. */
-    if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT)
+  va_list ap;
+  va_start(ap, s);
+  char *message = Str_vcat(s, ap);
+  va_end(ap);
+
+  Event_T e = service->eventlist;
+  if (! e) {
+    /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
+    if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
+      DEBUG("'%s' %s\n", service->name, message);
+      free(message);
       return;
+    }
 
     /* Initialize event list and add first event. The manadatory informations
      * are cloned so the event is as standalone as possible and may be saved
@@ -147,44 +154,33 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
     e->state = STATE_INIT;
     e->state_map = 1;
     e->action = action;
-    if (s) {
-      va_list ap;
-      va_start(ap, s);
-      e->message = Str_vcat(s, ap);
-      va_end(ap);
-    }
+    e->message = message;
     service->eventlist = e;
   } else {
-    /* Try to find the event with the same origin and type identification.
-     * Each service and each test have its own custom actions object, so
-     * we share actions object address to identify event source. */
+    /* Try to find the event with the same origin and type identification. Each service and each test have its own custom actions object, so we share actions object address to identify event source. */
     do {
       if (e->action == action && e->id == id) {
         gettimeofday(&e->collected, NULL);
 
-        /* Shift the existing event flags to the left
-         * and set the first bit based on actual state */
+        /* Shift the existing event flags to the left and set the first bit based on actual state */
         e->state_map <<= 1;
         e->state_map |= ((state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) ? 0 : 1);
 
         /* Update the message */
-        if (s) {
-          va_list ap;
-          FREE(e->message);
-          va_start(ap, s);
-          e->message = Str_vcat(s, ap);
-          va_end(ap);
-        }
+        FREE(e->message);
+        e->message = message;
         break;
       }
       e = e->next;
     } while (e);
 
     if (!e) {
-      /* Only first failed/changed event can initialize the queue for given event type,
-       * thus succeeded events are ignored until first error. */
-      if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT)
+      /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
+      if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
+        DEBUG("'%s' %s\n", service->name, message);
+        free(message);
         return;
+      }
 
       /* Event was not found in the pending events list, we will add it.
        * The manadatory informations are cloned so the event is as standalone
@@ -200,12 +196,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
       e->state = STATE_INIT;
       e->state_map = 1;
       e->action = action;
-      if (s) {
-        va_list ap;
-        va_start(ap, s);
-        e->message = Str_vcat(s, ap);
-        va_end(ap);
-      }
+      e->message = message;
       e->next = service->eventlist;
       service->eventlist = e;
     }
@@ -220,7 +211,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
   } else
     e->count++;
 
-  handle_event(e);
+  handle_event(service, e);
 }
 
 
@@ -608,9 +599,7 @@ error1:
  * Handle the event
  * @param E An event
  */
-static void handle_event(Event_T E) {
-  Service_T S;
-
+static void handle_event(Service_T S, Event_T E) {
   ASSERT(E);
   ASSERT(E->action);
   ASSERT(E->action->failed);
@@ -619,12 +608,8 @@ static void handle_event(Event_T E) {
   /* We will handle only first succeeded event, recurrent succeeded events
    * or insufficient succeeded events during failed service state are
    * ignored. Failed events are handled each time. */
-  if (!E->state_changed && (E->state == STATE_SUCCEEDED || E->state == STATE_CHANGEDNOT || ((E->state_map & 0x1) ^ 0x1)))
-    return;
-
-  S = Event_get_source(E);
-  if (!S) {
-    LogError("Event handling aborted\n");
+  if (!E->state_changed && (E->state == STATE_SUCCEEDED || E->state == STATE_CHANGEDNOT || ((E->state_map & 0x1) ^ 0x1))) {
+    DEBUG("'%s' %s\n", S->name, E->message);
     return;
   }
 
@@ -718,17 +703,15 @@ static void handle_action(Event_T E, Action_T A) {
  * @param E An event object
  */
 static void Event_queue_add(Event_T E) {
-  FILE        *file = NULL;
   char         file_name[STRLEN];
   int          version = EVENT_VERSION;
   short        action = Event_get_action(E);
   int          rv = FALSE;
-  mode_t       mask;
 
   ASSERT(E);
   ASSERT(E->flag != HANDLER_SUCCEEDED);
 
-  if (!file_checkQueueDirectory(Run.eventlist_dir, 0700)) {
+  if (!file_checkQueueDirectory(Run.eventlist_dir)) {
     LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
     return;
   }
@@ -743,9 +726,7 @@ static void Event_queue_add(Event_T E) {
 
   DEBUG("Adding event to the queue file %s for later delivery\n", file_name);
 
-  mask = umask(QUEUEMASK);
-  file = fopen(file_name, "w");
-  umask(mask);
+  FILE *file = fopen(file_name, "w");
   if (! file) {
     LogError("Aborting event - cannot open the event file %s -- %s\n", file_name, STRERROR);
     return;
@@ -794,27 +775,22 @@ static void Event_queue_add(Event_T E) {
  * @param file_name File name
  */
 static void Event_queue_update(Event_T E, const char *file_name) {
-  FILE        *file = NULL;
   int          version = EVENT_VERSION;
   short        action = Event_get_action(E);
   int          rv = FALSE;
-  mode_t       mask;
 
   ASSERT(E);
   ASSERT(E->flag != HANDLER_SUCCEEDED);
 
-  if (!file_checkQueueDirectory(Run.eventlist_dir, 0700)) {
+  if (!file_checkQueueDirectory(Run.eventlist_dir)) {
     LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
     return;
   }
 
   DEBUG("Updating event in the queue file %s for later delivery\n", file_name);
 
-  mask = umask(QUEUEMASK);
-  file = fopen(file_name, "w");
-  umask(mask);
-  if (! file)
-  {
+  FILE *file = fopen(file_name, "w");
+  if (! file) {
     LogError("Aborting event - cannot open the event file %s -- %s\n", file_name, STRERROR);
     return;
   }

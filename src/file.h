@@ -68,7 +68,7 @@ char *file_findControlFile();
 
 /**
  * Create a program's pidfile - Such a file is created when in daemon
- * mode. The file is created with mask = MYPIDMASK (usually 644).
+ * mode.
  * @param pidfile The name of the pidfile to create
  * @return TRUE if the file was created, otherwise FALSE.
  */
@@ -125,10 +125,9 @@ int file_checkStat(char *filename, char *description, int permmask);
  * Check whether the specified directory exist or create it using
  * specified mode.
  * @param path The fully qualified path to the directory
- * @param mode The permission for the directory
  * @return TRUE if the succeeded otherwise FALSE
  */
-int file_checkQueueDirectory(char *path, mode_t mode);
+int file_checkQueueDirectory(char *path);
 
 
 /**

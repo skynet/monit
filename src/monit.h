@@ -98,14 +98,6 @@
 
 #define ARGMAX             64
 #define HTTP_CONTENT_MAX   (1024*1000)
-/* Set event queue directory mode: "drwx------" */
-#define QUEUEMASK          0077
-/* Set file mode: "drw-------" */
-#define PRIVATEMASK        0177
-/* Set log file mode: "-rw-r-----" */
-#define LOGMASK            0137
-/* Set pid file mode: "-rw-r--r--" */
-#define MYPIDMASK          0122
 #define MYPIDDIR           PIDDIR
 #define MYPIDFILE          "monit.pid"
 #define MYSTATEFILE        "monit.state"
@@ -897,7 +889,6 @@ struct myrun {
         volatile int  doreload;    /**< TRUE if a monit daemon should reinitialize */
         volatile int  dowakeup;  /**< TRUE if a monit daemon was wake up by signal */
         int  doaction;             /**< TRUE if some service(s) has action pending */
-        mode_t umask;                /**< The initial umask monit was started with */
         time_t incarnation;              /**< Unique ID for running monit instance */
         int  handler_init;                  /**< The handlers queue initialization */
         int  handler_flag;                            /**< The handlers state flag */
@@ -991,7 +982,7 @@ void  LogNotice(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogInfo(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogDebug(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  vLogError(const char *s, va_list ap);
-void vLogAbortHandler(const char *s, va_list ap);
+void  vLogAbortHandler(const char *s, va_list ap);
 void  log_close();
 #ifndef HAVE_VSYSLOG
 #ifdef HAVE_SYSLOG

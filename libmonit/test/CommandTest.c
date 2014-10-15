@@ -104,7 +104,7 @@ int main(void) {
         }
         printf("=> Test1: OK\n\n");
 
-        printf("=> Test2: set and get uid/gid\n");
+        printf("=> Test2: set and get uid/gid/umask\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "ps -aef|grep monit", NULL);
                 assert(c);

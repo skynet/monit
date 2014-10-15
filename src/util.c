@@ -128,6 +128,7 @@
 #include "alert.h"
 #include "process.h"
 #include "event.h"
+#include "state.h"
 
 
 struct ad_user {
@@ -1242,9 +1243,7 @@ char *Util_monitId(char *idfile) {
                 md5_context_t ctx;
                 char buf[STRLEN];
                 MD_T digest;
-                mode_t mask = umask(PRIVATEMASK);
                 file = fopen(idfile, "w");
-                umask(mask);
                 if (! file) {
                         LogError("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
                         return NULL;
@@ -1351,7 +1350,7 @@ int Util_isProcessRunning(Service_T s, int refresh) {
         if (pid > 0) {
                 if ((getpgid(pid) > -1) || (errno == EPERM))
                         return pid;
-                DEBUG("'%s' Error testing process id [%d] -- %s\n", s->name, pid, STRERROR);
+                DEBUG("'%s' process test failed [pid=%d] -- %s\n", s->name, pid, STRERROR);
         }
         Util_resetInfo(s);
         return 0;
@@ -1700,6 +1699,7 @@ void Util_monitorSet(Service_T s) {
         if (s->monitor == MONITOR_NOT) {
                 s->monitor = MONITOR_INIT;
                 DEBUG("'%s' monitoring enabled\n", s->name);
+                State_save();
         }
 }
 
@@ -1718,6 +1718,7 @@ void Util_monitorUnset(Service_T s) {
         if (s->eventlist)
                 gc_event(&s->eventlist);
         Util_resetInfo(s);
+        State_save();
 }
 
 

@@ -1635,6 +1635,8 @@ Example which sets multiple error levels and actions:
   if space usage > 80% for 5 times within 15 cycles then alert
   if space usage > 90% for 5 cycles then exec '/try/to/free/the/space'
 
+Note: the maximum number of cycles option value is 64.
+
 
 =head2 EXISTENCE TESTING
 

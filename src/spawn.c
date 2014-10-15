@@ -164,12 +164,6 @@ void spawn(Service_T S, command_t C, Event_T E) {
         if(pid == 0) {
 
                 /*
-                 * Reset to the original umask so programs will inherit the
-                 * same file creation mask monit was started with
-                 */
-                umask(Run.umask);
-
-                /*
                  * Switch uid/gid if requested
                  */
                 if(C->has_gid) {
