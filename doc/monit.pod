@@ -2431,6 +2431,7 @@ moment Monit knows how to speak:
  I<POSTFIX-POLICY>
  I<RADIUS>
  I<RDATE>
+ I<REDIS>
  I<RSYNC>
  I<SIP>
  I<SMTP>
