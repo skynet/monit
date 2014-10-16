@@ -4,8 +4,11 @@
 
 Version 5.10
 
-New: redis protocol test added. Usage:
+New: Simple redis ping protocol test added. Usage:
     if failed port 6379 protocol redis then alert
+
+New: Simple mongodb ping protocol test added. Usage:
+    if failed port 27017 protocol mongodb then alert
 
 Fixed: Issue #104: Keep umask Monit was started with when executing
 start/stop/restart programs, check programs and creating files.

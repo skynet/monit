@@ -62,7 +62,8 @@ typedef enum {
         Protocol_RADIUS,
         Protocol_MEMCACHE,
         Protocol_WEBSOCKET,
-        Protocol_REDIS
+        Protocol_REDIS,
+        Protocol_MONGODB
 } Protocol_Type;
 
 
@@ -77,6 +78,7 @@ int check_imap(Socket_T);
 int check_clamav(Socket_T);
 int check_ldap2(Socket_T);
 int check_ldap3(Socket_T);
+int check_mongodb(Socket_T);
 int check_mysql(Socket_T);
 int check_nntp(Socket_T);
 int check_ntp3(Socket_T);
