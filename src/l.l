@@ -248,6 +248,7 @@ mysql             { return MYSQL; }
 nntp              { return NNTP; }
 ntp3              { return NTP3; }
 ssh               { return SSH; }
+redis             { return REDIS; }
 dwp               { return DWP; }
 ldap2             { return LDAP2; }
 ldap3             { return LDAP3; }
