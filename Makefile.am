@@ -74,6 +74,7 @@ monit_SOURCES	= src/y.tab.c \
 		  src/protocols/protocol.c \
 		  src/protocols/radius.c \
 		  src/protocols/rdate.c \
+		  src/protocols/redis.c \
 		  src/protocols/rsync.c \
 		  src/protocols/sip.c \
 		  src/protocols/smtp.c \

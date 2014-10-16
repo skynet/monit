@@ -274,7 +274,7 @@
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
 %token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
-%token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE
+%token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE REDIS
 %token <string> STRING PATH MAILADDR MAILFROM MAILREPLYTO MAILSUBJECT
 %token <string> MAILBODY SERVICENAME STRINGNAME
 %token <number> NUMBER PERCENT LOGLIMIT CLOSELIMIT DNSLIMIT KEEPALIVELIMIT
@@ -1133,6 +1133,9 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL RDATE {
                     portset.protocol = Protocol_get(Protocol_RDATE);
+                  }
+                | PROTOCOL REDIS  {
+                    portset.protocol = Protocol_get(Protocol_REDIS);
                   }
                 | PROTOCOL RSYNC {
                     portset.protocol = Protocol_get(Protocol_RSYNC);
