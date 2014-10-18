@@ -10,7 +10,7 @@ New: Simple redis ping protocol test added. Usage:
 New: Simple mongodb ping protocol test added. Usage:
     if failed port 27017 protocol mongodb then alert
 
-New: Monit HTTP GUI with SSL enabled doesn't allow SSLv2 and SSLv3
+New: Monit HTTP GUI with SSL enabled no longer allows SSLv2 and SSLv3
 methods for security reasons. Only the TLS methods are supported.
 
 Fixed: Issue #104: Keep umask Monit was started with when executing

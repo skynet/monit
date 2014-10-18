@@ -56,12 +56,12 @@ int check_redis(Socket_T socket) {
                 return FALSE;
         }
         Str_chomp(buf);
-        if (! Str_isEqual(buf, "+PONG")) {
+        if (! Str_isEqual(buf, "+PONG") && ! Str_startsWith(buf, "-NOAUTH")) { // We accept authentication error (-NOAUTH Authentication required): redis responded to request, but requires authentication => we assume it works
                 socket_setError(socket, "REDIS: PING error -- %s", buf);
                 return FALSE;
         }
         if (socket_print(socket, "*1\r\n$4\r\nQUIT\r\n") < 0) {
-                socket_setError(socket, "REDIS: PING command error -- %s", STRERROR);
+                socket_setError(socket, "REDIS: QUIT command error -- %s", STRERROR);
                 return FALSE;
         }
         return TRUE;
