@@ -1046,14 +1046,14 @@ sslversion      : /* EMPTY */  { $<number>$ = SSL_VERSION_NONE; }
                 | TLSV1        { $<number>$ = SSL_VERSION_TLSV1; }
                 | TLSV11
                 {
-#ifndef HAVE_TLSV1_1_CLIENT_METHOD
+#ifndef HAVE_TLSV1_1
                         yyerror("Your SSL Library does not support TLS version 1.1");
 #endif
                         $<number>$ = SSL_VERSION_TLSV11;
                 }
                 | TLSV12
                 {
-#ifndef HAVE_TLSV1_1_CLIENT_METHOD
+#ifndef HAVE_TLSV1_2
                         yyerror("Your SSL Library does not support TLS version 1.2");
 #endif
                         $<number>$ = SSL_VERSION_TLSV12;
