@@ -31,13 +31,17 @@
 
 
 /**
- * Implement redis RESP protocol test:
- *     1.) send a PING command
- *     2.) expect a PONG response
- *     3.) send a QUIT command
+ * Simple redis RESP protocol ping test:
+ *
+ *     1. send a PING command
+ *     2. expect a PONG response
+ *     3. send a QUIT command
+ *
  * If passed return TRUE else return FALSE.
  *
- *  @file
+ * @see http://redis.io/topics/protocol
+ *
+ * @file
  */
 int check_redis(Socket_T socket) {
         ASSERT(socket);

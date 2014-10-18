@@ -4,8 +4,14 @@
 
 Version 5.10
 
-New: redis protocol test added. Usage:
+New: Simple redis ping protocol test added. Usage:
     if failed port 6379 protocol redis then alert
+
+New: Simple mongodb ping protocol test added. Usage:
+    if failed port 27017 protocol mongodb then alert
+
+New: Monit HTTP GUI with SSL enabled doesn't allow SSLv2 and SSLv3
+methods for security reasons. Only the TLS methods are supported.
 
 Fixed: Issue #104: Keep umask Monit was started with when executing
 start/stop/restart programs, check programs and creating files.
@@ -13,6 +19,8 @@ start/stop/restart programs, check programs and creating files.
 Fixed: Issue #101: Manual-mode monitored services state may not be
 restored if the monitoring state was changed by user right before
 the system died.
+
+Fixed: Support TLSv1.1 and TLSv1.2 when FIPS is enabled.
 
 
 Version 5.9

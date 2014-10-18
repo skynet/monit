@@ -2423,6 +2423,7 @@ moment Monit knows how to speak:
  I<LDAP3>
  I<LMTP>
  I<MEMCACHE>
+ I<MONGODB>
  I<MYSQL>
  I<NNTP>
  I<NTP3>

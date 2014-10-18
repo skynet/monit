@@ -78,6 +78,8 @@
 		52F6E8D313A756EB0023F87A /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D213A756EB0023F87A /* libpthread.dylib */; };
 		52F6E8D513A757050023F87A /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F6E8D413A757050023F87A /* libresolv.dylib */; };
 		9303FB8018C47E7000138D72 /* websocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 9303FB7F18C47E7000138D72 /* websocket.c */; };
+		9357B19B19F2F5A400329B3F /* mongodb.c in Sources */ = {isa = PBXBuildFile; fileRef = 9357B19919F2F5A400329B3F /* mongodb.c */; };
+		9357B19C19F2F5A400329B3F /* redis.c in Sources */ = {isa = PBXBuildFile; fileRef = 9357B19A19F2F5A400329B3F /* redis.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -285,6 +287,8 @@
 		52F6E8D413A757050023F87A /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
 		52FFBA1118A7E785001F9962 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		9303FB7F18C47E7000138D72 /* websocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = websocket.c; sourceTree = "<group>"; };
+		9357B19919F2F5A400329B3F /* mongodb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongodb.c; sourceTree = "<group>"; };
+		9357B19A19F2F5A400329B3F /* redis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = redis.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -574,6 +578,7 @@
 				52F6E78F13A74F220023F87A /* memcache.c */,
 				52F6E79013A74F220023F87A /* mysql.c */,
 				52F6E79113A74F220023F87A /* nntp.c */,
+				9357B19919F2F5A400329B3F /* mongodb.c */,
 				52F6E79313A74F220023F87A /* ntp3.c */,
 				52F6E79413A74F220023F87A /* pgsql.c */,
 				52F6E79513A74F220023F87A /* pop.c */,
@@ -582,6 +587,7 @@
 				52F6E79813A74F220023F87A /* protocol.h */,
 				52F6E79913A74F220023F87A /* radius.c */,
 				52F6E79A13A74F220023F87A /* rdate.c */,
+				9357B19A19F2F5A400329B3F /* redis.c */,
 				52F6E79B13A74F220023F87A /* rsync.c */,
 				52F6E79C13A74F220023F87A /* sip.c */,
 				52F6E79D13A74F220023F87A /* smtp.c */,
@@ -721,11 +727,13 @@
 				52F6E83913A74F220023F87A /* ldap3.c in Sources */,
 				52F6E83A13A74F220023F87A /* lmtp.c in Sources */,
 				52F6E83B13A74F220023F87A /* memcache.c in Sources */,
+				9357B19C19F2F5A400329B3F /* redis.c in Sources */,
 				52F6E83C13A74F220023F87A /* mysql.c in Sources */,
 				52F6E83D13A74F220023F87A /* nntp.c in Sources */,
 				52F6E83E13A74F220023F87A /* ntp3.c in Sources */,
 				52F6E83F13A74F220023F87A /* pgsql.c in Sources */,
 				52F6E84013A74F220023F87A /* pop.c in Sources */,
+				9357B19B19F2F5A400329B3F /* mongodb.c in Sources */,
 				52F6E84113A74F220023F87A /* postfix_policy.c in Sources */,
 				52F6E84213A74F220023F87A /* protocol.c in Sources */,
 				52F6E84313A74F220023F87A /* radius.c in Sources */,
