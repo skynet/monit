@@ -2423,7 +2423,9 @@ moment Monit knows how to speak:
  I<FTP>
  I<GPS>
  I<HTTP>
+ I<HTTPS>
  I<IMAP>
+ I<IMAPS>
  I<CLAMAV>
  I<LDAP2>
  I<LDAP3>
@@ -2442,6 +2444,7 @@ moment Monit knows how to speak:
  I<RSYNC>
  I<SIP>
  I<SMTP>
+ I<SMTPS>
  I<SSH>
  I<TNS>
  I<WEBSOCKET>
