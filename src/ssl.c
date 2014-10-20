@@ -627,6 +627,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
 #endif
                 case SSL_VERSION_AUTO:
                 default:
+                        SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
                         ssl->method = SSLv23_client_method();
                         break;
 
@@ -641,11 +642,6 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
-
-#ifdef OPENSSL_FIPS
-        if (FIPS_mode() && sslversion == SSL_VERSION_AUTO)
-                SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-#endif
 
         if (ssl->clientpemfile) {
 
