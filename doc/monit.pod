@@ -2409,10 +2409,10 @@ The TCPSSL options are:
 
  TCPSSL [SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12] [CERTMD5 md5sum]
 
-I<SSLAUTO> defaults will select the method automatically, but note
-that only TLS methods are supported. If you need SSLv2 or SSLv3 you
-have to explicitly select that method using I<SSLV2> or I<SSLV3>
-option.
+The default mode is I<SSLAUTO> and it will select the method
+automatically, but note that for security reasons it supports TLS
+methods only. If you need SSLv2 or SSLv3 you have to explicitly select
+that method using I<SSLV2> or I<SSLV3> option.
 
 I<protocol: PROTO(COL) protocol>. Optionally specify the protocol
 Monit should speak when a connection is established. At the
