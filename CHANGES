@@ -27,6 +27,9 @@ Fixed: Issue #101: Manual-mode monitored services state may not be
 restored if the monitoring state was changed by user right before
 the system died.
 
+Fixed: Issue #107: Support multi-line response in the LMTP protocol
+test.
+
 Fixed: Support TLSv1.1 and TLSv1.2 when FIPS is enabled.
 
 
