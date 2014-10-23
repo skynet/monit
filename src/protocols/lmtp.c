@@ -34,7 +34,7 @@
 /* --------------------------------------------------------------- Private */
 
 
-static int do_send(Socket_T socket, char *msg) {
+static int say(Socket_T socket, char *msg) {
         if (socket_write(socket, msg, strlen(msg)) < 0) {
                 socket_setError(socket, "LMTP: error sending data -- %s", STRERROR);
                 return FALSE;
