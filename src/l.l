@@ -242,6 +242,7 @@ smtps             { return SMTPS; }
 postfix-policy    { return POSTFIXPOLICY; }
 pop               { return POP; }
 imap              { return IMAP; }
+imaps             { return IMAPS; }
 clamav            { return CLAMAV; }
 dns               { return DNS; }
 mysql             { return MYSQL; }

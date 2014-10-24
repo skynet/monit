@@ -642,10 +642,8 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 goto sslerror;
         }
 
-#ifdef OPENSSL_FIPS
-        if (FIPS_mode() && sslversion == SSL_VERSION_AUTO)
+        if (sslversion == SSL_VERSION_AUTO)
                 SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-#endif
 
         if (ssl->clientpemfile) {
 
