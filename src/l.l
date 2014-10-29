@@ -230,12 +230,15 @@ smtps             { return SMTPS; }
 postfix-policy    { return POSTFIXPOLICY; }
 pop               { return POP; }
 imap              { return IMAP; }
+imaps             { return IMAPS; }
 clamav            { return CLAMAV; }
 dns               { return DNS; }
 mysql             { return MYSQL; }
 nntp              { return NNTP; }
 ntp3              { return NTP3; }
 ssh               { return SSH; }
+redis             { return REDIS; }
+mongodb           { return MONGODB; }
 dwp               { return DWP; }
 ldap2             { return LDAP2; }
 ldap3             { return LDAP3; }

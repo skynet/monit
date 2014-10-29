@@ -300,20 +300,11 @@ void delete_ssl_socket(ssl_connection *ssl) {
  * @return An ssl connection, or NULL if an error occured.
  */
 ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
-        const SSL_METHOD *server_method = NULL;
-        ssl_server_connection *ssl_server;
         ASSERT(pemfile);
         if (!ssl_initialized)
                 start_ssl();
-
-        ssl_server = new_ssl_server_connection(pemfile, clientpemfile);
-#ifdef OPENSSL_FIPS
-        if (FIPS_mode())
-                server_method = TLSv1_server_method();
-        else
-#endif
-                server_method = SSLv23_server_method();
-        if (!(ssl_server->method = server_method)) {
+        ssl_server_connection *ssl_server = new_ssl_server_connection(pemfile, clientpemfile);
+        if (!(ssl_server->method = SSLv23_server_method())) {
                 LogError("Cannot initialize the SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
@@ -337,8 +328,8 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
                 LogError("Error setting cipher list '%s' (no valid ciphers)\n", CIPHER_LIST);
                 goto sslerror;
         }
-        /* Disable session cache */
-        SSL_CTX_set_session_cache_mode(ssl_server->ctx, SSL_SESS_CACHE_OFF);
+        SSL_CTX_set_options(ssl_server->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3); // Disable SSLv2 and SSLv3 for security reasons
+        SSL_CTX_set_session_cache_mode(ssl_server->ctx, SSL_SESS_CACHE_OFF); // Disable session cache
         /*
          * We need this to force transmission of client certs
          */
@@ -598,35 +589,24 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
         ssl->clientpemfile = clientpemfile ? Str_dup(clientpemfile) : NULL;
 
         switch (sslversion) {
-
-                case SSL_VERSION_AUTO:
-#ifdef OPENSSL_FIPS
-                        if (FIPS_mode()) {
-                                ssl->method = TLSv1_client_method();
-                        } else
-#endif
-                                ssl->method = SSLv23_client_method();
-                        break;
-
                 case SSL_VERSION_SSLV2:
 #ifdef OPENSSL_NO_SSL2
-                        LogError("SSLv2 is not allowed - use either SSLv3 or TLSv1\n");
+                        LogError("SSLv2 is not allowed - use TLS\n");
                         goto sslerror;
 #else
 #ifdef OPENSSL_FIPS
                         if (FIPS_mode()) {
-                                LogError("SSLv2 is not allowed in FIPS mode - use TLSv1\n");
+                                LogError("SSLv2 is not allowed in FIPS mode - use TLS\n");
                                 goto sslerror;
                         } else
 #endif
                                 ssl->method = SSLv2_client_method();
 #endif
                         break;
-
                 case SSL_VERSION_SSLV3:
 #ifdef OPENSSL_FIPS
                         if (FIPS_mode()) {
-                                LogError("SSLv3 is not allowed in FIPS mode - use TLSv1\n");
+                                LogError("SSLv3 is not allowed in FIPS mode - use TLS\n");
                                 goto sslerror;
                         } else
 #endif
@@ -635,18 +615,19 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 case SSL_VERSION_TLSV1:
                         ssl->method = TLSv1_client_method();
                         break;
-#ifdef HAVE_TLSV1_1_CLIENT_METHOD
+#ifdef HAVE_TLSV1_1
                 case SSL_VERSION_TLSV11:
                         ssl->method = TLSv1_1_client_method();
                         break;
 #endif
-#ifdef HAVE_TLSV1_2_CLIENT_METHOD
+#ifdef HAVE_TLSV1_2
                 case SSL_VERSION_TLSV12:
                         ssl->method = TLSv1_2_client_method();
                         break;
 #endif
+                case SSL_VERSION_AUTO:
                 default:
-                        ssl->method = TLSv1_client_method();
+                        ssl->method = SSLv23_client_method();
                         break;
 
         }
@@ -660,6 +641,9 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
+
+        if (sslversion == SSL_VERSION_AUTO)
+                SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
         if (ssl->clientpemfile) {
 

@@ -6,7 +6,7 @@ AC_PREREQ([2.53])
 # Note: in  case of beta subversion, use underscore "_" rather then dash "-"
 # since RPM doesn't allow dash in Version
 # Example: 5.0_beta2
-AC_INIT([monit], [5.10_devel], [monit-general@nongnu.org])
+AC_INIT([monit], [5.10], [monit-general@nongnu.org])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
@@ -823,10 +823,10 @@ then
 fi
 # Check TLS version
 if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
-        AC_CHECK_LIB([ssl], [TLSv1_1_client_method], 
-                [AC_DEFINE([HAVE_TLSV1_1_CLIENT_METHOD], 1, [Define to 1 if you have openssl with TLSv1.1])])
-        AC_CHECK_LIB([ssl], [TLSv1_2_client_method],
-                [AC_DEFINE([HAVE_TLSV1_2_CLIENT_METHOD], 1, [Define to 1 if you have openssl with TLSv1.2])])
+        AC_CHECK_LIB([ssl], [TLSv1_1_method],
+                [AC_DEFINE([HAVE_TLSV1_1], 1, [Define to 1 if you have openssl with TLSv1.1])])
+        AC_CHECK_LIB([ssl], [TLSv1_2_method],
+                [AC_DEFINE([HAVE_TLSV1_2], 1, [Define to 1 if you have openssl with TLSv1.2])])
 fi
 
 

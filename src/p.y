@@ -273,8 +273,8 @@
 %token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
-%token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
-%token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE
+%token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP IMAPS CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
+%token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE REDIS MONGODB
 %token <string> STRING PATH MAILADDR MAILFROM MAILREPLYTO MAILSUBJECT
 %token <string> MAILBODY SERVICENAME STRINGNAME
 %token <number> NUMBER PERCENT LOGLIMIT CLOSELIMIT DNSLIMIT KEEPALIVELIMIT
@@ -1046,14 +1046,14 @@ sslversion      : /* EMPTY */  { $<number>$ = SSL_VERSION_NONE; }
                 | TLSV1        { $<number>$ = SSL_VERSION_TLSV1; }
                 | TLSV11
                 {
-#ifndef HAVE_TLSV1_1_CLIENT_METHOD
+#ifndef HAVE_TLSV1_1
                         yyerror("Your SSL Library does not support TLS version 1.1");
 #endif
                         $<number>$ = SSL_VERSION_TLSV11;
                 }
                 | TLSV12
                 {
-#ifndef HAVE_TLSV1_1_CLIENT_METHOD
+#ifndef HAVE_TLSV1_2
                         yyerror("Your SSL Library does not support TLS version 1.2");
 #endif
                         $<number>$ = SSL_VERSION_TLSV12;
@@ -1089,7 +1089,13 @@ protocol        : /* EMPTY */  {
                         portset.protocol = Protocol_get(Protocol_HTTP);
                  }
                 | PROTOCOL IMAP {
-                    portset.protocol = Protocol_get(Protocol_IMAP);
+                        portset.protocol = Protocol_get(Protocol_IMAP);
+                  }
+                | PROTOCOL IMAPS {
+                        portset.type = SOCK_STREAM;
+                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.protocol = Protocol_get(Protocol_IMAP);
                   }
                 | PROTOCOL CLAMAV {
                     portset.protocol = Protocol_get(Protocol_CLAMAV);
@@ -1099,6 +1105,9 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL LDAP3 {
                     portset.protocol = Protocol_get(Protocol_LDAP3);
+                  }
+                | PROTOCOL MONGODB  {
+                    portset.protocol = Protocol_get(Protocol_MONGODB);
                   }
                 | PROTOCOL MYSQL {
                     portset.protocol = Protocol_get(Protocol_MYSQL);
@@ -1133,6 +1142,9 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL RDATE {
                     portset.protocol = Protocol_get(Protocol_RDATE);
+                  }
+                | PROTOCOL REDIS  {
+                    portset.protocol = Protocol_get(Protocol_REDIS);
                   }
                 | PROTOCOL RSYNC {
                     portset.protocol = Protocol_get(Protocol_RSYNC);

@@ -65,6 +65,7 @@ monit_SOURCES	= src/y.tab.c \
 		  src/protocols/ldap3.c \
 		  src/protocols/lmtp.c \
 		  src/protocols/memcache.c \
+		  src/protocols/mongodb.c \
 		  src/protocols/mysql.c \
 		  src/protocols/nntp.c \
 		  src/protocols/ntp3.c \
@@ -74,6 +75,7 @@ monit_SOURCES	= src/y.tab.c \
 		  src/protocols/protocol.c \
 		  src/protocols/radius.c \
 		  src/protocols/rdate.c \
+		  src/protocols/redis.c \
 		  src/protocols/rsync.c \
 		  src/protocols/sip.c \
 		  src/protocols/smtp.c \
