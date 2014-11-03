@@ -91,16 +91,6 @@ gid_t Process_getGid(T P);
 
 
 /**
- * Returns the Process timeout. 
- * @param P A Process object
- * @return The number of seconds this Process has until exit before
- * the <code>onTimeout</code> handler is called if it is defined for
- * the Command. 0 means that there is no timeout.
- */
-int Process_getTimeout(T P);
-
-
-/**
  * Returns the working directory of the Process
  * @param P A Process object
  * @return The Process working directory
