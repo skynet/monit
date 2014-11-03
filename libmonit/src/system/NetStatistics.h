@@ -53,7 +53,7 @@ int NetStatistics_isGetByAddressSupported();
  * @param address IP address (e.g. "127.0.0.1" or "::1")
  * @return Network statistics object. Use NetStatistics_update() to get the data.
  */
-T NetStatistics_getByAddress(const char *address);
+T NetStatistics_createForAddress(const char *address);
 
 
 /**
@@ -62,191 +62,203 @@ T NetStatistics_getByAddress(const char *address);
  * @param interface Network interface name (e.g. "eth0")
  * @return Network statistics object. Use NetStatistics_update() to get the data.
  */
-T NetStatistics_getByInterface(const char *interface);
+T NetStatistics_createForInterface(const char *interface);
 
 
 /**
  * Destroy an network statistics object and release allocated resources. 
- * @param stats A network statistics object reference
+ * @param S A network statistics object reference
  */
-void NetStatistics_free(NetStatistics_T *stats);
+void NetStatistics_free(T *S);
 
 
 /**
  * Update network statistics for object.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @exception AssertException If statistics cannot be fetched or the address/interface
  * is invalid.
  */
-void NetStatistics_update(NetStatistics_T stats);
+void NetStatistics_update(T S);
 
 
 /**
  * Get incoming bytes per second statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Incoming bytes per second statistics.
  */
-long long NetStatistics_getBytesInPerSecond(T stats);
+long long NetStatistics_getBytesInPerSecond(T S);
 
 
 /**
  * Get incoming bytes per minute statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of minutes, the returned statistics will be for range given by 'now - count' (count max = 60m)
  * @return Incoming bytes per minute statistics.
  */
-long long NetStatistics_getBytesInPerMinute(T stats, int count);
+long long NetStatistics_getBytesInPerMinute(T S, int count);
 
 
 /**
  * Get incoming bytes per hour statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
  * @return Incoming bytes per hour statistics.
  */
-long long NetStatistics_getBytesInPerHour(T stats, int count);
+long long NetStatistics_getBytesInPerHour(T S, int count);
 
 
 /**
  * Get incoming packets per second statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Incoming packets per second statistics.
  */
-long long NetStatistics_getPacketsInPerSecond(T stats);
+long long NetStatistics_getPacketsInPerSecond(T S);
 
 
 /**
  * Get incoming packets per minute statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of minutes, the returned statistics will be for range given by 'now - count' (count max = 60m)
  * @return Incoming packets per minute statistics.
  */
-long long NetStatistics_getPacketsInPerMinute(T stats, int count);
+long long NetStatistics_getPacketsInPerMinute(T S, int count);
 
 
 /**
  * Get incoming packets per hour statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
  * @return Incoming packets per hour statistics.
  */
-long long NetStatistics_getPacketsInPerHour(T stats, int count);
+long long NetStatistics_getPacketsInPerHour(T S, int count);
 
 
 /**
  * Get incoming errors per second statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Incoming errors per second statistics.
  */
-long long NetStatistics_getErrorsInPerSecond(T stats);
+long long NetStatistics_getErrorsInPerSecond(T S);
 
 
 /**
  * Get incoming errors per minute statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of minutes, the returned statistics will be for range given by 'now - count' (count max = 60m)
  * @return Incoming errors per minute statistics.
  */
-long long NetStatistics_getErrorsInPerMinute(T stats, int count);
+long long NetStatistics_getErrorsInPerMinute(T S, int count);
 
 
 /**
  * Get incoming errors per hour statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
  * @return Incoming errors per hour statistics.
  */
-long long NetStatistics_getErrorsInPerHour(T stats, int count);
+long long NetStatistics_getErrorsInPerHour(T S, int count);
 
 
 /**
  * Get outgoing bytes per second statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Outgoing bytes per second statistics.
  */
-long long NetStatistics_getBytesOutPerSecond(T stats);
+long long NetStatistics_getBytesOutPerSecond(T S);
 
 
 /**
  * Get outgoing bytes per minute statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of minutes, the returned statistics will be for range given by 'now - count' (count max = 60m)
  * @return Outgoing bytes per minute statistics.
  */
-long long NetStatistics_getBytesOutPerMinute(T stats, int count);
+long long NetStatistics_getBytesOutPerMinute(T S, int count);
 
 
 /**
  * Get outgoing bytes per hour statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
  * @return Outgoing bytes per hour statistics.
  */
-long long NetStatistics_getBytesOutPerHour(T stats, int count);
+long long NetStatistics_getBytesOutPerHour(T S, int count);
 
 
 /**
  * Get outgoing packets per second statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Outgoing packets per second statistics.
  */
-long long NetStatistics_getPacketsOutPerSecond(T stats);
+long long NetStatistics_getPacketsOutPerSecond(T S);
 
 
 /**
  * Get outgoing packets per minute statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of minutes, the returned statistics will be for range given by 'now - count' (count max = 60m)
  * @return Outgoing packets per minute statistics.
  */
-long long NetStatistics_getPacketsOutPerMinute(T stats, int count);
+long long NetStatistics_getPacketsOutPerMinute(T S, int count);
 
 
 /**
  * Get outgoing packets per hour statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
  * @return Outgoing packets per hour statistics.
  */
-long long NetStatistics_getPacketsOutPerHour(T stats, int count);
+long long NetStatistics_getPacketsOutPerHour(T S, int count);
 
 
 /**
  * Get outgoing errors per second statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Outgoing errors per second.
  */
-long long NetStatistics_getErrorsOutPerSecond(T stats);
+long long NetStatistics_getErrorsOutPerSecond(T S);
 
 
 /**
  * Get outgoing errors per minute statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of minutes, the returned statistics will be for range given by 'now - count' (count max = 60m)
  * @return Outgoing errors per minute.
  */
-long long NetStatistics_getErrorsOutPerMinute(T stats, int count);
+long long NetStatistics_getErrorsOutPerMinute(T S, int count);
 
 
 /**
  * Get outgoing errors per hour statistics.
- * @param stats A network statistics object
+ * @param S A network statistics object
+ * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
  * @return Outgoing errors per hour.
  */
-long long NetStatistics_getErrorsOutPerHour(T stats, int count);
+long long NetStatistics_getErrorsOutPerHour(T S, int count);
 
 
 /**
  * Get interface state.
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Interface state (0 = down, 1 = up)
  */
-int NetStatistics_getState(T stats);
+int NetStatistics_getState(T S);
 
 
 /**
  * Get interface speed (note: not all interface types support speed)
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Interface speed [bps] (-1 = N/A)
  */
-long long NetStatistics_getSpeed(T stats);
+long long NetStatistics_getSpeed(T S);
 
 
 /**
  * Get interface duplex state (note: not all interface types support duplex)
- * @param stats A network statistics object
+ * @param S A network statistics object
  * @return Duplex state (-1 = N/A, 0 = half, 1 = full)
  */
-int NetStatistics_getDuplex(T stats);
+int NetStatistics_getDuplex(T S);
 
 
 #undef T

@@ -84,7 +84,7 @@ typedef struct NetStatisticsData_T {
 
 struct T {
         char *object;
-        const char *(*resolve)(const char *object); // Resolve Object-> Interface, set during NetStatistics_T instantiation by constructor (currently we implement only IPAddress->Interface lookup)
+        const char *(*resolve)(const char *object); // Resolve Object -> Interface, set during NetStatistics_T instantiation by constructor (currently we implement only IPAddress -> Interface lookup)
 
         struct {
                 long long last;
@@ -104,10 +104,10 @@ struct T {
 };
 
 
-/* --------------------------------------- Static destructor */
+/* ----------------------------------------------------- Static destructor */
 
 
-static void __attribute__ ((destructor)) _Destructor() {
+static void __attribute__ ((destructor)) _destructor() {
 #ifdef HAVE_IFADDRS_H
         if (_stats.addrs)
                 freeifaddrs(_stats.addrs);
@@ -135,22 +135,22 @@ long long _getKstatValue(kstat_t *ksp, char *value) {
                 THROW(AssertException, "Unsupported kstat data type 0x%x", kdata->data_type);
         }
         THROW(AssertException, "Cannot read %s statistics -- %s", value, System_getError(errno));
-        return -1LL; // Will be never reached
+        return -1LL;
 }
 #endif
 
 
-static long long _deltaSecond(T stats, NetStatisticsData_T *data) {
-        double deltams = stats->timestamp.last > -1 && stats->timestamp.now > stats->timestamp.last ? (stats->timestamp.now - stats->timestamp.last) : 1;
+static long long _deltaSecond(T S, NetStatisticsData_T *data) {
+        double deltams = S->timestamp.last > -1 && S->timestamp.now > S->timestamp.last ? (S->timestamp.now - S->timestamp.last) : 1;
         if (data->last > -1 && data->now > data->last)
                 return (long long)((data->now - data->last) * 1000. / deltams);
         return 0LL;
 }
 
 
-static long long _deltaMinute(T stats, NetStatisticsData_T *data, int count) {
+static long long _deltaMinute(T S, NetStatisticsData_T *data, int count) {
         assert(count > 0 && count <= 60);
-        int stop = Time_minutes(stats->timestamp.now);
+        int stop = Time_minutes(S->timestamp.now);
         int start = stop - count < 0 ? 60 - stop - count : stop - count;
         while (data->minute[start] == 0) {
                 if (++start > 59)
@@ -162,9 +162,9 @@ static long long _deltaMinute(T stats, NetStatisticsData_T *data, int count) {
 }
 
 
-static long long _deltaHour(T stats, NetStatisticsData_T *data, int count) {
+static long long _deltaHour(T S, NetStatisticsData_T *data, int count) {
         assert(count > 0 && count <= 24);
-        int stop = Time_hour(stats->timestamp.now);
+        int stop = Time_hour(S->timestamp.now);
         int start = stop - count < 0 ? 24 - stop - count : stop - count;
         while (data->minute[start] == 0) {
                 if (++start > 23)
@@ -198,62 +198,30 @@ static const char *_findInterfaceForAddress(const char *address) {
 #else
         THROW(AssertException, "Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
 #endif
-        return NULL; // Will be never reached
+        return NULL;
 }
 
 
-static void _updateHistory(T stats) {
-        int minute = Time_minutes(stats->timestamp.now);
-        int hour =  Time_hour(stats->timestamp.now);
-        stats->ibytes.minute[minute] = stats->ibytes.hour[hour] = stats->ibytes.now;
-        stats->ipackets.minute[minute] = stats->ipackets.hour[hour] = stats->ipackets.now;
-        stats->ierrors.minute[minute] = stats->ierrors.hour[hour] = stats->ierrors.now;
-        stats->obytes.minute[minute] = stats->obytes.hour[hour] = stats->obytes.now;
-        stats->opackets.minute[minute] = stats->opackets.hour[hour] = stats->opackets.now;
-        stats->oerrors.minute[minute] = stats->oerrors.hour[hour] = stats->oerrors.now;
+static const char *_returnInterface(const char *interface) {
+        return interface;
 }
 
 
-/* ---------------------------------------------------------------- Public */
-
-
-NetStatistics_T NetStatistics_getByAddress(const char *address) {
-        assert(address);
-        NetStatistics_T stats;
-        NEW(stats);
-        stats->object = Str_dup(address);
-        stats->resolve = _findInterfaceForAddress;
-        return stats;
+static void _updateHistory(T S) {
+        int minute = Time_minutes(S->timestamp.now);
+        int hour =  Time_hour(S->timestamp.now);
+        S->ibytes.minute[minute] = S->ibytes.hour[hour] = S->ibytes.now;
+        S->ipackets.minute[minute] = S->ipackets.hour[hour] = S->ipackets.now;
+        S->ierrors.minute[minute] = S->ierrors.hour[hour] = S->ierrors.now;
+        S->obytes.minute[minute] = S->obytes.hour[hour] = S->obytes.now;
+        S->opackets.minute[minute] = S->opackets.hour[hour] = S->opackets.now;
+        S->oerrors.minute[minute] = S->oerrors.hour[hour] = S->oerrors.now;
 }
 
 
-NetStatistics_T NetStatistics_getByInterface(const char *interface) {
-        assert(interface);
-        NetStatistics_T stats;
-        NEW(stats);
-        stats->object = Str_dup(interface);
-        return stats;
-}
-
-
-void NetStatistics_free(NetStatistics_T *stats) {
-        FREE((*stats)->object);
-        FREE(*stats);
-}
-
-
-int NetStatistics_isGetByAddressSupported() {
+static void _updateCache() {
 #ifdef HAVE_IFADDRS_H
-        return true;
-#else
-        return false;
-#endif
-}
-
-
-void NetStatistics_update(T stats) {
         time_t now = Time_now();
-#ifdef HAVE_IFADDRS_H
         if (_stats.timestamp != now) {
                 _stats.timestamp = now;
                 if (_stats.addrs) {
@@ -266,12 +234,53 @@ void NetStatistics_update(T stats) {
                 }
         }
 #endif
-        const char *interface;
-        if (stats->resolve)
-                interface = stats->resolve(stats->object);
-        else
-                interface = stats->object;
+}
+
+
+/* ---------------------------------------------------------------- Public */
+
+
+T NetStatistics_createForAddress(const char *address) {
+        assert(address);
+        T S;
+        NEW(S);
+        S->object = Str_dup(address);
+        S->resolve = _findInterfaceForAddress;
+        return S;
+}
+
+
+T NetStatistics_createForInterface(const char *interface) {
+        assert(interface);
+        T S;
+        NEW(S);
+        S->object = Str_dup(interface);
+        S->resolve = _returnInterface;
+        return S;
+}
+
+
+void NetStatistics_free(T *S) {
+        FREE((*S)->object);
+        FREE(*S);
+}
+
+
+int NetStatistics_isGetByAddressSupported() {
+#ifdef HAVE_IFADDRS_H
+        return true;
+#else
+        return false;
+#endif
+}
+
+
 #if defined DARWIN || defined FREEBSD || defined OPENBSD || defined NETBSD
+
+
+void NetStatistics_update(T S) {
+        _updateCache();
+        const char *interface = S->resolve(S->object);
         for (struct ifaddrs *a = _stats.addrs; a != NULL; a = a->ifa_next) {
                 if (a->ifa_addr == NULL)
                         continue;
@@ -284,41 +293,50 @@ void NetStatistics_update(T stats) {
                                 // try SIOCGIFMEDIA - if not supported, assume the interface is UP (loopback or other virtual interface)
                                 if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) >= 0) {
                                         if (ifmr.ifm_status & IFM_AVALID && ifmr.ifm_status & IFM_ACTIVE) {
-                                                stats->state = 1LL;
-                                                stats->duplex = ifmr.ifm_active & 0x00100000 ? 1LL : 0LL;
+                                                S->state = 1LL;
+                                                S->duplex = ifmr.ifm_active & 0x00100000 ? 1LL : 0LL;
                                         } else {
-                                                stats->state = 0LL;
-                                                stats->duplex = -1LL;
+                                                S->state = 0LL;
+                                                S->duplex = -1LL;
                                         }
                                 } else {
-                                        stats->state = 1LL;
+                                        S->state = 1LL;
                                 }
                                 close(s);
                         } else {
-                                stats->state = -1LL;
-                                stats->duplex = -1LL;
+                                S->state = -1LL;
+                                S->duplex = -1LL;
                         }
                         struct if_data *data = (struct if_data *)a->ifa_data;
-                        stats->timestamp.last = stats->timestamp.now;
-                        stats->timestamp.now = Time_milli();
-                        stats->speed = data->ifi_baudrate;
-                        stats->ipackets.last = stats->ipackets.now;
-                        stats->ipackets.now = data->ifi_ipackets;
-                        stats->ibytes.last = stats->ibytes.now;
-                        stats->ibytes.now = data->ifi_ibytes;
-                        stats->ierrors.last = stats->ierrors.now;
-                        stats->ierrors.now = data->ifi_ierrors;
-                        stats->opackets.last = stats->opackets.now;
-                        stats->opackets.now = data->ifi_opackets;
-                        stats->obytes.last = stats->obytes.now;
-                        stats->obytes.now = data->ifi_obytes;
-                        stats->oerrors.last = stats->oerrors.now;
-                        stats->oerrors.now = data->ifi_oerrors;
-                        _updateHistory(stats);
+                        S->timestamp.last = S->timestamp.now;
+                        S->timestamp.now = Time_milli();
+                        S->speed = data->ifi_baudrate;
+                        S->ipackets.last = S->ipackets.now;
+                        S->ipackets.now = data->ifi_ipackets;
+                        S->ibytes.last = S->ibytes.now;
+                        S->ibytes.now = data->ifi_ibytes;
+                        S->ierrors.last = S->ierrors.now;
+                        S->ierrors.now = data->ifi_ierrors;
+                        S->opackets.last = S->opackets.now;
+                        S->opackets.now = data->ifi_opackets;
+                        S->obytes.last = S->obytes.now;
+                        S->obytes.now = data->ifi_obytes;
+                        S->oerrors.last = S->oerrors.now;
+                        S->oerrors.now = data->ifi_oerrors;
+                        _updateHistory(S);
                         return;
                 }
         }
+        THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
+}
+
+
 #elif defined LINUX
+
+
+void NetStatistics_update(T S) {
+        _updateCache();
+        const char *interface = S->resolve(S->object);
         char buf[STRLEN];
         char path[PATH_MAX];
         /*
@@ -330,8 +348,8 @@ void NetStatistics_update(T stats) {
         FILE *f = fopen(path, "r");
         if (f) {
                 if (fscanf(f, "%256s\n", buf) == 1) {
-                        stats->state.last = stats->state.now;
-                        stats->state.now = Str_isEqual(buf, "down") ? 0LL : 1LL;
+                        S->state.last = S->state.now;
+                        S->state.now = Str_isEqual(buf, "down") ? 0LL : 1LL;
                 }
                 fclose(f);
         }
@@ -345,8 +363,8 @@ void NetStatistics_update(T stats) {
         if (f) {
                 int speed;
                 if (fscanf(f, "%d\n", &speed) == 1) {
-                        stats->speed.last = stats->speed.now;
-                        stats->speed.now = speed * 1000000; // mbps -> bps
+                        S->speed.last = S->speed.now;
+                        S->speed.now = speed * 1000000; // mbps -> bps
                 }
                 fclose(f);
         }
@@ -359,8 +377,8 @@ void NetStatistics_update(T stats) {
         f = fopen(path, "r");
         if (f) {
                 if (fscanf(f, "%256s\n", buf) == 1) {
-                        stats->duplex.last = stats->duplex.now;
-                        stats->duplex.now = Str_isEqual(buf, "full") ? 1LL : 0LL;
+                        S->duplex.last = S->duplex.now;
+                        S->duplex.now = Str_isEqual(buf, "full") ? 1LL : 0LL;
                 }
                 fclose(f);
         }
@@ -377,22 +395,22 @@ void NetStatistics_update(T stats) {
                 while (fgets(buf, sizeof(buf), f) != NULL) {
                         char iface[STRLEN];
                         if (sscanf(buf, "%256[^:]: %lld %lld %lld %*s %*s %*s %*s %*s %lld %lld %lld %*s %*s %*s %*s %*s", iface, &ibytes, &ipackets, &ierrors, &obytes, &opackets, &oerrors) == 7 && Str_isEqual(Str_trim(iface), interface)) {
-                                stats->timestamp.last = stats->timestamp.now;
-                                stats->timestamp.now = Time_milli();
-                                stats->ipackets.last = stats->ipackets.now;
-                                stats->ipackets.now = ipackets;
-                                stats->ibytes.last = stats->ibytes.now;
-                                stats->ibytes.now = ibytes;
-                                stats->ierrors.last = stats->ierrors.now;
-                                stats->ierrors.now = ierrors;
-                                stats->opackets.last = stats->opackets.now;
-                                stats->opackets.now = opackets;
-                                stats->obytes.last = stats->obytes.now;
-                                stats->obytes.now = obytes;
-                                stats->oerrors.last = stats->oerrors.now;
-                                stats->oerrors.now = oerrors;
+                                S->timestamp.last = S->timestamp.now;
+                                S->timestamp.now = Time_milli();
+                                S->ipackets.last = S->ipackets.now;
+                                S->ipackets.now = ipackets;
+                                S->ibytes.last = S->ibytes.now;
+                                S->ibytes.now = ibytes;
+                                S->ierrors.last = S->ierrors.now;
+                                S->ierrors.now = ierrors;
+                                S->opackets.last = S->opackets.now;
+                                S->opackets.now = opackets;
+                                S->obytes.last = S->obytes.now;
+                                S->obytes.now = obytes;
+                                S->oerrors.last = S->oerrors.now;
+                                S->oerrors.now = oerrors;
                                 fclose(f);
-                                _updateHistory(stats);
+                                _updateHistory(S);
                                 return;
                         }
                 }
@@ -400,7 +418,16 @@ void NetStatistics_update(T stats) {
         } else {
                 THROW(AssertException, "Cannot read /proc/net/dev -- %s", System_getError(errno));
         }
+        THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
+}
+
+
 #elif defined SOLARIS
+
+
+void NetStatistics_update(T S) {
+        _updateCache();
+        const char *interface = S->resolve(S->object);
         kstat_ctl_t *kc = kstat_open();
         if (kc) {
                 kstat_t *ksp;
@@ -413,14 +440,14 @@ void NetStatistics_update(T stats) {
                          * lo:0:lo0:opackets       878
                          */
                         if ((ksp = kstat_lookup(kc, "lo", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
-                                stats->ipackets.last = stats->ipackets.now;
-                                stats->opackets.last = stats->opackets.now;
-                                stats->ipackets.now = _getKstatValue(ksp, "ipackets");
-                                stats->opackets.now = _getKstatValue(ksp, "opackets");
-                                stats->timestamp.last = stats->timestamp.now;
-                                stats->timestamp.now = Time_milli();
+                                S->ipackets.last = S->ipackets.now;
+                                S->opackets.last = S->opackets.now;
+                                S->ipackets.now = _getKstatValue(ksp, "ipackets");
+                                S->opackets.now = _getKstatValue(ksp, "opackets");
+                                S->timestamp.last = S->timestamp.now;
+                                S->timestamp.now = Time_milli();
                                 kstat_close(kc);
-                                _updateHistory(stats);
+                                _updateHistory(S);
                                 return;
                         } else {
                                 kstat_close(kc);
@@ -448,28 +475,28 @@ void NetStatistics_update(T stats) {
                          * link:0:net0:obytes64    3227785
                          */
                         if ((ksp = kstat_lookup(kc, "link", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
-                                stats->state.last = stats->state.now;
-                                stats->speed.last = stats->speed.now;
-                                stats->duplex.last = stats->duplex.now;
-                                stats->ipackets.last = stats->ipackets.now;
-                                stats->ibytes.last = stats->ibytes.now;
-                                stats->ierrors.last = stats->ierrors.now;
-                                stats->opackets.last = stats->opackets.now;
-                                stats->obytes.last = stats->obytes.now;
-                                stats->oerrors.last = stats->oerrors.now;
-                                stats->state.now = _getKstatValue(ksp, "link_state") ? 1LL : 0LL;
-                                stats->speed.now = _getKstatValue(ksp, "ifspeed");
-                                stats->duplex.now = _getKstatValue(ksp, "link_duplex") == 2 ? 1LL : 0LL;
-                                stats->ipackets.now = _getKstatValue(ksp, "ipackets64");
-                                stats->ibytes.now = _getKstatValue(ksp, "rbytes64");
-                                stats->ierrors.now = _getKstatValue(ksp, "ierrors");
-                                stats->opackets.now = _getKstatValue(ksp, "opackets64");
-                                stats->obytes.now = _getKstatValue(ksp, "obytes64");
-                                stats->oerrors.now = _getKstatValue(ksp, "oerrors");
-                                stats->timestamp.last = stats->timestamp.now;
-                                stats->timestamp.now = Time_milli();
+                                S->state.last = S->state.now;
+                                S->speed.last = S->speed.now;
+                                S->duplex.last = S->duplex.now;
+                                S->ipackets.last = S->ipackets.now;
+                                S->ibytes.last = S->ibytes.now;
+                                S->ierrors.last = S->ierrors.now;
+                                S->opackets.last = S->opackets.now;
+                                S->obytes.last = S->obytes.now;
+                                S->oerrors.last = S->oerrors.now;
+                                S->state.now = _getKstatValue(ksp, "link_state") ? 1LL : 0LL;
+                                S->speed.now = _getKstatValue(ksp, "ifspeed");
+                                S->duplex.now = _getKstatValue(ksp, "link_duplex") == 2 ? 1LL : 0LL;
+                                S->ipackets.now = _getKstatValue(ksp, "ipackets64");
+                                S->ibytes.now = _getKstatValue(ksp, "rbytes64");
+                                S->ierrors.now = _getKstatValue(ksp, "ierrors");
+                                S->opackets.now = _getKstatValue(ksp, "opackets64");
+                                S->obytes.now = _getKstatValue(ksp, "obytes64");
+                                S->oerrors.now = _getKstatValue(ksp, "oerrors");
+                                S->timestamp.last = S->timestamp.now;
+                                S->timestamp.now = Time_milli();
                                 kstat_close(kc);
-                                _updateHistory(stats);
+                                _updateHistory(S);
                                 return;
                         } else {
                                 kstat_close(kc);
@@ -477,131 +504,141 @@ void NetStatistics_update(T stats) {
                         }
                 }
         }
-#endif
         THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
 }
 
 
-long long NetStatistics_getBytesInPerSecond(T stats) {
-        assert(stats);
-        return _deltaSecond(stats, &(stats->ibytes));
+#else
+
+
+void NetStatistics_update(T S) {
+        THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
 }
 
 
-long long NetStatistics_getBytesInPerMinute(T stats, int count) {
-        assert(stats);
-        return _deltaMinute(stats, &(stats->ibytes), count);
+#endif
+
+
+long long NetStatistics_getBytesInPerSecond(T S) {
+        assert(S);
+        return _deltaSecond(S, &(S->ibytes));
 }
 
 
-long long NetStatistics_getBytesInPerHour(T stats, int count) {
-        assert(stats);
-        return _deltaHour(stats, &(stats->ibytes), count);
-}
-
-long long NetStatistics_getPacketsInPerSecond(T stats) {
-        assert(stats);
-        return _deltaSecond(stats, &(stats->ipackets));
+long long NetStatistics_getBytesInPerMinute(T S, int count) {
+        assert(S);
+        return _deltaMinute(S, &(S->ibytes), count);
 }
 
 
-long long NetStatistics_getPacketsInPerMinute(T stats, int count) {
-        assert(stats);
-        return _deltaMinute(stats, &(stats->ipackets), count);
+long long NetStatistics_getBytesInPerHour(T S, int count) {
+        assert(S);
+        return _deltaHour(S, &(S->ibytes), count);
+}
+
+long long NetStatistics_getPacketsInPerSecond(T S) {
+        assert(S);
+        return _deltaSecond(S, &(S->ipackets));
 }
 
 
-long long NetStatistics_getPacketsInPerHour(T stats, int count) {
-        assert(stats);
-        return _deltaHour(stats, &(stats->ipackets), count);
-}
-
-long long NetStatistics_getErrorsInPerSecond(T stats) {
-        assert(stats);
-        return _deltaSecond(stats, &(stats->ierrors));
+long long NetStatistics_getPacketsInPerMinute(T S, int count) {
+        assert(S);
+        return _deltaMinute(S, &(S->ipackets), count);
 }
 
 
-long long NetStatistics_getErrorsInPerMinute(T stats, int count) {
-        assert(stats);
-        return _deltaMinute(stats, &(stats->ierrors), count);
+long long NetStatistics_getPacketsInPerHour(T S, int count) {
+        assert(S);
+        return _deltaHour(S, &(S->ipackets), count);
+}
+
+long long NetStatistics_getErrorsInPerSecond(T S) {
+        assert(S);
+        return _deltaSecond(S, &(S->ierrors));
 }
 
 
-long long NetStatistics_getErrorsInPerHour(T stats, int count) {
-        assert(stats);
-        return _deltaHour(stats, &(stats->ierrors), count);
+long long NetStatistics_getErrorsInPerMinute(T S, int count) {
+        assert(S);
+        return _deltaMinute(S, &(S->ierrors), count);
 }
 
 
-long long NetStatistics_getBytesOutPerSecond(T stats) {
-        assert(stats);
-        return _deltaSecond(stats, &(stats->obytes));
+long long NetStatistics_getErrorsInPerHour(T S, int count) {
+        assert(S);
+        return _deltaHour(S, &(S->ierrors), count);
 }
 
 
-long long NetStatistics_getBytesOutPerMinute(T stats, int count) {
-        assert(stats);
-        return _deltaMinute(stats, &(stats->obytes), count);
+long long NetStatistics_getBytesOutPerSecond(T S) {
+        assert(S);
+        return _deltaSecond(S, &(S->obytes));
 }
 
 
-long long NetStatistics_getBytesOutPerHour(T stats, int count) {
-        assert(stats);
-        return _deltaHour(stats, &(stats->obytes), count);
+long long NetStatistics_getBytesOutPerMinute(T S, int count) {
+        assert(S);
+        return _deltaMinute(S, &(S->obytes), count);
 }
 
 
-long long NetStatistics_getPacketsOutPerSecond(T stats) {
-        assert(stats);
-        return _deltaSecond(stats, &(stats->opackets));
+long long NetStatistics_getBytesOutPerHour(T S, int count) {
+        assert(S);
+        return _deltaHour(S, &(S->obytes), count);
 }
 
 
-long long NetStatistics_getPacketsOutPerMinute(T stats, int count) {
-        assert(stats);
-        return _deltaMinute(stats, &(stats->opackets), count);
+long long NetStatistics_getPacketsOutPerSecond(T S) {
+        assert(S);
+        return _deltaSecond(S, &(S->opackets));
 }
 
 
-long long NetStatistics_getPacketsOutPerHour(T stats, int count) {
-        assert(stats);
-        return _deltaHour(stats, &(stats->opackets), count);
+long long NetStatistics_getPacketsOutPerMinute(T S, int count) {
+        assert(S);
+        return _deltaMinute(S, &(S->opackets), count);
 }
 
 
-long long NetStatistics_getErrorsOutPerSecond(T stats) {
-        assert(stats);
-        return _deltaSecond(stats, &(stats->oerrors));
+long long NetStatistics_getPacketsOutPerHour(T S, int count) {
+        assert(S);
+        return _deltaHour(S, &(S->opackets), count);
 }
 
 
-long long NetStatistics_getErrorsOutPerMinute(T stats, int count) {
-        assert(stats);
-        return _deltaMinute(stats, &(stats->oerrors), count);
+long long NetStatistics_getErrorsOutPerSecond(T S) {
+        assert(S);
+        return _deltaSecond(S, &(S->oerrors));
 }
 
 
-long long NetStatistics_getErrorsOutPerHour(T stats, int count) {
-        assert(stats);
-        return _deltaHour(stats, &(stats->oerrors), count);
+long long NetStatistics_getErrorsOutPerMinute(T S, int count) {
+        assert(S);
+        return _deltaMinute(S, &(S->oerrors), count);
 }
 
 
-int NetStatistics_getState(T stats) {
-        assert(stats);
-        return stats->state;
+long long NetStatistics_getErrorsOutPerHour(T S, int count) {
+        assert(S);
+        return _deltaHour(S, &(S->oerrors), count);
 }
 
 
-long long NetStatistics_getSpeed(T stats) {
-        assert(stats);
-        return stats->speed;
+int NetStatistics_getState(T S) {
+        assert(S);
+        return S->state;
 }
 
 
-int NetStatistics_getDuplex(T stats) {
-        assert(stats);
-        return stats->duplex;
+long long NetStatistics_getSpeed(T S) {
+        assert(S);
+        return S->speed;
+}
+
+
+int NetStatistics_getDuplex(T S) {
+        assert(S);
+        return S->duplex;
 }
 

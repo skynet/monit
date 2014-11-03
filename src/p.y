@@ -892,14 +892,14 @@ checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
 checknet        : CHECKNET SERVICENAME ADDRESS STRING {
                     if (NetStatistics_isGetByAddressSupported()) {
                         createservice(TYPE_NET, $<string>2, $4, check_net);
-                        current->inf->priv.net.stats = NetStatistics_getByAddress($4);
+                        current->inf->priv.net.stats = NetStatistics_createForAddress($4);
                     } else {
                         yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
                     }
                   }
                 | CHECKNET SERVICENAME INTERFACE STRING {
                     createservice(TYPE_NET, $<string>2, $4, check_net);
-                    current->inf->priv.net.stats = NetStatistics_getByInterface($4);
+                    current->inf->priv.net.stats = NetStatistics_createForInterface($4);
                   }
                 ;
 
