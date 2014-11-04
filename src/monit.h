@@ -646,12 +646,32 @@ typedef struct myuptime {
 } *Uptime_T;
 
 
-typedef struct mynetlink {
+typedef struct mynetlinkstatus {
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
-        struct mynetlink *next;                            /**< next link in chain */
-} *NetLink_T;
+        struct mynetlinkstatus *next;                      /**< next link in chain */
+} *NetLinkStatus_T;
+
+
+typedef struct mynetlinkspeed {
+        int duplex;                                        /**< Last duplex status */
+        long long speed;                                     /**< Last speed [bps] */
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mynetlinkspeed *next;                       /**< next link in chain */
+} *NetLinkSpeed_T;
+
+
+typedef struct mynetlinksaturation {
+        Operator_Type operator;                           /**< Comparison operator */
+        float limit;                                     /**< Saturation limit [%] */
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mynetlinksaturation *next;                  /**< next link in chain */
+} *NetLinkSaturation_T;
 
 
 typedef struct mybandwidth {
@@ -824,7 +844,9 @@ typedef struct myservice {
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
         Status_T    statuslist;           /**< Program execution status check list */
-        NetLink_T   netlinklist;                            /**< Network link list */
+        NetLinkStatus_T netlinkstatuslist;           /**< Network link status list */
+        NetLinkSpeed_T netlinkspeedlist;              /**< Network link speed list */
+        NetLinkSaturation_T netlinksaturationlist;  /**< Net. link saturation list */
         Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
         Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
         Bandwidth_T downloadbyteslist;              /**< Download bytes check list */

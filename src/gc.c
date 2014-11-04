@@ -55,7 +55,9 @@ static void _gc_action(Action_T *);
 static void _gc_eventaction(EventAction_T *);
 static void _gcpdl(Dependant_T *);
 static void _gcso(Size_T *);
-static void _gcnetlink(NetLink_T *);
+static void _gcnetlinkstatus(NetLinkStatus_T *);
+static void _gcnetlinkspeed(NetLinkSpeed_T *);
+static void _gcnetlinksaturation(NetLinkSaturation_T *);
 static void _gcbandwidth(Bandwidth_T *);
 static void _gcmatch(Match_T *);
 static void _gcchecksum(Checksum_T *);
@@ -222,8 +224,14 @@ static void _gc_service(Service_T *s) {
         if((*s)->sizelist)
                 _gcso(&(*s)->sizelist);
 
-        if((*s)->netlinklist)
-                _gcnetlink(&(*s)->netlinklist);
+        if((*s)->netlinkstatuslist)
+                _gcnetlinkstatus(&(*s)->netlinkstatuslist);
+
+        if((*s)->netlinkspeedlist)
+                _gcnetlinkspeed(&(*s)->netlinkspeedlist);
+
+        if((*s)->netlinksaturationlist)
+                _gcnetlinksaturation(&(*s)->netlinksaturationlist);
 
         if((*s)->uploadbyteslist)
                 _gcbandwidth(&(*s)->uploadbyteslist);
@@ -538,11 +546,33 @@ static void _gcso(Size_T *s) {
 
 }
 
-static void _gcnetlink(NetLink_T *l) {
+static void _gcnetlinkstatus(NetLinkStatus_T *l) {
         ASSERT(l);
 
         if((*l)->next)
-                _gcnetlink(&(*l)->next);
+                _gcnetlinkstatus(&(*l)->next);
+        if((*l)->action)
+                _gc_eventaction(&(*l)->action);
+        FREE(*l);
+}
+
+
+static void _gcnetlinkspeed(NetLinkSpeed_T *l) {
+        ASSERT(l);
+
+        if((*l)->next)
+                _gcnetlinkspeed(&(*l)->next);
+        if((*l)->action)
+                _gc_eventaction(&(*l)->action);
+        FREE(*l);
+}
+
+
+static void _gcnetlinksaturation(NetLinkSaturation_T *l) {
+        ASSERT(l);
+
+        if((*l)->next)
+                _gcnetlinksaturation(&(*l)->next);
         if((*l)->action)
                 _gc_eventaction(&(*l)->action);
         FREE(*l);

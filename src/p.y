@@ -166,7 +166,9 @@
   static struct myperm permset;
   static struct mysize sizeset;
   static struct myuptime uptimeset;
-  static struct mynetlink netlinkset;
+  static struct mynetlinkstatus netlinkstatusset;
+  static struct mynetlinkspeed netlinkspeedset;
+  static struct mynetlinksaturation netlinksaturationset;
   static struct mybandwidth bandwidthset;
   static struct mymatch matchset;
   static struct myicmp icmpset;
@@ -202,7 +204,9 @@
   static void  addactionrate(ActionRate_T);
   static void  addsize(Size_T);
   static void  adduptime(Uptime_T);
-  static void  addnetlink(Service_T, NetLink_T);
+  static void  addnetlinkstatus(Service_T, NetLinkStatus_T);
+  static void  addnetlinkspeed(Service_T, NetLinkSpeed_T);
+  static void  addnetlinksaturation(Service_T, NetLinkSaturation_T);
   static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
   static void  addfilesystem(Filesystem_T);
   static void  addicmp(Icmp_T);
@@ -241,7 +245,9 @@
   static void  reset_actionrateset();
   static void  reset_sizeset();
   static void  reset_uptimeset();
-  static void  reset_netlinkset();
+  static void  reset_netlinkstatusset();
+  static void  reset_netlinkspeedset();
+  static void  reset_netlinksaturationset();
   static void  reset_bandwidthset();
   static void  reset_checksumset();
   static void  reset_permset();
@@ -274,7 +280,7 @@
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
-%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD TOTAL
+%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD TOTAL UTILIZATION
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
 %token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
@@ -458,7 +464,9 @@ optnetlist      : /* EMPTY */
 optnet          : start
                 | stop
                 | restart
-                | netlink
+                | netlinkstatus
+                | netlinkspeed
+                | netlinksaturation
                 | upload
                 | download
                 | actionrate
@@ -1947,9 +1955,22 @@ gid             : IF FAILED GID STRING rate1 THEN action1 recovery {
                   }
                 ;
 
-netlink         : IF FAILED LINK rate1 THEN action1 recovery {
-                    addeventaction(&(netlinkset).action, $<number>6, $<number>7);
-                    addnetlink(current, &netlinkset);
+netlinkstatus   : IF FAILED LINK rate1 THEN action1 recovery {
+                    addeventaction(&(netlinkstatusset).action, $<number>6, $<number>7);
+                    addnetlinkstatus(current, &netlinkstatusset);
+                  }
+                ;
+
+netlinkspeed    : IF CHANGED LINK rate1 THEN action1 recovery {
+                    addeventaction(&(netlinkspeedset).action, $<number>6, $<number>7);
+                    addnetlinkspeed(current, &netlinkspeedset);
+                  }
+
+netlinksaturation : IF UTILIZATION operator NUMBER PERCENT rate1 THEN action1 recovery {
+                    netlinksaturationset.operator = $<number>3;
+                    netlinksaturationset.limit = (unsigned long long)$4;
+                    addeventaction(&(netlinksaturationset).action, $<number>8, $<number>9);
+                    addnetlinksaturation(current, &netlinksaturationset);
                   }
                 ;
 
@@ -2255,7 +2276,9 @@ static void preparse() {
   reset_portset();
   reset_permset();
   reset_icmpset();
-  reset_netlinkset();
+  reset_netlinkstatusset();
+  reset_netlinkspeedset();
+  reset_netlinksaturationset();
   reset_bandwidthset();
   reset_rateset();
   reset_filesystemset();
@@ -2311,9 +2334,9 @@ static void postparse() {
                         if (s->program->args->has_gid) {
                                 Command_setGid(s->program->C, s->program->args->gid);
                         }
-                } else if (s->type == TYPE_NET && ! s->netlinklist) {
-                        addeventaction(&(netlinkset).action, ACTION_ALERT, ACTION_ALERT);
-                        addnetlink(s, &netlinkset);
+                } else if (s->type == TYPE_NET && ! s->netlinkstatuslist) {
+                        addeventaction(&(netlinkstatusset).action, ACTION_ALERT, ACTION_ALERT);
+                        addnetlinkstatus(s, &netlinkstatusset);
                 }
         }
 
@@ -2759,20 +2782,48 @@ static void addperm(Perm_T ps) {
 
 }
 
-/*
- * Add a new Link object to the current service link list
- */
-static void addnetlink(Service_T s, NetLink_T L) {
+
+static void addnetlinkstatus(Service_T s, NetLinkStatus_T L) {
   ASSERT(L);
 
-  NetLink_T l;
+  NetLinkStatus_T l;
   NEW(l);
-  l->action       = L->action;
+  l->action = L->action;
 
-  l->next = s->netlinklist;
-  s->netlinklist = l;
+  l->next = s->netlinkstatuslist;
+  s->netlinkstatuslist = l;
 
-  reset_netlinkset();
+  reset_netlinkstatusset();
+}
+
+
+static void addnetlinkspeed(Service_T s, NetLinkSpeed_T L) {
+  ASSERT(L);
+
+  NetLinkSpeed_T l;
+  NEW(l);
+  l->action = L->action;
+
+  l->next = s->netlinkspeedlist;
+  s->netlinkspeedlist = l;
+
+  reset_netlinkspeedset();
+}
+
+
+static void addnetlinksaturation(Service_T s, NetLinkSaturation_T L) {
+  ASSERT(L);
+
+  NetLinkSaturation_T l;
+  NEW(l);
+  l->operator = L->operator;
+  l->limit = L->limit;
+  l->action = L->action;
+
+  l->next = s->netlinksaturationlist;
+  s->netlinksaturationlist = l;
+
+  reset_netlinksaturationset();
 }
 
 
@@ -3674,11 +3725,20 @@ static void reset_uptimeset() {
 }
 
 
-/*
- * Reset the Link set to default values
- */
-static void reset_netlinkset() {
-  netlinkset.action = NULL;
+static void reset_netlinkstatusset() {
+  netlinkstatusset.action = NULL;
+}
+
+
+static void reset_netlinkspeedset() {
+  netlinkspeedset.action = NULL;
+}
+
+
+static void reset_netlinksaturationset() {
+  netlinksaturationset.limit = 0.;
+  netlinksaturationset.operator = Operator_Equal;
+  netlinksaturationset.action = NULL;
 }
 
 

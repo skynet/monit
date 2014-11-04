@@ -1069,9 +1069,19 @@ void Util_printService(Service_T s) {
                 );
         }
 
-        for (NetLink_T o = s->netlinklist; o; o = o->next) {
+        for (NetLinkStatus_T o = s->netlinkstatuslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Link", StringBuffer_toString(Util_printRule(buf, o->action, "if failed")));
+                printf(" %-20s = %s\n", "Link status", StringBuffer_toString(Util_printRule(buf, o->action, "if failed")));
+        }
+
+        for (NetLinkSpeed_T o = s->netlinkspeedlist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Link speed", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
+        }
+
+        for (NetLinkSaturation_T o = s->netlinksaturationlist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Link utilization", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit)));
         }
 
         for (Bandwidth_T o = s->uploadbyteslist; o; o = o->next) {
@@ -1712,7 +1722,6 @@ char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
 
 
 int Util_evalQExpression(Operator_Type operator, long long left, long long right) {
-
         switch (operator) {
                 case Operator_Greater:
                         if (left > right)
@@ -1735,9 +1744,34 @@ int Util_evalQExpression(Operator_Type operator, long long left, long long right
                         LogError("Unknown comparison operator\n");
                         return FALSE;
         }
-
         return FALSE;
+}
 
+
+int Util_evalDoubleQExpression(Operator_Type operator, double left, double right) {
+        switch (operator) {
+                case Operator_Greater:
+                        if (left > right)
+                                return TRUE;
+                        break;
+                case Operator_Less:
+                        if (left < right)
+                                return TRUE;
+                        break;
+                case Operator_Equal:
+                        if (left == right)
+                                return TRUE;
+                        break;
+                case Operator_NotEqual:
+                case Operator_Changed:
+                        if (left != right)
+                                return TRUE;
+                        break;
+                default:
+                        LogError("Unknown comparison operator\n");
+                        return FALSE;
+        }
+        return FALSE;
 }
 
 

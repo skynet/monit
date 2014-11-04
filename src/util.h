@@ -332,6 +332,16 @@ char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len);
 int Util_evalQExpression(Operator_Type operator, long long left, long long right);
 
 
+/**
+ * Evaluate a qualification expression.
+ * @param operator The qualification operator
+ * @param left Expression lval
+ * @param rightExpression rval
+ * @return the boolean value of the expression
+ */
+int Util_evalDoubleQExpression(Operator_Type operator, double left, double right);
+
+
 /*
  * This will enable service monitoring in the case that it was disabled.
  * @param s A Service_T object

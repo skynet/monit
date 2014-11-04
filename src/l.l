@@ -197,6 +197,8 @@ packet(s)?        { return PACKET; }
 bandwidth         { return BANDWIDTH; }
 upload(ed)?       { return UPLOAD; }
 download(ed)?     { return DOWNLOAD; }
+utilization       { return UTILIZATION; }
+utilisation       { return UTILIZATION; }
 total             { return TOTAL; }
 clientpemfile     { return CLIENTPEMFILE; }
 allowselfcertification  { return ALLOWSELFCERTIFICATION; }

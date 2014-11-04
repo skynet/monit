@@ -1356,43 +1356,83 @@ int check_net(Service_T s) {
         ELSE
         {
                 havedata = FALSE;
-                for (NetLink_T link = s->netlinklist; link; link = link->next)
+                for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "link data gathering failed -- %s", Exception_frame.message);
         }
         END_TRY;
         if (! havedata)
                 return FALSE; // Terminate test if no data are available
-        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+        for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
                 Event_post(s, Event_Size, STATE_SUCCEEDED, link->action, "link data gathering succeeded");
         }
         // State
         if (! NetStatistics_getState(s->inf->priv.net.stats)) {
-                for (NetLink_T link = s->netlinklist; link; link = link->next)
+                for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
                 return FALSE; // Terminate test if the link is down
         } else {
                 DEBUG("Link %s up\n", s->path);
-                for (NetLink_T link = s->netlinklist; link; link = link->next) {
+                for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
                 }
         }
         // Link errors
         long long oerrors = NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats);
-        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+        for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
                 if (oerrors)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld upload errors detected", oerrors);
                 else
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "upload errors check succeeded");
         }
         long long ierrors = NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats);
-        for (NetLink_T link = s->netlinklist; link; link = link->next) {
+        for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
                 if (ierrors)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld download errors detected", ierrors);
                 else
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "download errors check succeeded");
         }
-        char buf1[STRLEN], buf2[STRLEN];
+        // Link speed
+        int duplex = NetStatistics_getDuplex(s->inf->priv.net.stats);
+        long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
+        for (NetLinkSpeed_T link = s->netlinkspeedlist; link; link = link->next) {
+                if (link->speed) {
+                        if (duplex != link->duplex)
+                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link mode is now %splex", duplex ? "full" : "half");
+                        else
+                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %sduplex]", duplex ? "full" : "half");
+                        if (speed != link->speed)
+                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link speed changed to %lf Mb/s", (double)speed / 1000000.);
+                        else
+                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link speed has not changed since last cycle [current speed = %lf Mb/s]", (double)speed / 1000000.);
+                }
+                link->duplex = duplex;
+                link->speed = speed;
+        }
+        // Link saturation
+        if (speed) {
+                double osaturation = (double)NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats) * 8. * 100. / speed;
+                double isaturation = (double)NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats) * 8. * 100. / speed;
+                double iosaturation = osaturation + isaturation;
+                for (NetLinkSaturation_T link = s->netlinksaturationlist; link; link = link->next) {
+                        if (duplex) {
+                                if (Util_evalDoubleQExpression(link->operator, osaturation, link->limit))
+                                        Event_post(s, Event_Bandwidth, STATE_FAILED, link->action, "link upload utilization of %.1f%% matches limit [utilization %s %.1f%%]", osaturation, operatorshortnames[link->operator], link->limit);
+                                else
+                                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, link->action, "link upload utilization check succeeded [current upload utilization %.1f%%]", osaturation);
+                                if (Util_evalDoubleQExpression(link->operator, isaturation, link->limit))
+                                        Event_post(s, Event_Bandwidth, STATE_FAILED, link->action, "link download utilization of %.1f%% matches limit [utilization %s %.1f%%]", isaturation, operatorshortnames[link->operator], link->limit);
+                                else
+                                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, link->action, "link download utilization check succeeded [current download utilization %.1f%%]", isaturation);
+                        } else {
+                                if (Util_evalDoubleQExpression(link->operator, iosaturation, link->limit))
+                                        Event_post(s, Event_Bandwidth, STATE_FAILED, link->action, "link utilization of %.1f%% matches limit [utilization %s %.1f%%]", iosaturation, operatorshortnames[link->operator], link->limit);
+                                else
+                                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, link->action, "link utilization check succeeded [current utilization %.1f%%]", iosaturation);
+                        }
+                }
+        }
         // Upload
+        char buf1[STRLEN], buf2[STRLEN];
         for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
                 long long obytes;
                 switch (upload->range) {

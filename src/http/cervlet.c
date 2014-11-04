@@ -130,6 +130,9 @@ static void print_service_rules_gid(HttpResponse, Service_T);
 static void print_service_rules_timestamp(HttpResponse, Service_T);
 static void print_service_rules_filesystem(HttpResponse, Service_T);
 static void print_service_rules_size(HttpResponse, Service_T);
+static void print_service_rules_netlinkstatus(HttpResponse, Service_T);
+static void print_service_rules_netlinkspeed(HttpResponse, Service_T);
+static void print_service_rules_netlinksaturation(HttpResponse, Service_T);
 static void print_service_rules_uploadbytes(HttpResponse, Service_T);
 static void print_service_rules_uploadpackets(HttpResponse, Service_T);
 static void print_service_rules_downloadbytes(HttpResponse, Service_T);
@@ -926,6 +929,9 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_timestamp(res, s);
         print_service_rules_filesystem(res, s);
         print_service_rules_size(res, s);
+        print_service_rules_netlinkstatus(res, s);
+        print_service_rules_netlinkspeed(res, s);
+        print_service_rules_netlinksaturation(res, s);
         print_service_rules_uploadbytes(res, s);
         print_service_rules_uploadpackets(res, s);
         print_service_rules_downloadbytes(res, s);
@@ -1772,6 +1778,33 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
                         Util_printRule(res->outputbuffer, sl->action, "If changed");
                 else
                         Util_printRule(res->outputbuffer, sl->action, "If %s %llu byte(s)", operatornames[sl->operator], sl->size);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_netlinkstatus(HttpResponse res, Service_T s) {
+        for (NetLinkStatus_T l = s->netlinkstatuslist; l; l = l->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Link status</td><td>");
+                Util_printRule(res->outputbuffer, l->action, "If failed");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
+        for (NetLinkSpeed_T l = s->netlinkspeedlist; l; l = l->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>");
+                Util_printRule(res->outputbuffer, l->action, "If changed");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_netlinksaturation(HttpResponse res, Service_T s) {
+        for (NetLinkSaturation_T l = s->netlinksaturationlist; l; l = l->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Link utilization</td><td>");
+                Util_printRule(res->outputbuffer, l->action, "If %s %.1f%%", operatornames[l->operator], l->limit);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
