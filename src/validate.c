@@ -1400,9 +1400,9 @@ int check_net(Service_T s) {
                         else
                                 Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
                         if (speed != link->speed)
-                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link speed changed to %lf Mb/s", (double)speed / 1000000.);
+                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link speed changed to %.0lf Mb/s", (double)speed / 1000000.);
                         else
-                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link speed has not changed since last cycle [current speed = %lf Mb/s]", (double)speed / 1000000.);
+                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link speed has not changed since last cycle [current speed = %.0lf Mb/s]", (double)speed / 1000000.);
                 }
                 link->duplex = duplex;
                 link->speed = speed;

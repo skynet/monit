@@ -2138,7 +2138,7 @@ static void print_service_params_net(HttpResponse res, Service_T s) {
                         char buf[STRLEN];
                         long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
                         if (speed > 0)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.1lf Mb&#47;s %s-duplex</td></tr>", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.0lf Mb&#47;s %s-duplex</td></tr>", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>%lld per second</td></tr>", NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats));
 
                         long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
@@ -2555,7 +2555,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
                                 if (speed > 0)
                                         StringBuffer_append(res->outputbuffer,
-                                                "  %-33s %.1lf Mb/s %s-duplex\n",
+                                                "  %-33s %.0lf Mb/s %s-duplex\n",
                                                 "link speed", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
                                 StringBuffer_append(res->outputbuffer,
