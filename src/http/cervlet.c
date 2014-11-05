@@ -121,6 +121,8 @@ static void is_monit_running(HttpRequest, HttpResponse);
 static void do_service(HttpRequest, HttpResponse, Service_T);
 static void print_alerts(HttpResponse, Mail_T);
 static void print_buttons(HttpRequest, HttpResponse, Service_T);
+static void print_service_rules_timeout(HttpResponse, Service_T);
+static void print_service_rules_existence(HttpResponse, Service_T);
 static void print_service_rules_port(HttpResponse, Service_T);
 static void print_service_rules_icmp(HttpResponse, Service_T);
 static void print_service_rules_perm(HttpResponse, Service_T);
@@ -143,20 +145,20 @@ static void print_service_rules_checksum(HttpResponse, Service_T);
 static void print_service_rules_process(HttpResponse, Service_T);
 static void print_service_rules_program(HttpResponse, Service_T);
 static void print_service_rules_resource(HttpResponse, Service_T);
-static void print_service_params_port(HttpResponse, Service_T);
-static void print_service_params_icmp(HttpResponse, Service_T);
-static void print_service_params_perm(HttpResponse, Service_T);
-static void print_service_params_uid(HttpResponse, Service_T);
-static void print_service_params_gid(HttpResponse, Service_T);
-static void print_service_params_timestamp(HttpResponse, Service_T);
-static void print_service_params_filesystem(HttpResponse, Service_T);
-static void print_service_params_size(HttpResponse, Service_T);
-static void print_service_params_match(HttpResponse, Service_T);
-static void print_service_params_checksum(HttpResponse, Service_T);
-static void print_service_params_process(HttpResponse, Service_T);
-static void print_service_params_resource(HttpResponse, Service_T);
-static void print_service_params_program(HttpResponse, Service_T);
-static void print_service_params_net(HttpResponse, Service_T);
+static void print_service_status_port(HttpResponse, Service_T);
+static void print_service_status_icmp(HttpResponse, Service_T);
+static void print_service_status_perm(HttpResponse, Service_T);
+static void print_service_status_uid(HttpResponse, Service_T);
+static void print_service_status_gid(HttpResponse, Service_T);
+static void print_service_status_timestamp(HttpResponse, Service_T);
+static void print_service_status_filesystem(HttpResponse, Service_T);
+static void print_service_status_size(HttpResponse, Service_T);
+static void print_service_status_match(HttpResponse, Service_T);
+static void print_service_status_checksum(HttpResponse, Service_T);
+static void print_service_status_process(HttpResponse, Service_T);
+static void print_service_status_resource(HttpResponse, Service_T);
+static void print_service_status_program(HttpResponse, Service_T);
+static void print_service_status_net(HttpResponse, Service_T);
 static void print_status(HttpRequest, HttpResponse, int);
 static void status_service_txt(Service_T, HttpResponse, short);
 static char *get_monitoring_status(Service_T s, char *, int);
@@ -327,6 +329,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                 " a {text-decoration: underline;color:#222} "\
                 " table {border-collapse:collapse; border:0;} "\
                 " .stripe {background:#EDF5FF} "\
+                " .rule {background:#ddd} "\
                 " .red-text {color:#ff0000;} "\
                 " .green-text {color:#00ff00;} "\
                 " .gray-text {color:#999999;} "\
@@ -878,12 +881,6 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 
-        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Existence</td><td>");
-                Util_printRule(res->outputbuffer, s->action_NONEXIST, "If doesn't exist");
-                StringBuffer_append(res->outputbuffer, "</td></tr>");
-        }
-
         if (s->every.type != EVERY_CYCLE) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Check service</td><td>");
                 if (s->every.type == EVERY_SKIPCYCLES)
@@ -895,31 +892,27 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 
-        for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Timeout</td><td>If restarted %d times within %d cycle(s) then ", ar->count, ar->cycle);
-                Util_printAction(ar->action->failed, res->outputbuffer);
-                StringBuffer_append(res->outputbuffer, "</td></tr>");
-        }
+        // Status
+        print_service_status_icmp(res, s);
+        print_service_status_port(res, s);
+        print_service_status_perm(res, s);
+        print_service_status_uid(res, s);
+        print_service_status_gid(res, s);
+        print_service_status_timestamp(res, s);
+        print_service_status_filesystem(res, s);
+        print_service_status_size(res, s);
+        print_service_status_match(res, s);
+        print_service_status_checksum(res, s);
+        print_service_status_process(res, s);
+        print_service_status_resource(res, s);
+        print_service_status_program(res, s);
+        print_service_status_net(res, s);
 
         StringBuffer_append(res->outputbuffer, "<tr><td>Data collected</td><td>%s</td></tr>", Time_string(s->collected.tv_sec, buf));
 
-        /* Parameters */
-        print_service_params_icmp(res, s);
-        print_service_params_port(res, s);
-        print_service_params_perm(res, s);
-        print_service_params_uid(res, s);
-        print_service_params_gid(res, s);
-        print_service_params_timestamp(res, s);
-        print_service_params_filesystem(res, s);
-        print_service_params_size(res, s);
-        print_service_params_match(res, s);
-        print_service_params_checksum(res, s);
-        print_service_params_process(res, s);
-        print_service_params_resource(res, s);
-        print_service_params_program(res, s);
-        print_service_params_net(res, s);
-
-        /* Rules */
+        // Rules
+        print_service_rules_timeout(res, s);
+        print_service_rules_existence(res, s);
         print_service_rules_icmp(res, s);
         print_service_rules_port(res, s);
         print_service_rules_perm(res, s);
@@ -1665,19 +1658,37 @@ static void print_buttons(HttpRequest req, HttpResponse res, Service_T s) {
 }
 
 
+static void print_service_rules_timeout(HttpResponse res, Service_T s) {
+        for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next) {
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Timeout</td><td>If restarted %d times within %d cycle(s) then ", ar->count, ar->cycle);
+                Util_printAction(ar->action->failed, res->outputbuffer);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_existence(HttpResponse res, Service_T s) {
+        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Existence</td><td>");
+                Util_printRule(res->outputbuffer, s->action_NONEXIST, "If doesn't exist");
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
 static void print_service_rules_port(HttpResponse res, Service_T s) {
         for (Port_T p = s->portlist; p; p = p->next) {
                 if (p->family == AF_INET) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Port</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Port</td><td>");
                         if (p->retry > 1)
                                 Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry);
                         else
                                 Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                         if (p->SSL.certmd5 != NULL)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
+                                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
                 } else if (p->family == AF_UNIX) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Unix Socket</td><td>");
                         if (p->retry > 1)
                                 Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout, p->retry);
                         else
@@ -1690,7 +1701,7 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
 
 static void print_service_rules_icmp(HttpResponse res, Service_T s) {
         for (Icmp_T i = s->icmplist; i; i = i->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Ping</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Ping</td><td>");
                 Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1699,7 +1710,7 @@ static void print_service_rules_icmp(HttpResponse res, Service_T s) {
 
 static void print_service_rules_perm(HttpResponse res, Service_T s) {
         if (s->perm) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Permissions</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Permissions</td><td>");
                 Util_printRule(res->outputbuffer, s->perm->action, "If failed %o", s->perm->perm);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1708,7 +1719,7 @@ static void print_service_rules_perm(HttpResponse res, Service_T s) {
 
 static void print_service_rules_uid(HttpResponse res, Service_T s) {
         if (s->uid) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>UID</td><td>");
                 Util_printRule(res->outputbuffer, s->uid->action, "If failed %d", s->uid->uid);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1717,7 +1728,7 @@ static void print_service_rules_uid(HttpResponse res, Service_T s) {
 
 static void print_service_rules_euid(HttpResponse res, Service_T s) {
         if (s->euid) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>EUID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>EUID</td><td>");
                 Util_printRule(res->outputbuffer, s->euid->action, "If failed %d", s->euid->uid);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1726,7 +1737,7 @@ static void print_service_rules_euid(HttpResponse res, Service_T s) {
 
 static void print_service_rules_gid(HttpResponse res, Service_T s) {
         if (s->gid) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>GID</td><td>");
                 Util_printRule(res->outputbuffer, s->gid->action, "If failed %d", s->gid->gid);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1735,7 +1746,7 @@ static void print_service_rules_gid(HttpResponse res, Service_T s) {
 
 static void print_service_rules_timestamp(HttpResponse res, Service_T s) {
         for (Timestamp_T t = s->timestamplist; t; t = t->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Timestamp</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Timestamp</td><td>");
                 if (t->test_changes)
                         Util_printRule(res->outputbuffer, t->action, "If changed");
                 else
@@ -1747,20 +1758,20 @@ static void print_service_rules_timestamp(HttpResponse res, Service_T s) {
 
 static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILESYSTEM) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Filesystem flags</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Filesystem flags</td><td>");
                 Util_printRule(res->outputbuffer, s->action_FSFLAG, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
         for (Filesystem_T dl = s->filesystemlist; dl; dl = dl->next) {
                 if (dl->resource == RESOURCE_ID_INODE) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Inodes usage limit</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Inodes usage limit</td><td>");
                         if (dl->limit_absolute > -1)
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %lld", operatornames[dl->operator], dl->limit_absolute);
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 } else if (dl->resource == RESOURCE_ID_SPACE) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Space usage limit</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Space usage limit</td><td>");
                         if (dl->limit_absolute > -1)
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %lld blocks", operatornames[dl->operator], dl->limit_absolute);
                         else
@@ -1773,7 +1784,7 @@ static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
 
 static void print_service_rules_size(HttpResponse res, Service_T s) {
         for (Size_T sl = s->sizelist; sl; sl = sl->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Size</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Size</td><td>");
                 if (sl->test_changes)
                         Util_printRule(res->outputbuffer, sl->action, "If changed");
                 else
@@ -1785,7 +1796,7 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
 
 static void print_service_rules_netlinkstatus(HttpResponse res, Service_T s) {
         for (NetLinkStatus_T l = s->netlinkstatuslist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Link status</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link status</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If failed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1794,7 +1805,7 @@ static void print_service_rules_netlinkstatus(HttpResponse res, Service_T s) {
 
 static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
         for (NetLinkSpeed_T l = s->netlinkspeedlist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link speed</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1803,7 +1814,7 @@ static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
 
 static void print_service_rules_netlinksaturation(HttpResponse res, Service_T s) {
         for (NetLinkSaturation_T l = s->netlinksaturationlist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Link utilization</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link utilization</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If %s %.1f%%", operatornames[l->operator], l->limit);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1814,10 +1825,10 @@ static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Bandwidth_T bl = s->uploadbyteslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Upload bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Total upload bytes</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total upload bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf), bl->rangecount, Util_timestr(bl->range));
                 }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -1828,10 +1839,10 @@ static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
 static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->uploadpacketslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Upload packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Total upload packets</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total upload packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
                 }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -1843,10 +1854,10 @@ static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Bandwidth_T bl = s->downloadbyteslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Download bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Total download bytes</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total download bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf), bl->rangecount, Util_timestr(bl->range));
                 }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -1857,10 +1868,10 @@ static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
 static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->downloadpacketslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Download packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Total download packets</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total download packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
                 }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -1870,7 +1881,7 @@ static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
 
 static void print_service_rules_uptime(HttpResponse res, Service_T s) {
         for (Uptime_T ul = s->uptimelist; ul; ul = ul->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Uptime</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Uptime</td><td>");
                 Util_printRule(res->outputbuffer, ul->action, "If %s %llu second(s)", operatornames[ul->operator], ul->uptime);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1879,12 +1890,12 @@ static void print_service_rules_uptime(HttpResponse res, Service_T s) {
 static void print_service_rules_match(HttpResponse res, Service_T s) {
         if (s->type != TYPE_PROCESS) {
                 for (Match_T ml = s->matchignorelist; ml; ml = ml->next) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Ignore pattern</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Ignore pattern</td><td>");
                         Util_printRule(res->outputbuffer, ml->action, "If %smatch \"%s\"", ml->not ? "not " : "", ml->match_string);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
                 for (Match_T ml = s->matchlist; ml; ml = ml->next) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Pattern</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Pattern</td><td>");
                         Util_printRule(res->outputbuffer, ml->action, "If %smatch \"%s\"", ml->not ? "not " : "", ml->match_string);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
@@ -1894,7 +1905,7 @@ static void print_service_rules_match(HttpResponse res, Service_T s) {
 
 static void print_service_rules_checksum(HttpResponse res, Service_T s) {
         if (s->checksum) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Checksum</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Checksum</td><td>");
                 if (s->checksum->test_changes)
                         Util_printRule(res->outputbuffer, s->checksum->action, "If changed %s", checksumnames[s->checksum->type]);
                 else
@@ -1906,10 +1917,10 @@ static void print_service_rules_checksum(HttpResponse res, Service_T s) {
 
 static void print_service_rules_process(HttpResponse res, Service_T s) {
         if (s->type == TYPE_PROCESS) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>PID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>PID</td><td>");
                 Util_printRule(res->outputbuffer, s->action_PID, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
-                StringBuffer_append(res->outputbuffer, "<tr><td>PPID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>PPID</td><td>");
                 Util_printRule(res->outputbuffer, s->action_PPID, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1918,9 +1929,9 @@ static void print_service_rules_process(HttpResponse res, Service_T s) {
 
 static void print_service_rules_program(HttpResponse res, Service_T s) {
         if (s->type == TYPE_PROGRAM) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>Program timeout</td><td>Terminate the program if not finished within %d seconds</td></tr>", s->program->timeout);
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Program timeout</td><td>Terminate the program if not finished within %d seconds</td></tr>", s->program->timeout);
                 for (Status_T status = s->statuslist; status; status = status->next) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Test Exit value</td><td>");
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Test Exit value</td><td>");
                         if (status->operator == Operator_Changed)
                                 Util_printRule(res->outputbuffer, status->action, "If exit value changed");
                         else
@@ -1934,7 +1945,7 @@ static void print_service_rules_program(HttpResponse res, Service_T s) {
 static void print_service_rules_resource(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Resource_T q = s->resourcelist; q; q = q->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>");
                 switch (q->resource_id) {
                         case RESOURCE_ID_CPU_PERCENT:
                                 StringBuffer_append(res->outputbuffer, "CPU usage limit");
@@ -2030,7 +2041,7 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_port(HttpResponse res, Service_T s) {
+static void print_service_status_port(HttpResponse res, Service_T s) {
 
         if ((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
                 if (! Util_hasServiceStatus(s)) {
@@ -2077,7 +2088,7 @@ static void print_service_params_port(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_icmp(HttpResponse res, Service_T s) {
+static void print_service_status_icmp(HttpResponse res, Service_T s) {
         if (s->type == TYPE_HOST && s->icmplist) {
                 if (! Util_hasServiceStatus(s)) {
                         for (Icmp_T i = s->icmplist; i; i = i->next)
@@ -2094,7 +2105,7 @@ static void print_service_params_icmp(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_perm(HttpResponse res, Service_T s) {
+static void print_service_status_perm(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td><td>-</td></tr>");
@@ -2104,7 +2115,7 @@ static void print_service_params_perm(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_uid(HttpResponse res, Service_T s) {
+static void print_service_status_uid(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td>-</td></tr>");
@@ -2114,7 +2125,7 @@ static void print_service_params_uid(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_gid(HttpResponse res, Service_T s) {
+static void print_service_status_gid(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td>-</td></tr>");
@@ -2124,7 +2135,7 @@ static void print_service_params_gid(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_net(HttpResponse res, Service_T s) {
+static void print_service_status_net(HttpResponse res, Service_T s) {
         if (s->type == TYPE_NET) {
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Link</td><td>-</td></tr>");
@@ -2163,7 +2174,7 @@ static void print_service_params_net(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_timestamp(HttpResponse res, Service_T s) {
+static void print_service_status_timestamp(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE ||
            s->type == TYPE_FIFO ||
@@ -2183,7 +2194,7 @@ static void print_service_params_timestamp(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_filesystem(HttpResponse res, Service_T s) {
+static void print_service_status_filesystem(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILESYSTEM) {
 
@@ -2245,7 +2256,7 @@ static void print_service_params_filesystem(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_size(HttpResponse res, Service_T s) {
+static void print_service_status_size(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE) {
 
@@ -2266,7 +2277,7 @@ static void print_service_params_size(HttpResponse res, Service_T s) {
         }
 }
 
-static void print_service_params_match(HttpResponse res, Service_T s) {
+static void print_service_status_match(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE) {
 
@@ -2286,7 +2297,7 @@ static void print_service_params_match(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_checksum(HttpResponse res, Service_T s) {
+static void print_service_status_checksum(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_FILE && s->checksum) {
 
@@ -2306,7 +2317,7 @@ static void print_service_params_checksum(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_process(HttpResponse res, Service_T s) {
+static void print_service_status_process(HttpResponse res, Service_T s) {
 
         if (s->type == TYPE_PROCESS) {
 
@@ -2347,7 +2358,7 @@ static void print_service_params_process(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_resource(HttpResponse res, Service_T s) {
+static void print_service_status_resource(HttpResponse res, Service_T s) {
 
         if (Run.doprocess && (s->type == TYPE_PROCESS || s->type == TYPE_SYSTEM) ) {
 
@@ -2424,7 +2435,7 @@ static void print_service_params_resource(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_params_program(HttpResponse res, Service_T s) {
+static void print_service_status_program(HttpResponse res, Service_T s) {
         if (s->type == TYPE_PROGRAM) {
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
