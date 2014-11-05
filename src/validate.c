@@ -1371,7 +1371,6 @@ int check_net(Service_T s) {
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
                 return FALSE; // Terminate test if the link is down
         } else {
-                DEBUG("Link %s up\n", s->path);
                 for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
                 }
