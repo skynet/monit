@@ -1826,7 +1826,7 @@ static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->uploadbyteslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Upload bytes</td><td>");
-                        Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s/s", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
                 } else {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total upload bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf), bl->rangecount, Util_timestr(bl->range));
@@ -1840,7 +1840,7 @@ static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->uploadpacketslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Upload packets</td><td>");
-                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets/s", operatornames[bl->operator], bl->limit);
                 } else {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total upload packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
@@ -1855,7 +1855,7 @@ static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->downloadbyteslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Download bytes</td><td>");
-                        Util_printRule(res->outputbuffer, bl->action, "If %s %s per second", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %s/s", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
                 } else {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total download bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s in last %d %s(s)", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf), bl->rangecount, Util_timestr(bl->range));
@@ -1869,7 +1869,7 @@ static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->downloadpacketslist; bl; bl = bl->next) {
                 if (bl->range == TIME_SECOND) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Download packets</td><td>");
-                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets per second", operatornames[bl->operator], bl->limit);
+                        Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets/s", operatornames[bl->operator], bl->limit);
                 } else {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Total download packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets in last %d %s(s)", operatornames[bl->operator], bl->limit, bl->rangecount, Util_timestr(bl->range));
@@ -2139,36 +2139,35 @@ static void print_service_status_net(HttpResponse res, Service_T s) {
         if (s->type == TYPE_NET) {
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Link</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td>-</td></tr>");
                 } else {
                         char buf[STRLEN];
                         long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
                         if (speed > 0)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td>%.0lf Mb&#47;s %s-duplex</td></tr>", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download packets</td><td>%lld per second</td></tr>", NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats));
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td class='%s'>%.0lf Mb&#47;s %s-duplex</td></tr>",
+                                        s->error & Event_Link ? "red-text" : "",
+                                        (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
                         long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>%s per second", Str_bytesToSize(ibytes, buf));
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
+                                s->error & Event_Bandwidth ? "red-text" : "",
+                                Str_bytesToSize(ibytes, buf),
+                                NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats),
+                                NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && ibytes > 0)
                                 StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
 
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>%lld per second</td></tr>", NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
-
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload packets</td><td>%lld per second</td></tr>", NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats));
-
                         long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>%s per second", Str_bytesToSize(obytes, buf));
+                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
+                                s->error & Event_Bandwidth ? "red-text" : "",
+                                Str_bytesToSize(obytes, buf),
+                                NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats),
+                                NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && obytes > 0)
                                 StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
-
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>%lld per second</td></tr>", NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                 }
         }
 }
@@ -2570,35 +2569,35 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                 "link speed", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld per second\n",
+                                        "  %-33s %lld/s\n",
                                         "download packets", NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats));
 
                                 long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %s per second",
+                                        "  %-33s %s/s",
                                         "download bytes", Str_bytesToSize(ibytes, buf));
                                 if (speed > 0 && ibytes > 0)
                                         StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld per second\n",
+                                        "  %-33s %lld/s\n",
                                         "download errors", NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
 
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld per second\n",
+                                        "  %-33s %lld/s\n",
                                         "upload packets", NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats));
 
                                 long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %s per second",
+                                        "  %-33s %s/s",
                                         "upload bytes", Str_bytesToSize(obytes, buf));
                                 if (speed > 0 && obytes > 0)
                                         StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
                                 StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld per second\n",
+                                        "  %-33s %lld/s\n",
                                         "upload errors", NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         }
                         if (s->type == TYPE_FILESYSTEM) {
