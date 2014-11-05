@@ -2144,7 +2144,7 @@ static void print_service_params_net(HttpResponse res, Service_T s) {
                         long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download bytes</td><td>%s per second", Str_bytesToSize(ibytes, buf));
                         if (speed > 0 && ibytes > 0)
-                                StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * ibytes * 8 / (double)speed);
+                                StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
 
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download errors</td><td>%lld per second</td></tr>", NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
@@ -2154,7 +2154,7 @@ static void print_service_params_net(HttpResponse res, Service_T s) {
                         long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload bytes</td><td>%s per second", Str_bytesToSize(obytes, buf));
                         if (speed > 0 && obytes > 0)
-                                StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * obytes * 8 / (double)speed);
+                                StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
 
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload errors</td><td>%lld per second</td></tr>", NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
@@ -2567,7 +2567,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                         "  %-33s %s per second",
                                         "download bytes", Str_bytesToSize(ibytes, buf));
                                 if (speed > 0 && ibytes > 0)
-                                        StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * ibytes * 8 / (double)speed);
+                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
                                 StringBuffer_append(res->outputbuffer,
@@ -2583,7 +2583,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                         "  %-33s %s per second",
                                         "upload bytes", Str_bytesToSize(obytes, buf));
                                 if (speed > 0 && obytes > 0)
-                                        StringBuffer_append(res->outputbuffer, " (%.2f%% link utilization)", 100. * obytes * 8 / (double)speed);
+                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
                                 StringBuffer_append(res->outputbuffer,

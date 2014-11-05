@@ -1396,9 +1396,9 @@ int check_net(Service_T s) {
         for (NetLinkSpeed_T link = s->netlinkspeedlist; link; link = link->next) {
                 if (link->speed) {
                         if (duplex != link->duplex)
-                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link mode is now %splex", duplex ? "full" : "half");
+                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
                         else
-                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %sduplex]", duplex ? "full" : "half");
+                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
                         if (speed != link->speed)
                                 Event_post(s, Event_Link, STATE_CHANGED, link->action, "link speed changed to %lf Mb/s", (double)speed / 1000000.);
                         else
