@@ -118,6 +118,24 @@ static void __attribute__ ((destructor)) _destructor() {
 /* --------------------------------------------------------------- Private */
 
 
+static void _resetData(NetStatisticsData_T *data) {
+        for (int i = 0; i < 60; i++)
+                data->minute[i] = -1LL;
+        for (int i = 0; i < 24; i++)
+                data->hour[i] = -1LL;
+}
+
+
+static void _reset(T S) {
+        _resetData(&(S->ibytes));
+        _resetData(&(S->ipackets));
+        _resetData(&(S->ierrors));
+        _resetData(&(S->obytes));
+        _resetData(&(S->opackets));
+        _resetData(&(S->oerrors));
+}
+
+
 #ifdef SOLARIS
 long long _getKstatValue(kstat_t *ksp, char *value) {
         const kstat_named_t *kdata = kstat_data_lookup(ksp, value);
@@ -141,38 +159,42 @@ long long _getKstatValue(kstat_t *ksp, char *value) {
 
 
 static long long _deltaSecond(T S, NetStatisticsData_T *data) {
-        double deltams = S->timestamp.last > -1 && S->timestamp.now > S->timestamp.last ? (S->timestamp.now - S->timestamp.last) : 1;
-        if (data->last > -1 && data->now > data->last)
-                return (long long)((data->now - data->last) * 1000. / deltams);
+        if (S->timestamp.last > 0 && S->timestamp.now > S->timestamp.last)
+                if (data->last > -1 && data->now > data->last)
+                        return (long long)((data->now - data->last) * 1000. / (S->timestamp.now - S->timestamp.last));
         return 0LL;
 }
 
 
 static long long _deltaMinute(T S, NetStatisticsData_T *data, int count) {
         assert(count > 0 && count <= 60);
-        int stop = Time_minutes(S->timestamp.now);
-        int start = stop - count < 0 ? 60 - stop - count : stop - count;
-        while (data->minute[start] == 0) {
+        int stop = Time_minutes(S->timestamp.now / 1000.);
+        int delta = stop - count;
+        int start = delta < 0 ? 60 + delta + 1 : delta;
+        // Find first initialized value available in the start:stop interval
+        while (data->minute[start] == -1LL) {
                 if (++start > 59)
                         start = 0;
                 else if (start == stop)
                         break;
         }
-        return data->minute[stop] - data->minute[start];
+        return data->minute[start] > -1LL ? data->minute[stop] - data->minute[start] : 0LL;
 }
 
 
 static long long _deltaHour(T S, NetStatisticsData_T *data, int count) {
         assert(count > 0 && count <= 24);
-        int stop = Time_hour(S->timestamp.now);
-        int start = stop - count < 0 ? 24 - stop - count : stop - count;
-        while (data->minute[start] == 0) {
+        int stop = Time_hour(S->timestamp.now / 1000.);
+        int delta = stop - count;
+        int start = delta < 0 ? 24 + delta + 1 : delta;
+        // Find first initialized value available in the start:stop interval
+        while (data->hour[start] == -1LL) {
                 if (++start > 23)
                         start = 0;
                 else if (start == stop)
                         break;
         }
-        return data->hour[stop] - data->hour[start];
+        return data->hour[start] > -1LL ? data->hour[stop] - data->hour[start] : 0LL;
 }
 
 
@@ -208,8 +230,9 @@ static const char *_returnInterface(const char *interface) {
 
 
 static void _updateHistory(T S) {
-        int minute = Time_minutes(S->timestamp.now);
-        int hour =  Time_hour(S->timestamp.now);
+        time_t now = S->timestamp.now / 1000.;
+        int minute = Time_minutes(now);
+        int hour =  Time_hour(now);
         S->ibytes.minute[minute] = S->ibytes.hour[hour] = S->ibytes.now;
         S->ipackets.minute[minute] = S->ipackets.hour[hour] = S->ipackets.now;
         S->ierrors.minute[minute] = S->ierrors.hour[hour] = S->ierrors.now;
@@ -244,6 +267,7 @@ T NetStatistics_createForAddress(const char *address) {
         assert(address);
         T S;
         NEW(S);
+        _reset(S);
         S->object = Str_dup(address);
         S->resolve = _findInterfaceForAddress;
         return S;
@@ -254,6 +278,7 @@ T NetStatistics_createForInterface(const char *interface) {
         assert(interface);
         T S;
         NEW(S);
+        _reset(S);
         S->object = Str_dup(interface);
         S->resolve = _returnInterface;
         return S;
