@@ -2568,37 +2568,25 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                 "  %-33s %.0lf Mb/s %s-duplex\n",
                                                 "link speed", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
-                                StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld/s\n",
-                                        "download packets", NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats));
-
                                 long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
-                                StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %s/s",
-                                        "download bytes", Str_bytesToSize(ibytes, buf));
+                                StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
+                                        "download",
+                                        Str_bytesToSize(ibytes, buf),
+                                        NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats),
+                                        NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
                                 if (speed > 0 && ibytes > 0)
                                         StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
-                                StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld/s\n",
-                                        "download errors", NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
-
-                                StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld/s\n",
-                                        "upload packets", NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats));
-
                                 long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
-                                StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %s/s",
-                                        "upload bytes", Str_bytesToSize(obytes, buf));
+                                StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
+                                        "upload",
+                                        Str_bytesToSize(obytes, buf),
+                                        NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats),
+                                        NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                                 if (speed > 0 && obytes > 0)
                                         StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
-
-                                StringBuffer_append(res->outputbuffer,
-                                        "  %-33s %lld/s\n",
-                                        "upload errors", NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         }
                         if (s->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(res->outputbuffer,
