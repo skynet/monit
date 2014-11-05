@@ -373,8 +373,7 @@ void NetStatistics_update(T S) {
         FILE *f = fopen(path, "r");
         if (f) {
                 if (fscanf(f, "%256s\n", buf) == 1) {
-                        S->state.last = S->state.now;
-                        S->state.now = Str_isEqual(buf, "down") ? 0LL : 1LL;
+                        S->state = Str_isEqual(buf, "down") ? 0LL : 1LL;
                 }
                 fclose(f);
         }
@@ -388,8 +387,7 @@ void NetStatistics_update(T S) {
         if (f) {
                 int speed;
                 if (fscanf(f, "%d\n", &speed) == 1) {
-                        S->speed.last = S->speed.now;
-                        S->speed.now = speed * 1000000; // mbps -> bps
+                        S->speed = speed * 1000000; // mbps -> bps
                 }
                 fclose(f);
         }
@@ -402,8 +400,7 @@ void NetStatistics_update(T S) {
         f = fopen(path, "r");
         if (f) {
                 if (fscanf(f, "%256s\n", buf) == 1) {
-                        S->duplex.last = S->duplex.now;
-                        S->duplex.now = Str_isEqual(buf, "full") ? 1LL : 0LL;
+                        S->duplex = Str_isEqual(buf, "full") ? 1LL : 0LL;
                 }
                 fclose(f);
         }
@@ -500,18 +497,15 @@ void NetStatistics_update(T S) {
                          * link:0:net0:obytes64    3227785
                          */
                         if ((ksp = kstat_lookup(kc, "link", -1, (char *)interface)) && kstat_read(kc, ksp, NULL) != -1) {
-                                S->state.last = S->state.now;
-                                S->speed.last = S->speed.now;
-                                S->duplex.last = S->duplex.now;
                                 S->ipackets.last = S->ipackets.now;
                                 S->ibytes.last = S->ibytes.now;
                                 S->ierrors.last = S->ierrors.now;
                                 S->opackets.last = S->opackets.now;
                                 S->obytes.last = S->obytes.now;
                                 S->oerrors.last = S->oerrors.now;
-                                S->state.now = _getKstatValue(ksp, "link_state") ? 1LL : 0LL;
-                                S->speed.now = _getKstatValue(ksp, "ifspeed");
-                                S->duplex.now = _getKstatValue(ksp, "link_duplex") == 2 ? 1LL : 0LL;
+                                S->state = _getKstatValue(ksp, "link_state") ? 1LL : 0LL;
+                                S->speed = _getKstatValue(ksp, "ifspeed");
+                                S->duplex = _getKstatValue(ksp, "link_duplex") == 2 ? 1LL : 0LL;
                                 S->ipackets.now = _getKstatValue(ksp, "ipackets64");
                                 S->ibytes.now = _getKstatValue(ksp, "rbytes64");
                                 S->ierrors.now = _getKstatValue(ksp, "ierrors");
