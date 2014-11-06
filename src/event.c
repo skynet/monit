@@ -74,8 +74,8 @@
 
 EventTable_T Event_Table[] = {
   {Event_Action,     "Action done",               "Action done",                "Action done",              "Action done"},
-  {Event_ByteIn,     "Download bytes exceeded",   "Download bytes ok",          "Download changed",         "Download not changed"},
-  {Event_ByteOut,    "Upload bytes exceeded",     "Upload bytes ok",            "Upload changed",           "Upload not changed"},
+  {Event_ByteIn,     "Download bytes exceeded",   "Download bytes ok",          "Download bytes changed",   "Download bytes not changed"},
+  {Event_ByteOut,    "Upload bytes exceeded",     "Upload bytes ok",            "Upload bytes changed",     "Upload bytes not changed"},
   {Event_Checksum,   "Checksum failed",           "Checksum succeeded",         "Checksum changed",         "Checksum not changed"},
   {Event_Connection, "Connection failed",         "Connection succeeded",       "Connection changed",       "Connection not changed"},
   {Event_Content,    "Content failed",            "Content succeeded",          "Content match",            "Content doesn't match"},
