@@ -97,7 +97,7 @@ EventTable_T Event_Table[] = {
   {Event_Resource,   "Resource limit matched",    "Resource limit succeeded",   "Resource limit changed",   "Resource limit not changed"},
   {Event_Saturation, "Saturation exceeded",       "Saturation ok",              "Saturation changed",       "Saturation not changed"},
   {Event_Size,       "Size failed",               "Size succeeded",             "Size changed",             "Size not changed"},
-  {Event_Speed,      "Speed failed",              "Speed succeeded",            "Speed changed",            "Speed not changed"},
+  {Event_Speed,      "Speed failed",              "Speed ok",                   "Speed changed",            "Speed not changed"},
   {Event_Status,     "Status failed",             "Status succeeded",           "Status changed",           "Status not changed"},
   {Event_Timeout,    "Timeout",                   "Timeout recovery",           "Timeout changed",          "Timeout not changed"},
   {Event_Timestamp,  "Timestamp failed",          "Timestamp succeeded",        "Timestamp changed",        "Timestamp not changed"},
