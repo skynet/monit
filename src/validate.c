@@ -1394,7 +1394,7 @@ int check_net(Service_T s) {
         int duplex = NetStatistics_getDuplex(s->inf->priv.net.stats);
         long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
         for (NetLinkSpeed_T link = s->netlinkspeedlist; link; link = link->next) {
-                if (link->speed) {
+                if (speed && link->speed) {
                         if (duplex != link->duplex)
                                 Event_post(s, Event_Speed, STATE_CHANGED, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
                         else

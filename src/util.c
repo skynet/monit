@@ -1711,6 +1711,10 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.process.total_cpu_percent = 0;
                         s->inf->priv.process.uptime = 0;
                         break;
+                case TYPE_NET:
+                        if (s->inf->priv.net.stats)
+                                NetStatistics_reset(s->inf->priv.net.stats);
+                        break;
                 default:
                         break;
         }

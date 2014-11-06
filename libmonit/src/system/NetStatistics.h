@@ -66,10 +66,17 @@ T NetStatistics_createForInterface(const char *interface);
 
 
 /**
- * Destroy an network statistics object and release allocated resources. 
+ * Destroy a network statistics object and release allocated resources. 
  * @param S A network statistics object reference
  */
 void NetStatistics_free(T *S);
+
+
+/**
+ * Reset a network statistics object data.
+ * @param S A network statistics object
+ */
+void NetStatistics_reset(T S);
 
 
 /**

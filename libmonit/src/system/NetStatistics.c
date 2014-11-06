@@ -118,21 +118,26 @@ static void __attribute__ ((destructor)) _destructor() {
 /* --------------------------------------------------------------- Private */
 
 
-static void _resetData(NetStatisticsData_T *data) {
+static void _resetData(NetStatisticsData_T *data, long long value) {
         for (int i = 0; i < 60; i++)
-                data->minute[i] = -1LL;
+                data->minute[i] = value;
         for (int i = 0; i < 24; i++)
-                data->hour[i] = -1LL;
+                data->hour[i] = value;
 }
 
 
 static void _reset(T S) {
-        _resetData(&(S->ibytes));
-        _resetData(&(S->ipackets));
-        _resetData(&(S->ierrors));
-        _resetData(&(S->obytes));
-        _resetData(&(S->opackets));
-        _resetData(&(S->oerrors));
+        S->timestamp.last = 0LL;
+        S->timestamp.now = 0LL;
+        S->state = -1;
+        S->duplex = -1;
+        S->speed = 0LL;
+        _resetData(&(S->ibytes), -1LL);
+        _resetData(&(S->ipackets), -1LL);
+        _resetData(&(S->ierrors), -1LL);
+        _resetData(&(S->obytes), -1LL);
+        _resetData(&(S->opackets), -1LL);
+        _resetData(&(S->oerrors), -1LL);
 }
 
 
@@ -172,13 +177,6 @@ static long long _deltaMinute(T S, NetStatisticsData_T *data, int count) {
         int stop = Time_minutes(S->timestamp.now / 1000.);
         int delta = stop - count;
         int start = delta < 0 ? 60 + delta + 1 : delta;
-        // Find first initialized value available in the start:stop interval
-        while (data->minute[start] == -1LL) {
-                if (++start > 59)
-                        start = 0;
-                else if (start == stop)
-                        break;
-        }
         return data->minute[start] > -1LL ? data->minute[stop] - data->minute[start] : 0LL;
 }
 
@@ -189,13 +187,6 @@ static long long _deltaHour(T S, NetStatisticsData_T *data, int count) {
         int stop = Time_hour(S->timestamp.now / 1000.);
         int delta = stop - count;
         int start = delta < 0 ? 24 + delta + 1 : delta;
-        // Find first initialized value available in the start:stop interval
-        while (data->hour[start] == -1LL) {
-                if (++start > 23)
-                        start = 0;
-                else if (start == stop)
-                        break;
-        }
         return data->hour[start] > -1LL ? data->hour[stop] - data->hour[start] : 0LL;
 }
 
@@ -235,12 +226,23 @@ static void _updateHistory(T S) {
         time_t now = S->timestamp.now / 1000.;
         int minute = Time_minutes(now);
         int hour =  Time_hour(now);
-        S->ibytes.minute[minute] = S->ibytes.hour[hour] = S->ibytes.now;
-        S->ipackets.minute[minute] = S->ipackets.hour[hour] = S->ipackets.now;
-        S->ierrors.minute[minute] = S->ierrors.hour[hour] = S->ierrors.now;
-        S->obytes.minute[minute] = S->obytes.hour[hour] = S->obytes.now;
-        S->opackets.minute[minute] = S->opackets.hour[hour] = S->opackets.now;
-        S->oerrors.minute[minute] = S->oerrors.hour[hour] = S->oerrors.now;
+        if (S->timestamp.last == 0LL) {
+                // Initialize the history on first update, so we can start accounting for total data immediately. Any delta will show difference between the very first value and then given point in time, until regular update cycle
+                _resetData(&(S->ibytes), S->ibytes.now);
+                _resetData(&(S->ipackets), S->ipackets.now);
+                _resetData(&(S->ierrors), S->ierrors.now);
+                _resetData(&(S->obytes), S->obytes.now);
+                _resetData(&(S->opackets), S->opackets.now);
+                _resetData(&(S->oerrors), S->oerrors.now);
+        } else {
+                // Update relative values only
+                S->ibytes.minute[minute] = S->ibytes.hour[hour] = S->ibytes.now;
+                S->ipackets.minute[minute] = S->ipackets.hour[hour] = S->ipackets.now;
+                S->ierrors.minute[minute] = S->ierrors.hour[hour] = S->ierrors.now;
+                S->obytes.minute[minute] = S->obytes.hour[hour] = S->obytes.now;
+                S->opackets.minute[minute] = S->opackets.hour[hour] = S->opackets.now;
+                S->oerrors.minute[minute] = S->oerrors.hour[hour] = S->oerrors.now;
+        }
 }
 
 
@@ -290,6 +292,11 @@ T NetStatistics_createForInterface(const char *interface) {
 void NetStatistics_free(T *S) {
         FREE((*S)->object);
         FREE(*S);
+}
+
+
+void NetStatistics_reset(T S) {
+        _reset(S);
 }
 
 
