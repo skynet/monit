@@ -194,11 +194,14 @@ interface         { return INTERFACE; }
 link              { return LINK; }
 error(s)?         { return ERROR; }
 packet(s)?        { return PACKET; }
-bandwidth         { return BANDWIDTH; }
+bytein            { return BYTEIN; }
+byteout           { return BYTEOUT; }
+packetin          { return PACKETIN; }
+packetout         { return PACKETOUT; }
 upload(ed)?       { return UPLOAD; }
 download(ed)?     { return DOWNLOAD; }
-utilization       { return UTILIZATION; }
-utilisation       { return UTILIZATION; }
+saturation        { return SATURATION; }
+speed             { return SPEED; }
 total             { return TOTAL; }
 clientpemfile     { return CLIENTPEMFILE; }
 allowselfcertification  { return ALLOWSELFCERTIFICATION; }

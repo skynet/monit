@@ -236,8 +236,10 @@ static void printevents(unsigned int events) {
         } else {
                 if (IS_EVENT_SET(events, Event_Action))
                         printf("Action ");
-                if (IS_EVENT_SET(events, Event_Bandwidth))
-                        printf("Bandwidth ");
+                if (IS_EVENT_SET(events, Event_ByteIn))
+                        printf("ByteIn ");
+                if (IS_EVENT_SET(events, Event_ByteOut))
+                        printf("ByteOut ");
                 if (IS_EVENT_SET(events, Event_Checksum))
                         printf("Checksum ");
                 if (IS_EVENT_SET(events, Event_Connection))
@@ -262,6 +264,10 @@ static void printevents(unsigned int events) {
                         printf("Link ");
                 if (IS_EVENT_SET(events, Event_Nonexist))
                         printf("Nonexist ");
+                if (IS_EVENT_SET(events, Event_PacketIn))
+                        printf("PacketIn ");
+                if (IS_EVENT_SET(events, Event_PacketOut))
+                        printf("PacketOut ");
                 if (IS_EVENT_SET(events, Event_Permission))
                         printf("Permission ");
                 if (IS_EVENT_SET(events, Event_Pid))
@@ -270,8 +276,12 @@ static void printevents(unsigned int events) {
                         printf("PPID ");
                 if (IS_EVENT_SET(events, Event_Resource))
                         printf("Resource ");
+                if (IS_EVENT_SET(events, Event_Saturation))
+                        printf("Saturation ");
                 if (IS_EVENT_SET(events, Event_Size))
                         printf("Size ");
+                if (IS_EVENT_SET(events, Event_Speed))
+                        printf("Speed ");
                 if (IS_EVENT_SET(events, Event_Status))
                         printf("Status ");
                 if (IS_EVENT_SET(events, Event_Timeout))

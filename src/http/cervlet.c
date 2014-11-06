@@ -1558,8 +1558,10 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                 } else {
                         if (IS_EVENT_SET(r->events, Event_Action))
                                 StringBuffer_append(res->outputbuffer, "Action ");
-                        if (IS_EVENT_SET(r->events, Event_Bandwidth))
-                                StringBuffer_append(res->outputbuffer, "Bandwidth ");
+                        if (IS_EVENT_SET(r->events, Event_ByteIn))
+                                StringBuffer_append(res->outputbuffer, "ByteIn ");
+                        if (IS_EVENT_SET(r->events, Event_ByteOut))
+                                StringBuffer_append(res->outputbuffer, "ByteOut ");
                         if (IS_EVENT_SET(r->events, Event_Checksum))
                                 StringBuffer_append(res->outputbuffer, "Checksum ");
                         if (IS_EVENT_SET(r->events, Event_Connection))
@@ -1574,8 +1576,6 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                                 StringBuffer_append(res->outputbuffer, "Fsflags ");
                         if (IS_EVENT_SET(r->events, Event_Gid))
                                 StringBuffer_append(res->outputbuffer, "Gid ");
-                        if (IS_EVENT_SET(r->events, Event_Icmp))
-                                StringBuffer_append(res->outputbuffer, "Ping ");
                         if (IS_EVENT_SET(r->events, Event_Instance))
                                 StringBuffer_append(res->outputbuffer, "Instance ");
                         if (IS_EVENT_SET(r->events, Event_Invalid))
@@ -1586,14 +1586,24 @@ static void print_alerts(HttpResponse res, Mail_T s) {
                                 StringBuffer_append(res->outputbuffer, "Nonexist ");
                         if (IS_EVENT_SET(r->events, Event_Permission))
                                 StringBuffer_append(res->outputbuffer, "Permission ");
+                        if (IS_EVENT_SET(r->events, Event_PacketIn))
+                                StringBuffer_append(res->outputbuffer, "PacketIn ");
+                        if (IS_EVENT_SET(r->events, Event_PacketOut))
+                                StringBuffer_append(res->outputbuffer, "PacketOut ");
                         if (IS_EVENT_SET(r->events, Event_Pid))
                                 StringBuffer_append(res->outputbuffer, "PID ");
+                        if (IS_EVENT_SET(r->events, Event_Icmp))
+                                StringBuffer_append(res->outputbuffer, "Ping ");
                         if (IS_EVENT_SET(r->events, Event_PPid))
                                 StringBuffer_append(res->outputbuffer, "PPID ");
                         if (IS_EVENT_SET(r->events, Event_Resource))
                                 StringBuffer_append(res->outputbuffer, "Resource ");
+                        if (IS_EVENT_SET(r->events, Event_Saturation))
+                                StringBuffer_append(res->outputbuffer, "Saturation ");
                         if (IS_EVENT_SET(r->events, Event_Size))
                                 StringBuffer_append(res->outputbuffer, "Size ");
+                        if (IS_EVENT_SET(r->events, Event_Speed))
+                                StringBuffer_append(res->outputbuffer, "Speed ");
                         if (IS_EVENT_SET(r->events, Event_Status))
                                 StringBuffer_append(res->outputbuffer, "Status ");
                         if (IS_EVENT_SET(r->events, Event_Timeout))
@@ -1814,7 +1824,7 @@ static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
 
 static void print_service_rules_netlinksaturation(HttpResponse res, Service_T s) {
         for (NetLinkSaturation_T l = s->netlinksaturationlist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link utilization</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link saturation</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If %s %.1f%%", operatornames[l->operator], l->limit);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -2151,22 +2161,22 @@ static void print_service_status_net(HttpResponse res, Service_T s) {
 
                         long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
-                                s->error & Event_Bandwidth ? "red-text" : "",
+                                (s->error & Event_ByteIn || s->error & Event_PacketIn) ? "red-text" : "",
                                 Str_bytesToSize(ibytes, buf),
                                 NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats),
                                 NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && ibytes > 0)
-                                StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
+                                StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
 
                         long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
-                                s->error & Event_Bandwidth ? "red-text" : "",
+                                (s->error & Event_ByteOut || s->error & Event_PacketOut) ? "red-text" : "",
                                 Str_bytesToSize(obytes, buf),
                                 NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats),
                                 NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && obytes > 0)
-                                StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
+                                StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
@@ -2575,7 +2585,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                         NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats),
                                         NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
                                 if (speed > 0 && ibytes > 0)
-                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * ibytes * 8 / (double)speed);
+                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
                                 long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
@@ -2585,7 +2595,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                         NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats),
                                         NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
                                 if (speed > 0 && obytes > 0)
-                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link utilization)", 100. * obytes * 8 / (double)speed);
+                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
                         }
                         if (s->type == TYPE_FILESYSTEM) {

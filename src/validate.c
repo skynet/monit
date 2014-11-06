@@ -1396,13 +1396,13 @@ int check_net(Service_T s) {
         for (NetLinkSpeed_T link = s->netlinkspeedlist; link; link = link->next) {
                 if (link->speed) {
                         if (duplex != link->duplex)
-                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
+                                Event_post(s, Event_Speed, STATE_CHANGED, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
                         else
-                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
+                                Event_post(s, Event_Speed, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
                         if (speed != link->speed)
-                                Event_post(s, Event_Link, STATE_CHANGED, link->action, "link speed changed to %.0lf Mb/s", (double)speed / 1000000.);
+                                Event_post(s, Event_Speed, STATE_CHANGED, link->action, "link speed changed to %.0lf Mb/s", (double)speed / 1000000.);
                         else
-                                Event_post(s, Event_Link, STATE_CHANGEDNOT, link->action, "link speed has not changed since last cycle [current speed = %.0lf Mb/s]", (double)speed / 1000000.);
+                                Event_post(s, Event_Speed, STATE_CHANGEDNOT, link->action, "link speed has not changed since last cycle [current speed = %.0lf Mb/s]", (double)speed / 1000000.);
                 }
                 link->duplex = duplex;
                 link->speed = speed;
@@ -1415,18 +1415,18 @@ int check_net(Service_T s) {
                 for (NetLinkSaturation_T link = s->netlinksaturationlist; link; link = link->next) {
                         if (duplex) {
                                 if (Util_evalDoubleQExpression(link->operator, osaturation, link->limit))
-                                        Event_post(s, Event_Bandwidth, STATE_FAILED, link->action, "link upload utilization of %.1f%% matches limit [utilization %s %.1f%%]", osaturation, operatorshortnames[link->operator], link->limit);
+                                        Event_post(s, Event_Saturation, STATE_FAILED, link->action, "link upload saturation of %.1f%% matches limit [saturation %s %.1f%%]", osaturation, operatorshortnames[link->operator], link->limit);
                                 else
-                                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, link->action, "link upload utilization check succeeded [current upload utilization %.1f%%]", osaturation);
+                                        Event_post(s, Event_Saturation, STATE_SUCCEEDED, link->action, "link upload saturation check succeeded [current upload saturation %.1f%%]", osaturation);
                                 if (Util_evalDoubleQExpression(link->operator, isaturation, link->limit))
-                                        Event_post(s, Event_Bandwidth, STATE_FAILED, link->action, "link download utilization of %.1f%% matches limit [utilization %s %.1f%%]", isaturation, operatorshortnames[link->operator], link->limit);
+                                        Event_post(s, Event_Saturation, STATE_FAILED, link->action, "link download saturation of %.1f%% matches limit [saturation %s %.1f%%]", isaturation, operatorshortnames[link->operator], link->limit);
                                 else
-                                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, link->action, "link download utilization check succeeded [current download utilization %.1f%%]", isaturation);
+                                        Event_post(s, Event_Saturation, STATE_SUCCEEDED, link->action, "link download saturation check succeeded [current download saturation %.1f%%]", isaturation);
                         } else {
                                 if (Util_evalDoubleQExpression(link->operator, iosaturation, link->limit))
-                                        Event_post(s, Event_Bandwidth, STATE_FAILED, link->action, "link utilization of %.1f%% matches limit [utilization %s %.1f%%]", iosaturation, operatorshortnames[link->operator], link->limit);
+                                        Event_post(s, Event_Saturation, STATE_FAILED, link->action, "link saturation of %.1f%% matches limit [saturation %s %.1f%%]", iosaturation, operatorshortnames[link->operator], link->limit);
                                 else
-                                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, link->action, "link utilization check succeeded [current utilization %.1f%%]", iosaturation);
+                                        Event_post(s, Event_Saturation, STATE_SUCCEEDED, link->action, "link saturation check succeeded [current saturation %.1f%%]", iosaturation);
                         }
                 }
         }
@@ -1446,9 +1446,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, obytes, upload->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload %s matches limit [upload rate %s %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToSize(obytes, buf1), operatorshortnames[upload->operator], Str_bytesToSize(upload->limit, buf2), upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_ByteOut, STATE_FAILED, upload->action, "%supload %s matches limit [upload rate %s %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToSize(obytes, buf1), operatorshortnames[upload->operator], Str_bytesToSize(upload->limit, buf2), upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload check succeeded [current upload rate %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToSize(obytes, buf1), upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_ByteOut, STATE_SUCCEEDED, upload->action, "%supload check succeeded [current upload rate %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToSize(obytes, buf1), upload->rangecount, Util_timestr(upload->range));
         }
         for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
                 long long opackets;
@@ -1464,9 +1464,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, opackets, upload->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_PacketOut, STATE_FAILED, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_PacketOut, STATE_SUCCEEDED, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
         }
         // Download
         for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
@@ -1483,9 +1483,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ibytes, download->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload %s matches limit [download rate %s %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToSize(ibytes, buf1), operatorshortnames[download->operator], Str_bytesToSize(download->limit, buf2), download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_ByteIn, STATE_FAILED, download->action, "%sdownload %s matches limit [download rate %s %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToSize(ibytes, buf1), operatorshortnames[download->operator], Str_bytesToSize(download->limit, buf2), download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload check succeeded [current download rate %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToSize(ibytes, buf1), download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_ByteIn, STATE_SUCCEEDED, download->action, "%sdownload check succeeded [current download rate %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToSize(ibytes, buf1), download->rangecount, Util_timestr(download->range));
         }
         for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
                 long long ipackets;
@@ -1501,9 +1501,9 @@ int check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ipackets, download->limit))
-                        Event_post(s, Event_Bandwidth, STATE_FAILED, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_PacketIn, STATE_FAILED, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_Bandwidth, STATE_SUCCEEDED, download->action, "%sdownload packets check succeeded [current download packets %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_PacketIn, STATE_SUCCEEDED, download->action, "%sdownload packets check succeeded [current download packets %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
         }
         return TRUE;
 }

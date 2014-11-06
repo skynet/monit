@@ -280,7 +280,7 @@
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
-%token INTERFACE LINK PACKET ERROR BANDWIDTH UPLOAD DOWNLOAD TOTAL UTILIZATION
+%token INTERFACE LINK PACKET ERROR BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
 %token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
@@ -1475,7 +1475,8 @@ eventoptionlist : eventoption
                 ;
 
 eventoption     : ACTION          { mailset.events |= Event_Action; }
-                | BANDWIDTH       { mailset.events |= Event_Bandwidth; }
+                | BYTEIN          { mailset.events |= Event_ByteIn; }
+                | BYTEOUT         { mailset.events |= Event_ByteOut; }
                 | CHECKSUM        { mailset.events |= Event_Checksum; }
                 | CONNECTION      { mailset.events |= Event_Connection; }
                 | CONTENT         { mailset.events |= Event_Content; }
@@ -1488,11 +1489,15 @@ eventoption     : ACTION          { mailset.events |= Event_Action; }
                 | INVALID         { mailset.events |= Event_Invalid; }
                 | LINK            { mailset.events |= Event_Link; }
                 | NONEXIST        { mailset.events |= Event_Nonexist; }
+                | PACKETIN        { mailset.events |= Event_PacketIn; }
+                | PACKETOUT       { mailset.events |= Event_PacketOut; }
                 | PERMISSION      { mailset.events |= Event_Permission; }
                 | PID             { mailset.events |= Event_Pid; }
                 | PPID            { mailset.events |= Event_PPid; }
                 | RESOURCE        { mailset.events |= Event_Resource; }
+                | SATURATION      { mailset.events |= Event_Saturation; }
                 | SIZE            { mailset.events |= Event_Size; }
+                | SPEED           { mailset.events |= Event_Speed; }
                 | STATUS          { mailset.events |= Event_Status; }
                 | TIMEOUT         { mailset.events |= Event_Timeout; }
                 | TIMESTAMP       { mailset.events |= Event_Timestamp; }
@@ -1966,7 +1971,7 @@ netlinkspeed    : IF CHANGED LINK rate1 THEN action1 recovery {
                     addnetlinkspeed(current, &netlinkspeedset);
                   }
 
-netlinksaturation : IF UTILIZATION operator NUMBER PERCENT rate1 THEN action1 recovery {
+netlinksaturation : IF SATURATION operator NUMBER PERCENT rate1 THEN action1 recovery {
                     netlinksaturationset.operator = $<number>3;
                     netlinksaturationset.limit = (unsigned long long)$4;
                     addeventaction(&(netlinksaturationset).action, $<number>8, $<number>9);

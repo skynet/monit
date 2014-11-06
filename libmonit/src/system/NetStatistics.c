@@ -167,7 +167,8 @@ static long long _deltaSecond(T S, NetStatisticsData_T *data) {
 
 
 static long long _deltaMinute(T S, NetStatisticsData_T *data, int count) {
-        assert(count > 0 && count <= 60);
+        assert(count > 0);
+        assert(count <= 60);
         int stop = Time_minutes(S->timestamp.now / 1000.);
         int delta = stop - count;
         int start = delta < 0 ? 60 + delta + 1 : delta;
@@ -183,7 +184,8 @@ static long long _deltaMinute(T S, NetStatisticsData_T *data, int count) {
 
 
 static long long _deltaHour(T S, NetStatisticsData_T *data, int count) {
-        assert(count > 0 && count <= 24);
+        assert(count > 0);
+        assert(count <= 24);
         int stop = Time_hour(S->timestamp.now / 1000.);
         int delta = stop - count;
         int start = delta < 0 ? 24 + delta + 1 : delta;
