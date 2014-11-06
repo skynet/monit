@@ -2156,7 +2156,7 @@ static void print_service_status_net(HttpResponse res, Service_T s) {
                         long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
                         if (speed > 0)
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td class='%s'>%.0lf Mb&#47;s %s-duplex</td></tr>",
-                                        s->error & Event_Link ? "red-text" : "",
+                                        s->error & Event_Speed ? "red-text" : "",
                                         (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
                         long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
