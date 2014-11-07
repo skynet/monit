@@ -540,7 +540,7 @@ void NetStatistics_update(T S) {
 
 
 void NetStatistics_update(T S) {
-        THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
+        THROW(AssertException, "Cannot udate network statistics -- platform not supported");
 }
 
 
