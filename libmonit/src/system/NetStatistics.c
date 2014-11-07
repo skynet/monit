@@ -46,6 +46,10 @@
 #ifdef HAVE_KSTAT_H
 #include <kstat.h>
 #endif
+#ifdef HAVE_LIBPERFSTAT_H
+#include <sys/protosw.h>
+#include <libperfstat.h>
+#endif
 
 #include "system/NetStatistics.h"
 #include "system/Time.h"
@@ -533,6 +537,37 @@ void NetStatistics_update(T S) {
                 }
         }
         THROW(AssertException, "Cannot udate network statistics -- interface %s not found", interface);
+}
+
+
+#elif defined AIX
+
+
+void NetStatistics_update(T S) {
+        _updateCache();
+        const char *interface = S->resolve(S->object);
+        perfstat_id_t id;
+        perfstat_netinterface_t buf;
+	snprintf(id.name, sizeof(id.name), interface);
+        if (perfstat_netinterface(&id, &buf, sizeof(buf), 1) != 1)
+                THROW(AssertException, "Cannot get perfstat data for %s -- %s", interface, System_getError(errno));
+        S->ipackets.last = S->ipackets.now;
+        S->ibytes.last = S->ibytes.now;
+        S->ierrors.last = S->ierrors.now;
+        S->opackets.last = S->opackets.now;
+        S->obytes.last = S->obytes.now;
+        S->oerrors.last = S->oerrors.now;
+        S->speed = buf.bitrate;
+        S->ipackets.now = buf.ipackets;
+        S->ibytes.now = buf.ibytes;
+        S->ierrors.now = buf.ierrors;
+        S->opackets.now = buf.opackets;
+        S->obytes.now = buf.obytes;
+        S->oerrors.now = buf.oerrors;
+        S->timestamp.last = S->timestamp.now;
+        S->timestamp.now = Time_milli();
+        //FIXME: S->state and S->duplex are not implemented
+        _updateHistory(S);
 }
 
 

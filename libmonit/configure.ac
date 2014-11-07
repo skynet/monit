@@ -113,6 +113,16 @@ AC_CHECK_HEADERS([net/if.h], [], [],
          #include <netinet/ip.h>
          #endif
         ])
+AC_CHECK_HEADERS([ \
+        libperfstat.h \
+        ],
+        [],
+        [],
+        [
+         #ifdef HAVE_SYS_PROTOSW_H
+         #include <sys/protosw.h>
+         #endif
+        ])
 
 # ------------------------------------------------------------------------
 # Functions 
@@ -188,6 +198,7 @@ elif test "$architecture" = "AIX"
 then
    CFLAGS="$CFLAGS -D_THREAD_SAFE -D_REENTRANT"
    AC_DEFINE([AIX], 1, [Define to 1 if the system is AIX])
+   LIBS="$LIBS -lcfg -lodm -lperfstat"
 else
    AC_MSG_ERROR([Architecture not supported: ${architecture}])
 fi
