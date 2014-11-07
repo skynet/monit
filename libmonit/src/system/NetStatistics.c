@@ -548,7 +548,7 @@ void NetStatistics_update(T S) {
         const char *interface = S->resolve(S->object);
         perfstat_id_t id;
         perfstat_netinterface_t buf;
-	snprintf(id.name, sizeof(id.name), interface);
+        snprintf(id.name, sizeof(id.name), interface);
         if (perfstat_netinterface(&id, &buf, sizeof(buf), 1) != 1)
                 THROW(AssertException, "Cannot get perfstat data for %s -- %s", interface, System_getError(errno));
         S->ipackets.last = S->ipackets.now;
