@@ -1768,9 +1768,9 @@ Check any file changes:
 
 The choice of MD5 or SHA1 is optional. MD5 features a 128 bits
 checksum (32 bytes hex encoded string) and SHA1 a 160 bits checksum
-(40 bytes hex encoded string). If this option is omitted Monit, 
+(40 bytes hex encoded string). If this option is omitted, Monit 
 will try to guess the method from the EXPECT string or uses MD5 as
-default.
+the default checksum.
 
 I<expect> is optional and if used it specifies a md5 or sha1
 string Monit should expect when testing a file's checksum. If
