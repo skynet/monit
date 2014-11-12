@@ -53,7 +53,7 @@ int check_sieve(Socket_T socket) {
                         return FALSE;
                 }
                 Str_chomp(buf);
-                if (Str_isEqual(buf, "OK")) {
+                if (Str_startsWith(buf, "OK")) {
                         if (socket_print(socket, "LOGOUT\r\n") < 0) {
                                 socket_setError(socket, "SIEVE: error sending LOGOUT command  -- %s", STRERROR);
                                 return FALSE;
@@ -63,7 +63,7 @@ int check_sieve(Socket_T socket) {
                                 return FALSE;
                         }
                         Str_chomp(buf);
-                        if (! Str_isEqual(buf, "OK")) {
+                        if (! Str_startsWith(buf, "OK")) {
                                 socket_setError(socket, "SIEVE: invalid LOGOUT response -- %s", buf);
                                 return FALSE;
                         }
