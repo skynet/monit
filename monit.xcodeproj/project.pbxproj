@@ -80,6 +80,7 @@
 		9303FB8018C47E7000138D72 /* websocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 9303FB7F18C47E7000138D72 /* websocket.c */; };
 		9357B19B19F2F5A400329B3F /* mongodb.c in Sources */ = {isa = PBXBuildFile; fileRef = 9357B19919F2F5A400329B3F /* mongodb.c */; };
 		9357B19C19F2F5A400329B3F /* redis.c in Sources */ = {isa = PBXBuildFile; fileRef = 9357B19A19F2F5A400329B3F /* redis.c */; };
+		9378737B1A13907100CF8C5E /* sieve.c in Sources */ = {isa = PBXBuildFile; fileRef = 9378737A1A13907100CF8C5E /* sieve.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -289,6 +290,7 @@
 		9303FB7F18C47E7000138D72 /* websocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = websocket.c; sourceTree = "<group>"; };
 		9357B19919F2F5A400329B3F /* mongodb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongodb.c; sourceTree = "<group>"; };
 		9357B19A19F2F5A400329B3F /* redis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = redis.c; sourceTree = "<group>"; };
+		9378737A1A13907100CF8C5E /* sieve.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sieve.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -589,6 +591,7 @@
 				52F6E79A13A74F220023F87A /* rdate.c */,
 				9357B19A19F2F5A400329B3F /* redis.c */,
 				52F6E79B13A74F220023F87A /* rsync.c */,
+				9378737A1A13907100CF8C5E /* sieve.c */,
 				52F6E79C13A74F220023F87A /* sip.c */,
 				52F6E79D13A74F220023F87A /* smtp.c */,
 				52F6E79E13A74F220023F87A /* ssh.c */,
@@ -720,6 +723,7 @@
 				52F6E83213A74F220023F87A /* dwp.c in Sources */,
 				52F6E83313A74F220023F87A /* ftp.c in Sources */,
 				52F6E83413A74F220023F87A /* generic.c in Sources */,
+				9378737B1A13907100CF8C5E /* sieve.c in Sources */,
 				52F6E83513A74F220023F87A /* gps.c in Sources */,
 				52F6E83613A74F220023F87A /* http.c in Sources */,
 				52F6E83713A74F220023F87A /* imap.c in Sources */,
