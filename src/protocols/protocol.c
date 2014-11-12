@@ -68,7 +68,8 @@ static Protocol_T protocols[] = {
         &(struct Protocol_T){"MEMCACHE",        check_memcache},
         &(struct Protocol_T){"WEBSOCKET",       check_websocket},
         &(struct Protocol_T){"REDIS",           check_redis},
-        &(struct Protocol_T){"MONGODB",         check_mongodb}
+        &(struct Protocol_T){"MONGODB",         check_mongodb},
+        &(struct Protocol_T){"SIEVE",           check_sieve}
 };
 
 

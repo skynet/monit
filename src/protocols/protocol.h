@@ -63,7 +63,8 @@ typedef enum {
         Protocol_MEMCACHE,
         Protocol_WEBSOCKET,
         Protocol_REDIS,
-        Protocol_MONGODB
+        Protocol_MONGODB,
+        Protocol_SIEVE
 } Protocol_Type;
 
 
@@ -84,6 +85,7 @@ int check_nntp(Socket_T);
 int check_ntp3(Socket_T);
 int check_postfix_policy(Socket_T);
 int check_pop(Socket_T);
+int check_sieve(Socket_T);
 int check_smtp(Socket_T);
 int check_ssh(Socket_T);
 int check_redis(Socket_T);
