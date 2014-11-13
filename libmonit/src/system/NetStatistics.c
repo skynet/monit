@@ -599,6 +599,13 @@ long long NetStatistics_getBytesInPerHour(T S, int count) {
         return _deltaHour(S, &(S->ibytes), count);
 }
 
+
+long long NetStatistics_getBytesInTotal(T S) {
+        assert(S);
+        return S->ibytes.now;
+}
+
+
 long long NetStatistics_getPacketsInPerSecond(T S) {
         assert(S);
         return _deltaSecond(S, &(S->ipackets));
@@ -616,6 +623,13 @@ long long NetStatistics_getPacketsInPerHour(T S, int count) {
         return _deltaHour(S, &(S->ipackets), count);
 }
 
+
+long long NetStatistics_getPacketsInTotal(T S) {
+        assert(S);
+        return S->ipackets.now;
+}
+
+
 long long NetStatistics_getErrorsInPerSecond(T S) {
         assert(S);
         return _deltaSecond(S, &(S->ierrors));
@@ -631,6 +645,12 @@ long long NetStatistics_getErrorsInPerMinute(T S, int count) {
 long long NetStatistics_getErrorsInPerHour(T S, int count) {
         assert(S);
         return _deltaHour(S, &(S->ierrors), count);
+}
+
+
+long long NetStatistics_getErrorsInTotal(T S) {
+        assert(S);
+        return S->ierrors.now;
 }
 
 
@@ -652,6 +672,12 @@ long long NetStatistics_getBytesOutPerHour(T S, int count) {
 }
 
 
+long long NetStatistics_getBytesOutTotal(T S) {
+        assert(S);
+        return S->obytes.now;
+}
+
+
 long long NetStatistics_getPacketsOutPerSecond(T S) {
         assert(S);
         return _deltaSecond(S, &(S->opackets));
@@ -670,6 +696,12 @@ long long NetStatistics_getPacketsOutPerHour(T S, int count) {
 }
 
 
+long long NetStatistics_getPacketsOutTotal(T S) {
+        assert(S);
+        return S->opackets.now;
+}
+
+
 long long NetStatistics_getErrorsOutPerSecond(T S) {
         assert(S);
         return _deltaSecond(S, &(S->oerrors));
@@ -685,6 +717,12 @@ long long NetStatistics_getErrorsOutPerMinute(T S, int count) {
 long long NetStatistics_getErrorsOutPerHour(T S, int count) {
         assert(S);
         return _deltaHour(S, &(S->oerrors), count);
+}
+
+
+long long NetStatistics_getErrorsOutTotal(T S) {
+        assert(S);
+        return S->oerrors.now;
 }
 
 

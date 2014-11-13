@@ -106,6 +106,14 @@ long long NetStatistics_getBytesInPerMinute(T S, int count);
 
 
 /**
+ * Get total incoming bytes statistics.
+ * @param S A network statistics object
+ * @return Incoming bytes total.
+ */
+long long NetStatistics_getBytesInTotal(T S);
+
+
+/**
  * Get incoming bytes per hour statistics.
  * @param S A network statistics object
  * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
@@ -141,6 +149,14 @@ long long NetStatistics_getPacketsInPerHour(T S, int count);
 
 
 /**
+ * Get total incoming packets statistics.
+ * @param S A network statistics object
+ * @return Incoming packets total.
+ */
+long long NetStatistics_getPacketsInTotal(T S);
+
+
+/**
  * Get incoming errors per second statistics.
  * @param S A network statistics object
  * @return Incoming errors per second statistics.
@@ -164,6 +180,14 @@ long long NetStatistics_getErrorsInPerMinute(T S, int count);
  * @return Incoming errors per hour statistics.
  */
 long long NetStatistics_getErrorsInPerHour(T S, int count);
+
+
+/**
+ * Get total incoming errors statistics.
+ * @param S A network statistics object
+ * @return Incoming errors total.
+ */
+long long NetStatistics_getErrorsInTotal(T S);
 
 
 /**
@@ -193,6 +217,14 @@ long long NetStatistics_getBytesOutPerHour(T S, int count);
 
 
 /**
+ * Get total outgoing bytes statistics.
+ * @param S A network statistics object
+ * @return Outgoing bytes total.
+ */
+long long NetStatistics_getBytesOutTotal(T S);
+
+
+/**
  * Get outgoing packets per second statistics.
  * @param S A network statistics object
  * @return Outgoing packets per second statistics.
@@ -219,6 +251,14 @@ long long NetStatistics_getPacketsOutPerHour(T S, int count);
 
 
 /**
+ * Get total outgoing packets statistics.
+ * @param S A network statistics object
+ * @return Outgoing packets total.
+ */
+long long NetStatistics_getPacketsOutTotal(T S);
+
+
+/**
  * Get outgoing errors per second statistics.
  * @param S A network statistics object
  * @return Outgoing errors per second.
@@ -242,6 +282,14 @@ long long NetStatistics_getErrorsOutPerMinute(T S, int count);
  * @return Outgoing errors per hour.
  */
 long long NetStatistics_getErrorsOutPerHour(T S, int count);
+
+
+/**
+ * Get total outgoing errors statistics.
+ * @param S A network statistics object
+ * @return Outgoing errors total
+ */
+long long NetStatistics_getErrorsOutTotal(T S);
 
 
 /**
