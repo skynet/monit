@@ -239,6 +239,7 @@ ntp3              { return NTP3; }
 ssh               { return SSH; }
 redis             { return REDIS; }
 mongodb           { return MONGODB; }
+sieve             { return SIEVE; }
 dwp               { return DWP; }
 ldap2             { return LDAP2; }
 ldap3             { return LDAP3; }
