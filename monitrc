@@ -123,7 +123,7 @@ set daemon  60              # check services at 1-minute intervals
 ## command line, such as 'monit status' or 'monit restart service' The reason
 ## for this is that the Monit client uses the HTTP interface to send these
 ## commands to a running Monit daemon. See the Monit Wiki if you want to 
-## enable SSL for the web server. 
+## enable SSL for the HTTP interface. 
 #
 set httpd port 2812 and
     use address localhost  # only accept connection from localhost
