@@ -41,9 +41,9 @@
  */
 static char *_escapeZeroInExpectBuffer(char *s, int n) {
         assert(n < EXPECT_BUFFER_MAX);
+        int i, j;
         char t[n]; // VLA
-        memcpy(t, s, n);
-        for (int i = 0, j = 0; j <= n; i++, j++) {
+        for (i = 0, j = 0; j <= n; i++, j++) {
                 if ((t[j] = s[i]) == '\0') {
                         if (j + 2 < n) {
                                 t[j] = '\\';
@@ -52,8 +52,10 @@ static char *_escapeZeroInExpectBuffer(char *s, int n) {
                         }
                 }
         }
-        memcpy(s, t, n);
-        s[n] = 0;
+        if (j > i) {
+                memcpy(s, t, n);
+                s[n] = 0;
+        }
         return s;
 }
 
