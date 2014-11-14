@@ -605,8 +605,6 @@ I<SSL> allows to enable SSL for Monit web interface. Only TLS methods
 are supported. The I<PEMFILE> option holds both the server's private key
 and certificate. This file should be stored in a safe place on the
 filesystem and should have strict permissions, no more than 0700.
-Please see README.SSL file accompanying the software to get more
-information about certificates and generating pem files.
 
 For example:
 
