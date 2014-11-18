@@ -7,6 +7,9 @@ Version 5.11
 New: Sieve protocol test implemented. Usage:
     if failed port 2000 protocol sieve then alert
 
+Fixed: If the "not every <cron>" option matched, the test was
+skipped only once per minute.
+
 
 Version 5.10
 
