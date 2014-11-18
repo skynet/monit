@@ -800,7 +800,7 @@ void Util_printRunList() {
                 for (c = Run.mmonits; c; c = c->next) {
                         printf("%s with timeout %d seconds%s%s%s%s%s%s",
                                c->url->url,
-                               c->timeout,
+                               c->timeout / 1000,
                                (c->ssl.use_ssl && c->ssl.version) ? " ssl version " : "",
                                (c->ssl.use_ssl && c->ssl.version) ? sslnames[c->ssl.version] : "",
                                c->ssl.certmd5?" server cert md5 sum ":"",
@@ -1021,23 +1021,23 @@ void Util_printService(Service_T s) {
 
         for (Icmp_T o = s->icmplist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Ping", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout)));
+                printf(" %-20s = %s\n", "Ping", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s count %d with timeout %d seconds]", icmpnames[o->type], o->count, o->timeout / 1000)));
         }
 
         for (Port_T o = s->portlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 if (o->family == AF_INET) {
                         if (o->retry > 1)
-                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d times]", o->hostname, o->port, o->request ? o->request : "", o->protocol->name, Util_portTypeDescription(o), o->timeout, o->retry)));
+                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d times]", o->hostname, o->port, o->request ? o->request : "", o->protocol->name, Util_portTypeDescription(o), o->timeout / 1000, o->retry)));
                         else
-                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds]", o->hostname, o->port, o->request ? o->request : "", o->protocol->name, Util_portTypeDescription(o), o->timeout)));
+                                printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s:%d%s [%s via %s] with timeout %d seconds]", o->hostname, o->port, o->request ? o->request : "", o->protocol->name, Util_portTypeDescription(o), o->timeout / 1000)));
                         if (o->SSL.certmd5 != NULL)
                                 printf(" %-20s = %s\n", "Server cert md5 sum", o->SSL.certmd5);
                 } else if (o->family == AF_UNIX) {
                         if (o->retry > 1)
-                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d times]", o->pathname, o->protocol->name, o->timeout, o->retry)));
+                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s [protocol %s] with timeout %d seconds and retry %d times]", o->pathname, o->protocol->name, o->timeout / 1000, o->retry)));
                         else
-                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s [protocol %s] with timeout %d seconds]", o->pathname, o->protocol->name, o->timeout, o->retry)));
+                                printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s [protocol %s] with timeout %d seconds]", o->pathname, o->protocol->name, o->timeout / 1000, o->retry)));
                 }
         }
 
