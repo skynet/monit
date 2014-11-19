@@ -505,7 +505,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer,
                                   "%s with timeout %d seconds%s%s%s%s</td></tr>%s",
                                   c->url->url,
-                                  c->timeout,
+                                  c->timeout / 1000,
                                   c->ssl.use_ssl ? " ssl version " : "",
                                   c->ssl.use_ssl ? sslnames[c->ssl.version] : "",
                                   c->ssl.certmd5 ? " server cert md5 sum " : "",
@@ -1691,18 +1691,18 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
                 if (p->family == AF_INET) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Port</td><td>");
                         if (p->retry > 1)
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout, p->retry);
+                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000, p->retry);
                         else
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout);
+                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                         if (p->SSL.certmd5 != NULL)
                                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
                 } else if (p->family == AF_UNIX) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Unix Socket</td><td>");
                         if (p->retry > 1)
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout, p->retry);
+                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout / 1000, p->retry);
                         else
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds]", p->pathname, p->protocol->name, p->timeout);
+                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds]", p->pathname, p->protocol->name, p->timeout / 1000);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
                 }
         }
@@ -1712,7 +1712,7 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
 static void print_service_rules_icmp(HttpResponse res, Service_T s) {
         for (Icmp_T i = s->icmplist; i; i = i->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Ping</td><td>");
-                Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout);
+                Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout / 1000);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
