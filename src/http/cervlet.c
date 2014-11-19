@@ -209,7 +209,7 @@ static void _escapeHTML(StringBuffer_T sb, const char *buf) {
 static void _printServiceStatus(StringBuffer_T sb, Service_T s) {
         ASSERT(sb);
         ASSERT(s);
-        StringBuffer_append(sb, "<span class='%s-text'>", (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) ? "gray" : ((! s->error) ? "green" : "red"));
+        StringBuffer_append(sb, "<span class='%s-text'>", (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT) ? "gray" : ((! s->error) ? "green" : "red"));
         char buf[STRLEN];
         get_service_status(s, buf, sizeof(buf));
         _escapeHTML(sb, buf);
@@ -1712,7 +1712,7 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
 static void print_service_rules_icmp(HttpResponse res, Service_T s) {
         for (Icmp_T i = s->icmplist; i; i = i->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Ping</td><td>");
-                Util_printRule(res->outputbuffer, i->action, "If failed [%s count %d with timeout %d seconds]", icmpnames[i->type], i->count, i->timeout / 1000);
+                Util_printRule(res->outputbuffer, i->action, "If failed [count %d with timeout %d seconds]", i->count, i->timeout / 1000);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -2106,9 +2106,11 @@ static void print_service_status_icmp(HttpResponse res, Service_T s) {
                 } else {
                         for (Icmp_T i = s->icmplist; i; i = i->next) {
                                 if (! i->is_available)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='red-text'>connection failed [%s]</td></tr>", icmpnames[i->type]);
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='red-text'>connection failed</td></tr>");
+                                else if (i->response < 0)
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='gray-text'>N/A</td></tr>");
                                 else
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>%.3fs [%s]</td></tr>", i->response, icmpnames[i->type]);
+                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>%.3fs</td></tr>", i->response);
                         }
                 }
         }
@@ -2650,7 +2652,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                           "gid", s->inf->priv.process.gid,
                                           "uptime", uptime);
                                 FREE(uptime);
-                                if (Run.doprocess)        {
+                                if (Run.doprocess) {
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %d\n",
                                                   "children", s->inf->priv.process.children);
@@ -2673,10 +2675,18 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         if (s->type == TYPE_HOST && s->icmplist) {
                                 for (Icmp_T i = s->icmplist; i; i = i->next) {
-                                        StringBuffer_append(res->outputbuffer,
-                                                  "  %-33s %.3fs [%s]\n",
-                                                  "ping response time", i->is_available ? i->response : 0.,
-                                                  icmpnames[i->type]);
+                                        if (! i->is_available)
+                                                StringBuffer_append(res->outputbuffer,
+                                                        "  %-33s connection failed\n",
+                                                        "ping response time");
+                                        else if (i->response < 0)
+                                                StringBuffer_append(res->outputbuffer,
+                                                        "  %-33s N/A\n",
+                                                        "ping response time");
+                                        else
+                                                StringBuffer_append(res->outputbuffer,
+                                                        "  %-33s %.3fs\n",
+                                                        "ping response time", i->response);
                                 }
                         }
                         if ((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
@@ -2755,7 +2765,7 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         EventTable_T *et = Event_Table;
         ASSERT(s);
         ASSERT(buf);
-        if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT || s->monitor & MONITOR_WAITING) {
+        if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT) {
                 get_monitoring_status(s, buf, buflen);
         } else if (s->error == 0) {
                 snprintf(buf, buflen, "%s", statusnames[s->type]);
