@@ -10,8 +10,14 @@ New: Sieve protocol test implemented. Usage:
 Fixed: If the "not every <cron>" option matched, the test was
 skipped only once per minute.
 
+Fixed: Issue #114: If the the test is on hold due to the "every" option schedule,
+display last status instead of "Waiting".
+
 Fixed: Issue #115: The CLI/GUI reported port timeout value 1000x
 higher.
+
+Fixed: If ping is not allowed (insufficient permissions), display value as "N/A"
+instead of negative reposponse time.
 
 
 Version 5.10
