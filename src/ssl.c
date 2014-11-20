@@ -638,7 +638,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
         }
 
         if (!(ssl->ctx = SSL_CTX_new(ssl->method))) {
-                LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
+                LogError("Cannot initialize SSL client certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
@@ -648,12 +648,12 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
         if (ssl->clientpemfile) {
 
                 if (SSL_CTX_use_certificate_chain_file(ssl->ctx, ssl->clientpemfile) <= 0) {
-                        LogError("Cannot initialize SSL server certificate -- %s\n", SSLERROR);
+                        LogError("Cannot initialize SSL client certificate -- %s\n", SSLERROR);
                         goto sslerror;
                 }
 
                 if (SSL_CTX_use_PrivateKey_file(ssl->ctx, ssl->clientpemfile, SSL_FILETYPE_PEM) <= 0) {
-                        LogError("Cannot initialize SSL server private key -- %s\n", SSLERROR);
+                        LogError("Cannot initialize SSL client private key -- %s\n", SSLERROR);
                         goto sslerror;
                 }
 

@@ -43,7 +43,7 @@ static char *_escapeZeroInExpectBuffer(char *s, int n) {
         assert(n < EXPECT_BUFFER_MAX);
         int i, j;
         char t[n]; // VLA
-        for (i = 0, j = 0; j <= n; i++, j++) {
+        for (i = 0, j = 0; j < n; i++, j++) {
                 if ((t[j] = s[i]) == '\0') {
                         if (j + 2 < n) {
                                 t[j] = '\\';
