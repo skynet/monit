@@ -12,62 +12,59 @@ B<monit> [options] {arguments}
 
 =head1 DESCRIPTION
 
-B<monit> is a utility for managing and monitoring processes,
-programs, files, directories and filesystems on a Unix system.
-Monit conducts automatic maintenance and repair and can execute
-meaningful causal actions in error situations. E.g. Monit can
-start a process if it does not run, restart a process if it does
-not respond and stop a process if it uses too much resources. You
-can use Monit to monitor files, directories and filesystems for
-changes, such as timestamps changes, checksum changes or size
-changes.
+B<Monit> is a utility for managing and monitoring processes, programs,
+files, directories and filesystems on a Unix system. Monit conducts
+automatic maintenance and repair and can execute meaningful causal
+actions in error situations. E.g. Monit can start a process if it does
+not run, restart a process if it does not respond and stop a process if
+it uses too much resources. You can use Monit to monitor files,
+directories and filesystems for changes, such as timestamps changes,
+checksum changes or size changes.
 
-Monit is controlled via an easy to configure control file based
-on a free-format, token-oriented syntax. Monit logs to syslog or
-to its own log file and notifies you about error conditions via
-customizable alert messages. Monit can perform various TCP/IP
-network checks, protocol checks and can utilize SSL for such
-checks. Monit provides a http(s) interface and you may use a
-browser to access the Monit program.
+Monit is controlled via an easy to configure control file based on a
+free-format, token-oriented syntax. Monit logs to syslog or to its own
+log file and notifies you about error conditions via customizable alert
+messages. Monit can perform various TCP/IP network checks, protocol
+checks and can utilize SSL for such checks. Monit provides a http(s)
+interface and you may use a browser to access the Monit program.
 
 
 =head1 WHAT TO MONITOR?
 
-You can use Monit to monitor daemon B<processes> or similar
-programs running on localhost. Monit is particularly useful for
-monitoring daemon processes, such as those started at system boot
-time from /etc/init.d/. For instance sendmail, sshd, apache and
-mysql. In contrast to many other monitoring systems, Monit can act if
-an error situation should occur, e.g.; if sendmail is not
-running, monit can start sendmail again automatically or if
-apache is using too many resources (e.g. if a DoS attack is in
-progress) Monit can stop or restart apache and send you an alert
-message. Monit can also monitor process characteristics, such as
+You can use Monit to monitor daemon B<processes> or similar programs
+running on localhost. Monit is particularly useful for monitoring
+daemon processes, such as those started at system boot time. For
+instance sendmail, sshd, apache and mysql. In contrast to many other
+monitoring systems, Monit can act if an error situation should occur,
+e.g.; if sendmail is not running, monit can start sendmail again
+automatically or if apache is using too many resources (e.g. if a DoS
+attack is in progress) Monit can stop or restart apache and send you an
+alert message. Monit can also monitor process characteristics, such as
 how much memory or cpu cycles a process is using.
 
 You can also use Monit to monitor B<files>, B<directories> and
-B<filesystems> on localhost. Monit can monitor these items for
-changes, such as timestamps changes, checksum changes or size
-changes. This is also useful for security reasons - you can
-monitor the md5 or sha1 checksum of files that should not change
-and get an alert or perform an action if they should change.
+B<filesystems> on localhost. Monit can monitor these items for changes,
+such as timestamps changes, checksum changes or size changes. This is
+also useful for security reasons - you can monitor the md5 or sha1
+checksum of files that should not change and get an alert or perform an
+action if they should change.
 
-Monit can monitor B<network connections> to various servers,
-either on localhost or on remote hosts. TCP, UDP and Unix Domain
-Sockets are supported. Network test can be performed on a
-protocol level; Monit has built-in tests for the main Internet
-protocols, such as HTTP, SMTP etc. Even if a protocol is not
-supported you can still test the server because you can configure
-Monit to send any data and test the response from the server.
+Monit can monitor B<network connections> to various servers, either on
+localhost or on remote hosts. TCP, UDP and Unix Domain Sockets are
+supported. Network test can be performed on a protocol level; Monit has
+built-in tests for the main Internet protocols, such as HTTP, SMTP etc.
+Even if a protocol is not supported you can still test the server
+because you can configure Monit to send any data and test the response
+from the server.
 
 Monit can be used to test B<programs> or scripts at certain
 times, much like cron, but in addition, you can test the exit
 value of a program and perform an action or send an alert if the
-exit value indicate an error. This means that you can use Monit
+exit value indicates an error. This means that you can use Monit
 to perform any type of check you can write a script for.
 
 Finally, Monit can be used to monitor general B<system> resources
-on localhost such as overall CPU usage, Memory and Load Average.
+on localhost such as overall CPU usage, Memory and System Load.
 
 
 =head1 GENERAL OPERATION
@@ -95,8 +92,8 @@ If there was an error, Monit will print an error message to the
 console, including the line number in the control file from where
 the error was found.
 
-Once you have a working Monit control file you can start Monit
-from the console, like so:
+Once you have a working Monit control file, simply start Monit from the
+console, like so:
 
  $ monit 
 
@@ -104,11 +101,10 @@ You can change some configuration directives via command-line
 switches, but for simplicity it is recommended that you put these
 in the control file.
 
-If all goes well, Monit will now detach from the terminal and run
-as a background process, i.e. as a daemon process. As a daemon,
-Monit runs in cycles; It monitor services, then goes to sleep for
-a configured period, then wakes up and start monitoring again in
-an endless loop.
+Monit will detach from the terminal and run as a background process,
+i.e. as a daemon process. As a daemon, Monit runs in cycles; It monitor
+services, then goes to sleep for a configured period, then wakes up and
+start monitoring again in an endless loop.
 
 
 =head2 Options
@@ -273,35 +269,34 @@ running processes matching the pattern.
 =head1 THE MONIT CONTROL FILE
 
 Monit is configured and controlled via a control file called
-I<monitrc>. The default location for this file is ~/.monitrc. If
-this file does not exist, Monit will try /etc/monitrc, then
-@sysconfdir@/monitrc and finally ./monitrc. The value of
-@sysconfdir@ is given at configure time as ./configure
---sysconfdir. For instance, using  I<./configure --sysconfdir
-/var/monit/etc> will make Monit search for I<monitrc> in
+I<monitrc>. The default location for this file is ~/.monitrc. If this
+file does not exist, Monit will try /etc/monitrc, then
+@sysconfdir@/monitrc and finally ./monitrc. If you build Monit from
+source, the value of @sysconfdir@ can be given at configure time as
+./configure --sysconfdir. For instance, using I<./configure
+--sysconfdir /var/monit/etc> will make Monit search for I<monitrc> in
 I</var/monit/etc>
 
-To protect the security of your control file and passwords the
-control file must have permissions I<no more than 0700>
+To protect the security of your control file and passwords the control
+file must have read-write permissions I<no more than 0700>
 (u=xrw,g=,o=); Monit will complain and exit otherwise.
 
 When there is a conflict between the command-line arguments and
-the arguments in this file, the command-line arguments take
+the arguments in this file, the command-line arguments takes
 precedence.
 
 Monit uses its own Domain Specific Language (DSL); The control
 file consists of a series of service entries and global option
-statements in a free-format, token-oriented syntax.
+statements.
 
-Comments begin with a '#' and extend through the end of the line.
-
-Otherwise the file consists of a series of service entries or
+Comments begin with a C<'#'> and extend through the end of the
+line. Otherwise the file consists of a series of service entries or
 global option statements in a free-format, token-oriented syntax.
 
-You can use noise keywords like 'if', 'and', 'with(in)', 'has',
-'us(ing|e)', 'on(ly)', 'then', 'for', 'of'  anywhere in an
-entry to make it resemble English. They're ignored, but can make
-entries much easier to read at a glance.  Keywords are case
+You can use noise keywords like C<'if'>, C<'and'>, C<'with(in)'>,
+C<'has'>, C<'us(ing|e)'>, C<'on(ly)'>, C<'then'>, C<'for'>, C<'of'>
+anywhere in an entry to make it resemble English. They're ignored, but
+can make entries much easier to read at a glance. Keywords are case
 insensitive.
 
 There are three kinds of tokens: I<grammar>, I<numbers> (i.e.
@@ -318,21 +313,21 @@ entries:
 
 =item 1. Global set-statements
 
-A global set-statement starts with the keyword I<set> and the
+A global set-statement starts with the keyword C<set> and the
 item to configure.
 
 =item 2. Global include-statement
 
-The include statement consists of the keyword I<include> and
-a glob string.
+The include statement consists of the keyword C<include> and a glob
+string. This statement is used to include configure directives from
+separate files.
 
-=item 2. One or more service entry statements.
+=item 3. One or more service entry statements.
 
-Each service entry consists of the keywords I<check>, followed by
-the service type. Each entry requires a B<unique> descriptive
-name, which may be freely chosen. This name is used by monit
-to refer to the service internally and in all interactions
-with the user.
+Each service entry consists of the keywords C<check>, followed by the
+service type. Each entry requires a B<unique> descriptive name, which
+may be freely chosen. This name is used by Monit to refer to the
+service internally and in all interactions with the user.
 
 =back
 
@@ -342,89 +337,83 @@ Currently, eight types of check statements are supported:
 
 =item 1. CHECK PROCESS <unique name> <PIDFILE <path> | MATCHING <regex>>
 
-<path> is the absolute path to the program's pidfile. If the
-pidfile does not exist or does not contain the pid number of a
-running process, Monit will call the entry's start method if
-defined.
-<regex> is alternative process specification using pattern matching
-to process name (command line) from process table instead of pidfile.
-The first match is used so this form of check is useful for unique
-pattern matching - the pidfile should be used where possible as it
-defines expected pid exactly (pattern matching won't be useful for
-Apache in most cases or for processes which start child processes using
-fork/clone as the child will match the same pattern temporarily).
-The pattern can be obtained using I<monit procmatch ".*"> CLI command
-which lists all processes visible to Monit or using the I<ps> utility.
-The "procmatch" CLI command can be used to test your pattern as well.
-If Monit runs in passive mode or the start methods is not defined,
-Monit will just send alerts on errors.
+<path> is the absolute path to the program's pid-file. A pid-file is a
+file, containing a Process's unique ID. If the pid-file does not exist
+or does not contain the PID number of a running process, Monit will
+call the entry's start method if defined.
+
+<regex> is an alternative to using PID files and uses process name
+pattern matching to find the process to monitor. The first match is
+used so this form of check is most useful if the process name is
+unique. Pid-file should be used where possible as it defines expected
+pid exactly (pattern matching won't be useful for processes which start
+a child process using fork/clone as the child will match the same
+pattern temporarily). You can test if a process match a pattern from
+the command-line using C<monit procmatch "regex-pattern">. This will
+lists all processes matching or not, the regex-pattern.
 
 =item 2. CHECK FILE <unique name> PATH <path>
 
-<path> is the absolute path to the file. If the file does not
-exist or disappeared, Monit will call the entry's start method if
-defined, if <path> does not point to a regular file type (for
-instance a directory), Monit will disable monitoring of this
-entry. If Monit runs in passive mode or the start methods is not
-defined, Monit will just send alerts on errors.
+<path> is the absolute path to the file. If the file does not exist,
+Monit will call the entry's start method if defined, if <path> does not
+point to a regular file type (for instance a directory), Monit will
+disable monitoring of this entry. If Monit runs in passive mode or the
+start methods is not defined, Monit will just send an alert on error.
 
 =item 3. CHECK FIFO <unique name> PATH <path>
 
-<path> is the absolute path to the fifo. If the fifo does not
-exist or disappeared, Monit will call the entry's start method if
-defined, if <path> does not point to a fifo type (for
-instance a directory), Monit will disable monitoring of this
-entry. If Monit runs in passive mode or the start methods is not
-defined, Monit will just send alerts on errors.
+<path> is the absolute path to the fifo. If the fifo does not exist,
+Monit will call the entry's start method if defined, if <path> does not
+point to a fifo type (for instance a directory), Monit will disable
+monitoring of this entry. If Monit runs in passive mode or the start
+methods is not defined, Monit will just send an alert on error.
 
 =item 4. CHECK FILESYSTEM <unique name> PATH <path>
 
-<path> is the path to the filesystem block special device, mount point,
-file or a directory which is part of a filesystem. It is
-recommended to use a block special file directly (for example
-/dev/hda1 on Linux or /dev/dsk/c0t0d0s1 on Solaris, etc.) If you
-use a mount point (for example /data), be careful, because if the
-filesystem is unmounted the test will still be true because the mount
-point exist.
+<path> is the path to the device/disk, mount point, file or a directory
+which is part of a filesystem. It is recommended to use a block special
+file directly (for example /dev/hda1 on Linux or /dev/dsk/c0t0d0s1 on
+Solaris, etc.) If you use a mount point (for example /data), note if
+the filesystem is unmounted the test will still be true because the
+mount point exist.
 
 If the filesystem becomes unavailable, Monit will call the entry's
 start method if defined. if <path> does not point to a filesystem,
-Monit will disable monitoring of this entry. If Monit runs in
-passive mode or the start methods is not defined, Monit will just
-send alerts on errors.
+Monit will disable monitoring of this entry. If Monit runs in passive
+mode or the start methods is not defined, Monit will just send an alert
+on error.
 
 =item 5. CHECK DIRECTORY <unique name> PATH <path>
 
-<path> is the absolute path to the directory. If the directory
-does not exist or disappeared, Monit will call the entry's start
-method if defined, if <path> does not point to a directory, monit
-will disable monitoring of this entry. If Monit runs in passive
-mode or the start methods is not defined, Monit will just send
-alerts on errors.
+<path> is the absolute path to the directory. If the directory does not
+exist, Monit will call the entry's start method if defined. If <path>
+does not point to a directory, monit will disable monitoring of this
+entry. If Monit runs in passive mode or the start methods is not
+defined, Monit will just send an alert on error.
 
 =item 6. CHECK HOST <unique name> ADDRESS <host address> 
 
 The host address can be specified as a hostname string or as an
-ip-address string on a dotted decimal format. Such as,
+IP-address string on a dotted decimal format. Such as,
 tildeslash.com or "64.87.72.95".
 
 =item 7. CHECK SYSTEM <unique name>
 
-The system name is usually hostname, but any descriptive name can be
-used. You can use the variable $HOST as the name, which will expand to
-the hostname. This test allows one to check general system resources
-such as CPU usage (percent of time spent in user, system and wait),
-total memory usage or load average. The unique name is used as the
-system hostname in mail alerts and when M/Monit is configured, then
-also as initial name of the host entry in M/Monit.
+The I<unique name> is usually the local host name, but any descriptive
+name can be used. If you use the variable $HOST as the name, it will
+expand to the hostname. This check allows one to monitor general system
+resources such as CPU usage, total memory usage or load average. The
+I<unique name> is used as the system hostname in mail alerts and as
+the initial name of the host entry in M/Monit.
 
 =item 8. CHECK PROGRAM <unique name> PATH <executable file> [TIMEOUT <number> SECONDS]
 
-<path> is the absolute path to the executable program or script.
-The I<status> test allows one to check the program's exit status. If
-program will not finish within <number> seconds, Monit will terminate
-it. The default program timeout is 600 seconds (5 minutes). The output
-of the program is recorded (up to 1kB).
+<path> is the absolute path to the executable program or script. The
+L<status|/"PROGRAM STATUS TESTING"> test allows one to check the
+program's exit status. If the program does not finish executing within
+<number> seconds, Monit will terminate it. The default program timeout
+is 600 seconds (5 minutes). The output of the program is recorded and
+made available in the User Interface and in alerts (up to 1kB).
 
 =back
 
@@ -436,7 +425,7 @@ Monit will log status and error messages to a log file. Use the
 I<set logfile> statement in the monitrc control file. To setup
 Monit to log to its own logfile, use e.g. I<set logfile
 /var/log/monit.log>. If B<syslog> is given as a value for the
-I<-l> command-line switch (or the keyword I<set logfile syslog>
+C<-l> command-line switch (or the keyword I<set logfile syslog>
 is found in the control file) Monit will use the B<syslog> system
 daemon to log messages with a priority assigned to each message
 based on the context. To turn off logging, simply do not set the
@@ -458,39 +447,38 @@ monitoring each specified service and then goes to sleep for the
 given poll interval, wakes up and start monitoring again in an
 endless cycle.
 
-Alternatively, you can use the I<-d> command line switch to set
+Alternatively, you can use the C<-d> command line switch to set
 the poll interval, but it is strongly recommended to set the poll
 interval in your I<~/.monitrc> file, by using I<set daemon>.
 
 Monit will then always start in daemon mode. If you do not use
 this statement and do not start monit with the -d option, Monit
 will just run through the service checks once and then exit. This
-may be useful in some situations, but Monit is primarily designed
+might be useful in some situations, but Monit is primarily designed
 to run as a daemon process.
 
-Calling monit with a Monit daemon running in the background sends
+Calling C<monit> with a Monit daemon running in the background sends
 a wake-up signal to the daemon, forcing it to check services
-immediately. Calling monit with the quit argument will kill a
+immediately. Calling C<monit> with the quit argument will kill a
 running Monit daemon process instead of waking it up.
 
 
 =head1 INIT SUPPORT
 
-The I<set init> statement prevents Monit from transforming itself
-into a daemon process. Instead Monit will run as a foreground
-process. (You should still use set daemon to specify the poll
-cycle).
+The C<set init> statement prevents Monit from transforming itself into
+a daemon process. Instead Monit will run as a foreground process. (You
+should still use C<set daemon> to specify the poll cycle).
 
-This is required to run Monit from init. Using init to start
-Monit is probably the best way to run Monit if you want to be
-certain that you always have a running Monit daemon on your
-system. Another option is to run Monit from crontab. In any case,
-you should make sure that the control file does not have any
-syntax errors before you start Monit from init or crontab.
+This is required to run Monit from init. Using init to start Monit is
+probably the best way to run Monit if you want to be certain that you
+always have a running Monit daemon on your system. Another option is to
+run Monit from crontab. In any case, you should make sure that the
+control file does not have any syntax errors before you start Monit
+from init or crontab (use C<monit -t> to check).
 
-To setup Monit to run from init, you can either use the set init
-statement in Monit's control file or use the -I option from the
-command line. Here is what you must add to /etc/inittab:
+To setup Monit to run from init, you can either use the C<set init>
+statement in Monit's control file or use the C<-I> option from the
+command line. Here is what you must add to C</etc/inittab>:
 
   # Run Monit in standard run-levels
   mo:2345:respawn:/usr/local/bin/monit -Ic /etc/monitrc
@@ -504,39 +492,41 @@ For systems without telinit:
 
   kill -1 1
 
-If Monit is used to monitor services that are also started at
-boot time (e.g. services started via SYSV init rc scripts or via
-inittab) then, in some cases, a race condition could occur. That
-is; if a service is slow to start, Monit can assume that the
-service is not running and possibly try to start it and raise an
-alert, while, in fact the service is already about to start or
-already in its startup sequence. Please see the FAQ for a
-solution to this problem.
+If Monit is used to monitor services that are also started at boot time
+(e.g. services started via SYSV init rc scripts or via inittab) then,
+in some cases, a race condition could occur. That is; if a service is
+slow to start, Monit can assume that the service is not running and
+possibly try to start it and raise an alert, while, in fact the service
+is already about to start or already in its startup sequence. Please
+see the FAQ for a solution to this problem. The short version is to
+start Monit on a higher run-level after system processes.
 
 
 =head1 INCLUDE FILES
 
-The Monit control file, I<monitrc>, can include additional
-configuration files. This feature helps one to maintain a certain
-structure or to place repeating settings into one file. Include
-statements can be placed at virtually any spot. The syntax is the
-following:
+The Monit control file, C<monitrc>, can include additional
+configuration files. This feature helps one to organize configuration
+into separate files instead of having everything in one file, if you
+like this kind of thing. Include statements can be placed at virtually
+any place in C<monitrc> though the convention is at the bottom. The
+syntax is the following:
 
   include globstring
 
-The globstring is any kind of string as defined in glob(7). Thus,
+The globstring is any kind of string as defined in C<glob(7)>. Thus,
 you can refer to a single file or you can load several files at
 once. If you want to use whitespace in your string the globstring
-need to be embedded into quotes (') or double quotes ("). If the
+needs to be embedded into quotes (') or double quotes ("). If the
 globstring matches a directory instead of a file, it is silently
 ignored.
 
-Any I<include> statements in included files are parsed as in the
+Any I<include> statements in an included file are parsed as in the
 main control file.
 
-If the globstring matches several results, the files are included
-in a non sorted manner. If you need to rely on a certain order,
-you might need to use single I<include> statements.
+If the globstring matches several results, the files are included in a
+non sorted manner. If you need to rely on a certain order, you should
+avoid wild-card globbing and instead specify the full path of files
+included.
 
 An example,
 
@@ -549,62 +539,57 @@ files in I</etc/monit.d> that ends with the prefix I<.cfg>.
 
 =head1 MONIT HTTPD
 
-If specified in the control file, Monit will start a Monit daemon
-with http support. From a Browser you can then start and stop
-services, disable or enable service monitoring as well as view
-the status of each service. Also, if Monit logs to its own file,
-you can view the content of this logfile in a Browser.
+If specified in the control file, Monit will start with http support.
+From a Browser you can then start and stop services, disable or enable
+service monitoring as well as view the status of each service. Also, if
+Monit logs to its own file, you can view the content of this logfile in
+a Browser.
 
-The status page displayed by the Monit web server is automatically
-refreshed with the same poll time set for the monit daemon.
-
-The Monit web interface is required for CLI interface operation, as
-all CLI commands (such as "monit status") are handled by the web
-interface.
+Note that HTTP support is required for almost all Monit CLI interface
+operation, as CLI commands (such as "monit status") are handled by
+communicating with the Monit background process via the the HTTP
+interface. So basically you should have this enable, though you can
+bind the HTTP interface to localhost only so Monit is not accessible
+from the outside.
 
 Syntax:
 
-=over 4
-
-=item  SET HTTPD
-        PORT <number>
-        ALLOW <user:password | IP-address | IP-range>+
-        [ADDRESS <hostname | IP-address>]
-        [SSL <ENABLE | DISABLE>]
-        [PEMFILE <path>]
-        [CLIENTPEMFILE <path>]
-        [ALLOWSELFCERTIFICATION]
-        [SIGNATURE <ENABLE | DISABLE>]
-
-=back
+  SET HTTPD PORT <number> [ADDRESS <hostname | IP-address>]
+      [SSL <ENABLE | DISABLE>]
+      [PEMFILE <path>]
+      [CLIENTPEMFILE <path>]
+      [ALLOWSELFCERTIFICATION]
+      [SIGNATURE <ENABLE | DISABLE>]
+      ALLOW <user:password | IP-address | IP-range>+
 
 Example:
 
  set httpd port 2812
-     allow myuser:mypassword
+     allow username:password
 
-And you can use I<http://localhost:2812/> to access the Monit web
-interface from a browser.
+You can now use L<http://localhost:2812/|http://localhost:2812/> to
+access Monit's web interface from a browser, after you have entered
+username and password as credentials.
 
-I<PORT> option sets the port where Monit should listen. Monit uses
-usually port 2812.
+B<PORT> set the port Monit should bind to and listen on. Monit is
+usually setup on port 2812.
 
-I<ADDRESS> option allows to make Monit listen on specific interface
-only. For example if you B<don't> want to expose Monit web interface
-on external network, bind it to localhost only. Monit will accept
-connections on any address by default (if ADDRESS option is missing).
+B<ADDRESS> make Monit listen on a specific interface only. For example
+if you I<don't> want to expose Monit's web interface to the network,
+bind it to localhost only. Monit will accept connections on any address
+by default (if ADDRESS option is missing).
 
 For example to limit the web interface to localhost only:
 
  set httpd
      port 2812
      use address 127.0.0.1
-     allow myuser:mypassword
+     allow username:password
 
-I<SSL> allows to enable SSL for Monit web interface. Only TLS methods
-are supported. The I<PEMFILE> option holds both the server's private key
-and certificate. This file should be stored in a safe place on the
-filesystem and should have strict permissions, no more than 0700.
+B<SSL> enable TLS for Monit's web interface. The I<PEMFILE> option
+holds both the server's private key and certificate. This file should
+be stored in a safe place on the filesystem and should have strict
+permissions, no more than 0700.
 
 For example:
 
@@ -614,21 +599,20 @@ For example:
      pemfile /etc/certs/monit.pem
      allow myuser:mypassword
 
-You can use I<https://localhost:2812/> to access the Monit web
-server over a SSL encrypted connection.
+You can now use L<https://localhost:2812/|https://localhost:2812/> to
+access the Monit web server over a TLS encrypted connection.
 
-OpenSSL FIPS is supported, to enable FIPS mode (provided your OpenSSL
+OpenSSL FIPS is supported. To enable FIPS mode (provided your OpenSSL
 library supports it), add this statement to Monit control file: 
 
  SET FIPS
 
-I<CLIENTPEMFILE>, I<ALLOWSELFCERTIFICATION> options allow to set
-client certificate based authentication. A connecting client has
-to provide a certificate known to Monit in order to connect. This
-file also needs to have all necessary CA certificates. By default
-self-signed client certificates are B<not> allowed. If you want to
-use a self signed certificate from a client it has to be allowed
-explicitly with the I<ALLOWSELFCERTIFICATION> statement.
+B<CLIENTPEMFILE> client certificate based authentication. A connecting
+client has to provide a certificate known to Monit in order to connect.
+This file also needs to have all necessary CA certificates. By default
+self-signed client certificates are B<not> allowed. If you want to use
+a self signed certificate from a client it has to be allowed explicitly
+with the B<ALLOWSELFCERTIFICATION> statement.
 
 For example:
 
@@ -638,8 +622,8 @@ For example:
      pemfile /etc/certs/monit.pem
      clientpemfile /etc/certs/monit-client.pem
 
-I<SIGNATURE> option can be used to hide Monit version from the
-HTTP response header and error pages.  For example:
+B<SIGNATURE> can be used to hide Monit version from the
+HTTP response header and error pages. For example:
 
   set httpd
     port 2812
@@ -648,33 +632,38 @@ HTTP response header and error pages.  For example:
 
 =head2 Authentication
 
-Monit web interface access is controlled primarily controlled via the
-B<ALLOW> option.
+Access to the Monit web interface is controlled primarily via the
+B<ALLOW> option which is used to specify authentication and authorize
+only specific clients to connect.
 
 If the Monit command line interface is being used, at least one
 cleartext password is necessary (see bellow), otherwise the Monit
 command line interface will not be able to connect to the Monit
 web interface.
 
-Clients trying to connect to the server but supply the wrong
-username and/or password are logged with their ip-address.
+Clients trying to connect to Monit, but submit a wrong username and/or
+password are logged with their IP-address.
 
 =head3 Client certificates
 
-See the I<CLIENTPEMFILE> option above.
+This authentication method is a strong authentication mechanism and
+employ HTTPS client certificates to verify the authenticity of a
+connecting client. Clients must posses a Public Key Certificate known
+by Monit. The client must connect to Monit over SSL and Monit ask the
+client to send its certificate. Upon receiving the certificate Monit
+compares the certificate to certificates located in the
+I<CLIENTPEMFILE> file. Access is granted if the client certificate is
+in this file. See I<CLIENTPEMFILE> above for details.
 
 =head3 Host and network allow list
 
-The http server maintains an access-control list of hosts and
-networks allowed to connect to the server. You can add as many
-hosts as you want to, but only hosts with a valid domain name or
-its IP address are allowed. Networks require a network IP and a
-netmask to be accepted.
+Monit maintains an access-control list of hosts and networks allowed to
+connect. You can add as many hosts as you want to, but only hosts with
+a valid domain name or its IP address are allowed. 
 
-The http server will query a name server to check any hosts
-connecting to the server. If a host (client) is trying to connect
-to the server, but cannot be found in the access list or cannot
-be resolved, the server will shutdown the connection to the
+Monit will query a name server to check any hosts trying to connect. If
+a host (client) is trying to connect, but cannot be found in the access
+list or cannot be resolved, Monit will shutdown the connection to the
 client promptly.
 
 Control file example:
@@ -686,33 +675,31 @@ Control file example:
       allow 192.168.1.0/255.255.255.0
       allow 10.0.0.0/8
 
-Clients, not mentioned in the allow list, trying to connect to
-the server are logged with their ip-address.
+Clients, not mentioned in the allow list, trying to connect to Monit
+will be denied access and are logged with their IP-address.
 
 
 =head3 Basic Authentication
 
-Monit supports Basic Authentication schema described in RFC 2617.
+Monit supports Basic Authentication as described in RFC 2617.
 
 In short; a server challenge a client (e.g. a Browser) to send
-authentication information (username and password) and if
-accepted, the server will allow the client access to the
-requested document.
+authentication information (username and password) and if accepted, the
+server will allow the client access to the requested document.
 
-The biggest weakness with Basic Authentication is that the
-username and password is sent in clear-text (i.e. base64 encoded)
-over the network. It is therefor recommended that you do not use
-this authentication method unless you run the Monit http server
-with I<ssl> support. With ssl support it is completely safe to
-use Basic Authentication since B<all> http data, including Basic
+The biggest weakness with Basic Authentication is that username and
+password is sent in clear-text over the network (i.e. base64 encoded).
+It is therefor recommended that you do not use this authentication
+method unless you run Monit with I<ssl> support. With ssl, it is safe
+to use Basic Authentication since I<all> http data, including Basic
 Authentication headers will be encrypted.
 
 =head4 Cleartext user and password
 
-Monit will use Basic Authentication if an allow statement
-contains a username and a password separated with a single ':'
-character.  Special characters can be used but the password has
-to be quoted.
+Monit will use Basic Authentication if an allow statement contains a
+username and a password separated with a single ':' character. Special
+characters can be used, but for non-alphanumerics the password has to
+be quoted.
 
 Syntax:
 
@@ -727,9 +714,9 @@ Syntax:
 
  ALLOW @<group>
 
-where I<group> is the group name allowed to access Monit web
-interface. Monit uses PAM service called I<monit> for PAM
-authentication, see PAM manual page for detailed instructions
+where C<group> is the group name allowed to access Monit's web
+interface. Monit uses a PAM service called I<monit> for PAM
+authentication, see the PAM manual page for detailed instructions on
 how to set the PAM service and PAM authentication plugins.
 
 Sample PAM service for Monit on Mac OS X (store as
@@ -741,8 +728,8 @@ Sample PAM service for Monit on Mac OS X (store as
   auth       required       pam_deny.so
   account    required       pam_permit.so
 
-And monitrc setting which allows only group admin authenticated
-via PAM to access the web interface:
+And monitrc config which only allows group C<admin> authenticated via
+PAM to access the web interface:
 
   set httpd
       port 2812
@@ -750,14 +737,13 @@ via PAM to access the web interface:
 
 =head4 htpasswd file
 
-Alternatively you can use files in "htpasswd" format (one
-user:passwd entry per line), like so: I<allow
-[cleartext|crypt|md5] /path [users]>. By default cleartext
-passwords are read. In case the passwords are digested it is
-necessary to specify the cryptographic method. If you do not want
-all users in the password file to have access to Monit you can
-specify only those users that should have access, in the allow
-statement. Otherwise all users are added.
+Alternatively you can use files in C<htpasswd> format (one
+I<user:passwd> entry per line), like so: I<allow [cleartext|crypt|md5]
+/path [users]>. By default cleartext passwords are read. In case the
+passwords are digested it is necessary to specify the cryptographic
+method. If you do not want all users in the password file to have
+access to Monit you can specify only those users that should have
+access, in the allow statement. Otherwise all users are added.
 
 Example1:
 
@@ -775,7 +761,7 @@ Example2:
   set httpd port 2812
       allow localhost
       allow 10.1.1.1
-      allow hauk:"password"
+      allow hauk:"passw@rd"
 
 If you only want to use Basic Authentication, then just provide
 allow entries with username and password or password files as in
@@ -802,7 +788,7 @@ access rights.
 
 =head1 ALERT MESSAGES
 
-Monit will raise an event in the following situations:
+Monit will raise an alert in the following situations:
 
  o A service does not exist (e.g. process is not running)
  o Cannot read service data (e.g. cannot get filesystem usage)
@@ -826,98 +812,91 @@ Monit will raise an event in the following situations:
  o A service action was performed by administrator
  o Monit was started, stopped or reloaded
 
-To get an alert via e-mail, set the alert target using global I<set alert>
-statement (for all services) or using I<alert> statement in the context
-of the service entry (for single service).
-
+To get an alert via e-mail, set the alert target using the global C<set
+alert> statement (for all services) or the C<alert> statement in the
+context of a service entry (for a single service).
 
 =head2 Setting an alert recipient
 
-If an event occurred, Monit will send an alert. There are two kinds of alert
-statement: global and local.
+If an event occurs, Monit will send an alert. There are two kinds of
+alert statement: global and local.
 
 Global syntax:
 
-=over 4
-
-=item SET ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
-
-=back
+ SET ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
 
 Example:
 
  set alert foo@bar
 
-will send a default email to the address foo@bar whenever any event occurred on
-any service.
+will send a default email to the address foo@bar whenever any event
+occurs on any service.
 
 If you want to send alert messages to more email addresses, add a
-I<set alert 'email'> statement for each address.
+C<set alert 'email'> statement for each address.
 
-It is also possible to use the local alert statement in the context of some service
-to enable alert for the given service only:
+It is also possible to use the local alert statement in the context of
+a service check to enable alert for the given service only:
 
-=over 4
+ ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
 
-=item ALERT mail-address [[NOT] {event, ...}] [REMINDER cycles]
-
-=back
-
-Example:
+Local alert example:
 
  check host myhost with address 1.2.3.4
-     if failed port 25 protocol http then alert
+     if failed port 3306 protocol mysql then alert
      if failed port 80 protocol http then alert
-     alert foo@bar
+     alert foo@baz # Local service alert
 
-You can combine global and local alert statements. In the case of conflict, the local
-alert has precedence and overrides the global statement.
+You can combine global and local alert statements. If there is a
+conflict, the local alert has precedence and overrides the global
+statement. 
 
 
 =head3 Setting an event filter
 
-If you only want an alert message sent for certain events, then list them in
-the I<{event, ...}> block, e.g.:
+If you only want an alert message sent for certain events, list
+them in an C<{event, ...}> block, e.g.:
 
  set alert foo@bar only on { timeout, nonexist }
 
-You can also set exclude list (negate the list) to send alerts for all events
-except those which are listed, by prepending the list with the word I<not>.
-For example to receive all alerts except notification about Monit program start
-or stop:
+The event list can also be negated to send alerts for all events
+I<except> those which are listed, by prepending the list with the word
+C<not>. For example, to receive all alerts except notification about
+Monit program start and stop:
 
  set alert foo@bar but not on { instance }
 
-List of all possible event types (value from the first column can be used in
-the event filter:
+Here is a list of all possible event types emitted by Monit. Values
+from the first column can be used in the event filter list mentioned
+above:
 
  Event:     | Failure state:            | Success state:              
  ---------------------------------------------------------------------
- ACTION     | "Action done"             | "Action done"               
- CHECKSUM   | "Checksum failed"         | "Checksum succeeded"        
- CONNECTION | "Connection failed"       | "Connection succeeded"      
- CONTENT    | "Content failed",         | "Content succeeded"
- DATA       | "Data access error"       | "Data access succeeded"     
- EXEC       | "Execution failed"        | "Execution succeeded"       
- FSFLAGS    | "Filesystem flags failed" | "Filesystem flags succeeded"
- GID        | "GID failed"              | "GID succeeded"             
- ICMP       | "Ping failed"             | "Ping succeeded"
- INSTANCE   | "Monit instance changed"  | "Monit instance changed not"
- INVALID    | "Invalid type"            | "Type succeeded"            
- NONEXIST   | "Does not exist"          | "Exists"                    
- PERMISSION | "Permission failed"       | "Permission succeeded"      
- PID        | "PID failed"              | "PID succeeded"
- PPID       | "PPID failed"             | "PPID succeeded"
- RESOURCE   | "Resource limit matched"  | "Resource limit succeeded"  
- SIZE       | "Size failed"             | "Size succeeded"            
- STATUS     | "Status failed"           | "Status succeeded"            
- TIMEOUT    | "Timeout"                 | "Timeout recovery"          
- TIMESTAMP  | "Timestamp failed"        | "Timestamp succeeded"       
- UID        | "UID failed"              | "UID succeeded"             
- UPTIME     | "Uptime failed"           | "Uptime succeeded"             
+ action     | "Action done"             | "Action done"               
+ checksum   | "Checksum failed"         | "Checksum succeeded"        
+ connection | "Connection failed"       | "Connection succeeded"      
+ content    | "Content failed",         | "Content succeeded"
+ data       | "Data access error"       | "Data access succeeded"     
+ exec       | "Execution failed"        | "Execution succeeded"       
+ fsflags    | "Filesystem flags failed" | "Filesystem flags succeeded"
+ gid        | "GID failed"              | "GID succeeded"             
+ icmp       | "Ping failed"             | "Ping succeeded"
+ instance   | "Monit instance changed"  | "Monit instance changed not"
+ invalid    | "Invalid type"            | "Type succeeded"            
+ nonexist   | "Does not exist"          | "Exists"                    
+ permission | "Permission failed"       | "Permission succeeded"      
+ pid        | "PID failed"              | "PID succeeded"
+ ppid       | "PPID failed"             | "PPID succeeded"
+ resource   | "Resource limit matched"  | "Resource limit succeeded"  
+ size       | "Size failed"             | "Size succeeded"            
+ status     | "Status failed"           | "Status succeeded"            
+ timeout    | "Timeout"                 | "Timeout recovery"          
+ timestamp  | "Timestamp failed"        | "Timestamp succeeded"       
+ uid        | "UID failed"              | "UID succeeded"             
+ uptime     | "Uptime failed"           | "Uptime succeeded"             
 
 
-Each alert recipient can have its own filter, for example:
+Each alert recipient can have it's own filter, for example:
 
  set alert foo@bar { nonexist, timeout, resource, icmp, connection }
  set alert security@bar on { checksum, permission, uid, gid }
@@ -926,21 +905,17 @@ Each alert recipient can have its own filter, for example:
 
 =head3 Setting an error reminder
 
-Monit by default sends just B<one> notification if a service failed
-and another notification when it recovered. If you want to be notified
-that the service is still failed, you can use the reminder option in
-the alert statement:
+Monit by default sends just I<one> notification if a service failed and
+another when/if it recover. If you want to be notified that the service
+is still in a failed state, you can use the reminder option in the
+alert statement:
 
-=over 4
+ SET ALERT mail-address [WITH] REMINDER [ON] number [CYCLES]
 
-=item SET ALERT mail-address [WITH] REMINDER [ON] number [CYCLES]
+For example if you want to be notified each tenth cycle if a service
+remains in a failed state, you can use:
 
-=back
-
-For example if you want to be notified each tenth cycle if a
-service remains in a failed state, you can use:
-
-  alert foo@bar with reminder on 10 cycles
+ alert foo@bar with reminder on 10 cycles
 
 Likewise if you want to be notified on each failed cycle, you can
 use:
@@ -950,14 +925,10 @@ use:
 
 =head2 Disabling alerts for some service
 
-To suppress alerts for some user and service, add the NOALERT statement in the
-context of the service which show not generate alerts:
+To suppress alerts for some user and service, add the C<noalert>
+statement in the context of a service check.
 
-=over 4
-
-=item NOALERT mail-address
-
-=back
+ NOALERT mail-address
 
 Example (send all alerts to foo@bar except for service p3):
 
@@ -973,14 +944,10 @@ Example (send all alerts to foo@bar except for service p3):
 
 =head2 Message format
 
-Monit provides a default message format. You can set custom message
-format using I<set mail-format> statement:
+The alert message format can be modified by using the C<set
+mail-format> statement:
 
-=over 4
-
-=item SET MAIL-FORMAT {mail-format}
-
-=back
+ SET MAIL-FORMAT {mail-format}
 
 Example:
 
@@ -993,50 +960,53 @@ Example:
             monit
  }
 
-The I<from:> option is the sender email address. 
+The I<from:> option is the sender's email address. That is, the email
+address Monit will pretend it is sending alerts from. It does not have
+to be a real email-address only a proper formated address.
 
 The I<reply-to:> option can be used to set the reply-to mail header.
 
-The I<subject:> option allows to set message subject and must be on
-only I<one> line.
+The I<subject:> option sets the message subject and must be on only
+I<one> line.
 
 The I<message:> option sets the mail body. This option should always
 be the last in a mail-format statement. The mail body can be as long
-as needed, but must B<not> contain the '}' character.
+as needed, but must I<not> contain the block-closing '}' character.
 
-You can set only the option which you want to override. For example
-to change sender address only:
+You need not use all options, only the option which you want to
+override. For example to globally change the senders address only:
 
  set mail-format { from: bofh@foo.bar }
 
-The subject and body may contain $XYZ variables, which are expanded
-by Monit:
+The subject and body may contain $NAME variables, which are expanded by
+Monit. Here is a list of variables that can be used when composing an
+alert message.
 
 =over 4
 
 =item * I<$EVENT>
 
- A string describing the event that occurred.
+A string describing the event that occurred.
 
 =item * I<$SERVICE>
 
- The service name
+The service name
 
 =item * I<$DATE> 
 
- The current time and date (RFC 822 date style).
+The current time and date (RFC 822 date style).
 
 =item * I<$HOST> 
 
- The name of the host Monit is running on
+The name of the host Monit is running on
 
 =item * I<$ACTION> 
 
- The name of the action which was done by Monit.
+The name of the action which was done by Monit.
 
 =item * I<$DESCRIPTION> 
 
- The description of the error condition
+The description of the error condition
 
 =back 
 
@@ -1044,15 +1014,17 @@ by Monit:
 =head2 Setting a mail server for alert delivery
 
 The mail server Monit should use to send alert messages is
-defined with a I<set mailserver> statement:
+defined with a C<set mailserver> statement:
 
- SET MAILSERVER <hostname|ip-address [PORT number] [USERNAME string] [PASSWORD string] [using SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12] [CERTMD5 checksum]>, ...
-                [with TIMEOUT X SECONDS]
-                [using HOSTNAME hostname]
+ SET MAILSERVER <hostname|ip-address [PORT number] [USERNAME string]
+ [PASSWORD string] [using SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12]
+ [CERTMD5 checksum]>, ...
+   [with TIMEOUT X SECONDS]
+   [using HOSTNAME hostname]
 
-Multiple mailservers can be set using a comma separated list. If
+Multiple mailservers can be set by using a comma separated list. If
 Monit cannot connect to the first server, it will try the next in
-the list.
+the list and so on.
 
 The port statement allows to override the default SMTP port
 (465 for SSL, or 25 for TLS and non secure connection).
@@ -1068,27 +1040,25 @@ limit using the TIMEOUT option.
 
 Example (setting two mail servers for failover):
 
- set mailserver mail1.foo.bar, mail2.foo.bar
+ set mailserver smtp.gmail.com, smtp.other.host
 
-By default, Monit uses the local host name in SMTP HELO/EHLO
-and in the Message-ID header. You can override it using the
-HOSTNAME option.
+By default, Monit uses the local host name in SMTP HELO/EHLO and in the
+Message-ID header. You can override this using the HOSTNAME option.
 
 
 =head2 Event queue
 
-If no mail server is available, Monit I<can> queue events on the
-local file-system for retry until mail server recovery.
+If no mail server is available, Monit I<can> queue events in the
+local file-system for retry until the mail server recovers.
 
-If Monit is configured with M/Monit, the event queue provides safe
-event store for M/Monit in the case of temporary problems as well.
+If Monit is used with M/Monit, the event queue provides a safe
+event store for M/Monit in the case of temporary problems.
 
-The event queue is persistent across Monit restarts and provided
-that the back-end filesystem is persistent too, across system
-restart as well.
+The event queue is persistent across Monit restarts and provided that
+the back-end filesystem is persistent, across system restart as well.
 
-By default, the queue is disabled and if the alert handler fails,
-Monit will simply drop the alert message.
+By default, the queue is disabled and if the alert handler fails, Monit
+will simply drop the alert message.
 
 To enable the event queue, add the following statement:
 
@@ -1110,30 +1080,26 @@ machine, you B<must> use separated event queue directories.
 
 =head1 SERVICE METHODS
 
-Each service can have I<start>, I<stop> and I<restart> methods
-which allow Monit to perform corresponding action with the service.
+Each service can have associated I<start>, I<stop> and I<restart>
+methods which Monit can use to execute action on the service.
 
 Syntax:
 
-=over 4
-
-=item <START | STOP | RESTART> [PROGRAM] = "program"
+ <START | STOP | RESTART> [PROGRAM] = "program"
         [[AS] UID <number | string>]
         [[AS] GID <number | string>]
         [[WITH] TIMEOUT <number> SECOND(S)]
 
-=back
-
-If the I<program> is shell script it must begin with C<#!> and
+If the C<program> is a shell script it must begin with C<#!> and
 the remainder of the first line must specify an interpreter for
 the program. e.g. C<#!/bin/sh>
 
-The I<program> must be executable (for example mode 0755).
+The C<program> must also be executable (for example mode 0755).
 
 It's possible to write scripts directly into the I<program> this
 way:
 
- stop = "/bin/bash -c 'kill -s SIGTERM `cat /var/run/myproc.pid`'"
+ stop = "/bin/bash -c 'kill -s SIGTERM `cat /var/run/process.pid`'"
 
 By default the program is executed as the user under which Monit
 is running. If Monit is running as root, you may optionally specify
@@ -1142,12 +1108,12 @@ the I<UID> and I<GID> the executed program should switch to.
 Example:
 
  check process mmonit with pidfile /usr/local/mmonit/mmonit/logs/mmonit.pid
-   start program = "/usr/local/mmonit/bin/mmonit -d" as uid "mmonit" and gid "mmonit"
+   start program = "/usr/local/mmonit/bin/mmonit" as uid "mmonit" and gid "mmonit"
    stop program = "/usr/local/mmonit/bin/mmonit stop" as uid "mmonit" and gid "mmonit"
 
-In the case of process check, Monit waits up to 30 seconds for the
-start/stop action to finish by checking the process table. You can
-override the action timeout using the I<TIMEOUT> option.
+In the case of a process check, Monit will wait up to 30 seconds for
+the start/stop action to finish before giving up and report an error.
+You can override this timeout using the I<TIMEOUT> option.
 
 Example:
 
@@ -1158,30 +1124,29 @@ Example:
 
 =head1 SERVICE POLL TIME
 
-Services are checked in regular intervals given by the I<set
-daemon n> statement. Checks are performed in the same order as
-they are written in the I<.monitrc> file, except if dependencies
-are setup between services, in which case the services hierarchy
-may alternate the order of the checks.
+Services are checked in regular intervals by the C<set daemon n>
+statement. Checks are performed in the same order as they are written
+in the C<.monitrc> file, except if dependencies are setup between
+services.
 
-It is possible to modify the check schedule using the I<every>
+It is possible to modify a service check schedule by using the C<every>
 statement.
 
 There are three variants:
 
 =over 4
 
-=item 1. custom interval based on poll cycle length multiple
+=item 1. custom interval based on a poll cycle multiple
 
-      EVERY [number] CYCLES
+ EVERY [number] CYCLES
 
-=item 2. test schedule based on cron-style string
+=item 2. check is schedule based on a cron-style string
 
-      EVERY [cron]
+ EVERY [cron]
 
-=item 3. do-not-test schedule based on cron-style string
+=item 3. do-not-check schedule based on a cron-style string
 
-      NOT EVERY [cron]
+ NOT EVERY [cron]
 
 =back
 
@@ -1206,8 +1171,8 @@ The special characters:
               | indicate every month.
  - (hyphen)   | Hyphens are used to define ranges. For example,
               | 8-9 in the hour field indicate between 8AM and
-              | 9AM. Note that range is from time1 until and
-              | including time2. That is, from 8AM and until
+              | 9AM. Note that range is from start time until and
+              | including end time. That is, from 8AM and until
               | 10AM unless minutes are set. Another example,
               | 1-5 in the weekday field, specify from monday to
               | friday (including friday).
@@ -1220,38 +1185,36 @@ The special characters:
 Example 1: Check once per two cycles
 
  check process nginx with pidfile /var/run/nginx.pid
-   every 2 cycles
+       every 2 cycles
 
 Example 2: Check every workday 8AM-7PM
 
- check program checkOracleDatabase with
-       path /var/monit/programs/checkoracle.pl
-   every "* 8-19 * * 1-5"
+ check program checkOracleDatabase 
+        with path /var/monit/programs/checkoracle.pl
+       every "* 8-19 * * 1-5"
 
 Example 3: Do not run the check in the backup window on 
 Sunday 0AM-3AM
 
  check process mysqld with pidfile /var/run/mysqld.pid
-   not every "* 0-3 * * 0"
+       not every "* 0-3 * * 0"
 
 Limitations:
 
-The current test scheduler is poll cycle based. When Monit starts
-testing and the service test is constraint with the I<every cron>
-statement, it checks whether the current time match the
-cron-string pattern. If it does, the test is done, otherwise it
-is skipped. The cron specification thus does not guarantee when
-exactly the test will run - that depends on the default poll time
-and the length of the testing cycle. In other words, we cannot
-guarantee that Monit will run on a specific time. Therefor we
+The current scheduler is poll cycle based. When a service check is
+constraint with the I<every cron> statement, Monit will check whether
+the current time match the cron-string pattern. If it does, the check
+is performed, otherwise it is skipped. The cron specification thus does
+not guarantee when exactly the test will run, this depends on the
+default poll time and the length of the check cycle. In other words, we
+cannot guarantee that Monit will run on a specific time. Therefor we
 B<strongly> recommend to use an asterix in the minute field or at
-minimum a range, e..g. 0-15. B<Never> use a specific minute as
-Monit may not run on that minute.
+minimum a range, e..g. 0-15. B<Never> use a specific minute as Monit
+may not run on that minute.
 
-We will address this limitation in a future release and convert
-the test scheduler from serial polling into a parallel
-non-blocking scheduler where checks are guaranteed to run on time
-and with seconds resolution.
+We will address this limitation in a future release and convert the
+scheduler from serial polling into a parallel non-blocking scheduler
+where checks are guaranteed to run on time and with seconds resolution.
 
 
 =head1 SERVICE GROUPS
@@ -1280,11 +1243,11 @@ To restart a group of services:
   monit -g <groupname> restart
 
 Note:
-the I<status> and I<summary> commands don't support the -g
+the I<status> and I<summary> commands does not support the -g
 option and will print the state of all services.
 
-Service can be added to multiple groups by adding group statement
-multiple times:
+A service can be added to multiple groups by using more than one group
+statement:
 
   group www
   group filesystem
@@ -1296,25 +1259,26 @@ Monit supports three monitoring modes per service: I<active>,
 I<passive> and I<manual>. See also the example section below for
 usage of the mode statement.
 
-In I<active> mode, Monit will pro-actively monitor a service and
-in case of problems Monit will raise alerts and/or restart the
-service. Active mode is the default mode.
+In I<active> mode (the default), Monit will pro-actively monitor a
+service and in case of problems raise alerts and/or restart
+the service.
 
-In I<passive> mode, Monit will passively monitor a service and
-will raise alerts, but will B<not> try to fix a problem.
+In I<passive> mode, Monit will passively monitor a service and will
+raise alerts, but will B<not> try to fix a problem by executing
+I<start>, I<stop> or I<restart>.
 
-In I<manual> mode, Monit will enter I<active> mode B<only> if a
+In I<manual> mode, Monit will enter I<active> mode I<only> if a
 service was started via Monit:
 
   monit start <servicename>
 
 Use "monit stop <servicename>" to stop the service and take it out
-of Monit control. The manual mode can be used to build simple
+of Monit's control. The manual mode can be used to build a simple
 cluster with active/passive HA-services.
 
 A service's monitoring state is persistent across Monit restart.
 
-If you use Monit in a HA-cluster you should place the state file
+If you use Monit in a HA-cluster you should place the Monit state file
 in a temporary filesystem so if the machine which runs HA-services
 should crash and the stand-by machine take over its services, the
 HA-services won't be started after the crashed node will boot again:
@@ -1338,20 +1302,15 @@ register interest for this event.
 The syntax for the timeout statement is as follows (keywords are
 in capital):
 
-=over 4
+ IF <number> RESTART <number> CYCLE(S) THEN <action>
 
-=item IF <number> RESTART <number> CYCLE(S) THEN <action>
-
-=back
-
-Here is an example where Monit will unmonitor the service if it
-was restarted 2 times within 3 cycles:
+Here is an example where Monit will unmonitor the service if it was
+restarted 2 times within 3 cycles:
 
  if 2 restarts within 3 cycles then unmonitor
 
-To have Monit check the service again after a monitoring was
-disabled, run 'monit monitor <servicename>' from the command
-line.
+To have Monit check the service again after monitoring was disabled,
+run C<monit monitor servicename> from the command line.
 
 Example for setting custom exec on timeout:
 
@@ -1371,14 +1330,10 @@ entries in the Monit control file.
 
 The syntax for the depend statement is simply:
 
-=over 4
+ DEPENDS on service[, service [,...]]
 
-=item  DEPENDS on service[, service [,...]]
-
-=back
-
-Where B<service> is a service entry name, for instance B<apache>
-or B<datafs>.
+Where B<service> is a check service entry name used in your C<.monitrc>
+file, for instance B<apache> or B<datafs>.
 
 You may add more than one service name of any type or use more
 than one depend statement in an entry.
@@ -1407,24 +1362,23 @@ possibly cracked apache binary.
  (6) check file httpd with path /usr/local/apache/bin/httpd
  (7)    if failed checksum then unmonitor
 
-The first entry is the process entry for apache shown before
-(abbreviated for clarity). The fourth line sets up a dependency
-between this entry and the service entry named httpd in line 6. A
-depend tree works as follows, if an action is conducted in a
-lower branch it will propagate upward in the tree and for every
-dependent entry execute the same action. In this case, if the
-checksum should fail in line 7 then an unmonitor action is
-executed and the apache binary is not checked anymore. But since
-the apache process entry depends on the httpd entry this entry
-will also execute the unmonitor action. In short, if the checksum
-test for the httpd binary file should fail, both the check file
-httpd entry and the check process apache entry is set in
+The first entry is the process entry for apache (abbreviated for
+clarity). The fourth line sets up a dependency between this entry and
+the service entry named httpd in line 6. A dependency tree works as
+follows, if an action is conducted in a lower branch it will propagate
+upward in the tree and for every dependent entry execute the same
+action. In this case, if the checksum should fail in line 7 then an
+unmonitor action is executed and the apache binary is not checked
+anymore. But since the apache process entry depends on the httpd entry
+this entry will also execute the unmonitor action. In short, if the
+checksum test for the httpd binary file should fail, both the check
+file httpd entry and the check process apache entry is set in
 un-monitoring mode.
 
-A dependency tree is a general construct and can be used between
-all types of service entries and span many levels and propagate
-any supported action (except the exec action which will not
-propagate upward in a dependency tree for obvious reasons).
+A dependency tree is a general construct and can be used between all
+types of service entries and span many levels and propagate any
+supported action (except the exec action which will not propagate
+upward in a dependency tree for obvious reasons).
 
 Here is another different example. Consider the following common
 server setup:
@@ -1490,38 +1444,29 @@ control file.
 
 =head1 SERVICE TESTS
 
-=head2 GENERIC SYNTAX
+=head3 GENERAL SYNTAX
 
-Monit provides several tests you can use in a 'check' statement
-to test a service.
+Monit provides several tests you can use in a 'check' statement to test
+a service.
 
-You can test either for some expected value or range or take
-action if the value changed.
+You can test either for some expected value or range and take
+actions if the value changed.
 
-General syntax for testing specific value or range:
+General syntax for testing a specific value or range:
 
-=over 4
+ IF <TEST> THEN ACTION [ELSE IF SUCCEEDED THEN ACTION]
 
-=item  IF <TEST> THEN ACTION [ELSE IF SUCCEEDED THEN ACTION]
+The action is evaluated each time the <TEST> condition is true. Success
+action is optional and executed only when the state changes from
+failure to success. If success action is not set, Monit will send a
+recovery alert by default.
 
-=back
+General syntax for a value change test:
 
-The selected failure action is evaluated each time the <TEST> condition
-is true. Success action is optional and executed only when the state
-changes from failure to success. If success action is not set, Monit
-will send recovery alert by default.
+ IF CHANGED <TEST> THEN ACTION
 
-General syntax for value change test:
-
-=over 4
-
-=item  IF CHANGED <TEST> THEN ACTION
-
-=back
-
-The selected action is executed each time the value changed. Monit
-will remember the new value and will trigger event if the value changed
-again.
+The action is executed each time the value changes. Monit will remember
+the new value and will trigger event if the value change again.
 
 
 =head3 ACTION
@@ -1537,20 +1482,20 @@ B<ALERT> sends the user an alert event on each state change.
 
 =item * 
 
-B<RESTART> restarts the service B<and> sends an alert. Restart
-is conducted by calling service's registered restart method or
-by first calling the stop method followed by start method if restart
+B<RESTART> restarts the service B<and> send an alert. Restart is
+performed by calling the service's registered restart method or by
+first calling the stop method followed by the start method if restart
 is not set.
 
 =item * 
 
 B<START> starts the service by calling the service's registered
-start method B<and> sends an alert.
+start method B<and> send an alert.
 
 =item * 
 
 B<STOP> stops the service by calling the service's registered
-stop method B<and> sends an alert. If Monit stops a service it
+stop method B<and> send an alert. If Monit stops a service it
 will not be checked by Monit anymore nor restarted again later.
 To reactivate monitoring of the service again you must explicitly
 enable monitoring from the web interface or from the console.
@@ -1567,9 +1512,9 @@ switch to upon start. For instance:
  exec "/usr/local/tomcat/bin/startup.sh"
       as uid nobody and gid nobody
 
-Remember, if Monit is run by the superuser, then all programs
-executed by Monit will be started with superuser privileges
-unless the uid and gid extension was used.
+Remember, if Monit is run by root, then all programs executed by Monit
+will be started with superuser privileges unless the uid and gid
+extension is used.
 
 =item * 
 
@@ -1584,43 +1529,37 @@ from the console.
 
 =head3 FAILURE TOLERANCE
 
-By default the action is executed on first match. You can ignore soft errors
-and require multiple errors before the event is triggered and the service state
-changed to failure.
+By default the action is executed if it matches and the service set in
+an error state. However, you can require a test to fail more than once
+before the error event is triggered and the service state changed to
+failed. This is useful to avoid getting alerts on spurious errors,
+which can happen, especially with network tests.
 
 Syntax:
 
-=over 4
-
-=item ... [FOR] <X> CYCLES ...
-
-=back
+ FOR <X> CYCLES ...
 
 or:
 
-=over 4
+ <X> [TIMES WITHIN] <Y> CYCLES ...
 
-=item ... <X> [TIMES WITHIN] <Y> CYCLES ...
+The condition can be used both for failure and success action.
 
-=back
-
-The condition can be used both for the failure and success action.
-
-The first simpler format requires <X> consecutive events before switching the
-state:
+The first, simpler and recommended format requires C<X> consecutive
+events before switching the state:
 
  if failed 
     port 80 
-    for 10 cycles 
+    for 3 cycles 
  then alert
 
-The second format is more advanced and allows to tolerate intermitent issues, but
-still catch excessive problems, where the service is flapping between error and
-success states frequently.
+The second format is more advanced and allows to tolerate intermitent
+issues, but still catch excessive problems, where the service is
+flapping between error and success states frequently.
 
-For example if every second cycle is failure (1-0-1-0-1-0-...), then "for 2 cycles"
-condition will never match, despite the service has serious problems. The following
-statement will catch such state:
+For example if every second cycle fails (1-0-1-0-1-0-...), then "for 2
+cycles" condition will never match, despite the service having
+problems. The following statement will catch such a state:
 
  if failed 
     port 80
@@ -1633,30 +1572,26 @@ Example which sets multiple error levels and actions:
   if space usage > 80% for 5 times within 15 cycles then alert
   if space usage > 90% for 5 cycles then exec '/try/to/free/the/space'
 
-Note: the maximum number of cycles option value is 64.
+Note: the maximum value for cycles is 64.
 
 
 =head2 EXISTENCE TESTING
 
-Monit's default action when services does not exist (for example
-a process is not running, a file doesn't exist, etc.) is to perform
-restart action.
+Monit's default action when a service does not exist (for example a
+process is not running, a file does not exist, etc.) is to perform
+the restart action.
 
-You can override the default action with following statement:
+You can override the default action with the following statement:
 
-=over 4
+ IF [DOES] NOT EXIST THEN action
 
-=item IF [DOES] NOT EXIST THEN action
-
-=back
-
-I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
-"EXEC" or "UNMONITOR".
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP", "EXEC" or
+"UNMONITOR".
 
 Example:
 
  check file with path /cifs/mydata
-   if does not exist then exec "/usr/bin/mount_cifs.sh"
+       if does not exist then exec "/usr/bin/mount_cifs.sh"
 
 
 =head2 RESOURCE TESTING
@@ -1674,18 +1609,14 @@ The full syntax for a resource-statement used for resource
 testing is as follows (keywords are in capital and optional
 statements in [brackets]),
 
-=over 4
-
-=item IF resource operator value THEN action
-
-=back
+ IF resource operator value THEN action
 
 
 I<resource> is a choice of "CPU", "TOTAL CPU",
-"CPU([user|system|wait])", "MEMORY", "SWAP", "CHILDREN", "TOTAL MEMORY",
-"LOADAVG([1min|5min|15min])". Some resource tests can be used
-inside a check system entry, some in a check process entry and
-some in both:
+"CPU([user|system|wait])", "MEMORY", "SWAP", "CHILDREN", "TOTAL
+MEMORY", "LOADAVG([1min|5min|15min])". Some resource tests can be used
+inside a check system entry, some in a check process entry and some in
+both:
 
 System only resource tests:
 
@@ -1701,7 +1632,7 @@ CPU is the CPU usage of the process itself (percent).
 
 TOTAL CPU is the total CPU usage of the process and its children
 in (percent). You will want to use TOTAL CPU typically for
-services like Apache web server where one master process forks the
+services like Apache web server where one master process forks
 child processes as workers.
 
 CHILDREN is the number of child processes of the process. 
@@ -1746,34 +1677,25 @@ does, Monit will restart the service:
 =head2 FILE CHECKSUM TESTING
 
 The checksum statement may only be used in a file service
-entry and allows to check MD5 or SHA1 checksum.
+entry and can be used to check the file's MD5 or SHA1 checksum.
 
 Check specific checksum:
 
-=over 4
-
-=item IF FAILED [MD5|SHA1] CHECKSUM [EXPECT checksum] THEN action
-
-=back
+ IF FAILED [MD5|SHA1] CHECKSUM [EXPECT checksum] THEN action
 
 Check any file changes:
 
-=over 4
+ IF CHANGED [MD5|SHA1] CHECKSUM THEN action
 
-=item IF CHANGED [MD5|SHA1] CHECKSUM THEN action
+The choice of MD5 or SHA1 is optional. MD5 features a 128 bits checksum
+(32 bytes hex encoded string) and SHA1 a 160 bits checksum (40 bytes
+hex encoded string). If this option is omitted, Monit will try to guess
+the method from the EXPECT string or use MD5 as the default checksum.
 
-=back
-
-The choice of MD5 or SHA1 is optional. MD5 features a 128 bits
-checksum (32 bytes hex encoded string) and SHA1 a 160 bits checksum
-(40 bytes hex encoded string). If this option is omitted, Monit 
-will try to guess the method from the EXPECT string or uses MD5 as
-the default checksum.
-
-I<expect> is optional and if used it specifies a md5 or sha1
-string Monit should expect when testing a file's checksum. If
-I<expect> is used, Monit will not compute an initial checksum for
-the file, but instead use the string you submit. For example:
+C<expect> is optional and if used, specifies the md5 or sha1 string
+Monit should expect when testing a file's checksum. Monit will then not
+compute an initial checksum for the file, but instead use the string
+you submit. For example:
 
  if failed 
     checksum expect 8f7f419955cefa0b33a2ba316cba3659
@@ -1799,19 +1721,11 @@ directory service entry.
 
 Specific timestamp syntax:
 
-=over 4
+ IF TIMESTAMP [[operator] value [unit]] THEN action
 
-=item IF TIMESTAMP [[operator] value [unit]] THEN action
+Timestamp changed syntax:
 
-=back
-
-Timestamp change syntax:
-
-=over 4
-
-=item IF CHANGED TIMESTAMP THEN action
-
-=back
+ IF CHANGED TIMESTAMP THEN action
 
 I<operator> is a choice of "<", ">", "!=", "==" in C notation,
 "GT", "LT", "EQ", "NE" in shell sh notation and "GREATER",
@@ -1825,15 +1739,16 @@ I<unit> is either "SECOND(S)", "MINUTE(S)", "HOUR(S)" or "DAY(S)".
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
-For example to reload apache if configuration file timestamp changed:
+For example to reload apache if the configuration file timestamp
+changed:
 
  check file apache_conf with path /etc/apache/httpd.conf
    if changed timestamp then exec "/usr/bin/apachectl graceful"
 
 For example testing directory for file addition or removal:
 
- check directory mydir path /foo/directory
-  if timestamp < 1 hour then alert
+ check directory bar path /foo/bar
+       if timestamp < 1 hour then alert
 
 
 =head2 FILE SIZE TESTING
@@ -1844,19 +1759,11 @@ a size for a file.
 
 Testing specific size or range:
 
-=over 4
+ IF SIZE [[operator] value [unit]] THEN action
 
-=item IF SIZE [[operator] value [unit]] THEN action
+Testing size changes:
 
-=back
-
-Testing size change:
-
-=over 4
-
-=item IF CHANGED SIZE THEN action
-
-=back
+ IF CHANGED SIZE THEN action
 
 I<operator> is a choice of "<", ">", "!=", "==" in C notation,
 "GT", "LT", "EQ", "NE" in shell sh notation and "GREATER",
@@ -1880,16 +1787,12 @@ For example to send an alert if the file is too large:
 
 =head2 FILE CONTENT TESTING
 
-The match statement allows to incrementally test the content of a
+The match statement can be used to incrementally test the content of a
 text file by using regular expressions.
 
 Syntax:
 
-=over 4
-
-=item IF [NOT] MATCH {regex|path} THEN action
-
-=back
+ IF [NOT] MATCH {regex|path} THEN action
 
 I<regex> is a string containing the extended regular expression.
 See also regex(7).
@@ -1903,20 +1806,16 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 You can use the I<NOT> statement to invert a match.
 
 On startup the read position is set to the end of the file 
-and Monit continues to scan to the end of the file each cycle. 
+and Monit continues to scan to the end of the file on each cycle. 
 
-If the file size should decrease or inode change the read
+If the file size should decrease or inode changed, the read
 position is set to the start of the file.
 
 Only lines ending with a newline character are inspected.
 
-Only first 511 characters of a line are inspected.
+Only the first 511 characters of a line are inspected.
 
-=over 4
-
-=item IGNORE [NOT] MATCH {regex|path}
-
-=back
+ IGNORE [NOT] MATCH {regex|path}
 
 Lines matching an I<IGNORE> are not inspected during later 
 evaluations. I<IGNORE MATCH> has always precedence over 
@@ -1929,28 +1828,22 @@ statements are evaluated.
 For example:
 
   check file syslog with path /var/log/syslog
-    ignore match "^monit"
-    if match "^mrcoffee" then alert
-
+        ignore match "^monit"
+        if match "^mrcoffee" then alert
 
 
 =head2 FILESYSTEM FLAGS TESTING
 
-Monit can test the flags of a filesystem for changes. This test
-is implicit and Monit will send alert in case of failure by
-default.
+Monit can test the flags of a filesystem for changes. This test is
+implicit and Monit will send alert in case of failure by default.
 
-This test is useful for detecting changes of the filesystem flags
-such as when the filesystem became read-only (on disk error) or
-mount flags were changed (such as nosuid).
+This test is useful for detecting changes of filesystem flags such as
+if the filesystem become read-only (on disk error) or mount flags were
+changed (such as nosuid).
 
 The syntax for the fsflags statement is:
 
-=over 4
-
-=item IF CHANGED FSFLAGS THEN action
-
-=back
+ IF CHANGED FSFLAGS THEN action
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
@@ -1963,18 +1856,14 @@ Example:
 
 =head2 SPACE TESTING
 
-Monit can test filesystem space usage. This test may only be used
-in the context of a filesystem service type.
+Monit can test a filesystem or disk for space usage. This test may only
+be used in the context of a filesystem service type.
 
-Monit checks a total space usage, including reserved blocks.
+Monit will check the total space usage, including reserved blocks.
 
 Syntax:
 
-=over 4
-
-=item IF SPACE operator value unit THEN action
-
-=back
+ IF SPACE operator value unit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -1993,6 +1882,7 @@ Example:
  check filesystem rootfs with path /
        if space usage > 90% then alert
 
+
 =head2 INODE TESTING
 
 Monit can test filesystem inode usage. This test may only be used
@@ -2000,11 +1890,7 @@ in the context of a filesystem service type.
 
 Syntax:
 
-=over 4
-
-=item IF INODE(S) operator value [unit] THEN action
-
-=back
+ IF INODE(S) operator value [unit] THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -2032,17 +1918,12 @@ filesystem service types.
 
 Syntax:
 
-=over 4
-
-=item IF FAILED PERM(ISSION) octalnumber THEN action
-
-=back
-
+ IF FAILED PERM(ISSION) octalnumber THEN action
 
 I<octalnumber> defines permissions for a file, a directory or a
-filesystem as four octal digits (0-7). Valid range: 0000 - 7777 (you
-can omit the leading zeros, Monit will add the zeros to the left
-thus for example "640" is valid value and matches "0640").
+filesystem as four octal digits (0-7). Valid range is 0000 - 7777 (you
+can omit the leading zeros, Monit will add the zeros to the left. For
+example, "640" is a valid value and matches "0640").
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
@@ -2060,11 +1941,7 @@ or owner and effective user of a process.
 
 Syntax:
 
-=over 4
-
-=item IF FAILED [E]UID user THEN action
-
-=back
+ IF FAILED [E]UID user THEN action
 
 I<user> defines a user id either in numeric or in string form.
 
@@ -2084,11 +1961,7 @@ or process.
 
 Syntax:
 
-=over 4
-
-=item IF FAILED GID group THEN action
-
-=back
+ IF FAILED GID group THEN action
 
 I<group> defines a group id either in numeric or in string form.
 
@@ -2104,15 +1977,11 @@ Example:
 =head2 PID TESTING
 
 Monit can test the process' PID. This test is implicit and Monit will
-send a alert in the case that the PID changed outside of Monit control.
+send an alert in case the PID changed outside of Monit's control.
 
 Syntax:
 
-=over 4
-
-=item IF CHANGED PID THEN action
-
-=back
+ IF CHANGED PID THEN action
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
@@ -2120,9 +1989,9 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 This test is useful to detect possible process restarts which has
 occurred in the timeframe between two Monit testing cycles.
 
-For example if someone changes sshd configuration and do sshd
-restart outside of Monit's control you will be notified that the
-process was replaced by a new instance:
+For example if someone changes sshd configuration and did sshd restart
+outside of Monit's control you will be notified that the process was
+replaced by a new instance:
 
  check process sshd with pidfile /var/run/sshd.pid
        if changed pid then alert
@@ -2136,11 +2005,7 @@ PPID changed outside of Monit control.
 
 The syntax for the ppid statement is:
 
-=over 4
-
-=item IF CHANGED PPID THEN action
-
-=back
+ IF CHANGED PPID THEN action
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
@@ -2158,11 +2023,7 @@ type context.
 
 Syntax:
 
-=over 4
-
-=item IF UPTIME [[operator] value [unit]] THEN action
-
-=back
+ IF UPTIME [[operator] value [unit]] THEN action
 
 I<operator> is a choice of "<", ">", "!=", "==" in C notation,
 "GT", "LT", "EQ", "NE" in shell sh notation and "GREATER",
@@ -2193,19 +2054,11 @@ control file.
 
 Syntax for testing specific exit value:
 
-=over 4
-
-=item IF STATUS operator value THEN action
-
-=back
+ IF STATUS operator value THEN action
 
 Syntax for testing any exit value change:
 
-=over 4
-
-=item IF CHANGED STATUS THEN action
-
-=back
+ IF CHANGED STATUS THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -2218,7 +2071,6 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 Example:
 
  check program myscript with path /usr/local/bin/myscript.sh 
-       with timeout 500 seconds
        if status != 0 then alert
 
 Sample script for the above example (/usr/local/bin/myscript.sh):
@@ -2233,40 +2085,39 @@ You can also send parameters with the program:
        if status != 0 then alert
 
 Arguments to the program or script is a sequence of whitespace
-separated strings. In the above example the strings '-lrt' and 
-'/tmp/' are arguments to the program '/bin/ls'. If arguments are
-used, it is recommended to use quotes B<"> to enclose the string,
-otherwise, if no arguments are used, quotes are not needed.
+separated strings. In the above example the strings '-lrt' and '/tmp/'
+are arguments to the program '/bin/ls'. If arguments are used, it is
+recommended to use quotes B<"> to enclose the string, otherwise, if no
+arguments are used, quotes are not needed.
 
 Notes: If the program is a script, the interpreter is required
 in the first line. The program or script must also be executable.
 
-If Monit is run as the super user, you can optionally run the
-program as a different user and/or group. In this example we
-run the I<ls> program as user www and as group staff:
+If Monit is run as the super user, you can optionally run the program
+as a different user and/or group. In this example we run the I<ls>
+program as user www and as group staff:
 
  check program ls with path "/bin/ls /tmp" as uid "www"
           and gid "staff"
        if status != 0 then alert
 
-Monit will execute the program periodically and if the exit
-status of the program does not match the expected result, Monit
-can perform an action. In the example above, Monit will raise an
-alert if the exit value is different from 0. By convention, 0
-means the program exited normally.
+Monit will execute the program periodically and if the exit status of
+the program does not match the expected result, Monit can perform an
+action. In the example above, Monit will raise an alert if the exit
+value is different from 0. By convention, 0 means the program exited
+normally.
 
-Program checks are asynchronous. Meaning that Monit will not wait
-for the program to exit, but instead, Monit will start the
-program in the background and immediately continue checking the
-next service entry in I<monitrc>. At the next cycle, Monit will
-check if the program has finished and if so, collect the programs
-exit status - if the status indicate a failure, Monit will raise
-an alert message containing the program's error (stderr) output,
-if any. If the program has not exited after the first cycle,
-Monit will wait another cycle and so on. If the program is still
-running after 5 minutes, Monit will kill it and generate a
-program timeout event. It is possible to override the default
-timeout (see the syntax below).
+Program checks are asynchronous. Meaning that Monit will not wait for
+the program to exit, but instead, Monit will start the program in the
+background and immediately continue checking the next service entry in
+I<monitrc>. At the next cycle, Monit will check if the program has
+finished and if so, collect the program's exit status. If the status
+indicate a failure, Monit will raise an alert message containing the
+program's error (stderr) output, if any. If the program has not exited
+after the first cycle, Monit will wait another cycle and so on. If the
+program is still running after 5 minutes, Monit will kill it and
+generate a program timeout event. It is possible to override the
+default timeout (see the syntax below).
 
 The asynchronous nature of the program check allows for
 non-blocking behavior in the current Monit design, but it comes
@@ -2283,6 +2134,7 @@ will be removed in a later release of Monit.
 Multiple status tests can be used, for example:
 
  check program hwtest with path /usr/local/bin/hwtest.sh
+       with timeout 500 seconds
        if status = 1 then alert
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
 
@@ -2294,7 +2146,7 @@ datagram packets to a host and wait for the reply. This test can
 only be used within a check host statement. Monit must also run as
 the root user in order to be able to perform the ping test (because
 a ping test must use raw sockets which usually only the super user
-is allowed to do).
+is allowed to).
 
 Syntax:
 
@@ -2309,7 +2161,7 @@ was received, the ping test is considered a success. Monit will,
 by default, send I<three> ping request packets in one cycle to
 prevent false alarm (i.e. up to 66% packet loss is tolerated). You
 can set the B<COUNT> option to a value between 1 and 20 to send more
-or less packets. If you require 100% ping success, set the count to
+or fewer packets. If you require 100% ping success, set the count to
 1 (i.e. just one request will be sent, and if the packet was lost
 an error will be reported).
 
@@ -2317,8 +2169,9 @@ Note that many ISPs have started to filter out ping or ICMP packets
 now, in which case there will be no reply from the host.
 
 If a ping test is used in a check host entry, this test is run first
-and if the ping test should fail, we assume that the connection to the
-host is down and Monit does I<not> continue to test any ports.
+and if the test should fail, we assume that the connection to the
+host is down and Monit will I<not> continue with any subsequent port
+tests.
 
 Example:
 
@@ -2348,32 +2201,24 @@ I/O, Monit will execute a specified action.
 
 TCP/UDP port test syntax:
 
-=over 4
-
-=item IF FAILED
-        [host]
-        <port>
-        [type]
-        [protocol | {send/expect}+]
-        [timeout]
-        [retry]
-      THEN action
-
-=back
+ IF FAILED
+    [host]
+    <port>
+    [type]
+    [protocol | {send/expect}+]
+    [timeout]
+    [retry]
+ THEN action
 
 Unix socket test syntax:
 
-=over 4
-
-=item IF FAILED
-        <unixsocket>
-        [type] 
-        [protocol | {send/expect}+]
-        [timeout]
-        [retry]
-      THEN action
-
-=back
+ IF FAILED
+    <unixsocket>
+    [type] 
+    [protocol | {send/expect}+]
+    [timeout]
+    [retry]
+ THEN action
 
 Examples:
 
@@ -2387,7 +2232,7 @@ Options:
 
 I<host: HOST hostname>. Optionally specify the host to connect to.
 If the host is not given then localhost is assumed if this test
-is used inside a process entry. If this test was used inside a
+is used inside a process entry. If this test is used inside a
 remote host entry then the entry's remote host is assumed.
 
 I<port: PORT number>. The port number to connect to
@@ -2409,9 +2254,9 @@ The TCPSSL options are:
  TCPSSL [SSLAUTO|SSLV2|SSLV3|TLSV1|TLSV11|TLSV12] [CERTMD5 md5sum]
 
 The default mode is I<SSLAUTO> and it will select the method
-automatically, but note that for security reasons it supports TLS
-methods only. If you need SSLv2 or SSLv3 you have to explicitly select
-that method using I<SSLV2> or I<SSLV3> option.
+automatically, but for security reasons only TLS is used, not SSL. If
+you need SSLv2 or SSLv3 you have to explicitly select that method using
+I<SSLV2> or I<SSLV3> option.
 
 I<protocol: PROTO(COL) protocol>. Optionally specify the protocol
 Monit should speak when a connection is established. At the
@@ -2496,7 +2341,7 @@ configuration file:
 Max value for the expect buffer is 100 kb. For example, to set
 the expect buffer to read 10 kilobytes:
 
-set expectbuffer 10 kb
+ set expectbuffer 10 kb
 
 You can use non-printable characters in a SEND string if needed.
 Use the hex notation, \0xHEXHEX to send any char in the range
@@ -2546,7 +2391,7 @@ Syntax:
      [HTTP HEADERS list of headers]
      [CONTENT {= | != } STRING]
 
-I<REQUEST> option can set an URI string specifying a document on the
+I<REQUEST> option can set an URL string specifying a document on the
 HTTP server. If the request statement isn't specified, the default "/"
 page will be requested.
 
@@ -2558,13 +2403,13 @@ For example:
     request "/data/show?a=b&c=d"
  then restart
 
-I<STATUS> option can be used to explicitly test the HTTP status 
-code returned by the HTTP server. If not used, the http protocol test
-will fail if the status code returned is greater than or equal to 400. 
-You can override this behaviour by using the I<status> qualifier.
+I<STATUS> option can be used to explicitly test the HTTP status code
+returned by the HTTP server. If not used, the http protocol test will
+fail if the status code returned is greater than or equal to 400. You
+can override this behaviour by using the I<status> qualifier.
 
-For example to test that a page does B<not> exist (404 should be returned
-in this case):
+For example to test that a page does B<not> exist (the HTTP server
+should return 404 in this case):
 
   if failed
      port 80
@@ -2573,13 +2418,13 @@ in this case):
      status = 404
   then alert
 
-I<CHECKSUM> You can test the checksum for documents returned by a HTTP
+I<CHECKSUM> You can test the checksum of documents returned by a HTTP
 server. Either MD5 or SHA1 hash can be used. Monit will B<not> test the
 checksum for a document if the server does not set the HTTP
 I<Content-Length> header. A HTTP server should set this header when it
 server a static document (i.e. a file). There are no limitation on the
 document size, but keep in mind that Monit will use time to download the
-document over the network.
+document over the network to compute the checksum.
 
 Example:
 
@@ -2716,7 +2561,7 @@ For example:
        stop program = "/etc/init.d/freeradius stop"
        if failed 
           host 127.0.0.1 port 1812 type udp protocol radius
-          secret testing123
+          secret pingpong
        then alert
 
 
@@ -2782,8 +2627,8 @@ be sent if you have requested alert messages to be sent.
  check process apache with pidfile /var/run/httpd.pid
        start program = "/etc/init.d/httpd start" with timeout 60 seconds
        stop program  = "/etc/init.d/httpd stop"
-       if failed port 80 then restart
-       if failed port 443 with timeout 15 seconds then restart
+       if failed port 80 for 2 cycles then restart
+       if failed port 443 for 2 cycles with timeout 15 seconds then restart
 
 This example demonstrate how you can run a program as a specified
 user (uid) and with a specified group (gid). Many daemon programs
@@ -2831,7 +2676,6 @@ vhosts, hence the host statement before port:
        if failed host www.sol.no port 80 then alert
        if failed host shop.sol.no port 443 then alert
        if failed host chat.sol.no port 80 then alert
-       if failed host www.tildeslash.com port 80 then alert
 
 To make sure that Monit is communicating with a http server a
 protocol test can be added:
