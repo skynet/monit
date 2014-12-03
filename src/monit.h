@@ -872,8 +872,6 @@ typedef struct myservice {
         Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
         Bandwidth_T downloadpacketslist;          /**< Download packets check list */
 
-        EventAction_T action_PID;                      /**< Action upon pid change */
-        EventAction_T action_PPID;                    /**< Action upon ppid change */
         EventAction_T action_FSFLAG;      /**< Action upon filesystem flags change */
 
         /** General event handlers */
