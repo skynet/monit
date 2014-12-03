@@ -1929,7 +1929,7 @@ static void print_service_rules_checksum(HttpResponse res, Service_T s) {
 
 static void print_service_rules_pid(HttpResponse res, Service_T s) {
         for (Pid_T l = s->pidlist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>PID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>PID</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -1938,7 +1938,7 @@ static void print_service_rules_pid(HttpResponse res, Service_T s) {
 
 static void print_service_rules_ppid(HttpResponse res, Service_T s) {
         for (PPid_T l = s->ppidlist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr><td>PPID</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>PPID</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
