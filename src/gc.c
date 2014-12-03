@@ -66,7 +66,7 @@ static void _gcstatus(Status_T *);
 static void _gcuid(Uid_T *);
 static void _gcgid(Gid_T *);
 static void _gcpid(Pid_T *);
-static void _gcppid(PPid_T *);
+static void _gcppid(Pid_T *);
 static void _gcgrc(Generic_T *);
 static void _gcath(Auth_T *);
 static void _gc_mmonit(Mmonit_T *);
@@ -682,7 +682,7 @@ static void _gcpid(Pid_T *s) {
 }
 
 
-static void _gcppid(PPid_T *s) {
+static void _gcppid(Pid_T *s) {
         ASSERT(s);
         if((*s)->action)
                 _gc_eventaction(&(*s)->action);
