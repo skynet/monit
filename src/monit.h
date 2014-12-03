@@ -85,6 +85,7 @@
 #include "system/Process.h"
 #include "util/Str.h"
 #include "util/StringBuffer.h"
+#include "system/NetStatistics.h"
 
 
 #define MONITRC            "monitrc"
@@ -156,6 +157,7 @@ typedef enum {
 #define TIME_MINUTE        60
 #define TIME_HOUR          3600
 #define TIME_DAY           86400
+#define TIME_MONTH         2678400
 
 #define ACTION_IGNORE      0
 #define ACTION_ALERT       1
@@ -174,6 +176,7 @@ typedef enum {
 #define TYPE_SYSTEM        5
 #define TYPE_FIFO          6
 #define TYPE_PROGRAM       7
+#define TYPE_NET           8
 
 #define RESOURCE_ID_CPU_PERCENT       1
 #define RESOURCE_ID_MEM_PERCENT       2
@@ -200,8 +203,8 @@ typedef enum {
 
 #define UNIT_BYTE          1
 #define UNIT_KILOBYTE      1024
-#define UNIT_MEGABYTE      1048580
-#define UNIT_GIGABYTE      1073740000
+#define UNIT_MEGABYTE      1048576
+#define UNIT_GIGABYTE      1073741824
 
 #define HASH_UNKNOWN       0
 #define HASH_MD5           1
@@ -643,6 +646,46 @@ typedef struct myuptime {
 } *Uptime_T;
 
 
+typedef struct mynetlinkstatus {
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mynetlinkstatus *next;                      /**< next link in chain */
+} *NetLinkStatus_T;
+
+
+typedef struct mynetlinkspeed {
+        int duplex;                                        /**< Last duplex status */
+        long long speed;                                     /**< Last speed [bps] */
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mynetlinkspeed *next;                       /**< next link in chain */
+} *NetLinkSpeed_T;
+
+
+typedef struct mynetlinksaturation {
+        Operator_Type operator;                           /**< Comparison operator */
+        float limit;                                     /**< Saturation limit [%] */
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mynetlinksaturation *next;                  /**< next link in chain */
+} *NetLinkSaturation_T;
+
+
+typedef struct mybandwidth {
+        Operator_Type operator;                           /**< Comparison operator */
+        unsigned long long limit;                              /**< Data watermark */
+        int rangecount;                            /**< Time range to watch: count */
+        int range;                                  /**< Time range to watch: unit */
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mybandwidth *next;                     /**< next bandwidth in chain */
+} *Bandwidth_T;
+
+
 /** Defines checksum object */
 typedef struct mychecksum {
         MD_T  hash;                     /**< A checksum hash computed for the path */
@@ -772,6 +815,10 @@ typedef struct myinfo {
                         int    total_cpu_percent;                         /**< percentage * 10 */
                         time_t uptime;                                     /**< Process uptime */
                 } process;
+
+                struct {
+                        NetStatistics_T stats;
+                } net;
         } priv;
 } *Info_T;
 
@@ -817,7 +864,13 @@ typedef struct myservice {
         Uid_T       uid;                                            /**< Uid check */
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
-
+        NetLinkStatus_T netlinkstatuslist;           /**< Network link status list */
+        NetLinkSpeed_T netlinkspeedlist;              /**< Network link speed list */
+        NetLinkSaturation_T netlinksaturationlist;  /**< Net. link saturation list */
+        Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
+        Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
+        Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
+        Bandwidth_T downloadpacketslist;          /**< Download packets check list */
 
         EventAction_T action_FSFLAG;      /**< Action upon filesystem flags change */
 
@@ -1034,6 +1087,7 @@ int  check_remote_host(Service_T);
 int  check_system(Service_T);
 int  check_fifo(Service_T);
 int  check_program(Service_T);
+int  check_net(Service_T);
 int  check_URL(Service_T s);
 int  sha_md5_stream (FILE *, void *, void *);
 void reset_procinfo(Service_T);
