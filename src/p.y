@@ -162,6 +162,8 @@
   static Service_T depend_list = NULL;
   static struct myuid uidset;
   static struct mygid gidset;
+  static struct mypid pidset;
+  static struct myppid ppidset;
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
@@ -204,6 +206,8 @@
   static void  addactionrate(ActionRate_T);
   static void  addsize(Size_T);
   static void  adduptime(Uptime_T);
+  static void  addpid(Pid_T);
+  static void  addppid(PPid_T);
   static void  addnetlinkstatus(Service_T, NetLinkStatus_T);
   static void  addnetlinkspeed(Service_T, NetLinkSpeed_T);
   static void  addnetlinksaturation(Service_T, NetLinkSaturation_T);
@@ -245,6 +249,8 @@
   static void  reset_actionrateset();
   static void  reset_sizeset();
   static void  reset_uptimeset();
+  static void  reset_pidset();
+  static void  reset_ppidset();
   static void  reset_netlinkstatusset();
   static void  reset_netlinkspeedset();
   static void  reset_netlinksaturationset();
@@ -1370,12 +1376,14 @@ exist           : IF NOT EXIST rate1 THEN action1 recovery {
 
 
 pid             : IF CHANGED PID rate1 THEN action1 {
-                    seteventaction(&(current)->action_PID, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(pidset).action, $<number>6, ACTION_IGNORE);
+                    addpid(&pidset);
                   }
                 ;
 
 ppid            : IF CHANGED PPID rate1 THEN action1 {
-                    seteventaction(&(current)->action_PPID, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(ppidset).action, $<number>6, ACTION_IGNORE);
+                    addppid(&ppidset);
                   }
                 ;
 
@@ -2425,8 +2433,6 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
   addeventaction(&(current)->action_EXEC,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_INVALID,  ACTION_RESTART,   ACTION_ALERT);
   addeventaction(&(current)->action_NONEXIST, ACTION_RESTART,   ACTION_ALERT);
-  addeventaction(&(current)->action_PID,      ACTION_ALERT,     ACTION_IGNORE);
-  addeventaction(&(current)->action_PPID,     ACTION_ALERT,     ACTION_IGNORE);
   addeventaction(&(current)->action_FSFLAG,   ACTION_ALERT,     ACTION_IGNORE);
 
   /* Initialize internal event handlers */
@@ -2715,6 +2721,40 @@ static void adduptime(Uptime_T uu) {
   current->uptimelist = u;
 
   reset_uptimeset();
+}
+
+
+/*
+ * Add a new Pid object to the current service pid list
+ */
+static void addpid(Pid_T pp) {
+  ASSERT(pp);
+
+  Pid_T p;
+  NEW(p);
+  p->action = pp->action;
+
+  p->next = current->pidlist;
+  current->pidlist = p;
+
+  reset_pidset();
+}
+
+
+/*
+ * Add a new PPid object to the current service ppid list
+ */
+static void addppid(PPid_T pp) {
+  ASSERT(pp);
+
+  PPid_T p;
+  NEW(p);
+  p->action = pp->action;
+
+  p->next = current->ppidlist;
+  current->ppidlist = p;
+
+  reset_ppidset();
 }
 
 
@@ -3757,6 +3797,22 @@ static void reset_bandwidthset() {
   bandwidthset.operator = Operator_Equal;
   bandwidthset.limit = 0ULL;
   bandwidthset.action = NULL;
+}
+
+
+/*
+ * Reset the Pid set to default values
+ */
+static void reset_pidset() {
+  pidset.action = NULL;
+}
+
+
+/*
+ * Reset the PPid set to default values
+ */
+static void reset_ppidset() {
+  ppidset.action = NULL;
 }
 
 

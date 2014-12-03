@@ -65,6 +65,8 @@ static void _gcperm(Perm_T *);
 static void _gcstatus(Status_T *);
 static void _gcuid(Uid_T *);
 static void _gcgid(Gid_T *);
+static void _gcpid(Pid_T *);
+static void _gcppid(PPid_T *);
 static void _gcgrc(Generic_T *);
 static void _gcath(Auth_T *);
 static void _gc_mmonit(Mmonit_T *);
@@ -272,6 +274,12 @@ static void _gc_service(Service_T *s) {
         if((*s)->gid)
                 _gcgid(&(*s)->gid);
 
+        if((*s)->pidlist)
+                _gcpid(&(*s)->pidlist);
+
+        if((*s)->ppidlist)
+                _gcppid(&(*s)->ppidlist);
+
         if((*s)->dependantlist)
                 _gcpdl(&(*s)->dependantlist);
 
@@ -292,12 +300,6 @@ static void _gc_service(Service_T *s) {
 
         if((*s)->action_NONEXIST)
                 _gc_eventaction(&(*s)->action_NONEXIST);
-
-        if((*s)->action_PID)
-                _gc_eventaction(&(*s)->action_PID);
-
-        if((*s)->action_PPID)
-                _gc_eventaction(&(*s)->action_PPID);
 
         if((*s)->action_FSFLAG)
                 _gc_eventaction(&(*s)->action_FSFLAG);
@@ -669,6 +671,22 @@ static void _gcgid(Gid_T *s) {
 
         FREE(*s);
 
+}
+
+
+static void _gcpid(Pid_T *s) {
+        ASSERT(s);
+        if((*s)->action)
+                _gc_eventaction(&(*s)->action);
+        FREE(*s);
+}
+
+
+static void _gcppid(PPid_T *s) {
+        ASSERT(s);
+        if((*s)->action)
+                _gc_eventaction(&(*s)->action);
+        FREE(*s);
 }
 
 
