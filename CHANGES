@@ -7,6 +7,16 @@ Version 5.11
 New: Sieve protocol test implemented. Usage:
     if failed port 2000 protocol sieve then alert
 
+New: The PID and PPID change tests are no longer implicit. If you
+want to test the process PID/PPID changes, you have to add this test
+explicitly:
+    if changed pid then alert
+    if changed ppid then alert
+
+New: Multiple PID and PPID tests can be used now. Example:
+    if changed PID then alert
+    if changed PID 3 times in 5 cycles then stop
+
 Fixed: If the "not every <cron>" option matched, the test was
 skipped only once per minute.
 

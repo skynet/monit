@@ -691,6 +691,24 @@ typedef struct mygid {
 } *Gid_T;
 
 
+/** Defines pid object */
+typedef struct mypid {
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mypid *next;                                 /**< next pid in chain */
+} *Pid_T;
+
+
+/** Defines ppid object */
+typedef struct myppid {
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct myppid *next;                               /**< next ppid in chain */
+} *PPid_T;
+
+
 /** Defines filesystem configuration */
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
@@ -793,14 +811,14 @@ typedef struct myservice {
         Match_T     matchlist;                             /**< Content Match list */
         Match_T     matchignorelist;                /**< Content Match ignore list */
         Timestamp_T timestamplist;                       /**< Timestamp check list */
+        Pid_T       pidlist;                                   /**< Pid check list */
+        PPid_T      ppidlist;                                 /**< PPid check list */
+        Status_T    statuslist;           /**< Program execution status check list */
         Uid_T       uid;                                            /**< Uid check */
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
-        Status_T    statuslist;           /**< Program execution status check list */
 
 
-        EventAction_T action_PID;                      /**< Action upon pid change */
-        EventAction_T action_PPID;                    /**< Action upon ppid change */
         EventAction_T action_FSFLAG;      /**< Action upon filesystem flags change */
 
         /** General event handlers */

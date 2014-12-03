@@ -132,7 +132,8 @@ static void print_service_rules_size(HttpResponse, Service_T);
 static void print_service_rules_uptime(HttpResponse, Service_T);
 static void print_service_rules_match(HttpResponse, Service_T);
 static void print_service_rules_checksum(HttpResponse, Service_T);
-static void print_service_rules_process(HttpResponse, Service_T);
+static void print_service_rules_pid(HttpResponse, Service_T);
+static void print_service_rules_ppid(HttpResponse, Service_T);
 static void print_service_rules_program(HttpResponse, Service_T);
 static void print_service_rules_resource(HttpResponse, Service_T);
 static void print_service_params_port(HttpResponse, Service_T);
@@ -919,7 +920,8 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_uptime(res, s);
         print_service_rules_match(res, s);
         print_service_rules_checksum(res, s);
-        print_service_rules_process(res, s);
+        print_service_rules_pid(res, s);
+        print_service_rules_ppid(res, s);
         print_service_rules_program(res, s);
         print_service_rules_resource(res, s);
 
@@ -1751,13 +1753,19 @@ static void print_service_rules_checksum(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_rules_process(HttpResponse res, Service_T s) {
-        if (s->type == TYPE_PROCESS) {
+static void print_service_rules_pid(HttpResponse res, Service_T s) {
+        for (Pid_T l = s->pidlist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>PID</td><td>");
-                Util_printRule(res->outputbuffer, s->action_PID, "If changed");
+                Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
+        }
+}
+
+
+static void print_service_rules_ppid(HttpResponse res, Service_T s) {
+        for (PPid_T l = s->ppidlist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>PPID</td><td>");
-                Util_printRule(res->outputbuffer, s->action_PPID, "If changed");
+                Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }

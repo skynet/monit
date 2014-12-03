@@ -223,10 +223,12 @@ static void check_process_pid(Service_T s) {
         if (s->inf->priv.process._pid < 0 || s->inf->priv.process.pid < 0)
                 return;
         
-        if (s->inf->priv.process._pid != s->inf->priv.process.pid)
-                Event_post(s, Event_Pid, STATE_CHANGED, s->action_PID, "process PID changed from %d to %d", s->inf->priv.process._pid, s->inf->priv.process.pid);
-        else
-                Event_post(s, Event_Pid, STATE_CHANGEDNOT, s->action_PID, "process PID has not changed since last cycle");
+        for (Pid_T l = s->pidlist; l; l = l->next) {
+                if (s->inf->priv.process._pid != s->inf->priv.process.pid)
+                        Event_post(s, Event_Pid, STATE_CHANGED, l->action, "process PID changed from %d to %d", s->inf->priv.process._pid, s->inf->priv.process.pid);
+                else
+                        Event_post(s, Event_Pid, STATE_CHANGEDNOT, l->action, "process PID has not changed since last cycle");
+        }
 }
 
 
@@ -241,10 +243,12 @@ static void check_process_ppid(Service_T s) {
         if (s->inf->priv.process._ppid < 0 || s->inf->priv.process.ppid < 0)
                 return;
         
-        if (s->inf->priv.process._ppid != s->inf->priv.process.ppid)
-                Event_post(s, Event_PPid, STATE_CHANGED, s->action_PPID, "process PPID changed from %d to %d", s->inf->priv.process._ppid, s->inf->priv.process.ppid);
-        else
-                Event_post(s, Event_PPid, STATE_CHANGEDNOT, s->action_PPID, "process PPID has not changed since last cycle");
+        for (PPid_T l = s->ppidlist; l; l = l->next) {
+                if (s->inf->priv.process._ppid != s->inf->priv.process.ppid)
+                        Event_post(s, Event_PPid, STATE_CHANGED, l->action, "process PPID changed from %d to %d", s->inf->priv.process._ppid, s->inf->priv.process.ppid);
+                else
+                        Event_post(s, Event_PPid, STATE_CHANGEDNOT, l->action, "process PPID has not changed since last cycle");
+        }
 }
 
 
