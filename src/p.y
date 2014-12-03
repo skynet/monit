@@ -251,10 +251,6 @@
   static void  reset_uptimeset();
   static void  reset_pidset();
   static void  reset_ppidset();
-  static void  reset_netlinkstatusset();
-  static void  reset_netlinkspeedset();
-  static void  reset_netlinksaturationset();
-  static void  reset_bandwidthset();
   static void  reset_checksumset();
   static void  reset_permset();
   static void  reset_uidset();

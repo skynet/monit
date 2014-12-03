@@ -864,13 +864,6 @@ typedef struct myservice {
         Uid_T       uid;                                            /**< Uid check */
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
-        NetLinkStatus_T netlinkstatuslist;           /**< Network link status list */
-        NetLinkSpeed_T netlinkspeedlist;              /**< Network link speed list */
-        NetLinkSaturation_T netlinksaturationlist;  /**< Net. link saturation list */
-        Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
-        Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
-        Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
-        Bandwidth_T downloadpacketslist;          /**< Download packets check list */
 
         EventAction_T action_FSFLAG;      /**< Action upon filesystem flags change */
 
