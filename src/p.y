@@ -163,7 +163,7 @@
   static struct myuid uidset;
   static struct mygid gidset;
   static struct mypid pidset;
-  static struct myppid ppidset;
+  static struct mypid ppidset;
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
@@ -203,7 +203,7 @@
   static void  addsize(Size_T);
   static void  adduptime(Uptime_T);
   static void  addpid(Pid_T);
-  static void  addppid(PPid_T);
+  static void  addppid(Pid_T);
   static void  addfilesystem(Filesystem_T);
   static void  addicmp(Icmp_T);
   static void  addgeneric(Port_T, char*, char*);
@@ -2559,10 +2559,10 @@ static void addpid(Pid_T pp) {
 /*
  * Add a new PPid object to the current service ppid list
  */
-static void addppid(PPid_T pp) {
+static void addppid(Pid_T pp) {
   ASSERT(pp);
 
-  PPid_T p;
+  Pid_T p;
   NEW(p);
   p->action = pp->action;
 

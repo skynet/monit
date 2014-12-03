@@ -700,15 +700,6 @@ typedef struct mypid {
 } *Pid_T;
 
 
-/** Defines ppid object */
-typedef struct myppid {
-        EventAction_T action;  /**< Description of the action upon event occurence */
-
-        /** For internal use */
-        struct myppid *next;                               /**< next ppid in chain */
-} *PPid_T;
-
-
 /** Defines filesystem configuration */
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
@@ -812,7 +803,7 @@ typedef struct myservice {
         Match_T     matchignorelist;                /**< Content Match ignore list */
         Timestamp_T timestamplist;                       /**< Timestamp check list */
         Pid_T       pidlist;                                   /**< Pid check list */
-        PPid_T      ppidlist;                                 /**< PPid check list */
+        Pid_T       ppidlist;                                 /**< PPid check list */
         Status_T    statuslist;           /**< Program execution status check list */
         Uid_T       uid;                                            /**< Uid check */
         Uid_T       euid;                                 /**< Effective Uid check */

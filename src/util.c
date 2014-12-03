@@ -969,7 +969,7 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "Pid", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }
 
-        for (PPid_T o = s->ppidlist; o; o = o->next) {
+        for (Pid_T o = s->ppidlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "PPid", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }

@@ -243,7 +243,7 @@ static void check_process_ppid(Service_T s) {
         if (s->inf->priv.process._ppid < 0 || s->inf->priv.process.ppid < 0)
                 return;
         
-        for (PPid_T l = s->ppidlist; l; l = l->next) {
+        for (Pid_T l = s->ppidlist; l; l = l->next) {
                 if (s->inf->priv.process._ppid != s->inf->priv.process.ppid)
                         Event_post(s, Event_PPid, STATE_CHANGED, l->action, "process PPID changed from %d to %d", s->inf->priv.process._ppid, s->inf->priv.process.ppid);
                 else
