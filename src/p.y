@@ -163,7 +163,7 @@
   static struct myuid uidset;
   static struct mygid gidset;
   static struct mypid pidset;
-  static struct myppid ppidset;
+  static struct mypid ppidset;
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
