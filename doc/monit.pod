@@ -2234,19 +2234,19 @@ only be used within a check network service entry in the Monit control file.
 
 Crrent upload bandwidth rate test syntax:
 
- IF UPLOADED operator value unit PER SECOND THEN action
+ IF UPLOAD operator value unit THEN action
 
 Current download bandwidth rate test syntax:
 
- IF DOWNLOADED operator value unit PER SECOND THEN action
+ IF DOWNLOAD operator value unit THEN action
 
 Total upload test syntax:
 
- IF TOTAL UPLOADED operator value unit IN LAST number timeunit THEN action
+ IF TOTAL UPLOAD operator value unit IN LAST number timeunit THEN action
 
 Total download test syntax:
 
- IF TOTAL DOWNLOADED operator value unit IN LAST number timeunit THEN action
+ IF TOTAL DOWNLOAD operator value unit IN LAST number timeunit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -2265,9 +2265,9 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 
 Examples:
 
- if uploaded > 500 kilobytes per second then alert
- if total downloaded > 1 GB in last 2 hours then alert
- if total downloaded > 10 GB in last day then alert
+ if upload > 500 kB/s then alert
+ if total download > 1 GB in last 2 hours then alert
+ if total download > 10 GB in last day then alert
 
 
 =head2 NETWORK PACKETS TEST
@@ -2279,19 +2279,19 @@ only be used within a check network service entry in the Monit control file.
 
 Crrent upload bandwidth rate test syntax:
 
- IF UPLOAD PACKETS operator value PER SECOND THEN action
+ IF UPLOAD operator value PACKETS/S THEN action
 
 Current download bandwidth rate test syntax:
 
- IF DOWNLOAD PACKETS operator value PER SECOND THEN action
+ IF DOWNLOAD operator value PACKETS/S THEN action
 
 Total upload test syntax:
 
- IF TOTAL UPLOAD PACKETS operator value IN LAST number timeunit THEN action
+ IF TOTAL UPLOAD operator value PACKETS IN LAST number timeunit THEN action
 
 Total download test syntax:
 
- IF TOTAL DOWNLOAD PACKETS operator value IN LAST number timeunit THEN action
+ IF TOTAL DOWNLOAD operator value PACKETS IN LAST number timeunit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -2306,8 +2306,8 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
 Examples:
-        if upload packets > 1000 per second then alert
-        if total upload packets > 900000 in last hour then alert
+        if upload > 1000 packets/s then alert
+        if total upload > 900000 packets in last hour then alert
 
 
 =head2 NETWORK PING TEST

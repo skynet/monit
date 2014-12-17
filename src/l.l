@@ -125,10 +125,10 @@ restartarg  restart{ws}?(program)?{ws}?([=]{ws})?["]
 execarg     exec(ute)?{ws}?["]
 pathtokarg  path{ws}?["]
 percent     ("percent"|"%")
-byte        ("byte"|"bytes"|"b")
-kilobyte    ("kilobyte"|"kilobytes"|"kb")
-megabyte    ("megabyte"|"megabytes"|"mb")
-gigabyte    ("gigabyte"|"gigabytes"|"gb")
+byte        ("byte"|"bytes"|"b")("/s")?
+kilobyte    ("kilobyte"|"kilobytes"|"kb")("/s")?
+megabyte    ("megabyte"|"megabytes"|"mb")("/s")?
+gigabyte    ("gigabyte"|"gigabytes"|"gb")("/s")?
 
 %x ARGUMENT_COND DEPEND_COND SERVICE_COND URL_COND STRING_COND EVERY_COND HTTP_HEADER_COND INCLUDE
 
@@ -193,7 +193,7 @@ address           { return ADDRESS; }
 interface         { return INTERFACE; }
 link              { return LINK; }
 error(s)?         { return ERROR; }
-packet(s)?        { return PACKET; }
+packet(s)?("/s")? { return PACKET; }
 bytein            { return BYTEIN; }
 byteout           { return BYTEOUT; }
 packetin          { return PACKETIN; }
