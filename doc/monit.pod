@@ -2176,8 +2176,9 @@ Example:
 
 =head2 NETWORK LINK SPEED TEST
 
-You can check the network link speed changes. This test may only be
-used within a check network service entry in the Monit control file.
+You can check the network link mode (maximum speed) for changes. This
+test may only be used within a check network service entry in the Monit
+control file.
 
 Syntax:
 
@@ -2186,8 +2187,8 @@ Syntax:
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
-The test will match if the link speed has changed (e.g. speed dropped)
-or if the duplex mode has changed.
+The test will match if the link mode has changed (e.g. maximum speed
+dropped) or if the duplex mode has changed.
 
 NOTE: not all interface types allow for speed monitoring. Pseudo
 interfaces such as loopback device or VMWare interfaces don't have
