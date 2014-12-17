@@ -61,7 +61,7 @@ fi
 %{_mandir}/man1/%{name}.1.gz
 
 %changelog
-* Mon Nov 03 2014 Martin Pala <martinp@tildeslash.com>
+* Wed Dec 17 2014 Martin Pala <martinp@tildeslash.com>
 - Upgraded to monit-5.11
 
 * Mon Oct 06 2014 Martin Pala <martinp@tildeslash.com>
