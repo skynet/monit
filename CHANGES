@@ -42,7 +42,7 @@ Fixed: Issue #115: The CLI/GUI reported port timeout value 1000x
 higher.
 
 Fixed: If ping is not allowed (insufficient permissions), display value as "N/A"
-instead of negative reposponse time.
+instead of negative response time.
 
 
 Version 5.10
