@@ -4,6 +4,21 @@
 
 Version 5.11
 
+New: Network tests implemented. You can test the link status (up/down),
+speed changed (drops due to damaged ports or cables, signal problems, etc.), 
+link saturation, upload/download bandwidth usage and total transfers, number
+of upload/download packets. Example:
+    check network public with interface eth0
+        if failed link then alert
+        if changed link then alert
+        if saturation > 80% then alert
+        if uploaded > 500 kilobytes per second then alert
+        if downloaded > 1 MB per second then alert
+        if upload packets > 1000 per second then alert
+        if download packets > 1000 per second then alert
+        if total uploaded > 1 GB in last hour then alert
+        if total downloaded > 100 GB in last 5 hours then alert 
+
 New: Sieve protocol test implemented. Usage:
     if failed port 2000 protocol sieve then alert
 

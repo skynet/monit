@@ -331,7 +331,7 @@ service internally and in all interactions with the user.
 
 =back
 
-Currently, eight types of check statements are supported:
+Currently, nine types of check statements are supported:
 
 =over 4
 
@@ -414,6 +414,11 @@ program's exit status. If the program does not finish executing within
 <number> seconds, Monit will terminate it. The default program timeout
 is 600 seconds (5 minutes). The output of the program is recorded and
 made available in the User Interface and in alerts (up to 1kB).
+
+=item 9. CHECK NETWORK <unique name> <ADDRESS <ipaddress> | INTERFACE <name>>
+
+<ipaddress> is the IPv4 or IPv6 address of the monitored network interface. It
+is also possible to use interface name, such as "eth0" on Linux.
 
 =back
 
@@ -810,6 +815,10 @@ Monit will raise an alert in the following situations:
  o A file content test found a match 
  o Filesystem flags changed
  o A service action was performed by administrator
+ o A network link failed
+ o A network link speed changed
+ o A network link saturation failed
+ o A network link upload/download rate failed
  o Monit was started, stopped or reloaded
 
 To get an alert via e-mail, set the alert target using the global C<set
@@ -870,30 +879,37 @@ Here is a list of all possible event types emitted by Monit. Values
 from the first column can be used in the event filter list mentioned
 above:
 
- Event:     | Failure state:            | Success state:              
+ Event:     | Failure state:              | Success state:
  ---------------------------------------------------------------------
- action     | "Action done"             | "Action done"               
- checksum   | "Checksum failed"         | "Checksum succeeded"        
- connection | "Connection failed"       | "Connection succeeded"      
- content    | "Content failed",         | "Content succeeded"
- data       | "Data access error"       | "Data access succeeded"     
- exec       | "Execution failed"        | "Execution succeeded"       
- fsflags    | "Filesystem flags failed" | "Filesystem flags succeeded"
- gid        | "GID failed"              | "GID succeeded"             
- icmp       | "Ping failed"             | "Ping succeeded"
- instance   | "Monit instance changed"  | "Monit instance changed not"
- invalid    | "Invalid type"            | "Type succeeded"            
- nonexist   | "Does not exist"          | "Exists"                    
- permission | "Permission failed"       | "Permission succeeded"      
- pid        | "PID failed"              | "PID succeeded"
- ppid       | "PPID failed"             | "PPID succeeded"
- resource   | "Resource limit matched"  | "Resource limit succeeded"  
- size       | "Size failed"             | "Size succeeded"            
- status     | "Status failed"           | "Status succeeded"            
- timeout    | "Timeout"                 | "Timeout recovery"          
- timestamp  | "Timestamp failed"        | "Timestamp succeeded"       
- uid        | "UID failed"              | "UID succeeded"             
- uptime     | "Uptime failed"           | "Uptime succeeded"             
+ action     | "Action done"               | "Action done"
+ checksum   | "Checksum failed"           | "Checksum succeeded"
+ bytein     | "Download bytes exceeded"   | "Download bytes ok"
+ byteout    | "Upload bytes exceeded"     | "Upload bytes ok"
+ connection | "Connection failed"         | "Connection succeeded"
+ content    | "Content failed",           | "Content succeeded"
+ data       | "Data access error"         | "Data access succeeded"
+ exec       | "Execution failed"          | "Execution succeeded"
+ fsflags    | "Filesystem flags failed"   | "Filesystem flags succeeded"
+ gid        | "GID failed"                | "GID succeeded"
+ icmp       | "Ping failed"               | "Ping succeeded"
+ instance   | "Monit instance changed"    | "Monit instance changed not"
+ invalid    | "Invalid type"              | "Type succeeded"
+ link       | "Link down"                 | "Link up"
+ nonexist   | "Does not exist"            | "Exists"
+ packetin   | "Download packets exceeded" | "Download packets ok"
+ packetout  | "Upload packets exceeded"   | "Upload packets ok"
+ permission | "Permission failed"         | "Permission succeeded"
+ pid        | "PID failed"                | "PID succeeded"
+ ppid       | "PPID failed"               | "PPID succeeded"
+ resource   | "Resource limit matched"    | "Resource limit succeeded"
+ saturation | "Saturation exceeded"       | "Saturation ok"
+ size       | "Size failed"               | "Size succeeded"
+ speed      | "Speed failed"              | "Speed ok"
+ status     | "Status failed"             | "Status succeeded"
+ timeout    | "Timeout"                   | "Timeout recovery"
+ timestamp  | "Timestamp failed"          | "Timestamp succeeded"
+ uid        | "UID failed"                | "UID succeeded"
+ uptime     | "Uptime failed"             | "Uptime succeeded"
 
 
 Each alert recipient can have it's own filter, for example:
@@ -2139,6 +2155,161 @@ Multiple status tests can be used, for example:
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
 
 
+=head2 NETWORK LINK STATUS TEST
+
+You can check the network link state. This test may only be used
+within a check network service entry in the Monit control file.
+
+Syntax:
+
+ IF FAILED LINK THEN action
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+The test will fail if the link is down or link errors were detected.
+
+Example:
+
+ if failed link then alert
+
+
+=head2 NETWORK LINK SPEED TEST
+
+You can check the network link speed changes. This test may only be
+used within a check network service entry in the Monit control file.
+
+Syntax:
+
+ IF CHANGED LINK THEN action
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+The test will match if the link speed has changed (e.g. speed dropped)
+or if the duplex mode has changed.
+
+NOTE: not all interface types allow for speed monitoring. Pseudo
+interfaces such as loopback device or VMWare interfaces don't have
+speed attribute.
+
+Example:
+
+ if changed link then alert
+
+
+=head2 NETWORK SATURATION TEST
+
+You can check the network link saturation. Monit then computes the link
+utilization based on the current transfer rate vs.  maximum link speed.
+This test may only be used within a check network service entry in the
+Monit control file.
+
+Syntax:
+
+ IF SATURATION operator value% THEN action
+
+I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
+"lt", "eq", "ne" in shell sh notation and "greater", "less",
+"equal", "notequal" in human readable form (if not specified,
+default is EQUAL).
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+NOTE: as this test depends on the link speed being available, not all
+interface types allow to test the saturation. See the LINK SPEED test
+description.
+
+Example:
+
+ if saturation > 90% then alert
+
+
+=head2 NETWORK BANDWIDTH TEST
+
+You can check the network link upload and download bandwidth - current
+transfer rate and total data transferred in last 24 hours. This test may
+only be used within a check network service entry in the Monit control file.
+
+Crrent upload bandwidth rate test syntax:
+
+ IF UPLOADED operator value unit PER SECOND THEN action
+
+Current download bandwidth rate test syntax:
+
+ IF DOWNLOADED operator value unit PER SECOND THEN action
+
+Total upload test syntax:
+
+ IF TOTAL UPLOADED operator value unit IN LAST number timeunit THEN action
+
+Total download test syntax:
+
+ IF TOTAL DOWNLOADED operator value unit IN LAST number timeunit THEN action
+
+I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
+"lt", "eq", "ne" in shell sh notation and "greater", "less",
+"equal", "notequal" in human readable form (if not specified,
+default is EQUAL).
+
+I<unit> is a choice of "B","KB","MB","GB" or long alternatives
+"byte", "kilobyte", "megabyte", "gigabyte".
+
+I<timeunit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
+NOTE: Monit keeps total upload/download statistics only for last
+24 hours => the test cannot span more then one day.
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+Examples:
+
+ if uploaded > 500 kilobytes per second then alert
+ if total downloaded > 1 GB in last 2 hours then alert
+ if total downloaded > 10 GB in last day then alert
+
+
+=head2 NETWORK PACKETS TEST
+
+
+You can check the network link upload and download packets count - current
+transfer rate and total data transferred in last 24 hours. This test may
+only be used within a check network service entry in the Monit control file.
+
+Crrent upload bandwidth rate test syntax:
+
+ IF UPLOAD PACKETS operator value PER SECOND THEN action
+
+Current download bandwidth rate test syntax:
+
+ IF DOWNLOAD PACKETS operator value PER SECOND THEN action
+
+Total upload test syntax:
+
+ IF TOTAL UPLOAD PACKETS operator value IN LAST number timeunit THEN action
+
+Total download test syntax:
+
+ IF TOTAL DOWNLOAD PACKETS operator value IN LAST number timeunit THEN action
+
+I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
+"lt", "eq", "ne" in shell sh notation and "greater", "less",
+"equal", "notequal" in human readable form (if not specified,
+default is EQUAL).
+
+I<timeunit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
+NOTE: Monit keeps total upload/download statistics only for last
+24 hours => the test cannot span more then one day.
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+Examples:
+        if upload packets > 1000 per second then alert
+        if total upload packets > 900000 in last hour then alert
+
+
 =head2 NETWORK PING TEST
 
 Monit can perform a network ping test by sending ICMP echo request
@@ -2286,6 +2457,7 @@ moment Monit knows how to speak:
  I<RDATE>
  I<REDIS>
  I<RSYNC>
+ I<SIEVE>
  I<SIP>
  I<SMTP>
  I<SMTPS>
