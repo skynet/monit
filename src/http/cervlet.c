@@ -1817,7 +1817,7 @@ static void print_service_rules_netlinkstatus(HttpResponse res, Service_T s) {
 
 static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
         for (NetLinkSpeed_T l = s->netlinkspeedlist; l; l = l->next) {
-                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link speed</td><td>");
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link capacity</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
@@ -2165,7 +2165,7 @@ static void print_service_status_net(HttpResponse res, Service_T s) {
                         char buf[STRLEN];
                         long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
                         if (speed > 0)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Link speed</td><td class='%s'>%.0lf Mb&#47;s %s-duplex</td></tr>",
+                                StringBuffer_append(res->outputbuffer, "<tr><td>Link capacity</td><td class='%s'>%.0lf Mb&#47;s %s-duplex</td></tr>",
                                         s->error & Event_Speed ? "red-text" : "",
                                         (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 

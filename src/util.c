@@ -1089,7 +1089,7 @@ void Util_printService(Service_T s) {
 
         for (NetLinkSpeed_T o = s->netlinkspeedlist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Link speed", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
+                printf(" %-20s = %s\n", "Link capacity", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }
 
         for (NetLinkSaturation_T o = s->netlinksaturationlist; o; o = o->next) {

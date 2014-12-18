@@ -2176,13 +2176,13 @@ Example:
 
 =head2 NETWORK LINK SPEED TEST
 
-You can check the network link mode (maximum speed) for changes. This
-test may only be used within a check network service entry in the Monit
+You can check the network link mode (capacity / maximum speed) for changes.
+This test may only be used within a check network service entry in the Monit
 control file.
 
 Syntax:
 
- IF CHANGED LINK THEN action
+ IF CHANGED LINK [CAPACITY] THEN action
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
@@ -2196,7 +2196,7 @@ speed attribute.
 
 Example:
 
- if changed link then alert
+ if changed link capacity then alert
 
 
 =head2 NETWORK SATURATION TEST
