@@ -160,6 +160,7 @@ does              {/* EMPTY */}
 per               {/* EMPTY */}
 in                {/* EMPTY */}
 last              {/* EMPTY */}
+capacity          {/* EMPTY */}
 
 {startarg}        { BEGIN(ARGUMENT_COND); return START; }
 {stoparg}         { BEGIN(ARGUMENT_COND); return STOP; }
