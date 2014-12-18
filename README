@@ -70,7 +70,7 @@ monit with the -Iv options. In diagnostic mode, monit will print debug
 information to the console. Use ctrl+c to stop monit in diagnostic mode. To
 see all options for the program, use monit -h.
 
-Copy monitrc in the build directory to $HOME/.monitrc or if you plan to run
+Copy monitrc in the build directory to ~/.monitrc or if you plan to run
 Monit as root, to /etc/monitc. Use this file as a starting point to write
 your own configuration file for Monit.
 
