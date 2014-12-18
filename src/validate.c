@@ -907,11 +907,11 @@ static int check_skip(Service_T s) {
                 s->every.spec.cycle.counter = 0;
         } else if (s->every.type == EVERY_CRON && ! _incron(s, now)) {
                 s->monitor |= MONITOR_WAITING;
-                DEBUG("'%s' test skipped as current time (%ld) does not match every's cron spec \"%s\"\n", s->name, (long)now, s->every.spec.cron);
+                DEBUG("'%s' test skipped as current time (%lld) does not match every's cron spec \"%s\"\n", s->name, (long long)now, s->every.spec.cron);
                 return TRUE;
         } else if (s->every.type == EVERY_NOTINCRON && Time_incron(s->every.spec.cron, now)) {
                 s->monitor |= MONITOR_WAITING;
-                DEBUG("'%s' test skipped as current time (%ld) matches every's cron spec \"not %s\"\n", s->name, (long)now, s->every.spec.cron);
+                DEBUG("'%s' test skipped as current time (%lld) matches every's cron spec \"not %s\"\n", s->name, (long long)now, s->every.spec.cron);
                 return TRUE;
         }
         s->monitor &= ~MONITOR_WAITING;
@@ -1228,7 +1228,7 @@ int check_program(Service_T s) {
                 if (Process_exitStatus(P) < 0) { // Program is still running
                         time_t execution_time = (now - s->program->started);
                         if (execution_time > s->program->timeout) { // Program timed out
-                                LogError("'%s' program timed out after %ld seconds. Killing program with pid %ld\n", s->name, (long)execution_time, (long)Process_getPid(P));
+                                LogError("'%s' program timed out after %lld seconds. Killing program with pid %ld\n", s->name, (long long)execution_time, (long)Process_getPid(P));
                                 Process_kill(P);
                                 Process_waitFor(P); // Wait for child to exit to get correct exit value
                                 // Fall-through with P and evaluate exit value below.

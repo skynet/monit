@@ -45,6 +45,10 @@
 #include <sys/proc.h>
 #endif
 
+#ifdef HAVE_SYS_VMMETER_H
+#include <sys/vmmeter.h>
+#endif
+
 #ifdef HAVE_KVM_H
 #include <kvm.h>
 #endif
