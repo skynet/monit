@@ -15,7 +15,7 @@ __ANSI-C Compiler and Build System__. You will need an ANSI-C99 compiler install
 BOOTSTRAPPING
 =============
 
-If you build Monit from the git repository, you need to call `./bootstrap` first before continuing with the installation steps below. To build a Monit release package from a bootstrapped build directory, perform the following steps. 1. `make cleanall` 2. `./bootstrap && ./configure` 3. `make dist` This will create a self-contained `monit-x.y.z.tar.gz` package which can be distributed. 
+If you build Monit from the git repository, you need to call `./bootstrap` first before continuing with the installation steps below. 
 
 
 INSTALLATION
@@ -46,7 +46,7 @@ Once started, monit will run as a background process. To stop monit, use `monit 
 start monit with the -Iv options. In diagnostic mode, monit will print debug information to the console. Use `ctrl+c` to stop monit in
 diagnostic mode. To see all options for the program, use `monit -h`.
 
-Copy `monitrc` in the build directory to *$HOME/.monitrc* or if you plan to run Monit as root, to */etc/monitc*. Use this file as a starting
+Copy `monitrc` in the build directory to *~/.monitrc* or if you plan to run Monit as root, to */etc/monitc*. Use this file as a starting
 point to write your own configuration file for Monit.
 
 
