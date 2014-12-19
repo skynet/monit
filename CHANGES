@@ -46,6 +46,8 @@ instead of negative response time.
 
 Fixed: OpenBSD: don't narrow the 64-bit time_t on 32-bit build (Y2038 problem).
 
+Fixed: Issue #136: "memory kilobytes total" is not in kB-s
+
 
 Version 5.10
 
