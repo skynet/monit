@@ -816,7 +816,7 @@ Monit will raise an alert in the following situations:
  o Filesystem flags changed
  o A service action was performed by administrator
  o A network link failed
- o A network link speed changed
+ o A network link capacity changed
  o A network link saturation failed
  o A network link upload/download rate failed
  o Monit was started, stopped or reloaded
@@ -2174,10 +2174,10 @@ Example:
  if failed link then alert
 
 
-=head2 NETWORK LINK SPEED TEST
+=head2 NETWORK LINK CAPACITY TEST
 
-You can check the network link mode (capacity / maximum speed) for changes.
-This test may only be used within a check network service entry in the Monit
+You can check the network link mode capacity for changes. This test 
+may only be used within a check network service entry in the Monit
 control file.
 
 Syntax:
@@ -2190,7 +2190,7 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 The test will match if the link mode has changed (e.g. maximum speed
 dropped) or if the duplex mode has changed.
 
-NOTE: not all interface types allow for speed monitoring. Pseudo
+NOTE: not all interface types allow for capacity monitoring. Pseudo
 interfaces such as loopback device or VMWare interfaces don't have
 speed attribute.
 
