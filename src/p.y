@@ -2320,7 +2320,7 @@ static void postparse() {
                 addservice(current);
 
         /* Check that we do not start monit in daemon mode without having a poll time */
-        if (!Run.polltime && (Run.isdaemon || Run.init)) {
+        if ((Run.polltime <= 0) && (Run.isdaemon || Run.init)) {
                 LogError("Poll time not defined. Please define poll time in the\n control file or use the -d option when starting monit\n");
                 cfg_errflag++;
         }
