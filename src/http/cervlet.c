@@ -2666,10 +2666,10 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                   "children", s->inf->priv.process.children);
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %s\n",
-                                                  "memory kilobytes", Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
+                                                  "memory", Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %s\n",
-                                                  "memory kilobytes total", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
+                                                  "memory total", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
                                         StringBuffer_append(res->outputbuffer,
                                                   "  %-33s %.1f%%\n"
                                                   "  %-33s %.1f%%\n"
