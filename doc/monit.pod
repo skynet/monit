@@ -85,7 +85,7 @@ switch to monit. For instance,
 Before Monit is started the first time, you can test the control
 file for syntax errors:
 
- $ monit -t 
+ $ monit -t
  $ Control file syntax OK
 
 If there was an error, Monit will print an error message to the
@@ -95,7 +95,7 @@ the error was found.
 Once you have a working Monit control file, simply start Monit from the
 console, like so:
 
- $ monit 
+ $ monit
 
 You can change some configuration directives via command-line
 switches, but for simplicity it is recommended that you put these
@@ -155,7 +155,7 @@ B<-vv>
    Very verbose mode, same as -v plus log stack-trace on error
 
 B<-H> I<[filename]>
-   Print MD5 and SHA1 hashes of the file or of stdin if the 
+   Print MD5 and SHA1 hashes of the file or of stdin if the
    filename is omitted; Monit will exit afterwards
 
 B<-V>
@@ -331,7 +331,7 @@ service internally and in all interactions with the user.
 
 =back
 
-Currently, eight types of check statements are supported:
+Currently, nine types of check statements are supported:
 
 =over 4
 
@@ -391,7 +391,7 @@ does not point to a directory, monit will disable monitoring of this
 entry. If Monit runs in passive mode or the start methods is not
 defined, Monit will just send an alert on error.
 
-=item 6. CHECK HOST <unique name> ADDRESS <host address> 
+=item 6. CHECK HOST <unique name> ADDRESS <host address>
 
 The host address can be specified as a hostname string or as an
 IP-address string on a dotted decimal format. Such as,
@@ -415,6 +415,11 @@ program's exit status. If the program does not finish executing within
 is 600 seconds (5 minutes). The output of the program is recorded and
 made available in the User Interface and in alerts (up to 1kB).
 
+=item 9. CHECK NETWORK <unique name> <ADDRESS <ipaddress> | INTERFACE <name>>
+
+<ipaddress> is the IPv4 or IPv6 address of the monitored network interface. It
+is also possible to use interface name, such as "eth0" on Linux.
+
 =back
 
 
@@ -435,7 +440,7 @@ switch)
 
 =head1 DAEMON MODE
 
-Use 
+Use
 
  set daemon n (where n is a number in seconds)
 
@@ -533,7 +538,7 @@ An example,
  include /etc/monit.d/*.cfg
 
 This will load any file matching the globstring. That is, all
-files in I</etc/monit.d> that ends with the prefix I<.cfg>. 
+files in I</etc/monit.d> that ends with the prefix I<.cfg>.
 
 
 
@@ -603,7 +608,7 @@ You can now use L<https://localhost:2812/|https://localhost:2812/> to
 access the Monit web server over a TLS encrypted connection.
 
 OpenSSL FIPS is supported. To enable FIPS mode (provided your OpenSSL
-library supports it), add this statement to Monit control file: 
+library supports it), add this statement to Monit control file:
 
  SET FIPS
 
@@ -659,7 +664,7 @@ in this file. See I<CLIENTPEMFILE> above for details.
 
 Monit maintains an access-control list of hosts and networks allowed to
 connect. You can add as many hosts as you want to, but only hosts with
-a valid domain name or its IP address are allowed. 
+a valid domain name or its IP address are allowed.
 
 Monit will query a name server to check any hosts trying to connect. If
 a host (client) is trying to connect, but cannot be found in the access
@@ -807,9 +812,13 @@ Monit will raise an alert in the following situations:
  o A process' PID changed out of Monit's control
  o A process' PPID changed out of Monit control
  o Too many service recovery attempts failed
- o A file content test found a match 
+ o A file content test found a match
  o Filesystem flags changed
  o A service action was performed by administrator
+ o A network link failed
+ o A network link capacity changed
+ o A network link saturation failed
+ o A network link upload/download rate failed
  o Monit was started, stopped or reloaded
 
 To get an alert via e-mail, set the alert target using the global C<set
@@ -849,7 +858,7 @@ Local alert example:
 
 You can combine global and local alert statements. If there is a
 conflict, the local alert has precedence and overrides the global
-statement. 
+statement.
 
 
 =head3 Setting an event filter
@@ -870,30 +879,37 @@ Here is a list of all possible event types emitted by Monit. Values
 from the first column can be used in the event filter list mentioned
 above:
 
- Event:     | Failure state:            | Success state:              
+ Event:     | Failure state:              | Success state:
  ---------------------------------------------------------------------
- action     | "Action done"             | "Action done"               
- checksum   | "Checksum failed"         | "Checksum succeeded"        
- connection | "Connection failed"       | "Connection succeeded"      
- content    | "Content failed",         | "Content succeeded"
- data       | "Data access error"       | "Data access succeeded"     
- exec       | "Execution failed"        | "Execution succeeded"       
- fsflags    | "Filesystem flags failed" | "Filesystem flags succeeded"
- gid        | "GID failed"              | "GID succeeded"             
- icmp       | "Ping failed"             | "Ping succeeded"
- instance   | "Monit instance changed"  | "Monit instance changed not"
- invalid    | "Invalid type"            | "Type succeeded"            
- nonexist   | "Does not exist"          | "Exists"                    
- permission | "Permission failed"       | "Permission succeeded"      
- pid        | "PID failed"              | "PID succeeded"
- ppid       | "PPID failed"             | "PPID succeeded"
- resource   | "Resource limit matched"  | "Resource limit succeeded"  
- size       | "Size failed"             | "Size succeeded"            
- status     | "Status failed"           | "Status succeeded"            
- timeout    | "Timeout"                 | "Timeout recovery"          
- timestamp  | "Timestamp failed"        | "Timestamp succeeded"       
- uid        | "UID failed"              | "UID succeeded"             
- uptime     | "Uptime failed"           | "Uptime succeeded"             
+ action     | "Action done"               | "Action done"
+ checksum   | "Checksum failed"           | "Checksum succeeded"
+ bytein     | "Download bytes exceeded"   | "Download bytes ok"
+ byteout    | "Upload bytes exceeded"     | "Upload bytes ok"
+ connection | "Connection failed"         | "Connection succeeded"
+ content    | "Content failed",           | "Content succeeded"
+ data       | "Data access error"         | "Data access succeeded"
+ exec       | "Execution failed"          | "Execution succeeded"
+ fsflags    | "Filesystem flags failed"   | "Filesystem flags succeeded"
+ gid        | "GID failed"                | "GID succeeded"
+ icmp       | "Ping failed"               | "Ping succeeded"
+ instance   | "Monit instance changed"    | "Monit instance changed not"
+ invalid    | "Invalid type"              | "Type succeeded"
+ link       | "Link down"                 | "Link up"
+ nonexist   | "Does not exist"            | "Exists"
+ packetin   | "Download packets exceeded" | "Download packets ok"
+ packetout  | "Upload packets exceeded"   | "Upload packets ok"
+ permission | "Permission failed"         | "Permission succeeded"
+ pid        | "PID failed"                | "PID succeeded"
+ ppid       | "PPID failed"               | "PPID succeeded"
+ resource   | "Resource limit matched"    | "Resource limit succeeded"
+ saturation | "Saturation exceeded"       | "Saturation ok"
+ size       | "Size failed"               | "Size succeeded"
+ speed      | "Speed failed"              | "Speed ok"
+ status     | "Status failed"             | "Status succeeded"
+ timeout    | "Timeout"                   | "Timeout recovery"
+ timestamp  | "Timestamp failed"          | "Timestamp succeeded"
+ uid        | "UID failed"                | "UID succeeded"
+ uptime     | "Uptime failed"             | "Uptime succeeded"
 
 
 Each alert recipient can have it's own filter, for example:
@@ -992,23 +1008,23 @@ A string describing the event that occurred.
 
 The service name
 
-=item * I<$DATE> 
+=item * I<$DATE>
 
 The current time and date (RFC 822 date style).
 
-=item * I<$HOST> 
+=item * I<$HOST>
 
 The name of the host Monit is running on
 
-=item * I<$ACTION> 
+=item * I<$ACTION>
 
 The name of the action which was done by Monit.
 
-=item * I<$DESCRIPTION> 
+=item * I<$DESCRIPTION>
 
 The description of the error condition
 
-=back 
+=back
 
 
 =head2 Setting a mail server for alert delivery
@@ -1119,7 +1135,7 @@ Example:
 
  check process foobar with pidfile /var/run/foobar.pid
    start program = "/etc/init.d/foobar start" with timeout 60 seconds
-   stop program = "/etc/init.d/foobar stop" 
+   stop program = "/etc/init.d/foobar stop"
 
 
 =head1 SERVICE POLL TIME
@@ -1153,7 +1169,7 @@ There are three variants:
 A cron-style string, consist of 5 fields separated with
 white-space. All fields are required:
 
- Name:        | Allowed values:            | Special characters:              
+ Name:        | Allowed values:            | Special characters:
  ---------------------------------------------------------------
  Minutes      | 0-59                       | * - ,
  Hours        | 0-23                       | * - ,
@@ -1189,11 +1205,11 @@ Example 1: Check once per two cycles
 
 Example 2: Check every workday 8AM-7PM
 
- check program checkOracleDatabase 
+ check program checkOracleDatabase
         with path /var/monit/programs/checkoracle.pl
        every "* 8-19 * * 1-5"
 
-Example 3: Do not run the check in the backup window on 
+Example 3: Do not run the check in the backup window on
 Sunday 0AM-3AM
 
  check process mysqld with pidfile /var/run/mysqld.pid
@@ -1354,7 +1370,7 @@ change an alert is sent and apache is not monitored anymore. The
 rationale is security and that Monit should not execute a
 possibly cracked apache binary.
 
- (1) check process apache 
+ (1) check process apache
  (2)    with pidfile "/usr/local/apache/logs/httpd.pid"
  (3)    ...
  (4)    depends on httpd
@@ -1398,19 +1414,19 @@ dependencies:
 
 =over 4
 
-=item If no servers are running 
+=item If no servers are running
 
 Monit will start the servers in the following order: I<d>, I<c>,
 I<b>, I<a>
 
-=item If all servers are running 
+=item If all servers are running
 
 When you run 'Monit stop all' this is the stop order: I<a>, I<b>,
 I<c>, I<d>. If you run 'Monit stop d' then I<a>, I<b> and I<c>
 are also stopped because they depend on I<d> and finally I<d> is
 stopped.
 
-=item If I<a> does not run 
+=item If I<a> does not run
 
 When Monit runs it will start I<a>
 
@@ -1429,7 +1445,7 @@ and finally start I<b> then I<a>.
 When Monit runs it will first stop I<a>, I<b> and I<c> then start
 I<d> and finally start I<c>, I<b> then I<a>.
 
-=item If the control file contains a depend loop. 
+=item If the control file contains a depend loop.
 
 A depend loop is for example; a->b and b->a or a->b->c->a.
 
@@ -1476,23 +1492,23 @@ list:
 
 =over 4
 
-=item * 
+=item *
 
 B<ALERT> sends the user an alert event on each state change.
 
-=item * 
+=item *
 
 B<RESTART> restarts the service B<and> send an alert. Restart is
 performed by calling the service's registered restart method or by
 first calling the stop method followed by the start method if restart
 is not set.
 
-=item * 
+=item *
 
 B<START> starts the service by calling the service's registered
 start method B<and> send an alert.
 
-=item * 
+=item *
 
 B<STOP> stops the service by calling the service's registered
 stop method B<and> send an alert. If Monit stops a service it
@@ -1500,7 +1516,7 @@ will not be checked by Monit anymore nor restarted again later.
 To reactivate monitoring of the service again you must explicitly
 enable monitoring from the web interface or from the console.
 
-=item * 
+=item *
 
 B<EXEC> can be used to execute an arbitrary program B<and> send
 an alert. If you choose this action you must state the program to
@@ -1516,7 +1532,7 @@ Remember, if Monit is run by root, then all programs executed by Monit
 will be started with superuser privileges unless the uid and gid
 extension is used.
 
-=item * 
+=item *
 
 B<UNMONITOR> will disable monitoring of the service B<and> send
 an alert. The service will not be checked by Monit anymore nor
@@ -1548,9 +1564,9 @@ The condition can be used both for failure and success action.
 The first, simpler and recommended format requires C<X> consecutive
 events before switching the state:
 
- if failed 
-    port 80 
-    for 3 cycles 
+ if failed
+    port 80
+    for 3 cycles
  then alert
 
 The second format is more advanced and allows to tolerate intermitent
@@ -1561,9 +1577,9 @@ For example if every second cycle fails (1-0-1-0-1-0-...), then "for 2
 cycles" condition will never match, despite the service having
 problems. The following statement will catch such a state:
 
- if failed 
+ if failed
     port 80
-    for 3 times within 5 cycles 
+    for 3 times within 5 cycles
  then alert
 
 Example which sets multiple error levels and actions:
@@ -1635,7 +1651,7 @@ in (percent). You will want to use TOTAL CPU typically for
 services like Apache web server where one master process forks
 child processes as workers.
 
-CHILDREN is the number of child processes of the process. 
+CHILDREN is the number of child processes of the process.
 
 TOTAL MEMORY is the memory usage of the process and its child
 processes in either percent or as an amount (Byte, kB, MB, GB).
@@ -1697,12 +1713,12 @@ Monit should expect when testing a file's checksum. Monit will then not
 compute an initial checksum for the file, but instead use the string
 you submit. For example:
 
- if failed 
+ if failed
     checksum expect 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
-You can, for example, use the GNU utility I<md5sum(1)> or 
-I<sha1sum(1)> to create a checksum string for a file and 
+You can, for example, use the GNU utility I<md5sum(1)> or
+I<sha1sum(1)> to create a checksum string for a file and
 use this string in the expect-statement.
 
 Reloading a server if its configuration file was changed:
@@ -1805,8 +1821,8 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 
 You can use the I<NOT> statement to invert a match.
 
-On startup the read position is set to the end of the file 
-and Monit continues to scan to the end of the file on each cycle. 
+On startup the read position is set to the end of the file
+and Monit continues to scan to the end of the file on each cycle.
 
 If the file size should decrease or inode changed, the read
 position is set to the start of the file.
@@ -1817,12 +1833,12 @@ Only the first 511 characters of a line are inspected.
 
  IGNORE [NOT] MATCH {regex|path}
 
-Lines matching an I<IGNORE> are not inspected during later 
-evaluations. I<IGNORE MATCH> has always precedence over 
+Lines matching an I<IGNORE> are not inspected during later
+evaluations. I<IGNORE MATCH> has always precedence over
 I<IF MATCH>.
 
-All I<IGNORE MATCH> statements are evaluated first, in the 
-order of their appearance. Thereafter, all the I<IF MATCH> 
+All I<IGNORE MATCH> statements are evaluated first, in the
+order of their appearance. Thereafter, all the I<IF MATCH>
 statements are evaluated.
 
 For example:
@@ -2070,7 +2086,7 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 
 Example:
 
- check program myscript with path /usr/local/bin/myscript.sh 
+ check program myscript with path /usr/local/bin/myscript.sh
        if status != 0 then alert
 
 Sample script for the above example (/usr/local/bin/myscript.sh):
@@ -2139,6 +2155,162 @@ Multiple status tests can be used, for example:
        if status = 3 for 5 cycles then exec "/usr/local/bin/emergency.sh"
 
 
+=head2 NETWORK LINK STATUS TEST
+
+You can check the network link state. This test may only be used
+within a check network service entry in the Monit control file.
+
+Syntax:
+
+ IF FAILED LINK THEN action
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+The test will fail if the link is down or link errors were detected.
+
+Example:
+
+ if failed link then alert
+
+
+=head2 NETWORK LINK CAPACITY TEST
+
+You can check the network link mode capacity for changes. This test 
+may only be used within a check network service entry in the Monit
+control file.
+
+Syntax:
+
+ IF CHANGED LINK [CAPACITY] THEN action
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+The test will match if the link mode has changed (e.g. maximum speed
+dropped) or if the duplex mode has changed.
+
+NOTE: not all interface types allow for capacity monitoring. Pseudo
+interfaces such as loopback device or VMWare interfaces don't have
+speed attribute.
+
+Example:
+
+ if changed link capacity then alert
+
+
+=head2 NETWORK SATURATION TEST
+
+You can check the network link saturation. Monit then computes the link
+utilization based on the current transfer rate vs.  maximum link speed.
+This test may only be used within a check network service entry in the
+Monit control file.
+
+Syntax:
+
+ IF SATURATION operator value% THEN action
+
+I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
+"lt", "eq", "ne" in shell sh notation and "greater", "less",
+"equal", "notequal" in human readable form (if not specified,
+default is EQUAL).
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+NOTE: as this test depends on the link speed being available, not all
+interface types allow to test the saturation. See the LINK SPEED test
+description.
+
+Example:
+
+ if saturation > 90% then alert
+
+
+=head2 NETWORK BANDWIDTH TEST
+
+You can check the network link upload and download bandwidth - current
+transfer rate and total data transferred in last 24 hours. This test may
+only be used within a check network service entry in the Monit control file.
+
+Crrent upload bandwidth rate test syntax:
+
+ IF UPLOAD operator value unit THEN action
+
+Current download bandwidth rate test syntax:
+
+ IF DOWNLOAD operator value unit THEN action
+
+Total upload test syntax:
+
+ IF TOTAL UPLOAD operator value unit IN LAST number timeunit THEN action
+
+Total download test syntax:
+
+ IF TOTAL DOWNLOAD operator value unit IN LAST number timeunit THEN action
+
+I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
+"lt", "eq", "ne" in shell sh notation and "greater", "less",
+"equal", "notequal" in human readable form (if not specified,
+default is EQUAL).
+
+I<unit> is a choice of "B","KB","MB","GB" or long alternatives
+"byte", "kilobyte", "megabyte", "gigabyte".
+
+I<timeunit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
+NOTE: Monit keeps total upload/download statistics only for last
+24 hours => the test cannot span more then one day.
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+Examples:
+
+ if upload > 500 kB/s then alert
+ if total download > 1 GB in last 2 hours then alert
+ if total download > 10 GB in last day then alert
+
+
+=head2 NETWORK PACKETS TEST
+
+
+You can check the network link upload and download packets count - current
+transfer rate and total data transferred in last 24 hours. This test may
+only be used within a check network service entry in the Monit control file.
+
+Crrent upload bandwidth rate test syntax:
+
+ IF UPLOAD operator value PACKETS/S THEN action
+
+Current download bandwidth rate test syntax:
+
+ IF DOWNLOAD operator value PACKETS/S THEN action
+
+Total upload test syntax:
+
+ IF TOTAL UPLOAD operator value PACKETS IN LAST number timeunit THEN action
+
+Total download test syntax:
+
+ IF TOTAL DOWNLOAD operator value PACKETS IN LAST number timeunit THEN action
+
+I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
+"lt", "eq", "ne" in shell sh notation and "greater", "less",
+"equal", "notequal" in human readable form (if not specified,
+default is EQUAL).
+
+I<timeunit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
+NOTE: Monit keeps total upload/download statistics only for last
+24 hours => the test cannot span more then one day.
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+Examples:
+        if upload > 1000 packets/s then alert
+        if total upload > 900000 packets in last hour then alert
+
+
 =head2 NETWORK PING TEST
 
 Monit can perform a network ping test by sending ICMP echo request
@@ -2151,7 +2323,7 @@ is allowed to).
 Syntax:
 
   IF FAILED PING
-     [COUNT number] [WITH] [TIMEOUT number SECONDS] 
+     [COUNT number] [WITH] [TIMEOUT number SECONDS]
   THEN action
 
 The B<COUNT> parameter specifies how many consecutive ping requests
@@ -2214,7 +2386,7 @@ Unix socket test syntax:
 
  IF FAILED
     <unixsocket>
-    [type] 
+    [type]
     [protocol | {send/expect}+]
     [timeout]
     [retry]
@@ -2286,6 +2458,7 @@ moment Monit knows how to speak:
  I<RDATE>
  I<REDIS>
  I<RSYNC>
+ I<SIEVE>
  I<SIP>
  I<SMTP>
  I<SMTPS>
@@ -2368,7 +2541,7 @@ number of characters.
 
 Here is a simple SMTP protocol example:
 
- if failed 
+ if failed
     port 25 and
     expect "^220.*"
     send   "HELO localhost.localdomain\r\n"
@@ -2397,7 +2570,7 @@ page will be requested.
 
 For example:
 
- if failed 
+ if failed
     port 80
     protocol http
     request "/data/show?a=b&c=d"
@@ -2428,18 +2601,18 @@ document over the network to compute the checksum.
 
 Example:
 
- if failed 
+ if failed
     port 80
     protocol http
-    request "/page.html" 
+    request "/page.html"
     checksum 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
 I<HTTP HEADERS> can be used to send a list of any HTTP headers
 with a http protocol test. For instance, the host header. If the
 host header is not set, Monit will use the hostname or IP-address
-of the host as specified in the check host statement. Specifying 
-a host header is useful if you want to connect to and test a 
+of the host as specified in the check host statement. Specifying
+a host header is useful if you want to connect to and test a
 name-based virtual host. The syntax for setting HTTP headers is
 
   http headers [name:value, name:value,..]
@@ -2512,7 +2685,7 @@ must connect them together using the OR keyword.
 
 Example:
 
- if failed port 80 protocol apache-status 
+ if failed port 80 protocol apache-status
         loglimit > 10% or
         dnslimit > 50% or
         waitlimit < 20%
@@ -2540,11 +2713,11 @@ may respond 200 OK (test succeeded) or send a 483 Too Many Hops
 For example:
 
  check host openser_all with address 127.0.0.1
-   if failed 
+   if failed
       port 5060 type udp protocol sip
       with target "localhost:5060" and maxforward 6
    then alert
-  
+
 
 =head4 RADIUS
 
@@ -2559,7 +2732,7 @@ For example:
  check process radiusd with pidfile /var/run/radiusd.pid
        start program = "/etc/init.d/freeradius start"
        stop program = "/etc/init.d/freeradius stop"
-       if failed 
+       if failed
           host 127.0.0.1 port 1812 type udp protocol radius
           secret pingpong
        then alert
@@ -2642,7 +2815,7 @@ otherwise Monit will simply ignore the request to change uid and
 gid.
 
  check process tomcat with pidfile /var/run/tomcat.pid
-       start program = "/etc/init.d/tomcat start" 
+       start program = "/etc/init.d/tomcat start"
              as uid nobody and gid nobody
        stop program  = "/etc/init.d/tomcat stop"
              # You can also use id numbers instead and write:
@@ -2683,7 +2856,7 @@ protocol test can be added:
  check process apache with pidfile /var/run/httpd.pid
        start "/etc/init.d/httpd start"
        stop  "/etc/init.d/httpd stop"
-       if failed 
+       if failed
           host www.sol.no port 80 protocol http
        then alert
 
@@ -2693,7 +2866,7 @@ the send/expect mechanism:
  check process apache with pidfile /var/run/httpd.pid
        start "/etc/init.d/httpd start"
        stop  "/etc/init.d/httpd stop"
-       if failed 
+       if failed
           host www.sol.no port 80 and
           send "GET / HTTP/1.1\r\nHost: www.sol.no\r\n\r\n"
           expect "HTTP/[0-9\.]{3} 200.*"
@@ -2724,8 +2897,8 @@ In this example we ask Monit to test the checksum for a document
 on a remote server. If the checksum was changed we send an alert:
 
  check host tildeslash with address www.tildeslash.com
-       if failed 
-          port 80 protocol http and 
+       if failed
+          port 80 protocol http and
           request "/monit/dist/monit-5.7.tar.gz"
           with checksum f9d26b8393736b5dfad837bb13780786
        then alert
@@ -2734,7 +2907,7 @@ Here are a couple of tests for some popular communication
 servers, using the SIP protocol. First we test a FreeSWITCH
 server and then an Asterisk server
 
- check process freeswitch 
+ check process freeswitch
     with pidfile /usr/local/freeswitch/log/freeswitch.pid
   start program = "/usr/local/freeswitch/bin/freeswitch -nc -hp"
   stop program = "/usr/local/freeswitch/bin/freeswitch -stop"
@@ -2742,12 +2915,12 @@ server and then an Asterisk server
   if total memory > 1500.0 MB for 5 cycles then alert
   if total memory > 2000.0 MB for 5 cycles then restart
   if cpu > 60% for 5 cycles then alert
-  if failed 
+  if failed
      port 5060 type udp protocol SIP
-     target me@foo.bar and maxforward 10 
+     target me@foo.bar and maxforward 10
   then restart
 
- check process asterisk 
+ check process asterisk
    with pidfile /var/run/asterisk/asterisk.pid
    start program = "/usr/sbin/asterisk"
    stop program = "/usr/sbin/asterisk -r -x 'shutdown now'"
@@ -2755,7 +2928,7 @@ server and then an Asterisk server
    if total memory > 1500.0 MB for 5 cycles then alert
    if total memory > 2000.0 MB for 5 cycles then restart
    if cpu > 60% for 5 cycles then alert
-   if failed 
+   if failed
       port 5060 type udp protocol SIP
       and target me@foo.bar maxforward 10
    then restart
@@ -2786,7 +2959,7 @@ service if it is not running:
        start program = "/etc/init.d/oracle start"
        stop program  = "/etc/init.d/oracle stop"
        mode active # Not necessary really, since it's the default
-       if failed 
+       if failed
           port 9001 protocol tns
        then restart
        group database
@@ -2821,11 +2994,11 @@ statement and a file check dependency:
  check process apache with pidfile /var/run/httpd.pid
       start = "/etc/init.d/httpd start"
       stop  = "/etc/init.d/httpd stop"
-      alert admin@bar on {nonexist, timeout} 
-        with mail-format { 
+      alert admin@bar on {nonexist, timeout}
+        with mail-format {
               from:     bofh@$HOST
               subject:  apache $EVENT - $ACTION
-              message:  This event occurred on $HOST at $DATE. 
+              message:  This event occurred on $HOST at $DATE.
               Your faithful employee,
               monit
       }
@@ -2835,10 +3008,10 @@ statement and a file check dependency:
       group apache
 
  check file httpd_bin with path /usr/local/apache/bin/httpd
-       alert security@bar on {checksum, timestamp, 
+       alert security@bar on {checksum, timestamp,
                   permission, uid, gid}
              with mail-format {subject: Alaaarrm! on $HOST}
-       if failed checksum 
+       if failed checksum
           and expect 8f7f419955cefa0b33a2ba316cba3659
               then unmonitor
        if failed permission 755 then unmonitor
@@ -2872,13 +3045,13 @@ of each other.
        stop  = "/etc/init.d/oracle stop"
        if failed port 9001 for 3 cycles then restart
 
- check process oracle-import 
+ check process oracle-import
       with pidfile /var/run/oracle-import.pid
        start = "/etc/init.d/oracle-import start"
        stop  = "/etc/init.d/oracle-import stop"
        depends on oracle
 
- check process oracle-export 
+ check process oracle-export
       with pidfile /var/run/oracle-export.pid
        start = "/etc/init.d/oracle-export start"
        stop  = "/etc/init.d/oracle-export stop"
@@ -2888,18 +3061,18 @@ of each other.
 
 =head1 FILES
 
-F<~/.monitrc>  
+F<~/.monitrc>
    Default run control file
 
 F</etc/monitrc>
-   If the control file is not found in the default 
+   If the control file is not found in the default
    location and /etc contains a F<monitrc> file, this
    file will be used instead.
 
-F<./monitrc>  
+F<./monitrc>
    If the control file is not found in either of the
-   previous two locations, and the current working 
-   directory contains a F<monitrc> file, this file is 
+   previous two locations, and the current working
+   directory contains a F<monitrc> file, this file is
    used instead.
 
 
@@ -2919,15 +3092,15 @@ F</etc/monit.pid>
    Lock file to help prevent concurrent runs (root mode,
    systems without /var/run).
 
-F<~/.monit.state>  
+F<~/.monit.state>
    Monit saves its state to this file and utilizes
-   information found in this file to recover from 
-   a crash. This is a binary file and its content is 
+   information found in this file to recover from
+   a crash. This is a binary file and its content is
    only of interest to monit. You may set the location
-   of this file in the Monit control file or by using 
+   of this file in the Monit control file or by using
    the -s switch when Monit is started.
 
-F<~/.monit.id>  
+F<~/.monit.id>
     Monit save its unique id to this file.
 
 
@@ -2946,7 +3119,7 @@ The event that occurred on the service
 
 =item MONIT_DESCRIPTION
 
-A description of the error condition 
+A description of the error condition
 
 =item MONIT_SERVICE
 
@@ -2961,30 +3134,30 @@ The time and date (RFC 822 style) the event occurred
 
 The host the event occurred on
 
-=back 
+=back
 
 The following environment variables are only available for
 process service entries:
 
 =over 4
 
-=item MONIT_PROCESS_PID 
+=item MONIT_PROCESS_PID
 
 The process pid. This may be 0 if the process was (re)started,
 
-=item MONIT_PROCESS_MEMORY 
+=item MONIT_PROCESS_MEMORY
 
 Process memory. This may be 0 if the process was (re)started,
 
-=item MONIT_PROCESS_CHILDREN 
+=item MONIT_PROCESS_CHILDREN
 
 Process children. This may be 0 if the process was (re)started,
 
-=item MONIT_PROCESS_CPU_PERCENT 
+=item MONIT_PROCESS_CPU_PERCENT
 
 Process cpu%. This may be 0 if the process was (re)started,
 
-=back 
+=back
 
 
 =head1 SIGNALS

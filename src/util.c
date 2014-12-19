@@ -236,6 +236,10 @@ static void printevents(unsigned int events) {
         } else {
                 if (IS_EVENT_SET(events, Event_Action))
                         printf("Action ");
+                if (IS_EVENT_SET(events, Event_ByteIn))
+                        printf("ByteIn ");
+                if (IS_EVENT_SET(events, Event_ByteOut))
+                        printf("ByteOut ");
                 if (IS_EVENT_SET(events, Event_Checksum))
                         printf("Checksum ");
                 if (IS_EVENT_SET(events, Event_Connection))
@@ -256,8 +260,14 @@ static void printevents(unsigned int events) {
                         printf("Instance ");
                 if (IS_EVENT_SET(events, Event_Invalid))
                         printf("Invalid ");
+                if (IS_EVENT_SET(events, Event_Link))
+                        printf("Link ");
                 if (IS_EVENT_SET(events, Event_Nonexist))
                         printf("Nonexist ");
+                if (IS_EVENT_SET(events, Event_PacketIn))
+                        printf("PacketIn ");
+                if (IS_EVENT_SET(events, Event_PacketOut))
+                        printf("PacketOut ");
                 if (IS_EVENT_SET(events, Event_Permission))
                         printf("Permission ");
                 if (IS_EVENT_SET(events, Event_Pid))
@@ -266,8 +276,12 @@ static void printevents(unsigned int events) {
                         printf("PPID ");
                 if (IS_EVENT_SET(events, Event_Resource))
                         printf("Resource ");
+                if (IS_EVENT_SET(events, Event_Saturation))
+                        printf("Saturation ");
                 if (IS_EVENT_SET(events, Event_Size))
                         printf("Size ");
+                if (IS_EVENT_SET(events, Event_Speed))
+                        printf("Speed ");
                 if (IS_EVENT_SET(events, Event_Status))
                         printf("Status ");
                 if (IS_EVENT_SET(events, Event_Timeout))
@@ -915,6 +929,8 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Pid file", s->path);
         } else if (s->type == TYPE_HOST) {
                 printf(" %-20s = %s\n", "Address", s->path);
+        } else if (s->type == TYPE_NET) {
+                printf(" %-20s = %s\n", "Interface", s->path);
         } else if (s->type != TYPE_SYSTEM) {
                 printf(" %-20s = %s\n", "Path", s->path);
         }
@@ -955,7 +971,7 @@ void Util_printService(Service_T s) {
                 printf(" timeout %d second(s)", s->restart->timeout);
                 printf("\n");
         }
-        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
+        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM && s->type != TYPE_NET) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Existence", StringBuffer_toString(Util_printRule(buf, s->action_NONEXIST, "if does not exist")));
         }
@@ -1064,6 +1080,57 @@ void Util_printService(Service_T s) {
                         :
                         StringBuffer_toString(Util_printRule(buf, o->action, "if %s %llu byte(s)", operatornames[o->operator], o->size))
                 );
+        }
+
+        for (NetLinkStatus_T o = s->netlinkstatuslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Link status", StringBuffer_toString(Util_printRule(buf, o->action, "if failed")));
+        }
+
+        for (NetLinkSpeed_T o = s->netlinkspeedlist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Link capacity", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
+        }
+
+        for (NetLinkSaturation_T o = s->netlinksaturationlist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                printf(" %-20s = %s\n", "Link utilization", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit)));
+        }
+
+        for (Bandwidth_T o = s->uploadbyteslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                if (o->range == TIME_SECOND) {
+                        printf(" %-20s = %s\n", "Upload bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s/s", operatornames[o->operator], Str_bytesToSize(o->limit, buffer))));
+                } else {
+                        printf(" %-20s = %s\n", "Total upload bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s in last %d %s(s)", operatornames[o->operator], Str_bytesToSize(o->limit, buffer), o->rangecount, Util_timestr(o->range))));
+                }
+        }
+
+        for (Bandwidth_T o = s->uploadpacketslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                if (o->range == TIME_SECOND) {
+                        printf(" %-20s = %s\n", "Upload packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets/s", operatornames[o->operator], o->limit)));
+                } else {
+                        printf(" %-20s = %s\n", "Total upload packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets in last %d %s(s)", operatornames[o->operator], o->limit, o->rangecount, Util_timestr(o->range))));
+                }
+        }
+
+        for (Bandwidth_T o = s->downloadbyteslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                if (o->range == TIME_SECOND) {
+                        printf(" %-20s = %s\n", "Download bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s/s", operatornames[o->operator], Str_bytesToSize(o->limit, buffer))));
+                } else {
+                        printf(" %-20s = %s\n", "Total download bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s in last %d %s(s)", operatornames[o->operator], Str_bytesToSize(o->limit, buffer), o->rangecount, Util_timestr(o->range))));
+                }
+        }
+
+        for (Bandwidth_T o = s->downloadpacketslist; o; o = o->next) {
+                StringBuffer_clear(buf);
+                if (o->range == TIME_SECOND) {
+                        printf(" %-20s = %s\n", "Download packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets/s", operatornames[o->operator], o->limit)));
+                } else {
+                        printf(" %-20s = %s\n", "Total downl. packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets in last %d %s(s)", operatornames[o->operator], o->limit, o->rangecount, Util_timestr(o->range))));
+                }
         }
 
         for (Uptime_T o = s->uptimelist; o; o = o->next) {
@@ -1647,6 +1714,10 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.process.total_cpu_percent = 0;
                         s->inf->priv.process.uptime = 0;
                         break;
+                case TYPE_NET:
+                        if (s->inf->priv.net.stats)
+                                NetStatistics_reset(s->inf->priv.net.stats);
+                        break;
                 default:
                         break;
         }
@@ -1668,7 +1739,6 @@ char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
 
 
 int Util_evalQExpression(Operator_Type operator, long long left, long long right) {
-
         switch (operator) {
                 case Operator_Greater:
                         if (left > right)
@@ -1691,9 +1761,34 @@ int Util_evalQExpression(Operator_Type operator, long long left, long long right
                         LogError("Unknown comparison operator\n");
                         return FALSE;
         }
-
         return FALSE;
+}
 
+
+int Util_evalDoubleQExpression(Operator_Type operator, double left, double right) {
+        switch (operator) {
+                case Operator_Greater:
+                        if (left > right)
+                                return TRUE;
+                        break;
+                case Operator_Less:
+                        if (left < right)
+                                return TRUE;
+                        break;
+                case Operator_Equal:
+                        if (left == right)
+                                return TRUE;
+                        break;
+                case Operator_NotEqual:
+                case Operator_Changed:
+                        if (left != right)
+                                return TRUE;
+                        break;
+                default:
+                        LogError("Unknown comparison operator\n");
+                        return FALSE;
+        }
+        return FALSE;
 }
 
 
@@ -1846,5 +1941,26 @@ int Util_getfqdnhostname(char *buf, unsigned len) {
         if (info)
                 freeaddrinfo(info);
         return 0;
+}
+
+
+const char *Util_timestr(int time) {
+        int i = 0;
+        struct mytimetable {
+                int id;
+                char *description;
+        } tt[]= {
+                {TIME_SECOND, "second"},
+                {TIME_MINUTE, "minute"},
+                {TIME_HOUR,   "hour"},
+                {TIME_DAY,    "day"},
+                {TIME_MONTH,  "month"},
+                {0}
+        };
+        do {
+                if (time == tt[i].id)
+                        return tt[i].description;
+        } while (tt[++i].description);
+        return NULL;
 }
 

@@ -96,12 +96,12 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
                         (long long)Run.incarnation,
                         VERSION);
         StringBuffer_append(B,
-                "<uptime>%ld</uptime>"
+                "<uptime>%lld</uptime>"
                 "<poll>%d</poll>"
                 "<startdelay>%d</startdelay>"
                 "<localhostname>%s</localhostname>"
                 "<controlfile>%s</controlfile>",
-                (long)Util_getProcessUptime(Run.pidfile),
+                (long long)Util_getProcessUptime(Run.pidfile),
                 Run.polltime,
                 Run.startdelay,
                 Run.system->name ? Run.system->name : "",
@@ -157,14 +157,14 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
         else
                 StringBuffer_append(B, "<service type=\"%d\"><name>%s</name>", S->type, S->name ? S->name : "");
         StringBuffer_append(B,
-                "<collected_sec>%ld</collected_sec>"
+                "<collected_sec>%lld</collected_sec>"
                 "<collected_usec>%ld</collected_usec>"
                 "<status>%d</status>"
                 "<status_hint>%d</status_hint>"
                 "<monitor>%d</monitor>"
                 "<monitormode>%d</monitormode>"
                 "<pendingaction>%d</pendingaction>",
-                (long)S->collected.tv_sec,
+                (long long)S->collected.tv_sec,
                 (long)S->collected.tv_usec,
                 S->error,
                 S->error_hint,
@@ -185,11 +185,62 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                         if (S->type == TYPE_FILE || S->type == TYPE_DIRECTORY || S->type == TYPE_FIFO || S->type == TYPE_FILESYSTEM)
                                 StringBuffer_append(B, "<mode>%o</mode><uid>%d</uid><gid>%d</gid>", S->inf->st_mode & 07777, (int)S->inf->st_uid, (int)S->inf->st_gid);
                         if (S->type == TYPE_FILE || S->type == TYPE_FIFO || S->type == TYPE_DIRECTORY)
-                                StringBuffer_append(B, "<timestamp>%ld</timestamp>", (long)S->inf->timestamp);
+                                StringBuffer_append(B, "<timestamp>%lld</timestamp>", (long long)S->inf->timestamp);
                         if (S->type == TYPE_FILE) {
                                 StringBuffer_append(B, "<size>%llu</size>", (unsigned long long) S->inf->priv.file.st_size);
                                 if (S->checksum)
                                         StringBuffer_append(B, "<checksum type=\"%s\">%s</checksum>", checksumnames[S->checksum->type], S->inf->priv.file.cs_sum);
+                        }
+                        if (S->type == TYPE_NET) {
+                                StringBuffer_append(B,
+                                        "<link>"
+                                        "<state>%d</state>"
+                                        "<speed>%lld</speed>"
+                                        "<duplex>%d</duplex>"
+                                        "<download>"
+                                        "<packets>"
+                                        "<now>%lld</now>"
+                                        "<total>%lld</total>"
+                                        "</packets>"
+                                        "<bytes>"
+                                        "<now>%lld</now>"
+                                        "<total>%lld</total>"
+                                        "</bytes>"
+                                        "<errors>"
+                                        "<now>%lld</now>"
+                                        "<total>%lld</total>"
+                                        "</errors>"
+                                        "</download>"
+                                        "<upload>"
+                                        "<packets>"
+                                        "<now>%lld</now>"
+                                        "<total>%lld</total>"
+                                        "</packets>"
+                                        "<bytes>"
+                                        "<now>%lld</now>"
+                                        "<total>%lld</total>"
+                                        "</bytes>"
+                                        "<errors>"
+                                        "<now>%lld</now>"
+                                        "<total>%lld</total>"
+                                        "</errors>"
+                                        "</upload>"
+                                        "</link>",
+                                        NetStatistics_getState(S->inf->priv.net.stats),
+                                        NetStatistics_getSpeed(S->inf->priv.net.stats),
+                                        NetStatistics_getDuplex(S->inf->priv.net.stats),
+                                        NetStatistics_getPacketsInPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getPacketsInTotal(S->inf->priv.net.stats),
+                                        NetStatistics_getBytesInPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getBytesInTotal(S->inf->priv.net.stats),
+                                        NetStatistics_getErrorsInPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getErrorsInTotal(S->inf->priv.net.stats),
+                                        NetStatistics_getPacketsOutPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getPacketsOutTotal(S->inf->priv.net.stats),
+                                        NetStatistics_getBytesOutPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getBytesOutTotal(S->inf->priv.net.stats),
+                                        NetStatistics_getErrorsOutPerSecond(S->inf->priv.net.stats),
+                                        NetStatistics_getErrorsOutTotal(S->inf->priv.net.stats));
                         }
                         if (S->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(B,
@@ -222,13 +273,13 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "<uid>%d</uid>"
                                         "<euid>%d</euid>"
                                         "<gid>%d</gid>"
-                                        "<uptime>%ld</uptime>",
+                                        "<uptime>%lld</uptime>",
                                         S->inf->priv.process.pid,
                                         S->inf->priv.process.ppid,
                                         S->inf->priv.process.uid,
                                         S->inf->priv.process.euid,
                                         S->inf->priv.process.gid,
-                                        (long)S->inf->priv.process.uptime);
+                                        (long long)S->inf->priv.process.uptime);
                                 if (Run.doprocess) {
                                         StringBuffer_append(B,
                                                 "<children>%d</children>"
@@ -333,10 +384,10 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                         if (S->type == TYPE_PROGRAM && S->program->started) {
                                 StringBuffer_append(B,
                                         "<program>"
-                                        "<started>%lu</started>"
+                                        "<started>%lld</started>"
                                         "<status>%d</status>"
                                         "<output><![CDATA[",
-                                        (unsigned long)S->program->started,
+                                        (long long)S->program->started,
                                         S->program->exitStatus);
                                 _escapeCDATA(B, StringBuffer_toString(S->program->output));
                                 StringBuffer_append(B,
@@ -372,7 +423,7 @@ static void status_event(Event_T E, StringBuffer_T B) {
         struct timeval *tv = Event_get_collected(E);
         StringBuffer_append(B,
                 "<event>"
-                "<collected_sec>%ld</collected_sec>"
+                "<collected_sec>%lld</collected_sec>"
                 "<collected_usec>%ld</collected_usec>"
                 "<service>%s</service>"
                 "<type>%d</type>"
@@ -380,7 +431,7 @@ static void status_event(Event_T E, StringBuffer_T B) {
                 "<state>%d</state>"
                 "<action>%d</action>"
                 "<message><![CDATA[",
-                (long)tv->tv_sec,
+                (long long)tv->tv_sec,
                 (long)tv->tv_usec,
                 Event_get_id(E) == Event_Instance ? "Monit" : Event_get_source_name(E),
                 Event_get_source_type(E),

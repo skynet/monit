@@ -53,6 +53,13 @@ typedef enum {
         Event_Heartbeat  = 0x100000,
         Event_Status     = 0x200000,
         Event_Uptime     = 0x400000,
+        Event_Link       = 0x800000,
+        Event_Speed      = 0x1000000,
+        Event_Saturation = 0x2000000,
+        Event_ByteIn     = 0x4000000,
+        Event_ByteOut    = 0x8000000,
+        Event_PacketIn   = 0x10000000,
+        Event_PacketOut  = 0x20000000,
         Event_All        = 0x7FFFFFFF
 } Event_Type;
 

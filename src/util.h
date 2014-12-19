@@ -332,6 +332,16 @@ char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len);
 int Util_evalQExpression(Operator_Type operator, long long left, long long right);
 
 
+/**
+ * Evaluate a qualification expression.
+ * @param operator The qualification operator
+ * @param left Expression lval
+ * @param rightExpression rval
+ * @return the boolean value of the expression
+ */
+int Util_evalDoubleQExpression(Operator_Type operator, double left, double right);
+
+
 /*
  * This will enable service monitoring in the case that it was disabled.
  * @param s A Service_T object
@@ -409,6 +419,14 @@ char *Util_portDescription(Port_T p, char *buf, int bufsize);
  *  @return zero on success
  */
 int Util_getfqdnhostname(char *buf, unsigned len);
+
+
+/**
+ * Return string presentation of TIME_* unit
+ *  @param time The TIME_* unit (see monit.h)
+ *  @return string
+ */
+const char *Util_timestr(int time);
 
 
 #endif

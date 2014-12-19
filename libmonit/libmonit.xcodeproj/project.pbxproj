@@ -23,6 +23,8 @@
 		52936F9113A5212700FC4089 /* StrTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F8313A5212700FC4089 /* StrTest.c */; };
 		52936F9213A5212700FC4089 /* SystemTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F8413A5212700FC4089 /* SystemTest.c */; };
 		52936F9313A5212700FC4089 /* TimeTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F8613A5212700FC4089 /* TimeTest.c */; };
+		52A710B9196C920800379D67 /* NetStatistics.c in Sources */ = {isa = PBXBuildFile; fileRef = 52A710B7196C920800379D67 /* NetStatistics.c */; };
+		52A710BA196C920800379D67 /* NetStatistics.h in Headers */ = {isa = PBXBuildFile; fileRef = 52A710B8196C920800379D67 /* NetStatistics.h */; };
 		52D7967E13A6CE560014CED2 /* Bootstrap.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7964A13A6CE560014CED2 /* Bootstrap.c */; };
 		52D7968113A6CE560014CED2 /* assert.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7964F13A6CE560014CED2 /* assert.c */; };
 		52D7968413A6CE560014CED2 /* Exception.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7965213A6CE560014CED2 /* Exception.c */; };
@@ -97,6 +99,8 @@
 		52936F8513A5212700FC4089 /* test.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = test.sh; sourceTree = "<group>"; };
 		52936F8613A5212700FC4089 /* TimeTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TimeTest.c; sourceTree = "<group>"; };
 		52936F9913A5216B00FC4089 /* COPYING */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = COPYING; sourceTree = "<group>"; };
+		52A710B7196C920800379D67 /* NetStatistics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = NetStatistics.c; sourceTree = "<group>"; };
+		52A710B8196C920800379D67 /* NetStatistics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetStatistics.h; sourceTree = "<group>"; };
 		52D7964A13A6CE560014CED2 /* Bootstrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = Bootstrap.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52D7964B13A6CE560014CED2 /* Bootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Bootstrap.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52D7964C13A6CE560014CED2 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Config.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -286,6 +290,8 @@
 		52D7966213A6CE560014CED2 /* system */ = {
 			isa = PBXGroup;
 			children = (
+				52A710B7196C920800379D67 /* NetStatistics.c */,
+				52A710B8196C920800379D67 /* NetStatistics.h */,
 				52D7966413A6CE560014CED2 /* Command.c */,
 				52D7966513A6CE560014CED2 /* Command.h */,
 				52D7966A13A6CE560014CED2 /* Process.h */,
@@ -330,6 +336,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52A710BA196C920800379D67 /* NetStatistics.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -460,6 +467,7 @@
 				52936F8B13A5212700FC4089 /* FileTest.c in Sources */,
 				52936F8C13A5212700FC4089 /* InputStreamTest.c in Sources */,
 				52936F8D13A5212700FC4089 /* ListTest.c in Sources */,
+				52A710B9196C920800379D67 /* NetStatistics.c in Sources */,
 				52936F8E13A5212700FC4089 /* NetTest.c in Sources */,
 				52936F8F13A5212700FC4089 /* OutputStreamTest.c in Sources */,
 				52936F9013A5212700FC4089 /* StringBufferTest.c in Sources */,

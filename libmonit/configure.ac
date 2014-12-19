@@ -93,7 +93,36 @@ AC_CHECK_HEADERS([ctype.h errno.h fcntl.h limits.h pthread.h setjmp.h \
                   signal.h stdarg.h stdio.h string.h string.h strings.h \
                   sys/socket.h sys/time.h sys/types.h unistd.h execinfo.h \
                   sys/sendfile.h sys/dirent.h poll.h sys/poll.h sys/event.h \
-                  stropts.h sys/ioctl.h sys/filio.h])
+                  stropts.h sys/ioctl.h sys/filio.h kstat.h ifaddrs.h \
+                  net/if_media.h netinet/in.h])
+AC_CHECK_HEADERS([net/if.h], [], [],
+        [
+         #ifdef HAVE_SYS_TYPES_H
+         #include <sys/types.h>
+         #endif
+         #if HAVE_SYS_SOCKET_H
+         #include <sys/socket.h>
+         #endif
+         #if HAVE_NETINET_IN_SYSTM_H
+         #include <netinet/in.h>
+         #endif
+         #if HAVE_NETINET_IN_SYSTM_H
+         #include <netinet/in_systm.h>
+         #endif
+         #if HAVE_NETINET_IP_H
+         #include <netinet/ip.h>
+         #endif
+        ])
+AC_CHECK_HEADERS([ \
+        libperfstat.h \
+        ],
+        [],
+        [],
+        [
+         #ifdef HAVE_SYS_PROTOSW_H
+         #include <sys/protosw.h>
+         #endif
+        ])
 
 # ------------------------------------------------------------------------
 # Functions 
@@ -148,7 +177,7 @@ then
    AC_DEFINE([DARWIN], 1, [Define to 1 if the system is OSX])
 elif test "$architecture" = "SunOS"
 then
-   LIBS="$LIBS -lsocket -lnsl"
+   LIBS="$LIBS -lsocket -lnsl -lkstat"
    CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -D__EXTENSIONS__ -m64"
    LDFLAGS="$LDFLAGS -m64"
    if test `uname -m` != "i86pc"
@@ -169,6 +198,7 @@ elif test "$architecture" = "AIX"
 then
    CFLAGS="$CFLAGS -D_THREAD_SAFE -D_REENTRANT"
    AC_DEFINE([AIX], 1, [Define to 1 if the system is AIX])
+   LIBS="$LIBS -lcfg -lodm -lperfstat"
 else
    AC_MSG_ERROR([Architecture not supported: ${architecture}])
 fi

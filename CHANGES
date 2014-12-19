@@ -4,6 +4,21 @@
 
 Version 5.11
 
+New: Network tests implemented. You can test the link status (up/down),
+speed changed (drops due to damaged ports or cables, signal problems, etc.),
+link saturation, upload/download bandwidth usage and total transfers, number
+of upload/download packets. Example:
+    check network public with interface eth0
+        if failed link then alert
+        if changed link then alert
+        if saturation > 80% then alert
+        if upload > 500 kB/s then alert
+        if download > 1 MB/s then alert
+        if upload > 1000 packets/s then alert
+        if download > 1000 packets/s then alert
+        if total upload > 1 GB in last hour then alert
+        if total download > 100 GB in last 5 hours then alert
+
 New: Sieve protocol test implemented. Usage:
     if failed port 2000 protocol sieve then alert
 
@@ -27,7 +42,11 @@ Fixed: Issue #115: The CLI/GUI reported port timeout value 1000x
 higher.
 
 Fixed: If ping is not allowed (insufficient permissions), display value as "N/A"
-instead of negative reposponse time.
+instead of negative response time.
+
+Fixed: OpenBSD: don't narrow the 64-bit time_t on 32-bit build (Y2038 problem).
+
+Fixed: Issue #136: "memory kilobytes total" is not in kB-s
 
 
 Version 5.10
@@ -207,7 +226,7 @@ New: Add command line option to reset Monit ID (-r/--resetid)
 
 New: Add client support for using TLS version 1.1 and 1.2. A recent
 1.x version of OpenSSL is required and of course that the server
-speaks this TLS version. At this time, not many does. Example: 
+speaks this TLS version. At this time, not many does. Example:
 if failed port 443 with type TCPSSL tlsv11 protocol http  then alert
 
 New: Process UID, EUID and GID tests. Allows to test if the
@@ -219,7 +238,7 @@ process is running as a given user. Example:
 
 New: Add WebSocket protocol test support for port check. Example:
     check host websocket.org with address "echo.websocket.org"
-        if failed 
+        if failed
            port 80 protocol websocket
            host "echo.websocket.org"
            request "/"
@@ -227,32 +246,32 @@ New: Add WebSocket protocol test support for port check. Example:
            version 13
         then alert
 
-New: Simplified HTTP protocol test to allow testing content without 
+New: Simplified HTTP protocol test to allow testing content without
 creating an URL object. It is now possible to say in a more natural way,
  check host mmonit.com with address mmonit.com
-       if failed 
+       if failed
           port 80 protocol http
           and request /monit/ with content = "Monit 5.7"
        then alert
 meaning that if the page mmonit.com/monit does not contain the text
 "Monit 5.7" then the test will fail. To reverse the test, i.e. to test
-that the page should not contain a specific string simply use '!=' 
+that the page should not contain a specific string simply use '!='
 instead, like,
-    if failed 
+    if failed
        port 80 protocol http
-       with content != "Nagios" 
+       with content != "Nagios"
     then alert
 Remember also that the string to test can be a regular expression
 
 New: The HTTP protocol test now support testing the HTTP status code
 returned by the server by using "status <operator> <number>".
 Backward compatible defaults (return error if status >= 400):
-    if failed 
+    if failed
        port 80 protocol http
        and status < 400
     then alert
 Return error if a page DOES exist (for success 404 is expected):
-    if failed 
+    if failed
        port 80 protocol http
        request "/non/existent.php"
        status = 404
@@ -262,8 +281,8 @@ Fixed: Unix Socket test now use the communication type (TCP or UDP)
 specified in port statement. Previously TCP was always used.
 
 Fixed: Improved test to check if a socket was connected. Since we use
-non-blocking connect, we now poll a few ms to avoid "connection failed, 
-XXX is not ready for i|o" errors which could occur, especially on high 
+non-blocking connect, we now poll a few ms to avoid "connection failed,
+XXX is not ready for i|o" errors which could occur, especially on high
 latency networks or long distance connect.
 
 Fixed: Simplified if-statements reported in UI
@@ -295,13 +314,13 @@ program registered with the service and then the start program.
 Now, if a restart program is registred with the service, this
 will be called instead, otherwise Monit fall back to its old
 behaviour. Example:
-     
+
   check process apache with pidfile /var/run/httpd.pid
         start   = "/usr/sbin/apachectl start"
         stop    = "/usr/sbin/apachectl stop"
         restart = "/usr/sbin/apachectl restart" <- New
 
-New: Improved communication with M/Monit. Thanks to Hippo Lin. For 
+New: Improved communication with M/Monit. Thanks to Hippo Lin. For
 scalability purpose, this Monit version should only be used with
 M/Monit version 3.1 or later.
 
@@ -345,7 +364,7 @@ BUGFIXES:
 
 * Escape XML messages properly.
 
-* Compilation: fix the configure script to support default compiler 
+* Compilation: fix the configure script to support default compiler
   paths when searching for OpenSSL (fixes library search on multi-
   architecture  platforms like Debian and Ubuntu).
 
@@ -588,7 +607,7 @@ Version 5.3
   be enabled using -vv option.
 
 * Improve how fast Monit check if a program was started or stopped.
-  Thanks to Michael Renner for patch. 
+  Thanks to Michael Renner for patch.
 
 * Fix the monitoring state presentation during service restart which
   temporarily displayed "Not monitored", whereas the monitoring was
@@ -720,7 +739,7 @@ NEW FEATURES AND FUNCTIONS:
   process name with arguments as provided by the 'ps' utility. If the
   pattern matches multiple processes, the first match is used.
   Example:
-      check process debian 
+      check process debian
             matching "/usr/lib/vmware/bin/vmware-vmx .*deb.vmx"
 
 * Added support for swap monitoring. Example:
@@ -793,7 +812,7 @@ BUGFIXES:
      - fixed handling of the service names which contain "/" in the
        name in Monit web interface. Thanks to Artyom Khafizov for
        patch.
-  
+
 * When 'check system' is not defined, monit adds it automatically
   using hostname for service name. If existing service was defined
   with the same service name (matching hostname), monit didn't added
@@ -869,8 +888,8 @@ NEW FEATURES AND FUNCTIONS:
     check process radiusd with pidfile /var/run/radiusd.pid
        start program = "/etc/init.d/freeradius start"
        stop program = "/etc/init.d/freeradius stop"
-       if failed 
-          host 127.0.0.1 port 2000 type udp protocol radius secret testing1234 
+       if failed
+          host 127.0.0.1 port 2000 type udp protocol radius secret testing1234
        then alert
        if 5 restarts within 5 cycles then timeout
 
@@ -915,8 +934,8 @@ BUGFIXES:
 * Fixed content match check which reported only first
   match during the same cycle. Thanks to Pavel Shevaev for
   report.
-  
-* Allow for the use of complete SSL certificate chains. 
+
+* Allow for the use of complete SSL certificate chains.
   Thanks to Lawrence Tan for patch.
 
 * Added support for multiline greetings to FTP protocol test.
@@ -960,7 +979,7 @@ BUGFIXES:
 
 * Removed the configure --without-resource option. If the user
   who is running Monit doesn't have permissions to check the
-  processes state, the related checks are disabled dynamically. 
+  processes state, the related checks are disabled dynamically.
 
 
 
@@ -999,7 +1018,7 @@ NEW FEATURES AND FUNCTIONS:
 
 * Support use of symbolic links in filesystem check. Thanks to
   Aleksander Kamenik for suggestion. Example:
-    check filesystem rootfs path 
+    check filesystem rootfs path
          /dev/disk/by-uuid/4ef973f7-67d1-4bb0-8223-cb1c692b72e4
       if space usage > 95% then alert
       if inode usage > 95% then alert
@@ -1024,7 +1043,7 @@ NEW FEATURES AND FUNCTIONS:
   either CHANGED or MATCH event in your alert filters, no change
   is necessary (alerts are delivered as usual, the tests just use
   different types internally).
-  
+
 * Monit now generates a unique id on first start and store the id
   in a permanent file. This id is used in protocol communication
   between Monit and M/Monit to pair a Monit instance with it's
@@ -1097,11 +1116,11 @@ NEW FEATURES AND FUNCTIONS:
 * Added a protocol test for testing the SIP protocol which is
   used by popular communication servers such as Asterisk and
   FreeSWITCH. We received two patches for this protocol and have
-  taken code from both and merged them. Many thanks to Bret 
+  taken code from both and merged them. Many thanks to Bret
   McDanel and to Pierrick Grasland for supplying the patches.
 
 * Added MONIT_DESCRIPTION to the list of environment variables
-  available to programs started by monit. Thanks to Morten 
+  available to programs started by monit. Thanks to Morten
   Bressendorff Schmidt for patch.
 
 * If a service group is specified for Monit CLI action,
@@ -1244,7 +1263,7 @@ BUGFIXES:
   Linux which reports number of CPUs as 0. Thanks to Marius
   Schmidt for report.
 
-* Cleanup event states during a service stop/unmonitor so old 
+* Cleanup event states during a service stop/unmonitor so old
   events are not sent when the service is started/monitored again.
 
 * Fixed #21989: Monit could start two instances of the process
@@ -1263,7 +1282,7 @@ BUGFIXES:
   SMTP authentication.
 
 * Fixed #22191 and #19823: If the file content test does not match
-  anymore, reset the service error state. (Previous versions did 
+  anymore, reset the service error state. (Previous versions did
   not clear the error state and kept showing a match in the status
   listing and in the http interface).
 
