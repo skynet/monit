@@ -412,7 +412,7 @@ the initial name of the host entry in M/Monit.
 L<status|/"PROGRAM STATUS TESTING"> test allows one to check the
 program's exit status. If the program does not finish executing within
 <number> seconds, Monit will terminate it. The default program timeout
-is 600 seconds (5 minutes). The output of the program is recorded and
+is 300 seconds (5 minutes). The output of the program is recorded and
 made available in the User Interface and in alerts (up to 1kB).
 
 =item 9. CHECK NETWORK <unique name> <ADDRESS <ipaddress> | INTERFACE <name>>
