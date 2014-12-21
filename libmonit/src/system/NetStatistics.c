@@ -313,6 +313,7 @@ int NetStatistics_isGetByAddressSupported() {
 }
 
 
+//FIXME: split this implementation to os-specific directories + compile-in / inlude only what is needed
 #if defined DARWIN || defined FREEBSD || defined OPENBSD || defined NETBSD
 
 
@@ -606,6 +607,11 @@ long long NetStatistics_getBytesInTotal(T S) {
 }
 
 
+double NetStatistics_getSaturationInPerSecond(T S) {
+        return S->speed ? (double)NetStatistics_getBytesInPerSecond(S) * 8. * 100. / S->speed : -1.;
+}
+
+
 long long NetStatistics_getPacketsInPerSecond(T S) {
         assert(S);
         return _deltaSecond(S, &(S->ipackets));
@@ -675,6 +681,11 @@ long long NetStatistics_getBytesOutPerHour(T S, int count) {
 long long NetStatistics_getBytesOutTotal(T S) {
         assert(S);
         return S->obytes.now;
+}
+
+
+double NetStatistics_getSaturationOutPerSecond(T S) {
+        return S->speed ? (double)NetStatistics_getBytesOutPerSecond(S) * 8. * 100. / S->speed : -1.;
 }
 
 

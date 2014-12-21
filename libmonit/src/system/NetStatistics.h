@@ -114,6 +114,14 @@ long long NetStatistics_getBytesInTotal(T S);
 
 
 /**
+ * Get incoming link saturation.
+ * @param S A network statistics object
+ * @return Incoming link saturation percent or -1 the link has unknown speed.
+ */
+double NetStatistics_getSaturationInPerSecond(T S);
+
+
+/**
  * Get incoming bytes per hour statistics.
  * @param S A network statistics object
  * @param count Number of hours, the returned statistics will be for range given by 'now - count' (count max = 24h)
@@ -222,6 +230,14 @@ long long NetStatistics_getBytesOutPerHour(T S, int count);
  * @return Outgoing bytes total.
  */
 long long NetStatistics_getBytesOutTotal(T S);
+
+
+/**
+ * Get outgoing link saturation.
+ * @param S A network statistics object
+ * @return Outgoing link saturation percent or -1 the link has unknown speed.
+ */
+double NetStatistics_getSaturationOutPerSecond(T S);
 
 
 /**

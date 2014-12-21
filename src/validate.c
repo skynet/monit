@@ -1412,10 +1412,9 @@ int check_net(Service_T s) {
                 link->speed = speed;
         }
         // Link saturation
-        if (speed) {
-                double osaturation = (double)NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats) * 8. * 100. / speed;
-                double isaturation = (double)NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats) * 8. * 100. / speed;
-                double iosaturation = osaturation + isaturation;
+        double osaturation = NetStatistics_getSaturationOutPerSecond(s->inf->priv.net.stats);
+        double isaturation = NetStatistics_getSaturationInPerSecond(s->inf->priv.net.stats);
+        if (osaturation >= 0. && isaturation >= 0.) {
                 for (NetLinkSaturation_T link = s->netlinksaturationlist; link; link = link->next) {
                         if (duplex) {
                                 if (Util_evalDoubleQExpression(link->operator, osaturation, link->limit))
@@ -1427,6 +1426,7 @@ int check_net(Service_T s) {
                                 else
                                         Event_post(s, Event_Saturation, STATE_SUCCEEDED, link->action, "link download saturation check succeeded [current download saturation %.1f%%]", isaturation);
                         } else {
+                                double iosaturation = osaturation + isaturation;
                                 if (Util_evalDoubleQExpression(link->operator, iosaturation, link->limit))
                                         Event_post(s, Event_Saturation, STATE_FAILED, link->action, "link saturation of %.1f%% matches limit [saturation %s %.1f%%]", iosaturation, operatorshortnames[link->operator], link->limit);
                                 else
