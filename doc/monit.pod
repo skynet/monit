@@ -2167,11 +2167,12 @@ Syntax:
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
-The test will fail if the link is down or link errors were detected.
+The test will fail if the link/interface is down or link errors were detected.
 
 Example:
 
- if failed link then alert
+ check network eth0 with interface eth0 
+       if failed link then alert
 
 
 =head2 NETWORK LINK CAPACITY TEST
@@ -2191,18 +2192,19 @@ The test will match if the link mode has changed (e.g. maximum speed
 dropped) or if the duplex mode has changed.
 
 NOTE: not all interface types allow for capacity monitoring. Pseudo
-interfaces such as loopback device or VMWare interfaces don't have
-speed attribute.
+interfaces such as loopback device or VMWare interfaces does not have
+a speed attribute.
 
 Example:
 
- if changed link capacity then alert
+ check network eth0 with interface eth0 
+       if changed link capacity then alert
 
 
 =head2 NETWORK SATURATION TEST
 
 You can check the network link saturation. Monit then computes the link
-utilization based on the current transfer rate vs.  maximum link speed.
+utilization based on the current transfer rate vs. link capacity.
 This test may only be used within a check network service entry in the
 Monit control file.
 
@@ -2218,19 +2220,20 @@ default is EQUAL).
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
-NOTE: as this test depends on the link speed being available, not all
-interface types allow to test the saturation. See the LINK SPEED test
+NOTE: this test depends on the availability of the speed attribute 
+and not all interface types have this attribute. See the LINK SPEED test
 description.
 
 Example:
 
- if saturation > 90% then alert
+ check network eth0 with interface eth0 
+       if saturation > 90% then alert
 
 
 =head2 NETWORK BANDWIDTH TEST
 
-You can check the network link upload and download bandwidth - current
-transfer rate and total data transferred in last 24 hours. This test may
+You can check a network link upload and download bandwidth usage, current
+transfer rate and total data transferred in the last 24 hours. This test may
 only be used within a check network service entry in the Monit control file.
 
 Current upload bandwidth rate test syntax:
@@ -2258,23 +2261,25 @@ I<unit> is a choice of "B","KB","MB","GB" or long alternatives
 "byte", "kilobyte", "megabyte", "gigabyte".
 
 I<time-unit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
-NOTE: Monit keeps total upload/download statistics only for last
-24 hours => the test cannot span more then one day.
+NOTE: Monit maintains a rolling count of total uploaded and downloaded
+bytes for the last 24 hours only. The value of time-unit can therefor not 
+specify a range wider than one day.
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
 Examples:
 
- if upload > 500 kB/s then alert
- if total download > 1 GB in last 2 hours then alert
- if total download > 10 GB in last day then alert
+ check network eth0 with interface eth0 
+       if upload > 500 kB/s then alert
+       if total download > 1 GB in last 2 hours then alert
+       if total download > 10 GB in last day then alert
 
 
 =head2 NETWORK PACKETS TEST
 
 
-You can check the network link upload and download packets count - current
+You can check the network link upload and download packets count, current
 transfer rate and total data transferred in last 24 hours. This test may
 only be used within a check network service entry in the Monit control file.
 
@@ -2300,15 +2305,17 @@ I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 default is EQUAL).
 
 I<time-unit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
-NOTE: Monit keeps total upload/download statistics only for last
-24 hours => the test cannot span more then one day.
+NOTE: Monit keeps total upload/download statistics only for the last
+24 hours. The time-unit value cannot therefor span more than one day.
 
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
 Examples:
-        if upload > 1000 packets/s then alert
-        if total upload > 900000 packets in last hour then alert
+
+ check network eth0 with interface eth0 
+       if upload > 1000 packets/s then alert
+       if total upload > 900000 packets in last hour then alert
 
 
 =head2 NETWORK PING TEST
