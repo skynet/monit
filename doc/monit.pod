@@ -978,7 +978,7 @@ Example:
 
 The I<from:> option is the sender's email address. That is, the email
 address Monit will pretend it is sending alerts from. It does not have
-to be a real email-address only a proper formated address.
+to be a real email-address only a proper formatted address.
 
 The I<reply-to:> option can be used to set the reply-to mail header.
 
@@ -1038,7 +1038,7 @@ defined with a C<set mailserver> statement:
    [with TIMEOUT X SECONDS]
    [using HOSTNAME hostname]
 
-Multiple mailservers can be set by using a comma separated list. If
+Multiple mail servers can be set by using a comma separated list. If
 Monit cannot connect to the first server, it will try the next in
 the list and so on.
 
@@ -1569,7 +1569,7 @@ events before switching the state:
     for 3 cycles
  then alert
 
-The second format is more advanced and allows to tolerate intermitent
+The second format is more advanced and allows to tolerate intermittent
 issues, but still catch excessive problems, where the service is
 flapping between error and success states frequently.
 
@@ -2233,7 +2233,7 @@ You can check the network link upload and download bandwidth - current
 transfer rate and total data transferred in last 24 hours. This test may
 only be used within a check network service entry in the Monit control file.
 
-Crrent upload bandwidth rate test syntax:
+Current upload bandwidth rate test syntax:
 
  IF UPLOAD operator value unit THEN action
 
@@ -2243,11 +2243,11 @@ Current download bandwidth rate test syntax:
 
 Total upload test syntax:
 
- IF TOTAL UPLOAD operator value unit IN LAST number timeunit THEN action
+ IF TOTAL UPLOAD operator value unit IN LAST number time-unit THEN action
 
 Total download test syntax:
 
- IF TOTAL DOWNLOAD operator value unit IN LAST number timeunit THEN action
+ IF TOTAL DOWNLOAD operator value unit IN LAST number time-unit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -2257,7 +2257,7 @@ default is EQUAL).
 I<unit> is a choice of "B","KB","MB","GB" or long alternatives
 "byte", "kilobyte", "megabyte", "gigabyte".
 
-I<timeunit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
+I<time-unit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
 NOTE: Monit keeps total upload/download statistics only for last
 24 hours => the test cannot span more then one day.
 
@@ -2278,7 +2278,7 @@ You can check the network link upload and download packets count - current
 transfer rate and total data transferred in last 24 hours. This test may
 only be used within a check network service entry in the Monit control file.
 
-Crrent upload bandwidth rate test syntax:
+Current upload bandwidth rate test syntax:
 
  IF UPLOAD operator value PACKETS/S THEN action
 
@@ -2288,18 +2288,18 @@ Current download bandwidth rate test syntax:
 
 Total upload test syntax:
 
- IF TOTAL UPLOAD operator value PACKETS IN LAST number timeunit THEN action
+ IF TOTAL UPLOAD operator value PACKETS IN LAST number time-unit THEN action
 
 Total download test syntax:
 
- IF TOTAL DOWNLOAD operator value PACKETS IN LAST number timeunit THEN action
+ IF TOTAL DOWNLOAD operator value PACKETS IN LAST number time-unit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
 "equal", "notequal" in human readable form (if not specified,
 default is EQUAL).
 
-I<timeunit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
+I<time-unit> is a choice of "MINUTE(S)", "HOUR(S)", "DAY".
 NOTE: Monit keeps total upload/download statistics only for last
 24 hours => the test cannot span more then one day.
 
@@ -2674,7 +2674,7 @@ I<limit> is acronym for child status:
 
 I<operator> is one of "<", "=", ">".
 
-I<number> is percentual numeric limit.
+I<number> is percentile numeric limit.
 
 Each of these limits can be compared against a value relative
 to the total number of active Apache child processes.
@@ -2860,7 +2860,7 @@ protocol test can be added:
           host www.sol.no port 80 protocol http
        then alert
 
-This example shows a different way to check a webserver using
+This example shows a different way to check a web-server using
 the send/expect mechanism:
 
  check process apache with pidfile /var/run/httpd.pid
