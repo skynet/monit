@@ -2174,6 +2174,15 @@ Example:
  check network eth0 with interface eth0 
        if failed link then alert
 
+In case a link failed you can add a start and stop program to automatically
+restart the interface which might help. (Substitute with the relevant network
+commands for you system)
+
+ check network eth0 with interface eth0
+       start program = '/sbin/ipup eth0'
+       stop program = '/sbin/ipdown eth0'
+       if failed link then restart
+
 
 =head2 NETWORK LINK CAPACITY TEST
 
