@@ -1680,7 +1680,7 @@ static void print_service_rules_timeout(HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_existence(HttpResponse res, Service_T s) {
-        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM) {
+        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM && s->type != TYPE_NET) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Existence</td><td>");
                 Util_printRule(res->outputbuffer, s->action_NONEXIST, "If doesn't exist");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");

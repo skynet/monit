@@ -1,6 +1,11 @@
-                     CHANGES version 5.11
+                     CHANGES version 5.12
 
            This file summarizes changes made since 5.0
+
+Version 5.12
+
+Fixed: HTTP GUI: Don't show the implicit existence test for network check (not used).
+
 
 Version 5.11
 
