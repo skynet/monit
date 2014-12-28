@@ -61,8 +61,8 @@
 #include <sys/sysctl.h>
 #endif
 
-#ifdef HAVE_SYS_DKSTAT_H
-#include <sys/dkstat.h>
+#ifdef HAVE_SYS_SCHED_H
+#include <sys/sched.h>
 #endif
 
 #include "monit.h"
