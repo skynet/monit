@@ -168,6 +168,7 @@ AC_CHECK_HEADERS([ \
 	sys/pstat.h \
 	sys/queue.h \
 	sys/resource.h \
+	sys/sched.h \
 	sys/statfs.h \
 	sys/statvfs.h \
 	sys/sysinfo.h \
