@@ -3208,7 +3208,7 @@ this man page also receive inspiration from the same authors.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2001-2014 by Tildeslash Ltd. All Rights Reserved.
+Copyright (C) 2001-2015 by Tildeslash Ltd. All Rights Reserved.
 This product is distributed in the hope that it will be useful,
 but WITHOUT any warranty; without even the implied warranty of
 MERCHANTABILITY or FITNESS for a particular purpose.
