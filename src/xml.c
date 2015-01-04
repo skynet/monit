@@ -226,21 +226,21 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                         "</errors>"
                                         "</upload>"
                                         "</link>",
-                                        NetStatistics_getState(S->inf->priv.net.stats),
-                                        NetStatistics_getSpeed(S->inf->priv.net.stats),
-                                        NetStatistics_getDuplex(S->inf->priv.net.stats),
-                                        NetStatistics_getPacketsInPerSecond(S->inf->priv.net.stats),
-                                        NetStatistics_getPacketsInTotal(S->inf->priv.net.stats),
-                                        NetStatistics_getBytesInPerSecond(S->inf->priv.net.stats),
-                                        NetStatistics_getBytesInTotal(S->inf->priv.net.stats),
-                                        NetStatistics_getErrorsInPerSecond(S->inf->priv.net.stats),
-                                        NetStatistics_getErrorsInTotal(S->inf->priv.net.stats),
-                                        NetStatistics_getPacketsOutPerSecond(S->inf->priv.net.stats),
-                                        NetStatistics_getPacketsOutTotal(S->inf->priv.net.stats),
-                                        NetStatistics_getBytesOutPerSecond(S->inf->priv.net.stats),
-                                        NetStatistics_getBytesOutTotal(S->inf->priv.net.stats),
-                                        NetStatistics_getErrorsOutPerSecond(S->inf->priv.net.stats),
-                                        NetStatistics_getErrorsOutTotal(S->inf->priv.net.stats));
+                                        Link_getState(S->inf->priv.net.stats),
+                                        Link_getSpeed(S->inf->priv.net.stats),
+                                        Link_getDuplex(S->inf->priv.net.stats),
+                                        Link_getPacketsInPerSecond(S->inf->priv.net.stats),
+                                        Link_getPacketsInTotal(S->inf->priv.net.stats),
+                                        Link_getBytesInPerSecond(S->inf->priv.net.stats),
+                                        Link_getBytesInTotal(S->inf->priv.net.stats),
+                                        Link_getErrorsInPerSecond(S->inf->priv.net.stats),
+                                        Link_getErrorsInTotal(S->inf->priv.net.stats),
+                                        Link_getPacketsOutPerSecond(S->inf->priv.net.stats),
+                                        Link_getPacketsOutTotal(S->inf->priv.net.stats),
+                                        Link_getBytesOutPerSecond(S->inf->priv.net.stats),
+                                        Link_getBytesOutTotal(S->inf->priv.net.stats),
+                                        Link_getErrorsOutPerSecond(S->inf->priv.net.stats),
+                                        Link_getErrorsOutTotal(S->inf->priv.net.stats));
                         }
                         if (S->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(B,

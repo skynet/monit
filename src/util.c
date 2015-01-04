@@ -1082,17 +1082,17 @@ void Util_printService(Service_T s) {
                 );
         }
 
-        for (NetLinkStatus_T o = s->netlinkstatuslist; o; o = o->next) {
+        for (LinkStatus_T o = s->linkstatuslist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Link status", StringBuffer_toString(Util_printRule(buf, o->action, "if failed")));
         }
 
-        for (NetLinkSpeed_T o = s->netlinkspeedlist; o; o = o->next) {
+        for (LinkSpeed_T o = s->linkspeedlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Link capacity", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }
 
-        for (NetLinkSaturation_T o = s->netlinksaturationlist; o; o = o->next) {
+        for (LinkSaturation_T o = s->linksaturationlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 printf(" %-20s = %s\n", "Link utilization", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit)));
         }
@@ -1716,7 +1716,7 @@ void Util_resetInfo(Service_T s) {
                         break;
                 case TYPE_NET:
                         if (s->inf->priv.net.stats)
-                                NetStatistics_reset(s->inf->priv.net.stats);
+                                Link_reset(s->inf->priv.net.stats);
                         break;
                 default:
                         break;

@@ -132,9 +132,9 @@ static void print_service_rules_gid(HttpResponse, Service_T);
 static void print_service_rules_timestamp(HttpResponse, Service_T);
 static void print_service_rules_filesystem(HttpResponse, Service_T);
 static void print_service_rules_size(HttpResponse, Service_T);
-static void print_service_rules_netlinkstatus(HttpResponse, Service_T);
-static void print_service_rules_netlinkspeed(HttpResponse, Service_T);
-static void print_service_rules_netlinksaturation(HttpResponse, Service_T);
+static void print_service_rules_linkstatus(HttpResponse, Service_T);
+static void print_service_rules_linkspeed(HttpResponse, Service_T);
+static void print_service_rules_linksaturation(HttpResponse, Service_T);
 static void print_service_rules_uploadbytes(HttpResponse, Service_T);
 static void print_service_rules_uploadpackets(HttpResponse, Service_T);
 static void print_service_rules_downloadbytes(HttpResponse, Service_T);
@@ -923,9 +923,9 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_timestamp(res, s);
         print_service_rules_filesystem(res, s);
         print_service_rules_size(res, s);
-        print_service_rules_netlinkstatus(res, s);
-        print_service_rules_netlinkspeed(res, s);
-        print_service_rules_netlinksaturation(res, s);
+        print_service_rules_linkstatus(res, s);
+        print_service_rules_linkspeed(res, s);
+        print_service_rules_linksaturation(res, s);
         print_service_rules_uploadbytes(res, s);
         print_service_rules_uploadpackets(res, s);
         print_service_rules_downloadbytes(res, s);
@@ -1181,8 +1181,8 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s&#47;s</td>", Str_bytesToSize(NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats), buf));
-                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s&#47;s</td>", Str_bytesToSize(NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats), buf));
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s&#47;s</td>", Str_bytesToSize(Link_getBytesOutPerSecond(s->inf->priv.net.stats), buf));
+                        StringBuffer_append(res->outputbuffer, "<td align='right'>%s&#47;s</td>", Str_bytesToSize(Link_getBytesInPerSecond(s->inf->priv.net.stats), buf));
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
@@ -1806,8 +1806,8 @@ static void print_service_rules_size(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_rules_netlinkstatus(HttpResponse res, Service_T s) {
-        for (NetLinkStatus_T l = s->netlinkstatuslist; l; l = l->next) {
+static void print_service_rules_linkstatus(HttpResponse res, Service_T s) {
+        for (LinkStatus_T l = s->linkstatuslist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link status</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If failed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -1815,8 +1815,8 @@ static void print_service_rules_netlinkstatus(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
-        for (NetLinkSpeed_T l = s->netlinkspeedlist; l; l = l->next) {
+static void print_service_rules_linkspeed(HttpResponse res, Service_T s) {
+        for (LinkSpeed_T l = s->linkspeedlist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link capacity</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -1824,8 +1824,8 @@ static void print_service_rules_netlinkspeed(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_rules_netlinksaturation(HttpResponse res, Service_T s) {
-        for (NetLinkSaturation_T l = s->netlinksaturationlist; l; l = l->next) {
+static void print_service_rules_linksaturation(HttpResponse res, Service_T s) {
+        for (LinkSaturation_T l = s->linksaturationlist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Link saturation</td><td>");
                 Util_printRule(res->outputbuffer, l->action, "If %s %.1f%%", operatornames[l->operator], l->limit);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -2163,28 +2163,28 @@ static void print_service_status_net(HttpResponse res, Service_T s) {
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td>-</td></tr>");
                 } else {
                         char buf[STRLEN];
-                        long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
+                        long long speed = Link_getSpeed(s->inf->priv.net.stats);
                         if (speed > 0)
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Link capacity</td><td class='%s'>%.0lf Mb&#47;s %s-duplex</td></tr>",
                                         s->error & Event_Speed ? "red-text" : "",
-                                        (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                                        (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
-                        long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                        long long ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
                                 (s->error & Event_ByteIn || s->error & Event_PacketIn) ? "red-text" : "",
                                 Str_bytesToSize(ibytes, buf),
-                                NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats),
-                                NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
+                                Link_getPacketsInPerSecond(s->inf->priv.net.stats),
+                                Link_getErrorsInPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && ibytes > 0)
                                 StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
 
-                        long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                        long long obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
                         StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
                                 (s->error & Event_ByteOut || s->error & Event_PacketOut) ? "red-text" : "",
                                 Str_bytesToSize(obytes, buf),
-                                NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats),
-                                NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
+                                Link_getPacketsOutPerSecond(s->inf->priv.net.stats),
+                                Link_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && obytes > 0)
                                 StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -2582,28 +2582,28 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                 }
                         }
                         if (s->type == TYPE_NET) {
-                                long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
+                                long long speed = Link_getSpeed(s->inf->priv.net.stats);
                                 if (speed > 0)
                                         StringBuffer_append(res->outputbuffer,
                                                 "  %-33s %.0lf Mb/s %s-duplex\n",
-                                                "link speed", (double)speed / 1000000., NetStatistics_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                                                "link speed", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
 
-                                long long ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                                long long ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
                                 StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
                                         "download",
                                         Str_bytesToSize(ibytes, buf),
-                                        NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats),
-                                        NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats));
+                                        Link_getPacketsInPerSecond(s->inf->priv.net.stats),
+                                        Link_getErrorsInPerSecond(s->inf->priv.net.stats));
                                 if (speed > 0 && ibytes > 0)
                                         StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");
 
-                                long long obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                                long long obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
                                 StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
                                         "upload",
                                         Str_bytesToSize(obytes, buf),
-                                        NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats),
-                                        NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats));
+                                        Link_getPacketsOutPerSecond(s->inf->priv.net.stats),
+                                        Link_getErrorsOutPerSecond(s->inf->priv.net.stats));
                                 if (speed > 0 && obytes > 0)
                                         StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
                                 StringBuffer_append(res->outputbuffer, "\n");

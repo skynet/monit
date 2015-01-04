@@ -55,9 +55,9 @@ static void _gc_action(Action_T *);
 static void _gc_eventaction(EventAction_T *);
 static void _gcpdl(Dependant_T *);
 static void _gcso(Size_T *);
-static void _gcnetlinkstatus(NetLinkStatus_T *);
-static void _gcnetlinkspeed(NetLinkSpeed_T *);
-static void _gcnetlinksaturation(NetLinkSaturation_T *);
+static void _gclinkstatus(LinkStatus_T *);
+static void _gclinkspeed(LinkSpeed_T *);
+static void _gclinksaturation(LinkSaturation_T *);
 static void _gcbandwidth(Bandwidth_T *);
 static void _gcmatch(Match_T *);
 static void _gcchecksum(Checksum_T *);
@@ -226,14 +226,14 @@ static void _gc_service(Service_T *s) {
         if((*s)->sizelist)
                 _gcso(&(*s)->sizelist);
 
-        if((*s)->netlinkstatuslist)
-                _gcnetlinkstatus(&(*s)->netlinkstatuslist);
+        if((*s)->linkstatuslist)
+                _gclinkstatus(&(*s)->linkstatuslist);
 
-        if((*s)->netlinkspeedlist)
-                _gcnetlinkspeed(&(*s)->netlinkspeedlist);
+        if((*s)->linkspeedlist)
+                _gclinkspeed(&(*s)->linkspeedlist);
 
-        if((*s)->netlinksaturationlist)
-                _gcnetlinksaturation(&(*s)->netlinksaturationlist);
+        if((*s)->linksaturationlist)
+                _gclinksaturation(&(*s)->linksaturationlist);
 
         if((*s)->uploadbyteslist)
                 _gcbandwidth(&(*s)->uploadbyteslist);
@@ -321,7 +321,7 @@ static void _gc_service(Service_T *s) {
 
         if((*s)->inf) {
                 if ((*s)->type == TYPE_NET)
-                        NetStatistics_free(&((*s)->inf->priv.net.stats));
+                        Link_free(&((*s)->inf->priv.net.stats));
                 FREE((*s)->inf);
         }
 
@@ -548,33 +548,33 @@ static void _gcso(Size_T *s) {
 
 }
 
-static void _gcnetlinkstatus(NetLinkStatus_T *l) {
+static void _gclinkstatus(LinkStatus_T *l) {
         ASSERT(l);
 
         if((*l)->next)
-                _gcnetlinkstatus(&(*l)->next);
+                _gclinkstatus(&(*l)->next);
         if((*l)->action)
                 _gc_eventaction(&(*l)->action);
         FREE(*l);
 }
 
 
-static void _gcnetlinkspeed(NetLinkSpeed_T *l) {
+static void _gclinkspeed(LinkSpeed_T *l) {
         ASSERT(l);
 
         if((*l)->next)
-                _gcnetlinkspeed(&(*l)->next);
+                _gclinkspeed(&(*l)->next);
         if((*l)->action)
                 _gc_eventaction(&(*l)->action);
         FREE(*l);
 }
 
 
-static void _gcnetlinksaturation(NetLinkSaturation_T *l) {
+static void _gclinksaturation(LinkSaturation_T *l) {
         ASSERT(l);
 
         if((*l)->next)
-                _gcnetlinksaturation(&(*l)->next);
+                _gclinksaturation(&(*l)->next);
         if((*l)->action)
                 _gc_eventaction(&(*l)->action);
         FREE(*l);

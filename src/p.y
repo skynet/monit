@@ -168,9 +168,9 @@
   static struct myperm permset;
   static struct mysize sizeset;
   static struct myuptime uptimeset;
-  static struct mynetlinkstatus netlinkstatusset;
-  static struct mynetlinkspeed netlinkspeedset;
-  static struct mynetlinksaturation netlinksaturationset;
+  static struct mylinkstatus linkstatusset;
+  static struct mylinkspeed linkspeedset;
+  static struct mylinksaturation linksaturationset;
   static struct mybandwidth bandwidthset;
   static struct mymatch matchset;
   static struct myicmp icmpset;
@@ -208,9 +208,9 @@
   static void  adduptime(Uptime_T);
   static void  addpid(Pid_T);
   static void  addppid(Pid_T);
-  static void  addnetlinkstatus(Service_T, NetLinkStatus_T);
-  static void  addnetlinkspeed(Service_T, NetLinkSpeed_T);
-  static void  addnetlinksaturation(Service_T, NetLinkSaturation_T);
+  static void  addlinkstatus(Service_T, LinkStatus_T);
+  static void  addlinkspeed(Service_T, LinkSpeed_T);
+  static void  addlinksaturation(Service_T, LinkSaturation_T);
   static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
   static void  addfilesystem(Filesystem_T);
   static void  addicmp(Icmp_T);
@@ -251,9 +251,9 @@
   static void  reset_uptimeset();
   static void  reset_pidset();
   static void  reset_ppidset();
-  static void  reset_netlinkstatusset();
-  static void  reset_netlinkspeedset();
-  static void  reset_netlinksaturationset();
+  static void  reset_linkstatusset();
+  static void  reset_linkspeedset();
+  static void  reset_linksaturationset();
   static void  reset_bandwidthset();
   static void  reset_checksumset();
   static void  reset_permset();
@@ -470,9 +470,9 @@ optnetlist      : /* EMPTY */
 optnet          : start
                 | stop
                 | restart
-                | netlinkstatus
-                | netlinkspeed
-                | netlinksaturation
+                | linkstatus
+                | linkspeed
+                | linksaturation
                 | upload
                 | download
                 | actionrate
@@ -904,16 +904,16 @@ checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                 ;
 
 checknet        : CHECKNET SERVICENAME ADDRESS STRING {
-                    if (NetStatistics_isGetByAddressSupported()) {
+                    if (Link_isGetByAddressSupported()) {
                         createservice(TYPE_NET, $<string>2, $4, check_net);
-                        current->inf->priv.net.stats = NetStatistics_createForAddress($4);
+                        current->inf->priv.net.stats = Link_createForAddress($4);
                     } else {
                         yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
                     }
                   }
                 | CHECKNET SERVICENAME INTERFACE STRING {
                     createservice(TYPE_NET, $<string>2, $4, check_net);
-                    current->inf->priv.net.stats = NetStatistics_createForInterface($4);
+                    current->inf->priv.net.stats = Link_createForInterface($4);
                   }
                 ;
 
@@ -1974,22 +1974,22 @@ gid             : IF FAILED GID STRING rate1 THEN action1 recovery {
                   }
                 ;
 
-netlinkstatus   : IF FAILED LINK rate1 THEN action1 recovery {
-                    addeventaction(&(netlinkstatusset).action, $<number>6, $<number>7);
-                    addnetlinkstatus(current, &netlinkstatusset);
+linkstatus   : IF FAILED LINK rate1 THEN action1 recovery {
+                    addeventaction(&(linkstatusset).action, $<number>6, $<number>7);
+                    addlinkstatus(current, &linkstatusset);
                   }
                 ;
 
-netlinkspeed    : IF CHANGED LINK rate1 THEN action1 recovery {
-                    addeventaction(&(netlinkspeedset).action, $<number>6, $<number>7);
-                    addnetlinkspeed(current, &netlinkspeedset);
+linkspeed    : IF CHANGED LINK rate1 THEN action1 recovery {
+                    addeventaction(&(linkspeedset).action, $<number>6, $<number>7);
+                    addlinkspeed(current, &linkspeedset);
                   }
 
-netlinksaturation : IF SATURATION operator NUMBER PERCENT rate1 THEN action1 recovery {
-                    netlinksaturationset.operator = $<number>3;
-                    netlinksaturationset.limit = (unsigned long long)$4;
-                    addeventaction(&(netlinksaturationset).action, $<number>8, $<number>9);
-                    addnetlinksaturation(current, &netlinksaturationset);
+linksaturation : IF SATURATION operator NUMBER PERCENT rate1 THEN action1 recovery {
+                    linksaturationset.operator = $<number>3;
+                    linksaturationset.limit = (unsigned long long)$4;
+                    addeventaction(&(linksaturationset).action, $<number>8, $<number>9);
+                    addlinksaturation(current, &linksaturationset);
                   }
                 ;
 
@@ -2295,9 +2295,9 @@ static void preparse() {
   reset_portset();
   reset_permset();
   reset_icmpset();
-  reset_netlinkstatusset();
-  reset_netlinkspeedset();
-  reset_netlinksaturationset();
+  reset_linkstatusset();
+  reset_linkspeedset();
+  reset_linksaturationset();
   reset_bandwidthset();
   reset_rateset();
   reset_filesystemset();
@@ -2353,9 +2353,9 @@ static void postparse() {
                         if (s->program->args->has_gid) {
                                 Command_setGid(s->program->C, s->program->args->gid);
                         }
-                } else if (s->type == TYPE_NET && ! s->netlinkstatuslist) {
-                        addeventaction(&(netlinkstatusset).action, ACTION_ALERT, ACTION_ALERT);
-                        addnetlinkstatus(s, &netlinkstatusset);
+                } else if (s->type == TYPE_NET && ! s->linkstatuslist) {
+                        addeventaction(&(linkstatusset).action, ACTION_ALERT, ACTION_ALERT);
+                        addlinkstatus(s, &linkstatusset);
                 }
         }
 
@@ -2834,47 +2834,47 @@ static void addperm(Perm_T ps) {
 }
 
 
-static void addnetlinkstatus(Service_T s, NetLinkStatus_T L) {
+static void addlinkstatus(Service_T s, LinkStatus_T L) {
   ASSERT(L);
 
-  NetLinkStatus_T l;
+  LinkStatus_T l;
   NEW(l);
   l->action = L->action;
 
-  l->next = s->netlinkstatuslist;
-  s->netlinkstatuslist = l;
+  l->next = s->linkstatuslist;
+  s->linkstatuslist = l;
 
-  reset_netlinkstatusset();
+  reset_linkstatusset();
 }
 
 
-static void addnetlinkspeed(Service_T s, NetLinkSpeed_T L) {
+static void addlinkspeed(Service_T s, LinkSpeed_T L) {
   ASSERT(L);
 
-  NetLinkSpeed_T l;
+  LinkSpeed_T l;
   NEW(l);
   l->action = L->action;
 
-  l->next = s->netlinkspeedlist;
-  s->netlinkspeedlist = l;
+  l->next = s->linkspeedlist;
+  s->linkspeedlist = l;
 
-  reset_netlinkspeedset();
+  reset_linkspeedset();
 }
 
 
-static void addnetlinksaturation(Service_T s, NetLinkSaturation_T L) {
+static void addlinksaturation(Service_T s, LinkSaturation_T L) {
   ASSERT(L);
 
-  NetLinkSaturation_T l;
+  LinkSaturation_T l;
   NEW(l);
   l->operator = L->operator;
   l->limit = L->limit;
   l->action = L->action;
 
-  l->next = s->netlinksaturationlist;
-  s->netlinksaturationlist = l;
+  l->next = s->linksaturationlist;
+  s->linksaturationlist = l;
 
-  reset_netlinksaturationset();
+  reset_linksaturationset();
 }
 
 
@@ -3776,20 +3776,20 @@ static void reset_uptimeset() {
 }
 
 
-static void reset_netlinkstatusset() {
-  netlinkstatusset.action = NULL;
+static void reset_linkstatusset() {
+  linkstatusset.action = NULL;
 }
 
 
-static void reset_netlinkspeedset() {
-  netlinkspeedset.action = NULL;
+static void reset_linkspeedset() {
+  linkspeedset.action = NULL;
 }
 
 
-static void reset_netlinksaturationset() {
-  netlinksaturationset.limit = 0.;
-  netlinksaturationset.operator = Operator_Equal;
-  netlinksaturationset.action = NULL;
+static void reset_linksaturationset() {
+  linksaturationset.limit = 0.;
+  linksaturationset.operator = Operator_Equal;
+  linksaturationset.action = NULL;
 }
 
 

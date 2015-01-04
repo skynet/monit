@@ -85,7 +85,7 @@
 #include "system/Process.h"
 #include "util/Str.h"
 #include "util/StringBuffer.h"
-#include "system/NetStatistics.h"
+#include "system/Link.h"
 
 
 #define MONITRC            "monitrc"
@@ -646,32 +646,32 @@ typedef struct myuptime {
 } *Uptime_T;
 
 
-typedef struct mynetlinkstatus {
+typedef struct mylinkstatus {
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
-        struct mynetlinkstatus *next;                      /**< next link in chain */
-} *NetLinkStatus_T;
+        struct mylinkstatus *next;                      /**< next link in chain */
+} *LinkStatus_T;
 
 
-typedef struct mynetlinkspeed {
+typedef struct mylinkspeed {
         int duplex;                                        /**< Last duplex status */
         long long speed;                                     /**< Last speed [bps] */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
-        struct mynetlinkspeed *next;                       /**< next link in chain */
-} *NetLinkSpeed_T;
+        struct mylinkspeed *next;                       /**< next link in chain */
+} *LinkSpeed_T;
 
 
-typedef struct mynetlinksaturation {
+typedef struct mylinksaturation {
         Operator_Type operator;                           /**< Comparison operator */
         float limit;                                     /**< Saturation limit [%] */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
-        struct mynetlinksaturation *next;                  /**< next link in chain */
-} *NetLinkSaturation_T;
+        struct mylinksaturation *next;                  /**< next link in chain */
+} *LinkSaturation_T;
 
 
 typedef struct mybandwidth {
@@ -808,7 +808,7 @@ typedef struct myinfo {
                 } process;
 
                 struct {
-                        NetStatistics_T stats;
+                        Link_T stats;
                 } net;
         } priv;
 } *Info_T;
@@ -855,9 +855,9 @@ typedef struct myservice {
         Uid_T       uid;                                            /**< Uid check */
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
-        NetLinkStatus_T netlinkstatuslist;           /**< Network link status list */
-        NetLinkSpeed_T netlinkspeedlist;              /**< Network link speed list */
-        NetLinkSaturation_T netlinksaturationlist;  /**< Net. link saturation list */
+        LinkStatus_T linkstatuslist;           /**< Network link status list */
+        LinkSpeed_T linkspeedlist;              /**< Network link speed list */
+        LinkSaturation_T linksaturationlist;  /**< Net. link saturation list */
         Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
         Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
         Bandwidth_T downloadbyteslist;              /**< Download bytes check list */

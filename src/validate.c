@@ -96,7 +96,6 @@
 #include "protocol.h"
 
 // libmonit
-#include "system/NetStatistics.h"
 #include "system/Time.h"
 #include "io/File.h"
 #include "io/InputStream.h"
@@ -597,10 +596,8 @@ static void check_timestamp(Service_T s) {
  */
 static void check_size(Service_T s) {
         ASSERT(s && s->sizelist);
-        
         char buf[10];
         for (Size_T sl = s->sizelist; sl; sl = sl->next) {
-                
                 /* if we are testing for changes only, the value is variable */
                 if (sl->test_changes) {
                         if (!sl->initialized) {
@@ -619,7 +616,6 @@ static void check_size(Service_T s) {
                         }
                         break;
                 }
-                
                 /* we are testing constant value for failed or succeeded state */
                 if (Util_evalQExpression(sl->operator, s->inf->priv.file.st_size, sl->size))
                         Event_post(s, Event_Size, STATE_FAILED, sl->action, "size test failed for %s -- current size is %s", s->path, Str_bytesToSize(s->inf->priv.file.st_size, buf));
@@ -1355,49 +1351,49 @@ int check_net(Service_T s) {
         int havedata = TRUE;
         TRY
         {
-                NetStatistics_update(s->inf->priv.net.stats);
+                Link_update(s->inf->priv.net.stats);
         }
         ELSE
         {
                 havedata = FALSE;
-                for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next)
+                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "link data gathering failed -- %s", Exception_frame.message);
         }
         END_TRY;
         if (! havedata)
                 return FALSE; // Terminate test if no data are available
-        for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
+        for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
                 Event_post(s, Event_Size, STATE_SUCCEEDED, link->action, "link data gathering succeeded");
         }
         // State
-        if (! NetStatistics_getState(s->inf->priv.net.stats)) {
-                for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next)
+        if (! Link_getState(s->inf->priv.net.stats)) {
+                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
                 return FALSE; // Terminate test if the link is down
         } else {
-                for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
+                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
                 }
         }
         // Link errors
-        long long oerrors = NetStatistics_getErrorsOutPerSecond(s->inf->priv.net.stats);
-        for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
+        long long oerrors = Link_getErrorsOutPerSecond(s->inf->priv.net.stats);
+        for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
                 if (oerrors)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld upload errors detected", oerrors);
                 else
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "upload errors check succeeded");
         }
-        long long ierrors = NetStatistics_getErrorsInPerSecond(s->inf->priv.net.stats);
-        for (NetLinkStatus_T link = s->netlinkstatuslist; link; link = link->next) {
+        long long ierrors = Link_getErrorsInPerSecond(s->inf->priv.net.stats);
+        for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
                 if (ierrors)
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "%lld download errors detected", ierrors);
                 else
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "download errors check succeeded");
         }
         // Link speed
-        int duplex = NetStatistics_getDuplex(s->inf->priv.net.stats);
-        long long speed = NetStatistics_getSpeed(s->inf->priv.net.stats);
-        for (NetLinkSpeed_T link = s->netlinkspeedlist; link; link = link->next) {
+        int duplex = Link_getDuplex(s->inf->priv.net.stats);
+        long long speed = Link_getSpeed(s->inf->priv.net.stats);
+        for (LinkSpeed_T link = s->linkspeedlist; link; link = link->next) {
                 if (speed && link->speed) {
                         if (duplex != link->duplex)
                                 Event_post(s, Event_Speed, STATE_CHANGED, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
@@ -1412,10 +1408,10 @@ int check_net(Service_T s) {
                 link->speed = speed;
         }
         // Link saturation
-        double osaturation = NetStatistics_getSaturationOutPerSecond(s->inf->priv.net.stats);
-        double isaturation = NetStatistics_getSaturationInPerSecond(s->inf->priv.net.stats);
+        double osaturation = Link_getSaturationOutPerSecond(s->inf->priv.net.stats);
+        double isaturation = Link_getSaturationInPerSecond(s->inf->priv.net.stats);
         if (osaturation >= 0. && isaturation >= 0.) {
-                for (NetLinkSaturation_T link = s->netlinksaturationlist; link; link = link->next) {
+                for (LinkSaturation_T link = s->linksaturationlist; link; link = link->next) {
                         if (duplex) {
                                 if (Util_evalDoubleQExpression(link->operator, osaturation, link->limit))
                                         Event_post(s, Event_Saturation, STATE_FAILED, link->action, "link upload saturation of %.1f%% matches limit [saturation %s %.1f%%]", osaturation, operatorshortnames[link->operator], link->limit);
@@ -1440,13 +1436,13 @@ int check_net(Service_T s) {
                 long long obytes;
                 switch (upload->range) {
                         case TIME_MINUTE:
-                                obytes = NetStatistics_getBytesOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
+                                obytes = Link_getBytesOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         case TIME_HOUR:
-                                obytes = NetStatistics_getBytesOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                obytes = Link_getBytesOutPerHour(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         default:
-                                obytes = NetStatistics_getBytesOutPerSecond(s->inf->priv.net.stats);
+                                obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, obytes, upload->limit))
@@ -1458,13 +1454,13 @@ int check_net(Service_T s) {
                 long long opackets;
                 switch (upload->range) {
                         case TIME_MINUTE:
-                                opackets = NetStatistics_getPacketsOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
+                                opackets = Link_getPacketsOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         case TIME_HOUR:
-                                opackets = NetStatistics_getPacketsOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                opackets = Link_getPacketsOutPerHour(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         default:
-                                opackets = NetStatistics_getPacketsOutPerSecond(s->inf->priv.net.stats);
+                                opackets = Link_getPacketsOutPerSecond(s->inf->priv.net.stats);
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, opackets, upload->limit))
@@ -1477,13 +1473,13 @@ int check_net(Service_T s) {
                 long long ibytes;
                 switch (download->range) {
                         case TIME_MINUTE:
-                                ibytes = NetStatistics_getBytesInPerMinute(s->inf->priv.net.stats, download->rangecount);
+                                ibytes = Link_getBytesInPerMinute(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         case TIME_HOUR:
-                                ibytes = NetStatistics_getBytesInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                ibytes = Link_getBytesInPerHour(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         default:
-                                ibytes = NetStatistics_getBytesInPerSecond(s->inf->priv.net.stats);
+                                ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ibytes, download->limit))
@@ -1495,13 +1491,13 @@ int check_net(Service_T s) {
                 long long ipackets;
                 switch (download->range) {
                         case TIME_MINUTE:
-                                ipackets = NetStatistics_getPacketsInPerMinute(s->inf->priv.net.stats, download->rangecount);
+                                ipackets = Link_getPacketsInPerMinute(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         case TIME_HOUR:
-                                ipackets = NetStatistics_getPacketsInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                ipackets = Link_getPacketsInPerHour(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         default:
-                                ipackets = NetStatistics_getPacketsInPerSecond(s->inf->priv.net.stats);
+                                ipackets = Link_getPacketsInPerSecond(s->inf->priv.net.stats);
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ipackets, download->limit))
