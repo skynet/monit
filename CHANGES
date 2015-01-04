@@ -4,6 +4,8 @@
 
 Version 5.12
 
+Fixed: Support monitoring of bonded network interfaces.
+
 Fixed: HTTP GUI: Don't show the implicit existence test for network check (not used).
 
 
