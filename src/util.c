@@ -971,9 +971,10 @@ void Util_printService(Service_T s) {
                 printf(" timeout %d second(s)", s->restart->timeout);
                 printf("\n");
         }
-        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM && s->type != TYPE_NET) {
+
+        for (Nonexist_T o = s->nonexistlist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Existence", StringBuffer_toString(Util_printRule(buf, s->action_NONEXIST, "if does not exist")));
+                printf(" %-20s = %s\n", "Existence", StringBuffer_toString(Util_printRule(buf, o->action, "if does not exist")));
         }
 
         for (Dependant_T o = s->dependantlist; o; o = o->next)
@@ -990,9 +991,9 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "PPid", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }
 
-        if (s->type == TYPE_FILESYSTEM) {
+        for (Fsflag_T o = s->fsflaglist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Filesystem flags", StringBuffer_toString(Util_printRule(buf, s->action_FSFLAG, "if changed")));
+                printf(" %-20s = %s\n", "Filesystem flags", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }
 
         if (s->type == TYPE_PROGRAM) {
@@ -1846,7 +1847,8 @@ StringBuffer_T Util_printAction(Action_T A, StringBuffer_T buf) {
                         StringBuffer_append(buf, " as uid %d", C->uid);
                 if (C->has_gid)
                         StringBuffer_append(buf, " as gid %d", C->gid);
-                StringBuffer_append(buf, " timeout %d cycle(s)", C->timeout);
+                if (C->timeout)
+                        StringBuffer_append(buf, " timeout %d cycle(s)", C->timeout);
         }
         return buf;
 }

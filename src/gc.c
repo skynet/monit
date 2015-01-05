@@ -67,6 +67,8 @@ static void _gcuid(Uid_T *);
 static void _gcgid(Gid_T *);
 static void _gcpid(Pid_T *);
 static void _gcppid(Pid_T *);
+static void _gcfsflag(Fsflag_T *);
+static void _gcnonexist(Nonexist_T *);
 static void _gcgrc(Generic_T *);
 static void _gcath(Auth_T *);
 static void _gc_mmonit(Mmonit_T *);
@@ -280,6 +282,12 @@ static void _gc_service(Service_T *s) {
         if((*s)->ppidlist)
                 _gcppid(&(*s)->ppidlist);
 
+        if((*s)->fsflaglist)
+                _gcfsflag(&(*s)->fsflaglist);
+
+        if((*s)->nonexistlist)
+                _gcnonexist(&(*s)->nonexistlist);
+
         if((*s)->dependantlist)
                 _gcpdl(&(*s)->dependantlist);
 
@@ -297,12 +305,6 @@ static void _gc_service(Service_T *s) {
 
         if((*s)->action_INVALID)
                 _gc_eventaction(&(*s)->action_INVALID);
-
-        if((*s)->action_NONEXIST)
-                _gc_eventaction(&(*s)->action_NONEXIST);
-
-        if((*s)->action_FSFLAG)
-                _gc_eventaction(&(*s)->action_FSFLAG);
 
         if((*s)->action_MONIT_START)
                 _gc_eventaction(&(*s)->action_MONIT_START);
@@ -676,6 +678,8 @@ static void _gcgid(Gid_T *s) {
 
 static void _gcpid(Pid_T *s) {
         ASSERT(s);
+        if((*s)->next)
+                _gcpid(&(*s)->next);
         if((*s)->action)
                 _gc_eventaction(&(*s)->action);
         FREE(*s);
@@ -684,6 +688,28 @@ static void _gcpid(Pid_T *s) {
 
 static void _gcppid(Pid_T *s) {
         ASSERT(s);
+        if((*s)->next)
+                _gcppid(&(*s)->next);
+        if((*s)->action)
+                _gc_eventaction(&(*s)->action);
+        FREE(*s);
+}
+
+
+static void _gcfsflag(Fsflag_T *s) {
+        ASSERT(s);
+        if((*s)->next)
+                _gcfsflag(&(*s)->next);
+        if((*s)->action)
+                _gc_eventaction(&(*s)->action);
+        FREE(*s);
+}
+
+
+static void _gcnonexist(Nonexist_T *s) {
+        ASSERT(s);
+        if((*s)->next)
+                _gcnonexist(&(*s)->next);
         if((*s)->action)
                 _gc_eventaction(&(*s)->action);
         FREE(*s);

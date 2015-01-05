@@ -130,6 +130,7 @@ static void print_service_rules_uid(HttpResponse, Service_T);
 static void print_service_rules_euid(HttpResponse, Service_T);
 static void print_service_rules_gid(HttpResponse, Service_T);
 static void print_service_rules_timestamp(HttpResponse, Service_T);
+static void print_service_rules_fsflags(HttpResponse, Service_T);
 static void print_service_rules_filesystem(HttpResponse, Service_T);
 static void print_service_rules_size(HttpResponse, Service_T);
 static void print_service_rules_linkstatus(HttpResponse, Service_T);
@@ -921,6 +922,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_euid(res, s);
         print_service_rules_gid(res, s);
         print_service_rules_timestamp(res, s);
+        print_service_rules_fsflags(res, s);
         print_service_rules_filesystem(res, s);
         print_service_rules_size(res, s);
         print_service_rules_linkstatus(res, s);
@@ -1680,9 +1682,9 @@ static void print_service_rules_timeout(HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_existence(HttpResponse res, Service_T s) {
-        if (s->type != TYPE_SYSTEM && s->type != TYPE_PROGRAM && s->type != TYPE_NET) {
+        for (Nonexist_T l = s->nonexistlist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Existence</td><td>");
-                Util_printRule(res->outputbuffer, s->action_NONEXIST, "If doesn't exist");
+                Util_printRule(res->outputbuffer, l->action, "If doesn't exist");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1768,12 +1770,16 @@ static void print_service_rules_timestamp(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
-        if (s->type == TYPE_FILESYSTEM) {
+static void print_service_rules_fsflags(HttpResponse res, Service_T s) {
+        for (Fsflag_T l = s->fsflaglist; l; l = l->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Filesystem flags</td><td>");
-                Util_printRule(res->outputbuffer, s->action_FSFLAG, "If changed");
+                Util_printRule(res->outputbuffer, l->action, "If changed");
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
+}
+
+
+static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
         for (Filesystem_T dl = s->filesystemlist; dl; dl = dl->next) {
                 if (dl->resource == RESOURCE_ID_INODE) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Inodes usage limit</td><td>");

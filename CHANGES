@@ -4,7 +4,18 @@
 
 Version 5.12
 
+New: Support for multiple existence tests (available in the process, file, directory
+and fifo check context):
+    if does not exist then alert
+    if does not exist 3 times in 5 cycles then stop
+
+New: Support for multiple fsflag tests (available in the filesystem check context):
+    if changed fsflags then alert
+    if changed fsflags for 10 cycles then exec "/usr/bin/myscript.sh"
+
 Fixed: Support monitoring of bonded network interfaces.
+
+Fixed: Minor memory leak on monit reload if multiple pid/ppid tests were defined.
 
 Fixed: HTTP GUI: Don't show the implicit existence test for network check (not used).
 

@@ -437,6 +437,15 @@ based on the context. To turn off logging, simply do not set the
 logfile in the control file (and of course, do not use the -l
 switch)
 
+The format for logfile is:
+
+    [date] priority : message
+
+for example:
+
+    [CET Jan  5 18:49:29] info : 'mymachine' Monit started
+
+
 
 =head1 DAEMON MODE
 
@@ -1593,9 +1602,8 @@ Note: the maximum value for cycles is 64.
 
 =head2 EXISTENCE TESTING
 
-Monit's default action when a service does not exist (for example a
-process is not running, a file does not exist, etc.) is to perform
-the restart action.
+This test is always active for the process, file, directory and fifo
+checks and is if not defined, it defaults to a restart action.
 
 You can override the default action with the following statement:
 

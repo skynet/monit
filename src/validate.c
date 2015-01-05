@@ -784,8 +784,9 @@ static void check_filesystem_flags(Service_T s) {
         if (s->inf->priv.filesystem._flags == -1)
                 return;
         
-        if (s->inf->priv.filesystem._flags != s->inf->priv.filesystem.flags)
-                Event_post(s, Event_Fsflag, STATE_CHANGED, s->action_FSFLAG, "filesytem flags changed to %#x", s->inf->priv.filesystem.flags);
+        for (Fsflag_T l = s->fsflaglist; l; l = l->next)
+                if (s->inf->priv.filesystem._flags != s->inf->priv.filesystem.flags)
+                        Event_post(s, Event_Fsflag, STATE_CHANGED, l->action, "filesytem flags changed to %#x", s->inf->priv.filesystem.flags);
 }
 
 /**
@@ -993,10 +994,12 @@ int check_process(Service_T s) {
         ASSERT(s);
         /* Test for running process */
         if (!(pid = Util_isProcessRunning(s, FALSE))) {
-                Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "process is not running");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_FAILED, l->action, "process is not running");
                 return FALSE;
         } else {
-                Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "process is running with pid %d", (int)pid);
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "process is running with pid %d", (int)pid);
         }
         /* Reset the exec and timeout errors if active ... the process is running (most probably after manual intervention) */
         if (IS_EVENT_SET(s->error, Event_Exec))
@@ -1074,7 +1077,8 @@ int check_file(Service_T s) {
         ASSERT(s);
 
         if (stat(s->path, &stat_buf) != 0) {
-                Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "file doesn't exist");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_FAILED, l->action, "file doesn't exist");
                 return FALSE;
         } else {
                 s->inf->st_mode = stat_buf.st_mode;
@@ -1085,7 +1089,8 @@ int check_file(Service_T s) {
                 s->inf->st_gid            = stat_buf.st_gid;
                 s->inf->priv.file.st_size = stat_buf.st_size;
                 s->inf->timestamp         = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
-                Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "file exists");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "file exists");
         }
 
         if (!S_ISREG(s->inf->st_mode) && !S_ISSOCK(s->inf->st_mode)) {
@@ -1132,14 +1137,16 @@ int check_directory(Service_T s) {
         ASSERT(s);
 
         if (stat(s->path, &stat_buf) != 0) {
-                Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "directory doesn't exist");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_FAILED, l->action, "directory doesn't exist");
                 return FALSE;
         } else {
                 s->inf->st_mode   = stat_buf.st_mode;
                 s->inf->st_uid    = stat_buf.st_uid;
                 s->inf->st_gid    = stat_buf.st_gid;
                 s->inf->timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
-                Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "directory exists");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "directory exists");
         }
 
         if (!S_ISDIR(s->inf->st_mode)) {
@@ -1177,14 +1184,16 @@ int check_fifo(Service_T s) {
         ASSERT(s);
 
         if (stat(s->path, &stat_buf) != 0) {
-                Event_post(s, Event_Nonexist, STATE_FAILED, s->action_NONEXIST, "fifo doesn't exist");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_FAILED, l->action, "fifo doesn't exist");
                 return FALSE;
         } else {
                 s->inf->st_mode   = stat_buf.st_mode;
                 s->inf->st_uid    = stat_buf.st_uid;
                 s->inf->st_gid    = stat_buf.st_gid;
                 s->inf->timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
-                Event_post(s, Event_Nonexist, STATE_SUCCEEDED, s->action_NONEXIST, "fifo exists");
+                for (Nonexist_T l = s->nonexistlist; l; l = l->next)
+                        Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "fifo exists");
         }
 
         if (!S_ISFIFO(s->inf->st_mode)) {

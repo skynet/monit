@@ -164,6 +164,8 @@
   static struct mygid gidset;
   static struct mypid pidset;
   static struct mypid ppidset;
+  static struct myfsflag fsflagset;
+  static struct mynonexist nonexistset;
   static struct mystatus statusset;
   static struct myperm permset;
   static struct mysize sizeset;
@@ -208,6 +210,8 @@
   static void  adduptime(Uptime_T);
   static void  addpid(Pid_T);
   static void  addppid(Pid_T);
+  static void  addfsflag(Fsflag_T);
+  static void  addnonexist(Nonexist_T);
   static void  addlinkstatus(Service_T, LinkStatus_T);
   static void  addlinkspeed(Service_T, LinkSpeed_T);
   static void  addlinksaturation(Service_T, LinkSaturation_T);
@@ -236,7 +240,6 @@
   static void  addeuid(uid_t);
   static void  addegid(gid_t);
   static void  addeventaction(EventAction_T *, int, int);
-  static void  seteventaction(EventAction_T *, int, int);
   static void  prepare_urlrequest(URL_T U);
   static void  seturlrequest(int, char *);
   static void  setlogfile(char *);
@@ -251,6 +254,8 @@
   static void  reset_uptimeset();
   static void  reset_pidset();
   static void  reset_ppidset();
+  static void  reset_fsflagset();
+  static void  reset_nonexistset();
   static void  reset_linkstatusset();
   static void  reset_linkspeedset();
   static void  reset_linksaturationset();
@@ -410,7 +415,6 @@ optfilesyslist  : /* EMPTY */
 optfilesys      : start
                 | stop
                 | restart
-                | exist
                 | actionrate
                 | every
                 | alert
@@ -452,7 +456,6 @@ opthostlist     : opthost
 opthost         : start
                 | stop
                 | restart
-                | exist
                 | connection
                 | icmp
                 | actionrate
@@ -525,7 +528,6 @@ optstatus       : start
                 | stop
                 | restart
                 | actionrate
-                | exist
                 | alert
                 | every
                 | group
@@ -1370,7 +1372,8 @@ apache_stat     : LOGLIMIT operator NUMBER PERCENT {
                 ;
 
 exist           : IF NOT EXIST rate1 THEN action1 recovery {
-                    seteventaction(&(current)->action_NONEXIST, $<number>6, $<number>7);
+                    addeventaction(&(nonexistset).action, $<number>6, $<number>7);
+                    addnonexist(&nonexistset);
                   }
                 ;
 
@@ -1867,7 +1870,8 @@ space           : IF SPACE operator value unit rate1 THEN action1 recovery {
                 ;
 
 fsflag          : IF CHANGED FSFLAG rate1 THEN action1 {
-                    seteventaction(&(current)->action_FSFLAG, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(fsflagset).action, $<number>6, ACTION_IGNORE);
+                    addfsflag(&fsflagset);
                   }
                 ;
 
@@ -2320,44 +2324,13 @@ static void postparse() {
                 addservice(current);
 
         /* Check that we do not start monit in daemon mode without having a poll time */
-        if (!Run.polltime && (Run.isdaemon || Run.init)) {
+        if (! Run.polltime && (Run.isdaemon || Run.init)) {
                 LogError("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0)  or use the -d option when starting monit\n");
                 cfg_errflag++;
         }
 
         if (Run.logfile)
                 Run.dolog = TRUE;
-
-        for (Service_T s = servicelist; s; s = s->next) {
-                if (s->type == TYPE_HOST) {
-                        /* Verify that a remote service has a port or an icmp list */
-                        if (!s->portlist && !s->icmplist) {
-                                LogError("'check host' statement is incomplete: Please specify a port number to test\n or an icmp test at the remote host: '%s'\n", s->name);
-                                cfg_errflag++;
-                        }
-                } else if (s->type == TYPE_PROGRAM) {
-                        /* Verify that a program test has a status test */
-                        if (! s->statuslist) {
-                                LogError("'check program %s' is incomplete: Please add an 'if status != n' test\n", s->name);
-                                cfg_errflag++;
-                        }
-                        /* Create the Command object */
-                        s->program->C = Command_new(s->path, NULL);
-                        // Append any arguments
-                        for (int i = 1; i < s->program->args->length; i++) {
-                                Command_appendArgument(s->program->C, s->program->args->arg[i]);
-                        }
-                        if (s->program->args->has_uid) {
-                                Command_setUid(s->program->C, s->program->args->uid);
-                        }
-                        if (s->program->args->has_gid) {
-                                Command_setGid(s->program->C, s->program->args->gid);
-                        }
-                } else if (s->type == TYPE_NET && ! s->linkstatuslist) {
-                        addeventaction(&(linkstatusset).action, ACTION_ALERT, ACTION_ALERT);
-                        addlinkstatus(s, &linkstatusset);
-                }
-        }
 
         /* Add the default general system service if not specified explicitly: service name default to hostname */
         if (! Run.system) {
@@ -2435,8 +2408,6 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
   addeventaction(&(current)->action_DATA,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_EXEC,     ACTION_ALERT,     ACTION_ALERT);
   addeventaction(&(current)->action_INVALID,  ACTION_RESTART,   ACTION_ALERT);
-  addeventaction(&(current)->action_NONEXIST, ACTION_RESTART,   ACTION_ALERT);
-  addeventaction(&(current)->action_FSFLAG,   ACTION_ALERT,     ACTION_IGNORE);
 
   /* Initialize internal event handlers */
   addeventaction(&(current)->action_MONIT_START,  ACTION_START, ACTION_IGNORE);
@@ -2454,17 +2425,70 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
  * Add a service object to the servicelist
  */
 static void addservice(Service_T s) {
-  ASSERT(s);
+        ASSERT(s);
 
-  /* Add the service to the end of the service list */
-  if (tail != NULL) {
-    tail->next = s;
-    tail->next_conf = s;
-  } else {
-    servicelist = s;
-    servicelist_conf = s;
-  }
-  tail = s;
+        // Test sanity check
+        switch (s->type) {
+                case TYPE_HOST:
+                        // Verify that a remote service has a port or an icmp list
+                        if (! s->portlist && ! s->icmplist) {
+                                LogError("'check host' statement is incomplete: Please specify a port number to test\n or an icmp test at the remote host: '%s'\n", s->name);
+                                cfg_errflag++;
+                        }
+                        break;
+                case TYPE_PROGRAM:
+                        // Verify that a program test has a status test
+                        if (! s->statuslist) {
+                                LogError("'check program %s' is incomplete: Please add an 'if status != n' test\n", s->name);
+                                cfg_errflag++;
+                        }
+                        // Create the Command object
+                        s->program->C = Command_new(s->path, NULL);
+                        // Append any arguments
+                        for (int i = 1; i < s->program->args->length; i++)
+                                Command_appendArgument(s->program->C, s->program->args->arg[i]);
+                        if (s->program->args->has_uid)
+                                Command_setUid(s->program->C, s->program->args->uid);
+                        if (s->program->args->has_gid)
+                                Command_setGid(s->program->C, s->program->args->gid);
+                        break;
+                case TYPE_NET:
+                        if (! s->linkstatuslist) {
+                                // Add link status test if not defined
+                                addeventaction(&(linkstatusset).action, ACTION_ALERT, ACTION_ALERT);
+                                addlinkstatus(s, &linkstatusset);
+                        }
+                        break;
+                case TYPE_FILESYSTEM:
+                        if (! s->fsflaglist) {
+                                // Add filesystem flags change test if not defined
+                                addeventaction(&(fsflagset).action, ACTION_ALERT, ACTION_IGNORE);
+                                addfsflag(&fsflagset);
+                        }
+                        break;
+                case TYPE_DIRECTORY:
+                case TYPE_FIFO:
+                case TYPE_FILE:
+                case TYPE_PROCESS:
+                        if (! s->nonexistlist) {
+                                // Add existence test if not defined
+                                addeventaction(&(nonexistset).action, ACTION_RESTART, ACTION_ALERT);
+                                addnonexist(&nonexistset);
+                        }
+                        break;
+                default:
+                        break;
+        }
+
+        /* Add the service to the end of the service list */
+        if (tail != NULL) {
+                tail->next = s;
+                tail->next_conf = s;
+        } else {
+                servicelist = s;
+                servicelist_conf = s;
+        }
+        tail = s;
 }
 
 
@@ -2758,6 +2782,40 @@ static void addppid(Pid_T pp) {
   current->ppidlist = p;
 
   reset_ppidset();
+}
+
+
+/*
+ * Add a new Fsflag object to the current service fsflag list
+ */
+static void addfsflag(Fsflag_T ff) {
+  ASSERT(ff);
+
+  Fsflag_T f;
+  NEW(f);
+  f->action = ff->action;
+
+  f->next = current->fsflaglist;
+  current->fsflaglist = f;
+
+  reset_fsflagset();
+}
+
+
+/*
+ * Add a new Nonexist object to the current service list
+ */
+static void addnonexist(Nonexist_T ff) {
+  ASSERT(ff);
+
+  Nonexist_T f;
+  NEW(f);
+  f->action = ff->action;
+
+  f->next = current->nonexistlist;
+  current->nonexistlist = f;
+
+  reset_nonexistset();
 }
 
 
@@ -3144,36 +3202,6 @@ static void addeventaction(EventAction_T *_ea, int failed, int succeeded) {
   }
   *_ea = ea;
   reset_rateset();
-}
-
-
-/*
- * Redefine EventAction object (used for default action overloading)
- */
-static void seteventaction(EventAction_T *_ea, int failed, int succeeded) {
-  EventAction_T ea = *_ea;
-
-  ASSERT(ea);
-  ASSERT(ea->failed);
-  ASSERT(ea->succeeded);
-
-  ea->failed->id     = failed;
-  ea->failed->count  = rate1.count;
-  ea->failed->cycles = rate1.cycles;
-  if (failed == ACTION_EXEC) {
-    ASSERT(command1);
-    ea->failed->exec = command1;
-    command1 = NULL;
-  }
-
-  ea->succeeded->id     = succeeded;
-  ea->succeeded->count  = rate2.count;
-  ea->succeeded->cycles = rate2.cycles;
-  if (succeeded == ACTION_EXEC) {
-    ASSERT(command2);
-    ea->succeeded->exec = command2;
-    command2 = NULL;
-  }
 }
 
 
@@ -3816,6 +3844,22 @@ static void reset_pidset() {
  */
 static void reset_ppidset() {
   ppidset.action = NULL;
+}
+
+
+/*
+ * Reset the Fsflag set to default values
+ */
+static void reset_fsflagset() {
+  fsflagset.action = NULL;
+}
+
+
+/*
+ * Reset the Nonexist set to default values
+ */
+static void reset_nonexistset() {
+  nonexistset.action = NULL;
 }
 
 

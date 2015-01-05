@@ -743,6 +743,22 @@ typedef struct mypid {
 } *Pid_T;
 
 
+typedef struct myfsflag {
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct myfsflag *next;
+} *Fsflag_T;
+
+
+typedef struct mynonexist {
+        EventAction_T action;  /**< Description of the action upon event occurence */
+
+        /** For internal use */
+        struct mynonexist *next;
+} *Nonexist_T;
+
+
 /** Defines filesystem configuration */
 typedef struct myfilesystem {
         int  resource;                        /**< Whether to check inode or space */
@@ -852,24 +868,24 @@ typedef struct myservice {
         Pid_T       pidlist;                                   /**< Pid check list */
         Pid_T       ppidlist;                                 /**< PPid check list */
         Status_T    statuslist;           /**< Program execution status check list */
+        Fsflag_T    fsflaglist;           /**< Action upon filesystem flags change */
+        Nonexist_T  nonexistlist;  /**< Action upon test subject existence failure */
         Uid_T       uid;                                            /**< Uid check */
         Uid_T       euid;                                 /**< Effective Uid check */
         Gid_T       gid;                                            /**< Gid check */
-        LinkStatus_T linkstatuslist;           /**< Network link status list */
-        LinkSpeed_T linkspeedlist;              /**< Network link speed list */
-        LinkSaturation_T linksaturationlist;  /**< Net. link saturation list */
+        LinkStatus_T linkstatuslist;                 /**< Network link status list */
+        LinkSpeed_T linkspeedlist;                    /**< Network link speed list */
+        LinkSaturation_T linksaturationlist;     /**< Network link saturation list */
         Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */
         Bandwidth_T uploadpacketslist;              /**< Upload packets check list */
         Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
         Bandwidth_T downloadpacketslist;          /**< Download packets check list */
 
-        EventAction_T action_FSFLAG;      /**< Action upon filesystem flags change */
 
         /** General event handlers */
         EventAction_T action_DATA;       /**< Description of the action upon event */
         EventAction_T action_EXEC;       /**< Description of the action upon event */
         EventAction_T action_INVALID;    /**< Description of the action upon event */
-        EventAction_T action_NONEXIST;   /**< Description of the action upon event */
 
         /** Internal monit events */
         EventAction_T action_MONIT_START;         /**< Monit instance start action */
