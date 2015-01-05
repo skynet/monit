@@ -1,0 +1,3 @@
+[submodule "libmonit"]
+	path = libmonit
+	url = git@bitbucket.org:tildeslash/libmonit.git
