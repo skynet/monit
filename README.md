@@ -12,6 +12,12 @@ __Memory and Disk space__. A minimum of 1 megabytes RAM are required and around 
   
 __ANSI-C Compiler and Build System__. You will need an ANSI-C99 compiler installed to build Monit. The GNU C compiler (GCC) from the Free Software Foundation (FSF) is recommended. In addition, your PATH must contain basic build tools such as make.
 
+GIT
+===
+
+Monit uses [libmonit](https://bitbucket.org/tildeslash/libmonit) as a submodule. To checkout Monit source code including libmonit, use `git clone git@bitbucket.org:tildeslash/monit.git --recursive`. Because libmonit is a submodule, changes to libmonit *should* be done in that repository, not in the submodule. Use `git submodule update --remote` to update libmonit in your local fork. See [Git-submodules](http://git-scm.com/book/en/v2/Git-Tools-Submodules) for more information.
+
+
 BOOTSTRAPPING
 =============
 
