@@ -23,6 +23,8 @@ Fixed: HTTP GUI: Don't show the implicit existence test for network check (not u
 
 Fixed: Issue #143: The network timeout reported value 1000x higher.
 
+Fixed: "monit validate" returns exit value 1 only if there were some errors.
+
 
 Version 5.11
 

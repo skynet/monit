@@ -467,7 +467,7 @@ static void do_action(char **args) {
         } else if (IS(action, "quit")) {
                 kill_daemon(SIGTERM);
         } else if (IS(action, "validate")) {
-                if ( validate())
+                if (validate())
                         exit(1);
         } else {
                 LogError("Invalid argument -- %s  (-h will show valid arguments)\n", action);
