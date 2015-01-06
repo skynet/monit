@@ -525,7 +525,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                                 break; // Wait for one response only
                         }
                 } else
-                        LogError("Ping response for %s %d/%d timed out -- no response within %d seconds\n", hostname, i + 1, count, timeout);
+                        LogError("Ping response for %s %d/%d timed out -- no response within %d seconds\n", hostname, i + 1, count, timeout / 1000);
         }
 error1:
         do {
