@@ -13,6 +13,8 @@ New: Support for multiple fsflag tests (available in the filesystem check contex
     if changed fsflags then alert
     if changed fsflags for 10 cycles then exec "/usr/bin/myscript.sh"
 
+Fixed: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
+
 Fixed: Support monitoring of bonded network interfaces.
 
 Fixed: Minor memory leak on monit reload if multiple pid/ppid tests were defined.
