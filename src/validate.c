@@ -1403,8 +1403,8 @@ int check_net(Service_T s) {
         int duplex = Link_getDuplex(s->inf->priv.net.stats);
         long long speed = Link_getSpeed(s->inf->priv.net.stats);
         for (LinkSpeed_T link = s->linkspeedlist; link; link = link->next) {
-                if (speed && link->speed) {
-                        if (duplex != link->duplex)
+                if (speed > 0 && link->speed) {
+                        if (duplex > -1 && duplex != link->duplex)
                                 Event_post(s, Event_Speed, STATE_CHANGED, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
                         else
                                 Event_post(s, Event_Speed, STATE_CHANGEDNOT, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
