@@ -15,13 +15,13 @@ __ANSI-C Compiler and Build System__. You will need an ANSI-C99 compiler install
 GIT
 ===
 
-Monit uses [libmonit](https://bitbucket.org/tildeslash/libmonit) as a submodule. To checkout Monit source code including libmonit, use `git clone git@bitbucket.org:tildeslash/monit.git --recursive`. Because libmonit is a submodule, changes to libmonit *should* be done in that repository, not in the submodule. Use `git submodule update --remote` to update libmonit in your local fork. See [Git-submodules](http://git-scm.com/book/en/v2/Git-Tools-Submodules) for more information.
+Monit uses [libmonit](https://bitbucket.org/tildeslash/libmonit) as a submodule. To checkout Monit source code, including libmonit, use `git clone git@bitbucket.org:tildeslash/monit.git --recursive`. Because libmonit is a submodule, changes to libmonit *should* be done in that repository, not in the submodule. Use `git submodule update --remote` to update libmonit in your local fork. See [Git-submodules](http://git-scm.com/book/en/v2/Git-Tools-Submodules) for more information.
 
 
 BOOTSTRAPPING
 =============
 
-If you build Monit from the git repository, you need to call `./bootstrap` first before continuing with the installation steps below. 
+If you build Monit from the git repository, you should to call `./bootstrap` first before continuing with the installation steps below. 
 
 
 INSTALLATION
