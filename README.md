@@ -21,7 +21,7 @@ Monit uses [libmonit](https://bitbucket.org/tildeslash/libmonit) as a submodule.
 BOOTSTRAPPING
 =============
 
-If you build Monit from the git repository, you should to call `./bootstrap` first before continuing with the installation steps below. 
+If you build Monit from the git repository you should call `./bootstrap` first, before continuing with the installation steps below. 
 
 
 INSTALLATION
