@@ -15,7 +15,7 @@ New: Support for multiple fsflag tests (available in the filesystem check contex
 
 Fixed: Linux: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
 
-Fixed: Linux + FreeBSD 32-bit platforms: Issue #138: handle 32-bit counter wraps.
+Fixed: Linux 32-bit + FreeBSD 32-bit + MaxOSX: Issue #138: handle 32-bit counter wraps.
 
 Fixed: Linux: Support monitoring of bonded network interfaces.
 
