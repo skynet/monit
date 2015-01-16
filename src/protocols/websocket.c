@@ -123,11 +123,14 @@ int check_websocket(Socket_T socket) {
                 socket_setError(socket, "WEBSOCKET: error -- %s", buf);
                 return FALSE;
         }
+        while (socket_readln(socket, buf, sizeof(buf)) && ! Str_isEqual(buf, "\r\n"))
+                ; // drop remaining HTTP response headers from the pipeline
 
         // Ping
-        unsigned char ping[2] = {
-                0x89, // Fin:True, Opcode:Ping
-                0x00  // Mask:False, Payload:0
+        unsigned char ping[6] = {
+                0x89,                  // Fin:True, Opcode:Ping
+                0x80,                  // Mask:True, Payload:0
+                0x5b, 0x63, 0x68, 0x84 // Key
         };
         if (socket_write(socket, ping, sizeof(ping)) < 0) {
                 socket_setError(socket, "WEBSOCKET: error sending ping -- %s", STRERROR);
@@ -139,9 +142,10 @@ int check_websocket(Socket_T socket) {
                 return FALSE;
 
         // Close request
-        unsigned char close_request[2] = {
-                0x88, // Fin:True, Opcode:Close
-                0x00  // Mask:False, Payload:0
+        unsigned char close_request[6] = {
+                0x88,                  // Fin:True, Opcode:Close
+                0x80,                  // Mask:True, Payload:0
+                0x5b, 0x63, 0x68, 0x84 // Key
         };
         if (socket_write(socket, close_request, sizeof(close_request)) < 0) {
                 socket_setError(socket, "WEBSOCKET: error sending close -- %s", STRERROR);

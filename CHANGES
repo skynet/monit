@@ -26,6 +26,8 @@ Fixed: HTTP GUI: Don't show the implicit existence test for network check (not u
 Fixed: Issue #143: Ping test may block longer then timeout settings and the event description
 in the case of timeout reported value 1000x higher.
 
+Fixed: Issue #144: Websocket protocol test - mask frames per RFC-6455.
+
 Fixed: "monit validate" returns exit value 1 only if there were some errors.
 
 
