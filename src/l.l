@@ -747,36 +747,36 @@ group[ \t]+       {
 }
 
 <HTTP_HEADER_COND>{
-        
+
         {wws}   ;
-        
+
         "["     ;
 
         [\n]    {
                         lineno++;
                 }
-        
+
         ([^\t\r\n,\[\]:]+)/[:] { // name/:
                         save_arg();
                 }
-        
+
         [:](({ws}?["][^"]+["])|([^\r\n\],:]+)) { // : value
                         yylval.string = Str_cat("%s:%s", Str_trim(argyytext), Str_unquote(yytext + 1));
                         save_arg();
                         return HTTPHEADER;
                 }
-        
+
         "]"     {
                         BEGIN(INITIAL);
                         save_arg();
                         return ']';
                 }
-        
+
         .       {
                         BEGIN(INITIAL);
                         yyerror("invalid HTTP header list format");
                 }
-        
+
 }
 
 

@@ -74,7 +74,7 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
 
         /* If it starts with the id string, then skip that */
         if (! strncmp(salt, id, strlen(id)))
-                    sp += strlen(id);
+                sp += strlen(id);
 
         /* It stops at the first '$', max 8 chars */
         for (ep = sp; *ep && *ep != '$' && ep < (sp + 8); ep++)
@@ -109,9 +109,9 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
         /* Then something really weird... */
         for (i = pwl; i; i >>= 1)
                 if (i & 1)
-                    md5_append(&ctx, final, 1);
+                        md5_append(&ctx, final, 1);
                 else
-                    md5_append(&ctx, (const md5_byte_t *)pw, 1);
+                        md5_append(&ctx, (const md5_byte_t *)pw, 1);
 
         /* Now make the output string */
         strncpy(buf, id, buflen);

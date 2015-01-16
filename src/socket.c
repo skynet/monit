@@ -482,7 +482,7 @@ int socket_shutdown_write(Socket_T S) {
 
 
 int socket_set_tcp_nodelay(Socket_T S) {
-    int on = 1;
-    return (setsockopt(S->socket, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) == 0);
+        int on = 1;
+        return (setsockopt(S->socket, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) == 0);
 }
 

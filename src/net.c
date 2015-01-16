@@ -339,7 +339,7 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
                 struct sockaddr_in *sa;
                 struct addrinfo hints;
                 struct addrinfo *result;
-                
+
                 memset(&hints, 0, sizeof(struct addrinfo));
                 hints.ai_family = AF_INET;
                 if((status = getaddrinfo(bindAddr, NULL, &hints, &result)) != 0) {

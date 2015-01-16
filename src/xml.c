@@ -87,25 +87,25 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
                 StringBuffer_append(B, "<monit id=\"%s\" incarnation=\"%lld\" version=\"%s\"><server>", Run.id, (long long)Run.incarnation, VERSION);
         else
                 StringBuffer_append(B,
-                        "<monit>"
-                        "<server>"
-                        "<id>%s</id>"
-                        "<incarnation>%lld</incarnation>"
-                        "<version>%s</version>",
-                        Run.id,
-                        (long long)Run.incarnation,
-                        VERSION);
+                                    "<monit>"
+                                    "<server>"
+                                    "<id>%s</id>"
+                                    "<incarnation>%lld</incarnation>"
+                                    "<version>%s</version>",
+                                    Run.id,
+                                    (long long)Run.incarnation,
+                                    VERSION);
         StringBuffer_append(B,
-                "<uptime>%lld</uptime>"
-                "<poll>%d</poll>"
-                "<startdelay>%d</startdelay>"
-                "<localhostname>%s</localhostname>"
-                "<controlfile>%s</controlfile>",
-                (long long)Util_getProcessUptime(Run.pidfile),
-                Run.polltime,
-                Run.startdelay,
-                Run.system->name ? Run.system->name : "",
-                Run.controlfile ? Run.controlfile : "");
+                            "<uptime>%lld</uptime>"
+                            "<poll>%d</poll>"
+                            "<startdelay>%d</startdelay>"
+                            "<localhostname>%s</localhostname>"
+                            "<controlfile>%s</controlfile>",
+                            (long long)Util_getProcessUptime(Run.pidfile),
+                            Run.polltime,
+                            Run.startdelay,
+                            Run.system->name ? Run.system->name : "",
+                            Run.controlfile ? Run.controlfile : "");
 
         if (Run.dohttpd) {
                 StringBuffer_append(B, "<httpd><address>%s</address><port>%d</port><ssl>%d</ssl></httpd>", Run.bind_addr ? Run.bind_addr : myip, Run.httpdport, Run.httpdssl);
@@ -115,23 +115,23 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
         }
 
         StringBuffer_append(B,
-                "</server>"
-                "<platform>"
-                "<name>%s</name>"
-                "<release>%s</release>"
-                "<version>%s</version>"
-                "<machine>%s</machine>"
-                "<cpu>%d</cpu>"
-                "<memory>%lu</memory>"
-                "<swap>%lu</swap>"
-                "</platform>",
-                systeminfo.uname.sysname,
-                systeminfo.uname.release,
-                systeminfo.uname.version,
-                systeminfo.uname.machine,
-                systeminfo.cpus,
-                systeminfo.mem_kbyte_max,
-                systeminfo.swap_kbyte_max);
+                            "</server>"
+                            "<platform>"
+                            "<name>%s</name>"
+                            "<release>%s</release>"
+                            "<version>%s</version>"
+                            "<machine>%s</machine>"
+                            "<cpu>%d</cpu>"
+                            "<memory>%lu</memory>"
+                            "<swap>%lu</swap>"
+                            "</platform>",
+                            systeminfo.uname.sysname,
+                            systeminfo.uname.release,
+                            systeminfo.uname.version,
+                            systeminfo.uname.machine,
+                            systeminfo.cpus,
+                            systeminfo.mem_kbyte_max,
+                            systeminfo.swap_kbyte_max);
 }
 
 
@@ -157,20 +157,20 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
         else
                 StringBuffer_append(B, "<service type=\"%d\"><name>%s</name>", S->type, S->name ? S->name : "");
         StringBuffer_append(B,
-                "<collected_sec>%lld</collected_sec>"
-                "<collected_usec>%ld</collected_usec>"
-                "<status>%d</status>"
-                "<status_hint>%d</status_hint>"
-                "<monitor>%d</monitor>"
-                "<monitormode>%d</monitormode>"
-                "<pendingaction>%d</pendingaction>",
-                (long long)S->collected.tv_sec,
-                (long)S->collected.tv_usec,
-                S->error,
-                S->error_hint,
-                S->monitor,
-                S->mode,
-                S->doaction);
+                            "<collected_sec>%lld</collected_sec>"
+                            "<collected_usec>%ld</collected_usec>"
+                            "<status>%d</status>"
+                            "<status_hint>%d</status_hint>"
+                            "<monitor>%d</monitor>"
+                            "<monitormode>%d</monitormode>"
+                            "<pendingaction>%d</pendingaction>",
+                            (long long)S->collected.tv_sec,
+                            (long)S->collected.tv_usec,
+                            S->error,
+                            S->error_hint,
+                            S->monitor,
+                            S->mode,
+                            S->doaction);
         if (S->every.type != EVERY_CYCLE) {
                 StringBuffer_append(B, "<every><type>%d</type>", S->every.type);
                 if (S->every.type == 1)
@@ -193,124 +193,124 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                         }
                         if (S->type == TYPE_NET) {
                                 StringBuffer_append(B,
-                                        "<link>"
-                                        "<state>%d</state>"
-                                        "<speed>%lld</speed>"
-                                        "<duplex>%d</duplex>"
-                                        "<download>"
-                                        "<packets>"
-                                        "<now>%lld</now>"
-                                        "<total>%lld</total>"
-                                        "</packets>"
-                                        "<bytes>"
-                                        "<now>%lld</now>"
-                                        "<total>%lld</total>"
-                                        "</bytes>"
-                                        "<errors>"
-                                        "<now>%lld</now>"
-                                        "<total>%lld</total>"
-                                        "</errors>"
-                                        "</download>"
-                                        "<upload>"
-                                        "<packets>"
-                                        "<now>%lld</now>"
-                                        "<total>%lld</total>"
-                                        "</packets>"
-                                        "<bytes>"
-                                        "<now>%lld</now>"
-                                        "<total>%lld</total>"
-                                        "</bytes>"
-                                        "<errors>"
-                                        "<now>%lld</now>"
-                                        "<total>%lld</total>"
-                                        "</errors>"
-                                        "</upload>"
-                                        "</link>",
-                                        Link_getState(S->inf->priv.net.stats),
-                                        Link_getSpeed(S->inf->priv.net.stats),
-                                        Link_getDuplex(S->inf->priv.net.stats),
-                                        Link_getPacketsInPerSecond(S->inf->priv.net.stats),
-                                        Link_getPacketsInTotal(S->inf->priv.net.stats),
-                                        Link_getBytesInPerSecond(S->inf->priv.net.stats),
-                                        Link_getBytesInTotal(S->inf->priv.net.stats),
-                                        Link_getErrorsInPerSecond(S->inf->priv.net.stats),
-                                        Link_getErrorsInTotal(S->inf->priv.net.stats),
-                                        Link_getPacketsOutPerSecond(S->inf->priv.net.stats),
-                                        Link_getPacketsOutTotal(S->inf->priv.net.stats),
-                                        Link_getBytesOutPerSecond(S->inf->priv.net.stats),
-                                        Link_getBytesOutTotal(S->inf->priv.net.stats),
-                                        Link_getErrorsOutPerSecond(S->inf->priv.net.stats),
-                                        Link_getErrorsOutTotal(S->inf->priv.net.stats));
+                                                    "<link>"
+                                                    "<state>%d</state>"
+                                                    "<speed>%lld</speed>"
+                                                    "<duplex>%d</duplex>"
+                                                    "<download>"
+                                                    "<packets>"
+                                                    "<now>%lld</now>"
+                                                    "<total>%lld</total>"
+                                                    "</packets>"
+                                                    "<bytes>"
+                                                    "<now>%lld</now>"
+                                                    "<total>%lld</total>"
+                                                    "</bytes>"
+                                                    "<errors>"
+                                                    "<now>%lld</now>"
+                                                    "<total>%lld</total>"
+                                                    "</errors>"
+                                                    "</download>"
+                                                    "<upload>"
+                                                    "<packets>"
+                                                    "<now>%lld</now>"
+                                                    "<total>%lld</total>"
+                                                    "</packets>"
+                                                    "<bytes>"
+                                                    "<now>%lld</now>"
+                                                    "<total>%lld</total>"
+                                                    "</bytes>"
+                                                    "<errors>"
+                                                    "<now>%lld</now>"
+                                                    "<total>%lld</total>"
+                                                    "</errors>"
+                                                    "</upload>"
+                                                    "</link>",
+                                                    Link_getState(S->inf->priv.net.stats),
+                                                    Link_getSpeed(S->inf->priv.net.stats),
+                                                    Link_getDuplex(S->inf->priv.net.stats),
+                                                    Link_getPacketsInPerSecond(S->inf->priv.net.stats),
+                                                    Link_getPacketsInTotal(S->inf->priv.net.stats),
+                                                    Link_getBytesInPerSecond(S->inf->priv.net.stats),
+                                                    Link_getBytesInTotal(S->inf->priv.net.stats),
+                                                    Link_getErrorsInPerSecond(S->inf->priv.net.stats),
+                                                    Link_getErrorsInTotal(S->inf->priv.net.stats),
+                                                    Link_getPacketsOutPerSecond(S->inf->priv.net.stats),
+                                                    Link_getPacketsOutTotal(S->inf->priv.net.stats),
+                                                    Link_getBytesOutPerSecond(S->inf->priv.net.stats),
+                                                    Link_getBytesOutTotal(S->inf->priv.net.stats),
+                                                    Link_getErrorsOutPerSecond(S->inf->priv.net.stats),
+                                                    Link_getErrorsOutTotal(S->inf->priv.net.stats));
                         }
                         if (S->type == TYPE_FILESYSTEM) {
                                 StringBuffer_append(B,
-                                        "<flags>%d</flags>"
-                                        "<block>"
-                                        "<percent>%.1f</percent>"
-                                        "<usage>%.1f</usage>"
-                                        "<total>%.1f</total>"
-                                        "</block>",
-                                        S->inf->priv.filesystem.flags,
-                                        S->inf->priv.filesystem.space_percent/10.,
-                                        S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.space_total / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.,
-                                        S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.f_blocks / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.);
+                                                    "<flags>%d</flags>"
+                                                    "<block>"
+                                                    "<percent>%.1f</percent>"
+                                                    "<usage>%.1f</usage>"
+                                                    "<total>%.1f</total>"
+                                                    "</block>",
+                                                    S->inf->priv.filesystem.flags,
+                                                    S->inf->priv.filesystem.space_percent/10.,
+                                                    S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.space_total / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.,
+                                                    S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.f_blocks / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.);
                                 if (S->inf->priv.filesystem.f_files > 0) {
                                         StringBuffer_append(B,
-                                                "<inode>"
-                                                "<percent>%.1f</percent>"
-                                                "<usage>%lld</usage>"
-                                                "<total>%lld</total>"
-                                                "</inode>",
-                                                S->inf->priv.filesystem.inode_percent/10.,
-                                                S->inf->priv.filesystem.inode_total,
-                                                S->inf->priv.filesystem.f_files);
+                                                            "<inode>"
+                                                            "<percent>%.1f</percent>"
+                                                            "<usage>%lld</usage>"
+                                                            "<total>%lld</total>"
+                                                            "</inode>",
+                                                            S->inf->priv.filesystem.inode_percent/10.,
+                                                            S->inf->priv.filesystem.inode_total,
+                                                            S->inf->priv.filesystem.f_files);
                                 }
                         }
                         if (S->type == TYPE_PROCESS) {
                                 StringBuffer_append(B,
-                                        "<pid>%d</pid>"
-                                        "<ppid>%d</ppid>"
-                                        "<uid>%d</uid>"
-                                        "<euid>%d</euid>"
-                                        "<gid>%d</gid>"
-                                        "<uptime>%lld</uptime>",
-                                        S->inf->priv.process.pid,
-                                        S->inf->priv.process.ppid,
-                                        S->inf->priv.process.uid,
-                                        S->inf->priv.process.euid,
-                                        S->inf->priv.process.gid,
-                                        (long long)S->inf->priv.process.uptime);
+                                                    "<pid>%d</pid>"
+                                                    "<ppid>%d</ppid>"
+                                                    "<uid>%d</uid>"
+                                                    "<euid>%d</euid>"
+                                                    "<gid>%d</gid>"
+                                                    "<uptime>%lld</uptime>",
+                                                    S->inf->priv.process.pid,
+                                                    S->inf->priv.process.ppid,
+                                                    S->inf->priv.process.uid,
+                                                    S->inf->priv.process.euid,
+                                                    S->inf->priv.process.gid,
+                                                    (long long)S->inf->priv.process.uptime);
                                 if (Run.doprocess) {
                                         StringBuffer_append(B,
-                                                "<children>%d</children>"
-                                                "<memory>"
-                                                "<percent>%.1f</percent>"
-                                                "<percenttotal>%.1f</percenttotal>"
-                                                "<kilobyte>%ld</kilobyte>"
-                                                "<kilobytetotal>%ld</kilobytetotal>"
-                                                "</memory>"
-                                                "<cpu>"
-                                                "<percent>%.1f</percent>"
-                                                "<percenttotal>%.1f</percenttotal>"
-                                                "</cpu>",
-                                                S->inf->priv.process.children,
-                                                S->inf->priv.process.mem_percent/10.0,
-                                                S->inf->priv.process.total_mem_percent/10.0,
-                                                S->inf->priv.process.mem_kbyte,
-                                                S->inf->priv.process.total_mem_kbyte,
-                                                S->inf->priv.process.cpu_percent/10.0,
-                                                S->inf->priv.process.total_cpu_percent/10.0);
+                                                            "<children>%d</children>"
+                                                            "<memory>"
+                                                            "<percent>%.1f</percent>"
+                                                            "<percenttotal>%.1f</percenttotal>"
+                                                            "<kilobyte>%ld</kilobyte>"
+                                                            "<kilobytetotal>%ld</kilobytetotal>"
+                                                            "</memory>"
+                                                            "<cpu>"
+                                                            "<percent>%.1f</percent>"
+                                                            "<percenttotal>%.1f</percenttotal>"
+                                                            "</cpu>",
+                                                            S->inf->priv.process.children,
+                                                            S->inf->priv.process.mem_percent/10.0,
+                                                            S->inf->priv.process.total_mem_percent/10.0,
+                                                            S->inf->priv.process.mem_kbyte,
+                                                            S->inf->priv.process.total_mem_kbyte,
+                                                            S->inf->priv.process.cpu_percent/10.0,
+                                                            S->inf->priv.process.total_cpu_percent/10.0);
                                 }
                         }
                         if (S->type == TYPE_HOST && S->icmplist) {
                                 for (Icmp_T i = S->icmplist; i; i = i->next) {
                                         StringBuffer_append(B,
-                                                "<icmp>"
-                                                "<type>%s</type>"
-                                                "<responsetime>%.3f</responsetime>"
-                                                "</icmp>",
-                                                icmpnames[i->type],
-                                                i->is_available ? i->response : -1.);
+                                                            "<icmp>"
+                                                            "<type>%s</type>"
+                                                            "<responsetime>%.3f</responsetime>"
+                                                            "</icmp>",
+                                                            icmpnames[i->type],
+                                                            i->is_available ? i->response : -1.);
                                 }
                         }
                         if ((S->type == TYPE_HOST || S->type == TYPE_PROCESS) && S-> portlist) {
@@ -318,81 +318,81 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                 for (p = S->portlist; p; p = p->next) {
                                         if (p->family == AF_INET)
                                                 StringBuffer_append(B,
-                                                          "<port>"
-                                                          "<hostname>%s</hostname>"
-                                                          "<portnumber>%d</portnumber>"
-                                                          "<request><![CDATA[%s]]></request>"
-                                                          "<protocol>%s</protocol>"
-                                                          "<type>%s</type>"
-                                                          "<responsetime>%.3f</responsetime>"
-                                                          "</port>",
-                                                          p->hostname?p->hostname:"",
-                                                          p->port,
-                                                          p->request?p->request:"",
-                                                          p->protocol->name?p->protocol->name:"",
-                                                          Util_portTypeDescription(p),
-                                                          p->is_available?p->response:-1.);
+                                                                    "<port>"
+                                                                    "<hostname>%s</hostname>"
+                                                                    "<portnumber>%d</portnumber>"
+                                                                    "<request><![CDATA[%s]]></request>"
+                                                                    "<protocol>%s</protocol>"
+                                                                    "<type>%s</type>"
+                                                                    "<responsetime>%.3f</responsetime>"
+                                                                    "</port>",
+                                                                    p->hostname?p->hostname:"",
+                                                                    p->port,
+                                                                    p->request?p->request:"",
+                                                                    p->protocol->name?p->protocol->name:"",
+                                                                    Util_portTypeDescription(p),
+                                                                    p->is_available?p->response:-1.);
                                         else if (p->family == AF_UNIX)
                                                 StringBuffer_append(B,
-                                                        "<unix>"
-                                                        "<path>%s</path>"
-                                                        "<protocol>%s</protocol>"
-                                                        "<responsetime>%.3f</responsetime>"
-                                                        "</unix>",
-                                                        p->pathname?p->pathname:"",
-                                                        p->protocol->name?p->protocol->name:"",
-                                                        p->is_available?p->response:-1.);
+                                                                    "<unix>"
+                                                                    "<path>%s</path>"
+                                                                    "<protocol>%s</protocol>"
+                                                                    "<responsetime>%.3f</responsetime>"
+                                                                    "</unix>",
+                                                                    p->pathname?p->pathname:"",
+                                                                    p->protocol->name?p->protocol->name:"",
+                                                                    p->is_available?p->response:-1.);
                                 }
                         }
                         if (S->type == TYPE_SYSTEM && Run.doprocess) {
                                 StringBuffer_append(B,
-                                        "<system>"
-                                        "<load>"
-                                        "<avg01>%.2f</avg01>"
-                                        "<avg05>%.2f</avg05>"
-                                        "<avg15>%.2f</avg15>"
-                                        "</load>"
-                                        "<cpu>"
-                                        "<user>%.1f</user>"
-                                        "<system>%.1f</system>"
+                                                    "<system>"
+                                                    "<load>"
+                                                    "<avg01>%.2f</avg01>"
+                                                    "<avg05>%.2f</avg05>"
+                                                    "<avg15>%.2f</avg15>"
+                                                    "</load>"
+                                                    "<cpu>"
+                                                    "<user>%.1f</user>"
+                                                    "<system>%.1f</system>"
 #ifdef HAVE_CPU_WAIT
-                                        "<wait>%.1f</wait>"
+                                                    "<wait>%.1f</wait>"
 #endif
-                                        "</cpu>"
-                                        "<memory>"
-                                        "<percent>%.1f</percent>"
-                                        "<kilobyte>%ld</kilobyte>"
-                                        "</memory>"
-                                        "<swap>"
-                                        "<percent>%.1f</percent>"
-                                        "<kilobyte>%ld</kilobyte>"
-                                        "</swap>"
-                                        "</system>",
-                                        systeminfo.loadavg[0],
-                                        systeminfo.loadavg[1],
-                                        systeminfo.loadavg[2],
-                                        systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent/10. : 0,
-                                        systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent/10. : 0,
+                                                    "</cpu>"
+                                                    "<memory>"
+                                                    "<percent>%.1f</percent>"
+                                                    "<kilobyte>%ld</kilobyte>"
+                                                    "</memory>"
+                                                    "<swap>"
+                                                    "<percent>%.1f</percent>"
+                                                    "<kilobyte>%ld</kilobyte>"
+                                                    "</swap>"
+                                                    "</system>",
+                                                    systeminfo.loadavg[0],
+                                                    systeminfo.loadavg[1],
+                                                    systeminfo.loadavg[2],
+                                                    systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent/10. : 0,
+                                                    systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent/10. : 0,
 #ifdef HAVE_CPU_WAIT
-                                        systeminfo.total_cpu_wait_percent > 0 ? systeminfo.total_cpu_wait_percent/10. : 0,
+                                                    systeminfo.total_cpu_wait_percent > 0 ? systeminfo.total_cpu_wait_percent/10. : 0,
 #endif
-                                        systeminfo.total_mem_percent/10.,
-                                        systeminfo.total_mem_kbyte,
-                                        systeminfo.total_swap_percent/10.,
-                                        systeminfo.total_swap_kbyte);
+                                                    systeminfo.total_mem_percent/10.,
+                                                    systeminfo.total_mem_kbyte,
+                                                    systeminfo.total_swap_percent/10.,
+                                                    systeminfo.total_swap_kbyte);
                         }
                         if (S->type == TYPE_PROGRAM && S->program->started) {
                                 StringBuffer_append(B,
-                                        "<program>"
-                                        "<started>%lld</started>"
-                                        "<status>%d</status>"
-                                        "<output><![CDATA[",
-                                        (long long)S->program->started,
-                                        S->program->exitStatus);
+                                                    "<program>"
+                                                    "<started>%lld</started>"
+                                                    "<status>%d</status>"
+                                                    "<output><![CDATA[",
+                                                    (long long)S->program->started,
+                                                    S->program->exitStatus);
                                 _escapeCDATA(B, StringBuffer_toString(S->program->output));
                                 StringBuffer_append(B,
-                                        "]]></output>"
-                                        "</program>");
+                                                    "]]></output>"
+                                                    "</program>");
                         }
                 }
         }
@@ -422,22 +422,22 @@ static void status_servicegroup(ServiceGroup_T SG, StringBuffer_T B, short L) {
 static void status_event(Event_T E, StringBuffer_T B) {
         struct timeval *tv = Event_get_collected(E);
         StringBuffer_append(B,
-                "<event>"
-                "<collected_sec>%lld</collected_sec>"
-                "<collected_usec>%ld</collected_usec>"
-                "<service>%s</service>"
-                "<type>%d</type>"
-                "<id>%ld</id>"
-                "<state>%d</state>"
-                "<action>%d</action>"
-                "<message><![CDATA[",
-                (long long)tv->tv_sec,
-                (long)tv->tv_usec,
-                Event_get_id(E) == Event_Instance ? "Monit" : Event_get_source_name(E),
-                Event_get_source_type(E),
-                Event_get_id(E),
-                Event_get_state(E),
-                Event_get_action(E));
+                            "<event>"
+                            "<collected_sec>%lld</collected_sec>"
+                            "<collected_usec>%ld</collected_usec>"
+                            "<service>%s</service>"
+                            "<type>%d</type>"
+                            "<id>%ld</id>"
+                            "<state>%d</state>"
+                            "<action>%d</action>"
+                            "<message><![CDATA[",
+                            (long long)tv->tv_sec,
+                            (long)tv->tv_usec,
+                            Event_get_id(E) == Event_Instance ? "Monit" : Event_get_source_name(E),
+                            Event_get_source_type(E),
+                            Event_get_id(E),
+                            Event_get_state(E),
+                            Event_get_action(E));
         _escapeCDATA(B, Event_get_message(E));
         StringBuffer_append(B, "]]></message>");
         Service_T s = Event_get_source(E);

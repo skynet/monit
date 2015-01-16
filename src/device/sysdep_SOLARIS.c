@@ -59,46 +59,46 @@
 
 
 char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
-  struct mnttab mnt;
-  FILE         *mntfd;
+        struct mnttab mnt;
+        FILE         *mntfd;
 
-  ASSERT(dev);
+        ASSERT(dev);
 
-  if ((mntfd = fopen("/etc/mnttab", "r")) == NULL) {
-    LogError("Cannot open /etc/mnttab file\n");
-    return NULL;
-  }
-  while (getmntent(mntfd, &mnt) == 0) {
-    if ((realpath(mnt.mnt_special, buf) && IS(buf, dev)) || IS(mnt.mnt_special, dev)) {
+        if ((mntfd = fopen("/etc/mnttab", "r")) == NULL) {
+                LogError("Cannot open /etc/mnttab file\n");
+                return NULL;
+        }
+        while (getmntent(mntfd, &mnt) == 0) {
+                if ((realpath(mnt.mnt_special, buf) && IS(buf, dev)) || IS(mnt.mnt_special, dev)) {
+                        fclose(mntfd);
+                        snprintf(buf, buflen, "%s", mnt.mnt_mountp);
+                        return buf;
+                }
+        }
         fclose(mntfd);
-        snprintf(buf, buflen, "%s", mnt.mnt_mountp);
-        return buf;
-    }
-  }
-  fclose(mntfd);
-  return NULL;
+        return NULL;
 }
 
 
 int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
-  int size;
-  struct statvfs usage;
+        int size;
+        struct statvfs usage;
 
-  ASSERT(inf);
+        ASSERT(inf);
 
-  if (statvfs(mntpoint, &usage) != 0) {
-    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
-    return FALSE;
-  }
-  size =                                   usage.f_frsize ? (usage.f_bsize / usage.f_frsize) : 1;
-  inf->priv.filesystem.f_bsize =           usage.f_bsize;
-  inf->priv.filesystem.f_blocks =          usage.f_blocks / size;
-  inf->priv.filesystem.f_blocksfree =      usage.f_bavail / size;
-  inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree  / size;
-  inf->priv.filesystem.f_files =           usage.f_files;
-  inf->priv.filesystem.f_filesfree =       usage.f_ffree;
-  inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
-  inf->priv.filesystem.flags =             usage.f_flag;
-  return TRUE;
+        if (statvfs(mntpoint, &usage) != 0) {
+                LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
+                return FALSE;
+        }
+        size =                                   usage.f_frsize ? (usage.f_bsize / usage.f_frsize) : 1;
+        inf->priv.filesystem.f_bsize =           usage.f_bsize;
+        inf->priv.filesystem.f_blocks =          usage.f_blocks / size;
+        inf->priv.filesystem.f_blocksfree =      usage.f_bavail / size;
+        inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree  / size;
+        inf->priv.filesystem.f_files =           usage.f_files;
+        inf->priv.filesystem.f_filesfree =       usage.f_ffree;
+        inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
+        inf->priv.filesystem.flags =             usage.f_flag;
+        return TRUE;
 }
 

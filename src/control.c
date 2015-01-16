@@ -243,7 +243,7 @@ static int _doStop(Service_T s, int flag) {
                 Util_monitorUnset(s);
         else
                 Util_resetInfo(s);
-        
+
         return rv;
 }
 
@@ -366,7 +366,7 @@ int control_service_daemon(const char *S, const char *action) {
                 return FALSE;
         }
         socket = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP,
-                            (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
+                                 (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
         if (! socket) {
                 LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
                 return FALSE;
@@ -375,16 +375,16 @@ int control_service_daemon(const char *S, const char *action) {
         /* Send request */
         auth = Util_getBasicAuthHeaderMonit();
         if (socket_print(socket,
-                "POST /%s HTTP/1.0\r\n"
-                "Content-Type: application/x-www-form-urlencoded\r\n"
-                "Content-Length: %lu\r\n"
-                "%s"
-                "\r\n"
-                "action=%s",
-                S,
-                (unsigned long)(strlen("action=") + strlen(action)),
-                auth ? auth : "",
-                action) < 0)
+                         "POST /%s HTTP/1.0\r\n"
+                         "Content-Type: application/x-www-form-urlencoded\r\n"
+                         "Content-Length: %lu\r\n"
+                         "%s"
+                         "\r\n"
+                         "action=%s",
+                         S,
+                         (unsigned long)(strlen("action=") + strlen(action)),
+                         auth ? auth : "",
+                         action) < 0)
         {
                 LogError("Cannot send the command '%s' to the monit daemon -- %s\n", action ? action : "null", STRERROR);
                 goto err1;
@@ -422,7 +422,7 @@ int control_service_daemon(const char *S, const char *action) {
                         if (p)
                                 *p = 0;
                 }
-err2:
+        err2:
                 LogError("Action failed -- %s\n", message ? message : "unable to parse response");
                 FREE(message);
         } else

@@ -100,7 +100,7 @@ static int _response(Socket_T socket, mysql_packet_t *pkt) {
 
 /**
  * Simple MySQL test. Connect to MySQL and read Server Handshake Packet.
- * If we can read the packet and it is not an error packet we assume the 
+ * If we can read the packet and it is not an error packet we assume the
  * server is up and working.
  *
  *  @see http://dev.mysql.com/doc/internals/en/client-server-protocol.html

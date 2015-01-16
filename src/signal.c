@@ -51,24 +51,24 @@
  */
 Sigfunc *signal(int signo, Sigfunc *func) {
 
-  struct sigaction act, oact;
+        struct sigaction act, oact;
 
-  act.sa_handler = func;
-  sigemptyset(&act.sa_mask);
-  act.sa_flags = 0;
-  if (signo == SIGALRM) {
+        act.sa_handler = func;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        if (signo == SIGALRM) {
 #ifdef  SA_INTERRUPT
-    act.sa_flags |= SA_INTERRUPT;   /* SunOS */
+                act.sa_flags |= SA_INTERRUPT;   /* SunOS */
 #endif
-  } else {
+        } else {
 #ifdef  SA_RESTART
-    act.sa_flags |= SA_RESTART;             /* SVR4, 44BSD */
+                act.sa_flags |= SA_RESTART;             /* SVR4, 44BSD */
 #endif
-  }
-  if (sigaction(signo, &act, &oact) < 0)
-      return(SIG_ERR);
+        }
+        if (sigaction(signo, &act, &oact) < 0)
+                return(SIG_ERR);
 
-  return(oact.sa_handler);
+        return(oact.sa_handler);
 
 }
 
@@ -80,12 +80,12 @@ Sigfunc *signal(int signo, Sigfunc *func) {
  */
 void set_signal_block(sigset_t *new, sigset_t *old) {
 
-  sigemptyset(new);
-  sigaddset(new, SIGHUP);
-  sigaddset(new, SIGINT);
-  sigaddset(new, SIGUSR1);
-  sigaddset(new, SIGTERM);
-  pthread_sigmask(SIG_BLOCK, new, old);
+        sigemptyset(new);
+        sigaddset(new, SIGHUP);
+        sigaddset(new, SIGINT);
+        sigaddset(new, SIGUSR1);
+        sigaddset(new, SIGTERM);
+        pthread_sigmask(SIG_BLOCK, new, old);
 
 }
 
@@ -96,6 +96,6 @@ void set_signal_block(sigset_t *new, sigset_t *old) {
  */
 void unset_signal_block(sigset_t *old) {
 
-  pthread_sigmask(SIG_SETMASK, old, NULL);
+        pthread_sigmask(SIG_SETMASK, old, NULL);
 
 }

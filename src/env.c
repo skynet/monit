@@ -79,7 +79,7 @@
 /**
  * Initialize the program environment
  *
- * @see https://bitbucket.org/tildeslash/monit/commits/cd545838378517f84bdb0989cadf461a19d8ba11 
+ * @see https://bitbucket.org/tildeslash/monit/commits/cd545838378517f84bdb0989cadf461a19d8ba11
  */
 void init_env() {
         // Close all descriptors except stdio

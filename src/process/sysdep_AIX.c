@@ -133,18 +133,18 @@ struct procentry64 *procs = NULL;
 
 
 int init_process_info_sysdep(void) {
-  perfstat_memory_total_t mem;
+        perfstat_memory_total_t mem;
 
-  if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
-    LogError("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
-    return FALSE;
-  }
+        if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
+                LogError("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
+                return FALSE;
+        }
 
-  page_size                = getpagesize();
-  systeminfo.mem_kbyte_max = (unsigned long)(mem.real_total * (page_size / 1024));
-  systeminfo.cpus          = sysconf(_SC_NPROCESSORS_ONLN);
+        page_size                = getpagesize();
+        systeminfo.mem_kbyte_max = (unsigned long)(mem.real_total * (page_size / 1024));
+        systeminfo.cpus          = sysconf(_SC_NPROCESSORS_ONLN);
 
-  return TRUE;
+        return TRUE;
 }
 
 
@@ -156,25 +156,25 @@ int init_process_info_sysdep(void) {
  * @return: 0 if successful, -1 if failed (and all load averages are 0).
  */
 int getloadavg_sysdep (double *loadv, int nelem) {
-  perfstat_cpu_total_t cpu;
+        perfstat_cpu_total_t cpu;
 
-  if (perfstat_cpu_total(NULL, &cpu, sizeof(perfstat_cpu_total_t), 1) < 1) {
-      LogError("system statistic error -- perfstat_cpu_total failed: %s\n", STRERROR);
-      return -1;
-  }
+        if (perfstat_cpu_total(NULL, &cpu, sizeof(perfstat_cpu_total_t), 1) < 1) {
+                LogError("system statistic error -- perfstat_cpu_total failed: %s\n", STRERROR);
+                return -1;
+        }
 
-  switch (nelem) {
-    case 3:
-      loadv[2] = (double)cpu.loadavg[2] / (double)(1<<SBITS);
+        switch (nelem) {
+                case 3:
+                        loadv[2] = (double)cpu.loadavg[2] / (double)(1<<SBITS);
 
-    case 2:
-      loadv[1] = (double)cpu.loadavg[1] / (double)(1<<SBITS);
+                case 2:
+                        loadv[1] = (double)cpu.loadavg[1] / (double)(1<<SBITS);
 
-    case 1:
-      loadv[0] = (double)cpu.loadavg[0] / (double)(1<<SBITS);
-  }
+                case 1:
+                        loadv[0] = (double)cpu.loadavg[0] / (double)(1<<SBITS);
+        }
 
-  return TRUE;
+        return TRUE;
 }
 
 
@@ -184,72 +184,72 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  * @return treesize>0 if succeeded otherwise =0.
  */
 int initprocesstree_sysdep(ProcessTree_T ** reference) {
-  int             i;
-  int             treesize;
-  struct userinfo user;
-  ProcessTree_T  *pt;
-  pid_t           firstproc = 0;
+        int             i;
+        int             treesize;
+        struct userinfo user;
+        ProcessTree_T  *pt;
+        pid_t           firstproc = 0;
 
-  memset(&user, 0, sizeof(struct userinfo));
+        memset(&user, 0, sizeof(struct userinfo));
 
-  if ((treesize = getprocs64(NULL, 0, NULL, 0, &firstproc, PID_MAX)) < 0) {
-    LogError("system statistic error -- getprocs64 failed: %s\n", STRERROR);
-    return FALSE;
-  }
+        if ((treesize = getprocs64(NULL, 0, NULL, 0, &firstproc, PID_MAX)) < 0) {
+                LogError("system statistic error -- getprocs64 failed: %s\n", STRERROR);
+                return FALSE;
+        }
 
-  procs = CALLOC(sizeof(struct procentry64), treesize);
+        procs = CALLOC(sizeof(struct procentry64), treesize);
 
-  firstproc = 0;
-  if ((treesize = getprocs64(procs, sizeof(struct procentry64), NULL, 0, &firstproc, treesize)) < 0) {
-    FREE(procs);
-    LogError("system statistic error -- getprocs64 failed: %s\n", STRERROR);
-    return FALSE;
-  }
+        firstproc = 0;
+        if ((treesize = getprocs64(procs, sizeof(struct procentry64), NULL, 0, &firstproc, treesize)) < 0) {
+                FREE(procs);
+                LogError("system statistic error -- getprocs64 failed: %s\n", STRERROR);
+                return FALSE;
+        }
 
-  pt = CALLOC(sizeof(ProcessTree_T), treesize);
+        pt = CALLOC(sizeof(ProcessTree_T), treesize);
 
-  for (i = 0; i < treesize; i++) {
-    int fd;
-    struct psinfo ps;
-    char filename[STRLEN];
+        for (i = 0; i < treesize; i++) {
+                int fd;
+                struct psinfo ps;
+                char filename[STRLEN];
 
-    pt[i].cputime     = 0;
-    pt[i].cpu_percent = 0;
-    pt[i].mem_kbyte   = 0;
-    pt[i].pid         = procs[i].pi_pid;
-    pt[i].ppid        = procs[i].pi_ppid;
-    pt[i].starttime   = procs[i].pi_start;
+                pt[i].cputime     = 0;
+                pt[i].cpu_percent = 0;
+                pt[i].mem_kbyte   = 0;
+                pt[i].pid         = procs[i].pi_pid;
+                pt[i].ppid        = procs[i].pi_ppid;
+                pt[i].starttime   = procs[i].pi_start;
 
-    if (procs[i].pi_state == SZOMB) {
-      pt[i].status_flag |= PROCESS_ZOMBIE;
-    } else if (getuser(&(procs[i]), sizeof(struct procinfo), &user, sizeof(struct userinfo)) != -1) {
-      pt[i].mem_kbyte = (user.ui_drss + user.ui_trss) * (page_size / 1024);
-      pt[i].cputime   = (user.ui_ru.ru_utime.tv_sec + user.ui_ru.ru_utime.tv_usec * 1.0e-6 + user.ui_ru.ru_stime.tv_sec + user.ui_ru.ru_stime.tv_usec * 1.0e-6) * 10;
-    }
+                if (procs[i].pi_state == SZOMB) {
+                        pt[i].status_flag |= PROCESS_ZOMBIE;
+                } else if (getuser(&(procs[i]), sizeof(struct procinfo), &user, sizeof(struct userinfo)) != -1) {
+                        pt[i].mem_kbyte = (user.ui_drss + user.ui_trss) * (page_size / 1024);
+                        pt[i].cputime   = (user.ui_ru.ru_utime.tv_sec + user.ui_ru.ru_utime.tv_usec * 1.0e-6 + user.ui_ru.ru_stime.tv_sec + user.ui_ru.ru_stime.tv_usec * 1.0e-6) * 10;
+                }
 
-    snprintf(filename, sizeof(filename), "/proc/%d/psinfo", pt[i].pid);
-    if ((fd = open(filename, O_RDONLY)) < 0) {
-      DEBUG("Cannot open proc file %s -- %s\n", filename, STRERROR);
-      continue;
-    }
-    if (read(fd, &ps, sizeof(ps)) < 0) {
-      DEBUG("Cannot read proc file %s -- %s\n", filename, STRERROR);
-      if (close(fd) < 0)
-        LogError("Socket close failed -- %s\n", STRERROR);
-      return FALSE;
-    }
-    if (close(fd) < 0)
-      LogError("Socket close failed -- %s\n", STRERROR);
-    pt[i].uid     = ps.pr_uid;
-    pt[i].euid    = ps.pr_euid;
-    pt[i].gid     = ps.pr_gid;
-    pt[i].cmdline = (ps.pr_psargs && *ps.pr_psargs) ? Str_dup(ps.pr_psargs) : Str_dup(procs[i].pi_comm);
-  }
+                snprintf(filename, sizeof(filename), "/proc/%d/psinfo", pt[i].pid);
+                if ((fd = open(filename, O_RDONLY)) < 0) {
+                        DEBUG("Cannot open proc file %s -- %s\n", filename, STRERROR);
+                        continue;
+                }
+                if (read(fd, &ps, sizeof(ps)) < 0) {
+                        DEBUG("Cannot read proc file %s -- %s\n", filename, STRERROR);
+                        if (close(fd) < 0)
+                                LogError("Socket close failed -- %s\n", STRERROR);
+                        return FALSE;
+                }
+                if (close(fd) < 0)
+                        LogError("Socket close failed -- %s\n", STRERROR);
+                pt[i].uid     = ps.pr_uid;
+                pt[i].euid    = ps.pr_euid;
+                pt[i].gid     = ps.pr_gid;
+                pt[i].cmdline = (ps.pr_psargs && *ps.pr_psargs) ? Str_dup(ps.pr_psargs) : Str_dup(procs[i].pi_comm);
+        }
 
-  FREE(procs);
-  *reference = pt;
+        FREE(procs);
+        *reference = pt;
 
-  return treesize;
+        return treesize;
 }
 
 
@@ -258,20 +258,20 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
  * @return: TRUE if successful, FALSE if failed (or not available)
  */
 int used_system_memory_sysdep(SystemInfo_T *si) {
-  perfstat_memory_total_t  mem;
+        perfstat_memory_total_t  mem;
 
-  /* Memory */
-  if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
-    LogError("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
-    return FALSE;
-  }
-  si->total_mem_kbyte = (unsigned long)((mem.real_total - mem.real_free - mem.numperm) * (page_size / 1024));
+        /* Memory */
+        if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
+                LogError("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
+                return FALSE;
+        }
+        si->total_mem_kbyte = (unsigned long)((mem.real_total - mem.real_free - mem.numperm) * (page_size / 1024));
 
-  /* Swap */
-  si->swap_kbyte_max   = (unsigned long)(mem.pgsp_total * 4);                   /* 4kB blocks */
-  si->total_swap_kbyte = (unsigned long)((mem.pgsp_total - mem.pgsp_free) * 4); /* 4kB blocks */
+        /* Swap */
+        si->swap_kbyte_max   = (unsigned long)(mem.pgsp_total * 4);                   /* 4kB blocks */
+        si->total_swap_kbyte = (unsigned long)((mem.pgsp_total - mem.pgsp_free) * 4); /* 4kB blocks */
 
-  return TRUE;
+        return TRUE;
 }
 
 
@@ -280,43 +280,43 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
  * @return: TRUE if successful, FALSE if failed (or not available)
  */
 int used_system_cpu_sysdep(SystemInfo_T *si) {
-  perfstat_cpu_total_t cpu;
-  unsigned long long cpu_total;
-  unsigned long long cpu_total_new = 0ULL;
-  unsigned long long cpu_user      = 0ULL;
-  unsigned long long cpu_syst      = 0ULL;
-  unsigned long long cpu_wait      = 0ULL;
+        perfstat_cpu_total_t cpu;
+        unsigned long long cpu_total;
+        unsigned long long cpu_total_new = 0ULL;
+        unsigned long long cpu_user      = 0ULL;
+        unsigned long long cpu_syst      = 0ULL;
+        unsigned long long cpu_wait      = 0ULL;
 
-  if (perfstat_cpu_total(NULL, &cpu, sizeof(perfstat_cpu_total_t), 1) < 0) {
-      LogError("system statistic error -- perfstat_cpu_total failed: %s\n", STRERROR);
-      return -1;
-  }
+        if (perfstat_cpu_total(NULL, &cpu, sizeof(perfstat_cpu_total_t), 1) < 0) {
+                LogError("system statistic error -- perfstat_cpu_total failed: %s\n", STRERROR);
+                return -1;
+        }
 
-  cpu_total_new = (cpu.user + cpu.sys + cpu.wait + cpu.idle) / cpu.ncpus;
-  cpu_total     = cpu_total_new - cpu_total_old;
-  cpu_total_old = cpu_total_new;
-  cpu_user      = cpu.user / cpu.ncpus;
-  cpu_syst      = cpu.sys / cpu.ncpus;
-  cpu_wait      = cpu.wait / cpu.ncpus;
+        cpu_total_new = (cpu.user + cpu.sys + cpu.wait + cpu.idle) / cpu.ncpus;
+        cpu_total     = cpu_total_new - cpu_total_old;
+        cpu_total_old = cpu_total_new;
+        cpu_user      = cpu.user / cpu.ncpus;
+        cpu_syst      = cpu.sys / cpu.ncpus;
+        cpu_wait      = cpu.wait / cpu.ncpus;
 
-  if (cpu_initialized) {
-    if (cpu_total > 0) {
-      si->total_cpu_user_percent = 1000 * ((double)(cpu_user - cpu_user_old) / (double)cpu_total);
-      si->total_cpu_syst_percent = 1000 * ((double)(cpu_syst - cpu_syst_old) / (double)cpu_total);
-      si->total_cpu_wait_percent = 1000 * ((double)(cpu_wait - cpu_wait_old) / (double)cpu_total);
-    } else {
-      si->total_cpu_user_percent = 0;
-      si->total_cpu_syst_percent = 0;
-      si->total_cpu_wait_percent = 0;
-    }
-  }
+        if (cpu_initialized) {
+                if (cpu_total > 0) {
+                        si->total_cpu_user_percent = 1000 * ((double)(cpu_user - cpu_user_old) / (double)cpu_total);
+                        si->total_cpu_syst_percent = 1000 * ((double)(cpu_syst - cpu_syst_old) / (double)cpu_total);
+                        si->total_cpu_wait_percent = 1000 * ((double)(cpu_wait - cpu_wait_old) / (double)cpu_total);
+                } else {
+                        si->total_cpu_user_percent = 0;
+                        si->total_cpu_syst_percent = 0;
+                        si->total_cpu_wait_percent = 0;
+                }
+        }
 
-  cpu_user_old = cpu_user;
-  cpu_syst_old = cpu_syst;
-  cpu_wait_old = cpu_wait;
+        cpu_user_old = cpu_user;
+        cpu_syst_old = cpu_syst;
+        cpu_wait_old = cpu_wait;
 
-  cpu_initialized = 1;
+        cpu_initialized = 1;
 
-  return TRUE;
+        return TRUE;
 }
 

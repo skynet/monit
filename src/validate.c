@@ -145,12 +145,12 @@ static void check_connection(Service_T s, Port_T p) {
         char report[STRLEN] = {};
         struct timeval t1;
         struct timeval t2;
-        
+
         ASSERT(s && p);
 retry:
         /* Get time of connection attempt beginning */
         gettimeofday(&t1, NULL);
-        
+
         /* Open a socket to the destination INET[hostname:port] or UNIX[pathname] */
         socket = socket_create(p);
         if (!socket) {
@@ -179,13 +179,13 @@ retry:
         } else {
                 DEBUG("'%s' succeeded testing protocol [%s] at %s\n", s->name, p->protocol->name, Util_portDescription(p, buf, sizeof(buf)));
         }
-        
+
         /* Get time of connection attempt finish */
         gettimeofday(&t2, NULL);
-        
+
         /* Get the response time */
         p->response = (double)(t2.tv_sec - t1.tv_sec) + (double)(t2.tv_usec - t1.tv_usec)/1000000;
-        
+
 error:
         if (socket)
                 socket_free(&socket);
@@ -201,7 +201,7 @@ error:
                 p->is_available = TRUE;
                 Event_post(s, Event_Connection, STATE_SUCCEEDED, p->action, "connection succeeded to %s", Util_portDescription(p, buf, sizeof(buf)));
         }
-        
+
 }
 
 
@@ -221,13 +221,13 @@ static void check_process_state(Service_T s) {
  * Test process pid for possible change since last cycle
  */
 static void check_process_pid(Service_T s) {
-        
+
         ASSERT(s && s->inf);
-        
+
         /* process pid was not initialized yet */
         if (s->inf->priv.process._pid < 0 || s->inf->priv.process.pid < 0)
                 return;
-        
+
         for (Pid_T l = s->pidlist; l; l = l->next) {
                 if (s->inf->priv.process._pid != s->inf->priv.process.pid)
                         Event_post(s, Event_Pid, STATE_CHANGED, l->action, "process PID changed from %d to %d", s->inf->priv.process._pid, s->inf->priv.process.pid);
@@ -241,13 +241,13 @@ static void check_process_pid(Service_T s) {
  * Test process ppid for possible change since last cycle
  */
 static void check_process_ppid(Service_T s) {
-        
+
         ASSERT(s && s->inf);
-        
+
         /* process ppid was not initialized yet */
         if (s->inf->priv.process._ppid < 0 || s->inf->priv.process.ppid < 0)
                 return;
-        
+
         for (Pid_T l = s->ppidlist; l; l = l->next) {
                 if (s->inf->priv.process._ppid != s->inf->priv.process.ppid)
                         Event_post(s, Event_PPid, STATE_CHANGED, l->action, "process PPID changed from %d to %d", s->inf->priv.process._ppid, s->inf->priv.process.ppid);
@@ -261,14 +261,14 @@ static void check_process_ppid(Service_T s) {
  * Check process resources
  */
 static void check_process_resources(Service_T s, Resource_T r) {
-        
+
         int okay = TRUE;
         char report[STRLEN]={0}, buf1[STRLEN], buf2[STRLEN];
-        
+
         ASSERT(s && r);
-        
+
         switch(r->resource_id) {
-                        
+
                 case RESOURCE_ID_CPU_PERCENT:
                         if (s->monitor & MONITOR_INIT || s->inf->priv.process.cpu_percent < 0) {
                                 DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
@@ -278,7 +278,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.cpu_percent/10.0);
                         break;
-                        
+
                 case RESOURCE_ID_TOTAL_CPU_PERCENT:
                         if (s->monitor & MONITOR_INIT || s->inf->priv.process.total_cpu_percent < 0) {
                                 DEBUG("'%s' total cpu usage check skipped (initializing)\n", s->name);
@@ -288,7 +288,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "total cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.total_cpu_percent/10.0);
                         break;
-                        
+
                 case RESOURCE_ID_CPUUSER:
                         if (s->monitor & MONITOR_INIT || systeminfo.total_cpu_user_percent < 0) {
                                 DEBUG("'%s' cpu user usage check skipped (initializing)\n", s->name);
@@ -298,7 +298,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "cpu user usage check succeeded [current cpu user usage=%.1f%%]", systeminfo.total_cpu_user_percent/10.0);
                         break;
-                        
+
                 case RESOURCE_ID_CPUSYSTEM:
                         if (s->monitor & MONITOR_INIT || systeminfo.total_cpu_syst_percent < 0) {
                                 DEBUG("'%s' cpu system usage check skipped (initializing)\n", s->name);
@@ -308,7 +308,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "cpu system usage check succeeded [current cpu system usage=%.1f%%]", systeminfo.total_cpu_syst_percent/10.0);
                         break;
-                        
+
                 case RESOURCE_ID_CPUWAIT:
                         if (s->monitor & MONITOR_INIT || systeminfo.total_cpu_wait_percent < 0) {
                                 DEBUG("'%s' cpu wait usage check skipped (initializing)\n", s->name);
@@ -318,7 +318,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "cpu wait usage check succeeded [current cpu wait usage=%.1f%%]", systeminfo.total_cpu_wait_percent/10.0);
                         break;
-                        
+
                 case RESOURCE_ID_MEM_PERCENT:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_percent, r->limit)) {
@@ -334,7 +334,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                         snprintf(report, STRLEN, "mem usage check succeeded [current mem usage=%.1f%%]", s->inf->priv.process.mem_percent/10.0);
                         }
                         break;
-                        
+
                 case RESOURCE_ID_MEM_KBYTE:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_kbyte, r->limit)) {
@@ -350,7 +350,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                         snprintf(report, STRLEN, "mem amount check succeeded [current mem amount=%s]", Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf1));
                         }
                         break;
-                        
+
                 case RESOURCE_ID_SWAP_PERCENT:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_percent, r->limit)) {
@@ -360,7 +360,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                         snprintf(report, STRLEN, "swap usage check succeeded [current swap usage=%.1f%%]", systeminfo.total_swap_percent/10.0);
                         }
                         break;
-                        
+
                 case RESOURCE_ID_SWAP_KBYTE:
                         if (s->type == TYPE_SYSTEM) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_kbyte, r->limit)) {
@@ -370,7 +370,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                         snprintf(report, STRLEN, "swap amount check succeeded [current swap amount=%s]", Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf1));
                         }
                         break;
-                        
+
                 case RESOURCE_ID_LOAD1:
                         if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[0]*10.0), r->limit)) {
                                 snprintf(report, STRLEN, "loadavg(1min) of %.1f matches resource limit [loadavg(1min)%s%.1f]", systeminfo.loadavg[0], operatorshortnames[r->operator], r->limit/10.0);
@@ -378,7 +378,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "loadavg(1min) check succeeded [current loadavg(1min)=%.1f]", systeminfo.loadavg[0]);
                         break;
-                        
+
                 case RESOURCE_ID_LOAD5:
                         if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[1]*10.0), r->limit)) {
                                 snprintf(report, STRLEN, "loadavg(5min) of %.1f matches resource limit [loadavg(5min)%s%.1f]", systeminfo.loadavg[1], operatorshortnames[r->operator], r->limit/10.0);
@@ -386,7 +386,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "loadavg(5min) check succeeded [current loadavg(5min)=%.1f]", systeminfo.loadavg[1]);
                         break;
-                        
+
                 case RESOURCE_ID_LOAD15:
                         if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[2]*10.0), r->limit)) {
                                 snprintf(report, STRLEN, "loadavg(15min) of %.1f matches resource limit [loadavg(15min)%s%.1f]", systeminfo.loadavg[2], operatorshortnames[r->operator], r->limit/10.0);
@@ -394,7 +394,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "loadavg(15min) check succeeded [current loadavg(15min)=%.1f]", systeminfo.loadavg[2]);
                         break;
-                        
+
                 case RESOURCE_ID_CHILDREN:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.children, r->limit)) {
                                 snprintf(report, STRLEN, "children of %i matches resource limit [children%s%ld]", s->inf->priv.process.children, operatorshortnames[r->operator], r->limit);
@@ -402,7 +402,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "children check succeeded [current children=%i]", s->inf->priv.process.children);
                         break;
-                        
+
                 case RESOURCE_ID_TOTAL_MEM_KBYTE:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_kbyte, r->limit)) {
                                 snprintf(report, STRLEN, "total mem amount of %s matches resource limit [total mem amount%s%s]", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf1), operatorshortnames[r->operator], Str_bytesToSize(r->limit * 1024., buf2));
@@ -410,7 +410,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount=%s]", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf1));
                         break;
-                        
+
                 case RESOURCE_ID_TOTAL_MEM_PERCENT:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_percent, r->limit)) {
                                 snprintf(report, STRLEN, "total mem amount of %.1f%% matches resource limit [total mem amount%s%.1f%%]", (float)s->inf->priv.process.total_mem_percent/10.0, operatorshortnames[r->operator], (float)r->limit/10.0);
@@ -418,7 +418,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         } else
                                 snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount=%.1f%%]", s->inf->priv.process.total_mem_percent/10.0);
                         break;
-                        
+
                 default:
                         LogError("'%s' error -- unknown resource ID: [%d]\n", s->name, r->resource_id);
                         return;
@@ -433,20 +433,20 @@ static void check_process_resources(Service_T s, Resource_T r) {
 static void check_checksum(Service_T s) {
         int         changed;
         Checksum_T  cs;
-        
+
         ASSERT(s && s->path && s->checksum);
-        
+
         cs = s->checksum;
-        
+
         if (Util_getChecksum(s->path, cs->type, s->inf->priv.file.cs_sum, sizeof(s->inf->priv.file.cs_sum))) {
-                
+
                 Event_post(s, Event_Data, STATE_SUCCEEDED, s->action_DATA, "checksum computed for %s", s->path);
-                
+
                 if (! cs->initialized) {
                         cs->initialized = TRUE;
                         snprintf(cs->hash, sizeof(cs->hash), "%s", s->inf->priv.file.cs_sum);
                 }
-                
+
                 switch(cs->type) {
                         case HASH_MD5:
                                 changed = strncmp(cs->hash, s->inf->priv.file.cs_sum, 32);
@@ -459,9 +459,9 @@ static void check_checksum(Service_T s) {
                                 *s->inf->priv.file.cs_sum = 0;
                                 return;
                 }
-                
+
                 if (changed) {
-                        
+
                         if (cs->test_changes) {
                                 /* if we are testing for changes only, the value is variable */
                                 Event_post(s, Event_Checksum, STATE_CHANGED, cs->action, "checksum was changed for %s", s->path);
@@ -471,7 +471,7 @@ static void check_checksum(Service_T s) {
                                 /* we are testing constant value for failed or succeeded state */
                                 Event_post(s, Event_Checksum, STATE_FAILED, cs->action, "checksum test failed for %s", s->path);
                         }
-                        
+
                 } else if (cs->test_changes) {
                         Event_post(s, Event_Checksum, STATE_CHANGEDNOT, cs->action, "checksum has not changed");
                 } else {
@@ -479,9 +479,9 @@ static void check_checksum(Service_T s) {
                 }
                 return;
         }
-        
+
         Event_post(s, Event_Data, STATE_FAILED, s->action_DATA, "cannot compute checksum for %s", s->path);
-        
+
 }
 
 
@@ -490,7 +490,7 @@ static void check_checksum(Service_T s) {
  */
 static void check_perm(Service_T s) {
         ASSERT(s && s->perm);
-        
+
         if ((s->inf->st_mode & 07777) != s->perm->perm)
                 Event_post(s, Event_Permission, STATE_FAILED, s->perm->action, "permission test failed for %s -- current permission is %04o", s->path, s->inf->st_mode&07777);
         else
@@ -503,7 +503,7 @@ static void check_perm(Service_T s) {
  */
 static void check_uid(Service_T s) {
         ASSERT(s && s->uid);
-        
+
         if (s->type == TYPE_PROCESS) {
                 if (s->inf->priv.process.uid != s->uid->uid)
                         Event_post(s, Event_Uid, STATE_FAILED, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, s->inf->priv.process.uid);
@@ -523,7 +523,7 @@ static void check_uid(Service_T s) {
  */
 static void check_euid(Service_T s) {
         ASSERT(s && s->uid);
-        
+
         if (s->inf->priv.process.euid != s->euid->uid)
                 Event_post(s, Event_Uid, STATE_FAILED, s->euid->action, "euid test failed for %s -- current euid is %d", s->name, s->inf->priv.process.euid);
         else
@@ -536,7 +536,7 @@ static void check_euid(Service_T s) {
  */
 static void check_gid(Service_T s) {
         ASSERT(s && s->gid);
-        
+
         if (s->type == TYPE_PROCESS) {
                 if (s->inf->priv.process.gid != s->gid->gid )
                         Event_post(s, Event_Gid, STATE_FAILED, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, s->inf->priv.process.gid);
@@ -556,20 +556,20 @@ static void check_gid(Service_T s) {
  */
 static void check_timestamp(Service_T s) {
         time_t now;
-        
+
         ASSERT(s && s->timestamplist);
-        
+
         if ((int)time(&now) == -1) {
                 Event_post(s, Event_Data, STATE_FAILED, s->action_DATA, "can't obtain actual system time");
                 return;
         } else
                 Event_post(s, Event_Data, STATE_SUCCEEDED, s->action_DATA, "actual system time obtained");
-        
+
         for (Timestamp_T t = s->timestamplist; t; t = t->next) {
                 if (t->test_changes) {
-                        
+
                         /* if we are testing for changes only, the value is variable */
-                        
+
                         if (t->timestamp != s->inf->timestamp) {
                                 /* reset expected value for next cycle */
                                 t->timestamp = s->inf->timestamp;
@@ -579,9 +579,9 @@ static void check_timestamp(Service_T s) {
                         }
                         break;
                 } else {
-                        
+
                         /* we are testing constant value for failed or succeeded state */
-                        
+
                         if (Util_evalQExpression(t->operator, (int)(now - s->inf->timestamp), t->time))
                                 Event_post(s, Event_Timestamp, STATE_FAILED, t->action, "timestamp test failed for %s", s->path);
                         else
@@ -630,7 +630,7 @@ static void check_size(Service_T s) {
  */
 static void check_uptime(Service_T s) {
         ASSERT(s);
-        
+
         for (Uptime_T ul = s->uptimelist; ul; ul = ul->next) {
                 if (Util_evalQExpression(ul->operator, s->inf->priv.process.uptime, ul->uptime))
                         Event_post(s, Event_Uptime, STATE_FAILED, ul->action, "uptime test failed for %s -- current uptime is %llu seconds", s->path, (unsigned long long)s->inf->priv.process.uptime);
@@ -666,15 +666,15 @@ static void check_match(Service_T s) {
         Match_T ml;
         FILE *file;
         char line[MATCH_LINE_LENGTH];
-        
+
         ASSERT(s && s->matchlist);
-        
+
         /* Open the file */
         if (! (file = fopen(s->path, "r"))) {
                 LogError("'%s' cannot open file %s: %s\n", s->name, s->path, STRERROR);
                 return;
         }
-        
+
         /* FIXME: Refactor: Initialize the filesystems table ahead of file and filesystems test and index it by device id + replace the Str_startsWith() with lookup to the table by device id (obtained via file's stat()).
          The central filesystems initialization will allow to reduce the statfs() calls in the case that there will be multiple file and/or filesystems tests for the same fs. Temporarily we go with
          dummy Str_startsWith() as quick fix which will cover 99.9% of use cases without rising the statfs overhead if statfs call would be inlined here.
@@ -685,14 +685,14 @@ static void check_match(Service_T s) {
                 /* If inode changed or size shrinked -> set read position = 0 */
                 if (s->inf->priv.file.st_ino != s->inf->priv.file.st_ino_prev || s->inf->priv.file.readpos > s->inf->priv.file.st_size)
                         s->inf->priv.file.readpos = 0;
-                
+
                 /* Do we need to match? Even if not, go to final, so we can reset the content match error flags in this cycle */
                 if (s->inf->priv.file.readpos == s->inf->priv.file.st_size) {
                         DEBUG("'%s' content match skipped - file size nor inode has not changed since last test\n", s->name);
                         goto final;
                 }
         }
-        
+
         while (TRUE) {
         next:
                 /* Seek to the read position */
@@ -700,13 +700,13 @@ static void check_match(Service_T s) {
                         LogError("'%s' cannot seek file %s: %s\n", s->name, s->path, STRERROR);
                         goto final;
                 }
-                
+
                 if (! fgets(line, MATCH_LINE_LENGTH, file)) {
                         if (! feof(file))
                                 LogError("'%s' cannot read file %s: %s\n", s->name, s->path, STRERROR);
                         goto final;
                 }
-                
+
                 size_t length = strlen(line);
                 if (length == 0) {
                         /* No content: shouldn't happen - empty line will contain at least '\n' */
@@ -731,7 +731,7 @@ static void check_match(Service_T s) {
                 }
                 /* Set read position to the end of last read */
                 s->inf->priv.file.readpos += length;
-                
+
                 /* Check ignores */
                 for (ml = s->matchignorelist; ml; ml = ml->next) {
                         if ((check_pattern(ml, line) == 0)  ^ (ml->not)) {
@@ -740,7 +740,7 @@ static void check_match(Service_T s) {
                                 goto next;
                         }
                 }
-                
+
                 /* Check non ignores */
                 for (ml = s->matchlist; ml; ml = ml->next) {
                         if ((check_pattern(ml, line) == 0) ^ (ml->not)) {
@@ -761,7 +761,7 @@ static void check_match(Service_T s) {
 final:
         if (fclose(file))
                 LogError("'%s' cannot close file %s: %s\n", s->name, s->path, STRERROR);
-        
+
         /* Post process the matches: generate events for particular patterns */
         for (ml = s->matchlist; ml; ml = ml->next) {
                 if (ml->log) {
@@ -779,11 +779,11 @@ final:
  */
 static void check_filesystem_flags(Service_T s) {
         ASSERT(s && s->inf);
-        
+
         /* filesystem flags were not initialized yet */
         if (s->inf->priv.filesystem._flags == -1)
                 return;
-        
+
         for (Fsflag_T l = s->fsflaglist; l; l = l->next)
                 if (s->inf->priv.filesystem._flags != s->inf->priv.filesystem.flags)
                         Event_post(s, Event_Fsflag, STATE_CHANGED, l->action, "filesytem flags changed to %#x", s->inf->priv.filesystem.flags);
@@ -794,20 +794,20 @@ static void check_filesystem_flags(Service_T s) {
  */
 static void check_filesystem_resources(Service_T s, Filesystem_T td) {
         ASSERT(s && td);
-        
+
         if ( (td->limit_percent < 0) && (td->limit_absolute < 0) ) {
                 LogError("'%s' error: filesystem limit not set\n", s->name);
                 return;
         }
-        
+
         switch(td->resource) {
-                        
+
                 case RESOURCE_ID_INODE:
                         if (s->inf->priv.filesystem.f_files <= 0) {
                                 DEBUG("'%s' filesystem doesn't support inodes\n", s->name);
                                 return;
                         }
-                        
+
                         if (td->limit_percent >= 0) {
                                 if (Util_evalQExpression( td->operator, s->inf->priv.filesystem.inode_percent, td->limit_percent)) {
                                         Event_post(s, Event_Resource, STATE_FAILED, td->action, "inode usage %.1f%% matches resource limit [inode usage%s%.1f%%]", s->inf->priv.filesystem.inode_percent/10., operatorshortnames[td->operator], td->limit_percent/10.);
@@ -821,7 +821,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                         }
                         Event_post(s, Event_Resource, STATE_SUCCEEDED, td->action, "inode usage test succeeded [current inode usage=%.1f%%]", s->inf->priv.filesystem.inode_percent/10.);
                         return;
-                        
+
                 case RESOURCE_ID_SPACE:
                         if (td->limit_percent >= 0) {
                                 if (Util_evalQExpression( td->operator, s->inf->priv.filesystem.space_percent, td->limit_percent)) {
@@ -836,25 +836,25 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                         }
                         Event_post(s, Event_Resource, STATE_SUCCEEDED, td->action, "space usage test succeeded [current space usage=%.1f%%]", s->inf->priv.filesystem.space_percent/10.);
                         return;
-                        
+
                 default:
                         LogError("'%s' error -- unknown resource type: [%d]\n", s->name, td->resource);
                         return;
         }
-        
+
 }
 
 
 static void check_timeout(Service_T s) {
         ASSERT(s);
-        
+
         if (! s->actionratelist)
                 return;
-        
+
         /* Start counting cycles */
         if (s->nstart > 0)
                 s->ncycle++;
-        
+
         int max = 0;
         for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next) {
                 if (max < ar->cycle)
@@ -862,7 +862,7 @@ static void check_timeout(Service_T s) {
                 if (s->nstart >= ar->count && s->ncycle <= ar->cycle)
                         Event_post(s, Event_Timeout, STATE_FAILED, ar->action, "service restarted %d times within %d cycles(s) - %s", s->nstart, s->ncycle, actionnames[ar->action->failed->id]);
         }
-        
+
         /* Stop counting and reset if the cycle interval is succeeded */
         if (s->ncycle > max) {
                 s->ncycle = 0;
@@ -1027,11 +1027,11 @@ int check_process(Service_T s) {
         }
         /* Test each host:port and protocol in the service's portlist */
         if (s->portlist)
-                /* skip further tests during startup timeout */
+        /* skip further tests during startup timeout */
                 if (s->start)
                         if (s->inf->priv.process.uptime < s->start->timeout) return TRUE;
-                for (pp = s->portlist; pp; pp = pp->next)
-                        check_connection(s, pp);
+        for (pp = s->portlist; pp; pp = pp->next)
+                check_connection(s, pp);
         return TRUE;
 }
 

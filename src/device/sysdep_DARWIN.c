@@ -58,46 +58,46 @@
 #include "device_sysdep.h"
 
 char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
-  int countfs;
+        int countfs;
 
-  ASSERT(dev);
+        ASSERT(dev);
 
-  if ((countfs = getfsstat(NULL, 0, MNT_NOWAIT)) != -1) {
-    struct statfs *statfs = CALLOC(countfs, sizeof(struct statfs));
-    if ((countfs = getfsstat(statfs, countfs * sizeof(struct statfs), MNT_NOWAIT)) != -1) {
-      for (int i = 0; i < countfs; i++) {
-        struct statfs *sfs = statfs + i;
-        if (IS(sfs->f_mntfromname, dev)) {
-          snprintf(buf, buflen, "%s", sfs->f_mntonname);
-          FREE(statfs);
-          return buf;
+        if ((countfs = getfsstat(NULL, 0, MNT_NOWAIT)) != -1) {
+                struct statfs *statfs = CALLOC(countfs, sizeof(struct statfs));
+                if ((countfs = getfsstat(statfs, countfs * sizeof(struct statfs), MNT_NOWAIT)) != -1) {
+                        for (int i = 0; i < countfs; i++) {
+                                struct statfs *sfs = statfs + i;
+                                if (IS(sfs->f_mntfromname, dev)) {
+                                        snprintf(buf, buflen, "%s", sfs->f_mntonname);
+                                        FREE(statfs);
+                                        return buf;
+                                }
+                        }
+                }
+                FREE(statfs);
         }
-      }
-    }
-    FREE(statfs);
-  }
-  LogError("Error getting mountpoint for filesystem '%s' -- %s\n", dev, STRERROR);
-  return NULL;
+        LogError("Error getting mountpoint for filesystem '%s' -- %s\n", dev, STRERROR);
+        return NULL;
 }
 
 
 int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
-  struct statfs usage;
+        struct statfs usage;
 
-  ASSERT(inf);
+        ASSERT(inf);
 
-  if (statfs(mntpoint, &usage) != 0) {
-    LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
-    return FALSE;
-  }
-  inf->priv.filesystem.f_bsize =           usage.f_bsize;
-  inf->priv.filesystem.f_blocks =          usage.f_blocks;
-  inf->priv.filesystem.f_blocksfree =      usage.f_bavail;
-  inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree;
-  inf->priv.filesystem.f_files =           usage.f_files;
-  inf->priv.filesystem.f_filesfree =       usage.f_ffree;
-  inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
-  inf->priv.filesystem.flags =             usage.f_flags;
-  return TRUE;
+        if (statfs(mntpoint, &usage) != 0) {
+                LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
+                return FALSE;
+        }
+        inf->priv.filesystem.f_bsize =           usage.f_bsize;
+        inf->priv.filesystem.f_blocks =          usage.f_blocks;
+        inf->priv.filesystem.f_blocksfree =      usage.f_bavail;
+        inf->priv.filesystem.f_blocksfreetotal = usage.f_bfree;
+        inf->priv.filesystem.f_files =           usage.f_files;
+        inf->priv.filesystem.f_filesfree =       usage.f_ffree;
+        inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
+        inf->priv.filesystem.flags =             usage.f_flags;
+        return TRUE;
 }
 

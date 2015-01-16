@@ -243,7 +243,7 @@ void State_save() {
 void State_update() {
         /* Ignore empty state file */
         if ((lseek(file, 0L, SEEK_END) == 0))
-             return;
+                return;
         TRY
         {
                 if (lseek(file, 0L, SEEK_SET) == -1)

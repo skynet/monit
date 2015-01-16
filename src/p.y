@@ -1014,7 +1014,7 @@ connection      : IF FAILED host port type protocol urloption nettimeout retry r
                     portset.retry = $<number>9;
                     /* This is a workaround to support content match without having to create
                      an URL object. 'urloption' creates the Request_T object we need minus the
-                     URL object, but with enough information to perform content test. 
+                     URL object, but with enough information to perform content test.
                      TODO: Parser is in need of refactoring */
                     portset.url_request = urlrequest;
                     addeventaction(&(portset).action, $<number>12, $<number>13);
@@ -3532,11 +3532,11 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
         char buf[STRLEN];
         FILE *handle = NULL;
         int credentials_added = 0;
-        
+
         ASSERT(filename);
-        
+
         handle = fopen(filename, "r");
-        
+
         if ( handle == NULL ) {
                 if (username != NULL)
                 yyerror2("Cannot read htpasswd (%s)", filename);
@@ -3544,31 +3544,31 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
                 yyerror2("Cannot read htpasswd", filename);
                 return;
         }
-        
+
         while (!feof(handle)) {
                 char *colonindex = NULL;
-                
+
                 if (! fgets(buf, STRLEN, handle))
                         continue;
-                        
+
                 Str_rtrim(buf);
                 Str_curtail(buf, "#");
 
                 if ( NULL == (colonindex = strchr(buf, ':')))
                         continue;
-                
+
                 ht_passwd = Str_dup(colonindex+1);
                 *colonindex = '\0';
-                
+
                 /* In case we have a file in /etc/passwd or /etc/shadow style we
                  *  want to remove ":.*$" and Crypt and MD5 hashed dont have a colon
                  */
-                
+
                 if ( (NULL != (colonindex = strchr(ht_passwd, ':'))) && ( dtype != DIGEST_CLEARTEXT) )
                 *colonindex = '\0';
-                
+
                 ht_username = Str_dup(buf);
-                
+
                 if (username == NULL) {
                         if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
                         credentials_added++;
@@ -3580,7 +3580,7 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
                         FREE(ht_username);
                 }
         }
-        
+
         if (credentials_added == 0) {
                 if ( username == NULL )
                 yywarning2("htpasswd file (%s) has no usable credentials", filename);

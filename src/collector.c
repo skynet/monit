@@ -134,7 +134,7 @@ int handle_mmonit(Event_T E) {
                         goto error;
                 }
                 if (! socket_set_tcp_nodelay(socket)) {
-                    LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
+                        LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
                 }
                 status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket));
                 if (! data_send(socket, C, StringBuffer_toString(sb))) {
@@ -148,7 +148,7 @@ int handle_mmonit(Event_T E) {
                 }
                 rv = HANDLER_SUCCEEDED; // Return success if at least one M/Monit succeeded
                 DEBUG("M/Monit: %s message sent to %s\n", E ? "event" : "status", C->url->url);
-error:
+        error:
                 if (socket)
                         socket_free(&socket);
         }

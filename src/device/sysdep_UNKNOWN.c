@@ -34,13 +34,13 @@
 #include "device_sysdep.h"
 
 char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
-  LogError("Unsupported mounted filesystem information method\n");
-  return NULL;
+        LogError("Unsupported mounted filesystem information method\n");
+        return NULL;
 }
 
 
 int filesystem_usage_sysdep(Info_T inf) {
-  LogError("Unsupported filesystem informations gathering method\n");
-  return FALSE;
+        LogError("Unsupported filesystem informations gathering method\n");
+        return FALSE;
 }
 
