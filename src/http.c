@@ -86,24 +86,15 @@ static volatile int running = FALSE;
  * message if monit httpd _should_ start but can't.
  */
 int can_http() {
-
         if (Run.dohttpd && Run.isdaemon) {
-
-                if (! has_hosts_allow() && ! Run.credentials) {
-
-                        LogError("%s: monit httpd not started since no connect allowed\n",
-                                 prog);
-
+                if (! Engine_hasHostsAllow() && ! Run.credentials) {
+                        LogError("%s: monit httpd not started since no connect allowed\n", prog);
                         return FALSE;
 
                 }
-
                 return TRUE;
-
         }
-
         return FALSE;
-
 }
 
 
@@ -112,44 +103,32 @@ int can_http() {
  * @param action START_HTTP or STOP_HTTP
  */
 void monit_http(int action) {
-
         int status;
-
         switch (action) {
-
                 case STOP_HTTP:
                         if (! running) break;
                         LogInfo("Shutting down Monit HTTP server\n");
-                        stop_httpd();
+                        Engine_stop();
                         if ( (status = pthread_join(thread, NULL)) != 0) {
-                                LogError("Monit: Failed to stop the http server. Thread error -- %s.\n",
-                                         strerror(status));
+                                LogError("Monit: Failed to stop the http server. Thread error -- %s.\n", strerror(status));
                         } else {
                                 LogInfo("Monit HTTP server stopped\n");
                                 running = FALSE;
                         }
                         break;
-
                 case START_HTTP:
-                        LogInfo("Starting Monit HTTP server at [%s:%d]\n",
-                                Run.bind_addr ? Run.bind_addr : "*", Run.httpdport);
+                        LogInfo("Starting Monit HTTP server at [%s:%d]\n", Run.bind_addr ? Run.bind_addr : "*", Run.httpdport);
                         if ( (status = pthread_create(&thread, NULL, thread_wrapper, NULL)) != 0) {
-                                LogError("Monit: Failed to create the http server. Thread error -- %s.\n",
-                                         strerror(status));
+                                LogError("Monit: Failed to create the http server. Thread error -- %s.\n", strerror(status));
                         } else {
                                 LogInfo("Monit HTTP server started\n");
                                 running = TRUE;
                         }
                         break;
-
                 default:
                         LogError("Monit: Unknown http server action\n");
                         break;
-
         }
-
-        return;
-
 }
 
 
@@ -157,16 +136,10 @@ void monit_http(int action) {
 
 
 static void *thread_wrapper(void *arg) {
-
         sigset_t ns;
-
-        /* Block collective signals in the http thread. The http server is
-         * taken down gracefully by signaling the main monit thread */
+        /* Block collective signals in the http thread. The http server is taken down gracefully by signaling the main monit thread */
         set_signal_block(&ns, NULL);
-        start_httpd(Run.httpdport, 1024, Run.bind_addr);
-
+        Engine_start(Run.httpdport, 1024, Run.bind_addr);
         return NULL;
-
 }
-
 

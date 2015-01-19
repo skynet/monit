@@ -546,7 +546,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
         }
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>httpd auth. style</td><td>%s</td></tr>",
-                            (Run.credentials != NULL) && (has_hosts_allow()) ? "Basic Authentication and Host/Net allow list" : (Run.credentials != NULL) ? "Basic Authentication" : (has_hosts_allow()) ? "Host/Net allow list" : "No authentication");
+                            Run.credentials && Engine_hasHostsAllow() ? "Basic Authentication and Host/Net allow list" : Run.credentials ? "Basic Authentication" : Engine_hasHostsAllow() ? "Host/Net allow list" : "No authentication");
         print_alerts(res, Run.maillist);
         StringBuffer_append(res->outputbuffer, "</table>");
         if (! is_readonly(req)) {
@@ -712,7 +712,7 @@ static void handle_run(HttpRequest req, HttpResponse res) {
                         LogInfo("The Monit http server stopped on user request\n");
                         send_error(res, SC_SERVICE_UNAVAILABLE,
                                    "The Monit http server is stopped");
-                        stop_httpd();
+                        Engine_stop();
                         return;
                 }
         }

@@ -873,13 +873,12 @@ void Util_printRunList() {
                 }
 
                 printf(" %-18s = %s\n", "httpd auth. style",
-                       (Run.credentials != NULL)&&has_hosts_allow() ? "Basic Authentication and Host/Net allow list" : (Run.credentials != NULL) ? "Basic Authentication" : has_hosts_allow() ? "Host/Net allow list" : "No authentication!");
+                       Run.credentials && Engine_hasHostsAllow() ? "Basic Authentication and Host/Net allow list" : Run.credentials ? "Basic Authentication" : Engine_hasHostsAllow() ? "Host/Net allow list" : "No authentication!");
 
         }
 
         {
-                Mail_T list;
-                for (list = Run.maillist; list; list = list->next) {
+                for (Mail_T list = Run.maillist; list; list = list->next) {
                         printf(" %-18s = %s\n", "Alert mail to", is_str_defined(list->to));
                         printf("   %-16s = ", "Alert on");
                         printevents(list->events);

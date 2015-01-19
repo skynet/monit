@@ -26,32 +26,52 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "config.h"
 
-#include "net.h"
-#include "processor.h"
-#include "cervlet.h"
-
-/*
- * The maximum queue length for incoming connection
- * indications (a request to connect)
+/**
+ * Start the HTTPD server
+ * @param port The Port number to start the server at
+ * @param backlog The maximum length of the incomming connection queue
+ * @param bindAddr the local address the server will bind to
  */
-#define DEFAULT_QUEUE_LEN  10
+void Engine_start(int port, int backlog, char *bindAddr);
 
-typedef struct host_allow {
-  unsigned long network;
-  unsigned long mask;
-  /* For internal use */
-  struct host_allow *next;
-} *HostsAllow;
 
-/* Public prototypes */
-void start_httpd(int port, int backlog, char *bindAddr);
-void stop_httpd();
-int add_host_allow(char *);
-int add_net_allow(char *);
-int has_hosts_allow();
-void destroy_hosts_allow();
+/**
+ * Stop the HTTPD server.
+ */
+void Engine_stop();
+
+
+/**
+ * Add hosts allowed to connect to this server.
+ * @param name A hostname (A-Record) or IP address to be added to the
+ * hosts allow list
+ * @return FALSE if the given host does not resolve, otherwise TRUE
+ */
+int Engine_addHostAllow(char *);
+
+
+/**
+ * Add network allowed to connect to this server.
+ * @param s_network A network identifier in IP/mask format to be added
+ * to the hosts allow list
+ * @return FALSE if no correct network identifier is provided,
+ * otherwise TRUE
+ */
+int Engine_addNetAllow(char *);
+
+
+/**
+ * Are any hosts present in the host allow list?
+ * @return TRUE if the host allow list is non-empty, otherwise FALSE
+ */
+int Engine_hasHostsAllow();
+
+
+/**
+ * Free the host allow list
+ */
+void Engine_destroyHostsAllow();
 
 
 #endif

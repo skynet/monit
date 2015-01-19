@@ -666,7 +666,7 @@ static void destroy_entry(void *p) {
  * Do Basic Authentication if this auth. style is allowed.
  */
 static int is_authenticated(HttpRequest req, HttpResponse res) {
-        if (Run.credentials != NULL) {
+        if (Run.credentials) {
                 if (! basic_authenticate(req)) {
                         send_error(res, SC_UNAUTHORIZED,
                                    "You are <b>not</b> authorized to access <i>monit</i>. "

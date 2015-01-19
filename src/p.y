@@ -840,7 +840,7 @@ allow           : ALLOW STRING':'STRING readonly {
                     FREE(htpasswd_file);
                   }
                 | ALLOW STRING {
-                    if (! (add_net_allow($2) || add_host_allow($2))) {
+                    if (! (Engine_addNetAllow($2) || Engine_addHostAllow($2))) {
                       yyerror2("Erroneous network or host identifier %s", $2);
                     }
                     FREE($2);
