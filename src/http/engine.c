@@ -257,7 +257,6 @@ done:
  */
 static int _isHostAllow(const struct in_addr addr) {
         int rv = FALSE;
-
         LOCK(hostlist_mutex)
         for (HostsAllow_T p = hostlist; p; p = p->next) {
                 if ((p->network & p->mask) == (addr.s_addr & p->mask)) {
@@ -326,7 +325,6 @@ error:
 
 
 void Engine_start(int port, int backlog, char *bindAddr) {
-        Socket_T S = NULL;
         stopped = Run.stopped;
         if ((myServerSocket = create_server_socket(port, backlog, bindAddr)) < 0) {
                 LogError("http server: Could not create a server socket at port %d -- %s\nMonit HTTP server not available\n", port, STRERROR);
@@ -337,8 +335,7 @@ void Engine_start(int port, int backlog, char *bindAddr) {
         } else {
                 _initializeService();
                 if (Run.httpdssl) {
-                        mySSLServerConnection = init_ssl_server( Run.httpsslpem, Run.httpsslclientpem);
-                        if (mySSLServerConnection == NULL) {
+                        if (! (mySSLServerConnection = init_ssl_server(Run.httpsslpem, Run.httpsslclientpem))) {
                                 LogError("HTTP server: Could not initialize SSL engine\nMonit HTTP server not available\n");
                                 return;
                         }
@@ -347,9 +344,9 @@ void Engine_start(int port, int backlog, char *bindAddr) {
 #endif
                 }
                 while (! stopped) {
-                        if (! (S = _socketProducer(myServerSocket, port, mySSLServerConnection)))
-                                continue;
-                        http_processor(S);
+                        Socket_T S = _socketProducer(myServerSocket, port, mySSLServerConnection);
+                        if (S)
+                                http_processor(S);
                 }
                 delete_ssl_server_socket(mySSLServerConnection);
                 Net_close(myServerSocket);
@@ -367,17 +364,13 @@ int Engine_addHostAllow(char *name) {
 
         struct addrinfo hints;
         struct addrinfo *res;
-
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = PF_INET; /* we support just IPv4 currently */
-
         if (getaddrinfo(name, NULL, &hints, &res) != 0)
                 return FALSE;
-
         for (struct addrinfo *_res = res; _res; _res = _res->ai_next) {
                 if (_res->ai_family == AF_INET) {
                         struct sockaddr_in *sin = (struct sockaddr_in *)_res->ai_addr;
-
                         HostsAllow_T h;
                         NEW(h);
                         memcpy(&h->network, &sin->sin_addr, 4);
@@ -443,7 +436,6 @@ done:
 
 int Engine_hasHostsAllow() {
         int rv;
-
         LOCK(hostlist_mutex)
         rv = (hostlist != NULL);
         END_LOCK;
