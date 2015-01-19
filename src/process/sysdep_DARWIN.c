@@ -140,7 +140,6 @@ int init_process_info_sysdep(void) {
  * @return treesize>0 if succeeded otherwise =0.
  */
 int initprocesstree_sysdep(ProcessTree_T **reference) {
-        int                i;
         size_t             treesize;
         mach_port_t        mytask = mach_task_self();
         ProcessTree_T     *pt;
@@ -180,7 +179,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
         args = CALLOC(1, args_size + 1);
         size = args_size; // save for per-process sysctl loop
 
-        for (i = 0; i < treesize; i++) {
+        for (int i = 0; i < treesize; i++) {
                 mach_port_t task;
 
                 pt[i].pid       = pinfo[i].kp_proc.p_pid;
@@ -244,10 +243,8 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
                                 pt[i].cpu_percent = 0;
                         }
                         if (task_threads(task, &threadtable, &threadtable_size) == KERN_SUCCESS) {
-                                int j;
-
                                 threadinfo = &threadinfo_data;
-                                for (j = 0; j < threadtable_size; j++) {
+                                for (int j = 0; j < threadtable_size; j++) {
                                         count = THREAD_BASIC_INFO_COUNT;
                                         if (thread_info(threadtable[j], THREAD_BASIC_INFO, (thread_info_t)threadinfo, &count) == KERN_SUCCESS) {
                                                 if ((threadinfo->flags & TH_FLAGS_IDLE) == 0) {
@@ -329,7 +326,6 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
  * @return: TRUE if successful, FALSE if failed
  */
 int used_system_cpu_sysdep(SystemInfo_T *si) {
-        int                       i;
         long                      total;
         long                      total_new = 0;
         kern_return_t             kret;
@@ -339,7 +335,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
         count = HOST_CPU_LOAD_INFO_COUNT;
         kret  = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
         if (kret == KERN_SUCCESS) {
-                for (i = 0; i < CPU_STATE_MAX; i++)
+                for (int i = 0; i < CPU_STATE_MAX; i++)
                         total_new += cpu_info.cpu_ticks[i];
                 total     = total_new - total_old;
                 total_old = total_new;

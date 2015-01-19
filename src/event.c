@@ -294,7 +294,6 @@ short Event_get_state(Event_T E) {
  * @return The Event raw state
  */
 short Event_check_state(Event_T E, short S) {
-        int       i;
         int       count = 0;
         short     state = (S == STATE_SUCCEEDED || S == STATE_CHANGEDNOT) ? 0 : 1; /* translate to 0/1 class */
         Action_T  action;
@@ -313,7 +312,7 @@ short Event_check_state(Event_T E, short S) {
         action = ! state ? E->action->succeeded : E->action->failed;
 
         /* Compare as many bits as cycles able to trigger the action */
-        for (i = 0; i < action->cycles; i++) {
+        for (int i = 0; i < action->cycles; i++) {
                 /* Check the state of the particular cycle given by the bit position */
                 flag = (E->state_map >> i) & 0x1;
 

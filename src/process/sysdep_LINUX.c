@@ -190,7 +190,6 @@ int init_process_info_sysdep(void) {
  * @return treesize>0 if succeeded otherwise =0.
  */
 int initprocesstree_sysdep(ProcessTree_T ** reference) {
-        int                 i = 0, j;
         int                 rv, bytes = 0;
         int                 treesize = 0;
         int                 stat_pid = 0;
@@ -224,7 +223,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         pt = CALLOC(sizeof(ProcessTree_T), treesize);
 
         /* Insert data from /proc directory */
-        for (i = 0; i < treesize; i++) {
+        for (int i = 0; i < treesize; i++) {
                 stat_pid = atoi(globbuf.gl_pathv[i] + strlen("/proc/"));
 
                 /********** /proc/PID/stat **********/
@@ -286,7 +285,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                         DEBUG("system statistic error -- cannot read /proc/%d/cmdline\n", stat_pid);
                         continue;
                 }
-                for (j = 0; j < (bytes - 1); j++) // The cmdline file contains argv elements/strings terminated separated by '\0' => join the string
+                for (int j = 0; j < (bytes - 1); j++) // The cmdline file contains argv elements/strings terminated separated by '\0' => join the string
                         if (buf[j] == 0)
                                 buf[j] = ' ';
 

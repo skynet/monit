@@ -192,7 +192,6 @@ static void close_server(SendMail_T *S) {
  * @return FALSE if failed, TRUE if succeeded
  */
 int sendmail(Mail_T mail) {
-        Mail_T m;
         SendMail_T S;
         int failed = FALSE;
         char now[STRLEN];
@@ -270,7 +269,7 @@ int sendmail(Mail_T mail) {
                                 THROW(IOException, "Authentication failed -- no supported authentication methods found");
                         }
                 }
-                for (m = mail; m; m = m->next) {
+                for (Mail_T m = mail; m; m = m->next) {
                         do_send(&S, "MAIL FROM: <%s>\r\n", m->from);
                         do_status(&S);
                         do_send(&S, "RCPT TO: <%s>\r\n", m->to);

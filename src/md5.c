@@ -351,16 +351,15 @@ void md5_finish(md5_context_t *pms, md5_byte_t digest[16]) {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
         md5_byte_t data[8];
-        int i;
 
         /* Save the length before padding. */
-        for (i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; ++i)
                 data[i] = (md5_byte_t)(pms->count[i >> 2] >> ((i & 3) << 3));
         /* Pad to 56 bytes mod 64. */
         md5_append(pms, pad, ((55 - (pms->count[0] >> 3)) & 63) + 1);
         /* Append the length. */
         md5_append(pms, data, 8);
-        for (i = 0; i < 16; ++i)
+        for (int i = 0; i < 16; ++i)
                 digest[i] = (md5_byte_t)(pms->abcd[i >> 2] >> ((i & 3) << 3));
 }
 

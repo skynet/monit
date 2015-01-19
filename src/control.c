@@ -185,8 +185,7 @@ static void _doStart(Service_T s) {
                 return;
         s->visited = TRUE;
         if (s->dependantlist) {
-                Dependant_T d;
-                for (d = s->dependantlist; d; d = d->next ) {
+                for (Dependant_T d = s->dependantlist; d; d = d->next ) {
                         Service_T parent = Util_getService(d->dependant);
                         ASSERT(parent);
                         _doStart(parent);
@@ -282,8 +281,7 @@ static void _doMonitor(Service_T s, int flag) {
                 return;
         s->visited = TRUE;
         if (s->dependantlist) {
-                Dependant_T d;
-                for (d = s->dependantlist; d; d = d->next ) {
+                for (Dependant_T d = s->dependantlist; d; d = d->next ) {
                         Service_T parent = Util_getService(d->dependant);
                         ASSERT(parent);
                         _doMonitor(parent, flag);
@@ -318,9 +316,8 @@ static void _doUnmonitor(Service_T s, int flag) {
  * @param flag A Custom flag
  */
 static void _doDepend(Service_T s, int action, int flag) {
-        Service_T child;
         ASSERT(s);
-        for (child = servicelist; child; child = child->next) {
+        for (Service_T child = servicelist; child; child = child->next) {
                 if (child->dependantlist) {
                         Dependant_T d;
                         for (d = child->dependantlist; d; d = d->next) {
@@ -518,8 +515,7 @@ int control_service(const char *S, int A) {
  * Reset the visited flags used when handling dependencies
  */
 void reset_depend() {
-        Service_T s;
-        for (s = servicelist; s; s = s->next) {
+        for (Service_T s = servicelist; s; s = s->next) {
                 s->visited = FALSE;
                 s->depend_visited = FALSE;
         }

@@ -159,7 +159,6 @@ double timestruc_to_tseconds(timestruc_t t) {
  * @return treesize>0 if succeeded otherwise =0.
  */
 int initprocesstree_sysdep(ProcessTree_T ** reference) {
-        int            i;
         int            rv;
         int            pid;
         int            treesize;
@@ -183,7 +182,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         pt = CALLOC(sizeof(ProcessTree_T), treesize);
 
         /* Insert data from /proc directory */
-        for (i = 0; i < treesize; i++) {
+        for (int i = 0; i < treesize; i++) {
                 pid = atoi(globbuf.gl_pathv[i] + strlen("/proc/"));
                 pt[i].pid = pid;
 
@@ -255,7 +254,7 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  * @return: TRUE if successful, FALSE if failed (or not available)
  */
 int used_system_memory_sysdep(SystemInfo_T *si) {
-        int                 i, n, num;
+        int                 n, num;
         kstat_ctl_t        *kctl;
         kstat_named_t      *knamed;
         kstat_t            *kstat;
@@ -316,7 +315,7 @@ again:
         }
         s = (swaptbl_t *)ALLOC(num * sizeof(swapent_t) + sizeof(struct swaptable));
         strtab = (char *)ALLOC((num + 1) * MAXSTRSIZE);
-        for (i = 0; i < (num + 1); i++)
+        for (int i = 0; i < (num + 1); i++)
                 s->swt_ent[i].ste_path = strtab + (i * MAXSTRSIZE);
         s->swt_n = num + 1;
         if ((n = swapctl(SC_LIST, s)) < 0) {
@@ -332,7 +331,7 @@ again:
                 FREE(strtab);
                 goto again;
         }
-        for (i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
                 if (! (s->swt_ent[i].ste_flags & ST_INDEL) && ! (s->swt_ent[i].ste_flags & ST_DOINGDEL)) {
                         total += s->swt_ent[i].ste_pages;
                         used  += s->swt_ent[i].ste_pages - s->swt_ent[i].ste_free;
@@ -352,7 +351,7 @@ again:
  * @return: TRUE if successful, FALSE if failed (or not available)
  */
 int used_system_cpu_sysdep(SystemInfo_T *si) {
-        int             i, ncpu = 0, ncpus;
+        int             ncpu = 0, ncpus;
         long            cpu_user = 0, cpu_syst = 0, cpu_wait = 0, total = 0, diff_total;
         kstat_ctl_t    *kctl;
         kstat_named_t  *knamed;
@@ -396,7 +395,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
                 }
         }
 
-        for (i = 0; i < ncpu; i++) {
+        for (int i = 0; i < ncpu; i++) {
                 if (-1 == kstat_read(kctl, cpu_ks[i], &cpu_stat[i])) {
                         LogError("system statistic -- failed to read cpu_stat kstat for cpu %d\n", i);
                         goto error2;

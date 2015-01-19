@@ -553,12 +553,11 @@ int recv_ssl_socket(ssl_connection *ssl, void *buffer, int len, int timeout) {
  */
 void stop_ssl() {
         if (ssl_initialized) {
-                int i;
                 ssl_initialized = FALSE;
                 ERR_free_strings();
                 CRYPTO_set_id_callback(NULL);
                 CRYPTO_set_locking_callback(NULL);
-                for (i = 0; i < CRYPTO_num_locks(); i++)
+                for (int i = 0; i < CRYPTO_num_locks(); i++)
                         assert(pthread_mutex_destroy(&ssl_mutex_table[i]) == 0);
                 FREE(ssl_mutex_table);
                 RAND_cleanup();
@@ -964,7 +963,6 @@ void enable_fips_mode() {
  */
 static int start_ssl() {
         if (! ssl_initialized) {
-                int i;
                 int locks = CRYPTO_num_locks();
 
 #ifdef OPENSSL_FIPS
@@ -975,7 +973,7 @@ static int start_ssl() {
                 ssl_initialized = TRUE;
                 ERR_load_crypto_strings();
                 ssl_mutex_table = CALLOC(locks, sizeof(pthread_mutex_t));
-                for (i = 0; i < locks; i++)
+                for (int i = 0; i < locks; i++)
                         pthread_mutex_init(&ssl_mutex_table[i], NULL);
                 CRYPTO_set_id_callback(ssl_thread_id);
                 CRYPTO_set_locking_callback(ssl_mutex_lock);

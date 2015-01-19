@@ -38,7 +38,6 @@
 
 int init_process_info_sysdep(void) {
         systeminfo.mem_kbyte_max = 0;
-
         return FALSE;
 }
 
@@ -56,6 +55,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         return 0;
 }
 
+
 /**
  * THIS IS JUST A DUMMY!!!
  *
@@ -66,11 +66,8 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
  * @return: 0 if successful, -1 if failed (and all load averages are 0).
  */
 int getloadavg_sysdep (double *loadv, int nelem) {
-        int i;
-
-        for (i = 0; i < nelem; i++)
+        for (int i = 0; i < nelem; i++)
                 loadv[i] = 0.0;
-
         return -1;
 }
 

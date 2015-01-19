@@ -174,8 +174,7 @@ int getloadavg_sysdep (double *a, int na) {
  * @return treesize>0 if succeeded otherwise 0.
  */
 int initprocesstree_sysdep(ProcessTree_T ** reference) {
-        int            i;
-        int            treesize;
+        int treesize;
         ProcessTree_T *pt;
 
         ASSERT(reference);
@@ -195,7 +194,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
         pt = CALLOC(sizeof(ProcessTree_T), treesize);
 
-        for (i = 0; i < treesize; i++) {
+        for (int i = 0; i < treesize; i++) {
                 pt[i].pid         = psall[i].pst_pid;
                 pt[i].ppid        = psall[i].pst_ppid;
                 pt[i].uid         = psall[i].pst_uid;
@@ -223,7 +222,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
  * @return: TRUE if successful, FALSE if failed (or not available)
  */
 int used_system_memory_sysdep(SystemInfo_T *si) {
-        int                 i, n, num;
+        int                 n, num;
         struct pst_static   pst;
         struct pst_dynamic  psd;
         struct swaptable   *s;
@@ -255,7 +254,7 @@ again:
         }
         s = (struct swaptable *)ALLOC(num * sizeof(struct swapent) + sizeof(struct swaptable));
         strtab = (char *)ALLOC((num + 1) * MAXSTRSIZE);
-        for (i = 0; i < (num + 1); i++)
+        for (int i = 0; i < (num + 1); i++)
                 s->swt_ent[i].ste_path = strtab + (i * MAXSTRSIZE);
         s->swt_n = num + 1;
         if ((n = swapctl(SC_LIST, s)) < 0) {
@@ -271,7 +270,7 @@ again:
                 FREE(strtab);
                 goto again;
         }
-        for (i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
                 if (! (s->swt_ent[i].ste_flags & ST_INDEL) && ! (s->swt_ent[i].ste_flags & ST_DOINGDEL)) {
                         total += s->swt_ent[i].ste_pages;
                         used  += s->swt_ent[i].ste_pages - s->swt_ent[i].ste_free;
@@ -291,7 +290,6 @@ again:
  * @return: TRUE if successful, FALSE if failed (or not available)
  */
 int used_system_cpu_sysdep(SystemInfo_T *si) {
-        int                i;
         long               cpu_total;
         long               cpu_total_new = 0;
         long               cpu_user = 0;
@@ -301,7 +299,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
 
         pstat_getdynamic(&psd, sizeof(psd), 1, 0);
 
-        for (i = 0; i < CPUSTATES; i++)
+        for (int i = 0; i < CPUSTATES; i++)
                 cpu_total_new += psd.psd_cpu_time[i];
         cpu_total     = cpu_total_new - cpu_total_old;
         cpu_total_old = cpu_total_new;

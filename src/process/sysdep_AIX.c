@@ -184,7 +184,6 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  * @return treesize>0 if succeeded otherwise =0.
  */
 int initprocesstree_sysdep(ProcessTree_T ** reference) {
-        int             i;
         int             treesize;
         struct userinfo user;
         ProcessTree_T  *pt;
@@ -208,7 +207,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
         pt = CALLOC(sizeof(ProcessTree_T), treesize);
 
-        for (i = 0; i < treesize; i++) {
+        for (int i = 0; i < treesize; i++) {
                 int fd;
                 struct psinfo ps;
                 char filename[STRLEN];

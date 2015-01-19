@@ -82,27 +82,22 @@ static void substitute(Mail_T, Event_T);
  * @return If failed, return HANDLER_ALERT flag or HANDLER_SUCCEEDED if succeeded
  */
 int handle_alert(Event_T E) {
-        Service_T s;
         int rv = HANDLER_SUCCEEDED;
 
         ASSERT(E);
 
-        s = Event_get_source(E);
+        Service_T s = Event_get_source(E);
         if (! s) {
                 LogError("Aborting alert\n");
                 return rv;
         }
-
         if (s->maillist || Run.maillist) {
-                Mail_T m;
-                Mail_T n;
                 Mail_T list = NULL;
                 /*
                  * Build a mail-list with local recipients that has registered interest
                  * for this event.
                  */
-                for (m = s->maillist; m; m = m->next) {
-
+                for (Mail_T m = s->maillist; m; m = m->next) {
                         if (
                             /* particular event notification type is allowed for given recipient */
                             IS_EVENT_SET(m->events, Event_get_id(E)) &&
@@ -116,35 +111,28 @@ int handle_alert(Event_T E) {
                             )
                         {
                                 Mail_T tmp = NULL;
-
                                 NEW(tmp);
                                 copy_mail(tmp, m);
                                 substitute(tmp, E);
                                 escape(tmp);
                                 tmp->next = list;
                                 list = tmp;
-
                                 DEBUG("%s notification is sent to %s\n", Event_get_description(E), m->to);
-
                         }
-
                 }
-
                 /*
                  * Build a mail-list with global recipients that has registered interest
                  * for this event. Recipients which are defined in the service localy
                  * overrides the same recipient events which are registered globaly.
                  */
-                for (m = Run.maillist; m; m = m->next) {
+                for (Mail_T m = Run.maillist; m; m = m->next) {
                         int skip = FALSE;
-
-                        for (n = s->maillist; n; n = n->next) {
+                        for (Mail_T n = s->maillist; n; n = n->next) {
                                 if (IS(m->to, n->to)) {
                                         skip = TRUE;
                                         break;
                                 }
                         }
-
                         if (
                             /* the local service alert definition has not overrided the global one */
                             ! skip &&
@@ -159,34 +147,23 @@ int handle_alert(Event_T E) {
                              )
                             )
                         {
-
                                 Mail_T tmp = NULL;
-
                                 NEW(tmp);
                                 copy_mail(tmp, m);
                                 substitute(tmp, E);
                                 escape(tmp);
                                 tmp->next = list;
                                 list = tmp;
-
                                 DEBUG("%s notification is sent to %s\n", Event_get_description(E), m->to);
-
                         }
-
                 }
-
                 if (list) {
-
                         if (sendmail(list))
                                 rv = HANDLER_ALERT;
                         gc_mail_list(&list);
-
                 }
-
         }
-
         return rv;
-
 }
 
 
@@ -237,3 +214,4 @@ static void escape(Mail_T m) {
         // drop any CR|LF from the subject
         Str_chomp(m->subject);
 }
+

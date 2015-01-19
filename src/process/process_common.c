@@ -157,7 +157,6 @@ int connectchild(ProcessTree_T *pt, int parent, int child) {
  * @return TRUE if succeeded otherwise FALSE.
  */
 void fillprocesstree(ProcessTree_T *pt, int index) {
-        int            i;
         ProcessTree_T *parent_pt;
 
         ASSERT(pt);
@@ -170,7 +169,7 @@ void fillprocesstree(ProcessTree_T *pt, int index) {
         pt[index].mem_kbyte_sum   = pt[index].mem_kbyte;
         pt[index].cpu_percent_sum = pt[index].cpu_percent;
 
-        for (i = 0; i < pt[index].children_num; i++)
+        for (int i = 0; i < pt[index].children_num; i++)
                 fillprocesstree(pt, pt[index].children[i]);
 
         if (pt[index].parent != -1 && pt[index].parent != index) {

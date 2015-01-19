@@ -426,7 +426,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         struct icmp *icmpin = NULL;
         struct icmp *icmpout = NULL;
         uint16_t id_in, id_out, seq_in;
-        int r, i, s, n = 0, status, read_timeout;
+        int r, s, n = 0, status, read_timeout;
         struct timeval t_in, t_out;
         char buf[STRLEN];
         double response = -1.;
@@ -468,7 +468,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
 #endif
         id_out = getpid() & 0xFFFF;
         icmpout = (struct icmp *)buf;
-        for (i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
                 unsigned char *data = (unsigned char *)icmpout->icmp_data;
                 icmpout->icmp_code  = 0;
                 icmpout->icmp_type  = ICMP_ECHO;

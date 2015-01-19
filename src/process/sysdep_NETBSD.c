@@ -262,7 +262,6 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
  * @return: TRUE if successful, FALSE if failed
  */
 int used_system_cpu_sysdep(SystemInfo_T *si) {
-        int       i;
         int       mib[] = {CTL_KERN, KERN_CP_TIME};
         long long cp_time[CPUSTATES];
         long      total_new = 0;
@@ -275,7 +274,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
                 return FALSE;
         }
 
-        for (i = 0; i < CPUSTATES; i++)
+        for (int i = 0; i < CPUSTATES; i++)
                 total_new += cp_time[i];
         total     = total_new - total_old;
         total_old = total_new;

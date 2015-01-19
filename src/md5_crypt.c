@@ -52,7 +52,7 @@ static unsigned char itoa64[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi
 
 static void to64(char *s, unsigned long v, int n) {
         while (--n >= 0) {
-                *s++ = itoa64[v&0x3f];
+                *s++ = itoa64[v & 0x3f];
                 v >>= 6;
         }
 }
@@ -65,7 +65,7 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
         char *p;
         const md5_byte_t *sp, *ep;
         unsigned char final[16];
-        int i, sl, pl, pwl = (int)strlen(pw);
+        int sl, pl, pwl = (int)strlen(pw);
         unsigned long l;
         md5_context_t ctx, ctx1;
 
@@ -107,11 +107,12 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
         memset(final, 0, sizeof(final));
 
         /* Then something really weird... */
-        for (i = pwl; i; i >>= 1)
+        for (int i = pwl; i; i >>= 1) {
                 if (i & 1)
                         md5_append(&ctx, final, 1);
                 else
                         md5_append(&ctx, (const md5_byte_t *)pw, 1);
+        }
 
         /* Now make the output string */
         strncpy(buf, id, buflen);
@@ -125,7 +126,7 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
          * On a 60 Mhz Pentium this takes 34 msec, so you would
          * need 30 seconds to build a 1000 entry dictionary...
          */
-        for (i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1000; i++) {
                 md5_init(&ctx1);
                 if (i & 1)
                         md5_append(&ctx1, (const md5_byte_t *)pw, pwl);
@@ -152,7 +153,7 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
         l = (final[ 2] << 16) | (final[ 8] << 8) | final[14]; to64(p, l, 4); p += 4;
         l = (final[ 3] << 16) | (final[ 9] << 8) | final[15]; to64(p, l, 4); p += 4;
         l = (final[ 4] << 16) | (final[10] << 8) | final[ 5]; to64(p, l, 4); p += 4;
-        l =                    final[11]                ; to64(p, l, 2); p += 2;
+        l =                        final[11]                ; to64(p, l, 2); p += 2;
         *p = '\0';
 
         /* Don't leave anything around in vm they could use. */

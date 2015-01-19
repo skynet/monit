@@ -420,23 +420,16 @@ static void do_action(char **args) {
                         int (*_control_service)(const char *, const char *) = exist_daemon() ? control_service_daemon : control_service_string;
 
                         if (Run.mygroup) {
-                                ServiceGroup_T sg = NULL;
-
-                                for (sg = servicegrouplist; sg; sg = sg->next) {
+                                for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
                                         if (! strcasecmp(Run.mygroup, sg->name)) {
-                                                ServiceGroupMember_T sgm = NULL;
-
-                                                for (sgm = sg->members; sgm; sgm = sgm->next)
+                                                for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
                                                         if (! _control_service(sgm->name, action))
                                                                 errors++;
-
                                                 break;
                                         }
                                 }
                         } else if (IS(service, "all")) {
-                                Service_T s = NULL;
-
-                                for (s = servicelist; s; s = s->next) {
+                                for (Service_T s = servicelist; s; s = s->next) {
                                         if (s->visited)
                                                 continue;
                                         if (! _control_service(s->name, action))
