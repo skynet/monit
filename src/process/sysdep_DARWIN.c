@@ -344,8 +344,8 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
                 total     = total_new - total_old;
                 total_old = total_new;
 
-                si->total_cpu_user_percent = (total > 0)?(int)(1000 * (double)(cpu_info.cpu_ticks[CPU_STATE_USER] - cpu_user_old) / total):-10;
-                si->total_cpu_syst_percent = (total > 0)?(int)(1000 * (double)(cpu_info.cpu_ticks[CPU_STATE_SYSTEM] - cpu_syst_old) / total):-10;
+                si->total_cpu_user_percent = (total > 0) ? (int)(1000 * (double)(cpu_info.cpu_ticks[CPU_STATE_USER] - cpu_user_old) / total) : -10;
+                si->total_cpu_syst_percent = (total > 0) ? (int)(1000 * (double)(cpu_info.cpu_ticks[CPU_STATE_SYSTEM] - cpu_syst_old) / total) : -10;
                 si->total_cpu_wait_percent = 0; /* there is no wait statistic available */
 
                 cpu_user_old = cpu_info.cpu_ticks[CPU_STATE_USER];

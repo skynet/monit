@@ -137,7 +137,7 @@ static int _pong(Socket_T socket) {
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // element value (1)
                 0x00                                            // BSON document terminal
         };
-        if(memcmp(pong.response, ok, sizeof(ok))) {
+        if (memcmp(pong.response, ok, sizeof(ok))) {
                 socket_setError(socket, "MONGODB: PING response error -- invalid reply");
                 return FALSE;
         }

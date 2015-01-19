@@ -133,11 +133,11 @@ static void log_backtrace();
  */
 int log_init() {
 
-        if (!Run.dolog) {
+        if (! Run.dolog) {
                 return TRUE;
         }
 
-        if (!open_log()) {
+        if (! open_log()) {
                 return FALSE;
         }
 
@@ -368,7 +368,7 @@ static char *timefmt(char *t, int size) {
 
         time(&now);
         localtime_r(&now, &tm);
-        if ( !strftime(t, size, TIMEFORMAT, &tm))
+        if ( ! strftime(t, size, TIMEFORMAT, &tm))
                 *t = 0;
         return t;
 }

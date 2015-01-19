@@ -38,29 +38,29 @@
  */
 int check_clamav(Socket_T socket) {
 
-  char buf[STRLEN];
-  const char *ok = "PONG";
+        char buf[STRLEN];
+        const char *ok = "PONG";
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  if(socket_print(socket, "PING\r\n") < 0) {
-    socket_setError(socket, "CLAMAV: error sending data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_print(socket, "PING\r\n") < 0) {
+                socket_setError(socket, "CLAMAV: error sending data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "CLAMAV: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "CLAMAV: error receiving data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  Str_chomp(buf);
+        Str_chomp(buf);
 
-  if(strncasecmp(buf, ok, strlen(ok)) != 0) {
-    socket_setError(socket, "CLAMAV error: %s", buf);
-    return FALSE;
-  }
+        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
+                socket_setError(socket, "CLAMAV error: %s", buf);
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 
 }
 

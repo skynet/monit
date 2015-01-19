@@ -96,20 +96,20 @@ int check_websocket(Socket_T socket) {
         // Establish websocket connection
         char buf[STRLEN];
         if (socket_print(socket,
-                        "GET %s HTTP/1.1\r\n"
-                        "Host: %s\r\n"
-                        "Upgrade: websocket\r\n"
-                        "Connection: Upgrade\r\n"
-                        "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==\r\n"
-                        "Sec-WebSocket-Version: %d\r\n"
-                        "Origin: %s\r\n"
-                        "Pragma: no-cache\r\n"
-                        "Cache-Control: no-cache\r\n"
-                        "\r\n",
-                        P->request ? P->request : "/",
-                        P->request_hostheader ? P->request_hostheader : Util_getHTTPHostHeader(socket, buf, sizeof(buf)),
-                        P->version,
-                        P->pathname ? P->pathname : "http://www.mmonit.com") < 0)
+                         "GET %s HTTP/1.1\r\n"
+                         "Host: %s\r\n"
+                         "Upgrade: websocket\r\n"
+                         "Connection: Upgrade\r\n"
+                         "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==\r\n"
+                         "Sec-WebSocket-Version: %d\r\n"
+                         "Origin: %s\r\n"
+                         "Pragma: no-cache\r\n"
+                         "Cache-Control: no-cache\r\n"
+                         "\r\n",
+                         P->request ? P->request : "/",
+                         P->request_hostheader ? P->request_hostheader : Util_getHTTPHostHeader(socket, buf, sizeof(buf)),
+                         P->version,
+                         P->pathname ? P->pathname : "http://www.mmonit.com") < 0)
         {
                 socket_setError(socket, "WEBSOCKET: error sending data -- %s", STRERROR);
                 return FALSE;

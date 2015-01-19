@@ -290,7 +290,7 @@ int check_http(Socket_T socket) {
 
         hostheader = _findHostHeaderIn(P->http_headers);
         hostheader = hostheader ? hostheader : P->request_hostheader
-                                ? P->request_hostheader : Util_getHTTPHostHeader(socket, host, STRLEN); // Otherwise use deprecated request_hostheader or default host
+        ? P->request_hostheader : Util_getHTTPHostHeader(socket, host, STRLEN); // Otherwise use deprecated request_hostheader or default host
         StringBuffer_T sb = StringBuffer_create(168);
         StringBuffer_append(sb,
                             "GET %s HTTP/1.1\r\n"
@@ -303,7 +303,7 @@ int check_http(Socket_T socket) {
         // Add headers if we have them
         if (P->http_headers) {
                 for (list_t p = P->http_headers->head; p; p = p->next) {
-			char *header = p->e;
+                        char *header = p->e;
                         if (Str_startsWith(header, "Host")) // Already set contrived above
                                 continue;
                         StringBuffer_append(sb, "%s\r\n", header);

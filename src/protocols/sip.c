@@ -64,113 +64,113 @@
  */
 
 
- /* -------------------------------------------------------------- Public*/
+/* -------------------------------------------------------------- Public*/
 
 int check_sip(Socket_T socket) {
-  int status;
-  char buf[STRLEN];
-  int port;
-  char *transport;
-  Port_T P;
-  const char *request;
-  const char *myip;
-  char *rport = "";
-  char *proto;
+        int status;
+        char buf[STRLEN];
+        int port;
+        char *transport;
+        Port_T P;
+        const char *request;
+        const char *myip;
+        char *rport = "";
+        char *proto;
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  P = socket_get_Port(socket);
-  ASSERT(P);
-  request = P->request?P->request:"monit@foo.bar";
+        P = socket_get_Port(socket);
+        ASSERT(P);
+        request = P->request ? P->request : "monit@foo.bar";
 
-  port = socket_get_local_port(socket);
-  proto = socket_is_secure(socket) ? "sips" : "sip";
+        port = socket_get_local_port(socket);
+        proto = socket_is_secure(socket) ? "sips" : "sip";
 
-  switch(socket_get_type(socket)) {
-    case SOCK_DGRAM:
-    {
-      transport="UDP";
-      rport=";rport";
-      break;
-    }
-    case SOCK_STREAM:
-    {
-      transport="TCP";
-      break;
-    }
-    default:
-    {
-      socket_setError(socket, "Unsupported socket type, only TCP and UDP are supported");
-      return TRUE;
-    }
-  }
+        switch (socket_get_type(socket)) {
+                case SOCK_DGRAM:
+                {
+                        transport = "UDP";
+                        rport = ";rport";
+                        break;
+                }
+                case SOCK_STREAM:
+                {
+                        transport = "TCP";
+                        break;
+                }
+                default:
+                {
+                        socket_setError(socket, "Unsupported socket type, only TCP and UDP are supported");
+                        return TRUE;
+                }
+        }
 
-  myip = socket_get_local_host(socket);
+        myip = socket_get_local_host(socket);
 
-  if(socket_print(socket,
-    "OPTIONS %s:%s SIP/2.0\r\n"
-    "Via: SIP/2.0/%s %s:%d;branch=z9hG4bKh%ld%s\r\n"
-    "Max-Forwards: %d\r\n"
-    "To: <%s:%s>\r\n"
-    "From: monit <%s:monit@%s>;tag=%ld\r\n"
-    "Call-ID: %ld\r\n"
-    "CSeq: 63104 OPTIONS\r\n"
-    "Contact: <%s:%s:%d>\r\n"
-    "Accept: application/sdp\r\n"
-    "Content-Length: 0\r\n"
-    "User-Agent: Monit/%s\r\n\r\n",
-    proto,            // protocol
-    request,          // to
-    transport,        // via transport udp|tcp
-    myip,             // who its from
-    port,             // our port
-    random(),         // branch
-    rport,            // rport option
-    P->maxforward,    // maximum forwards
-    proto,            // protocol
-    request,          // to
-    proto,            // protocol
-    myip,             // from host
-    random(),         // tag
-    random(),         // call id
-    proto,            // protocol
-    myip,             // contact host
-    port,             // contact port
-    VERSION           // user agent
-    ) < 0) {
-    socket_setError(socket, "SIP: error sending data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_print(socket,
+                         "OPTIONS %s:%s SIP/2.0\r\n"
+                         "Via: SIP/2.0/%s %s:%d;branch=z9hG4bKh%ld%s\r\n"
+                         "Max-Forwards: %d\r\n"
+                         "To: <%s:%s>\r\n"
+                         "From: monit <%s:monit@%s>;tag=%ld\r\n"
+                         "Call-ID: %ld\r\n"
+                         "CSeq: 63104 OPTIONS\r\n"
+                         "Contact: <%s:%s:%d>\r\n"
+                         "Accept: application/sdp\r\n"
+                         "Content-Length: 0\r\n"
+                         "User-Agent: Monit/%s\r\n\r\n",
+                         proto,            // protocol
+                         request,          // to
+                         transport,        // via transport udp|tcp
+                         myip,             // who its from
+                         port,             // our port
+                         random(),         // branch
+                         rport,            // rport option
+                         P->maxforward,    // maximum forwards
+                         proto,            // protocol
+                         request,          // to
+                         proto,            // protocol
+                         myip,             // from host
+                         random(),         // tag
+                         random(),         // call id
+                         proto,            // protocol
+                         myip,             // contact host
+                         port,             // contact port
+                         VERSION           // user agent
+                         ) < 0) {
+                socket_setError(socket, "SIP: error sending data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  if(! socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "SIP: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "SIP: error receiving data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  Str_chomp(buf);
+        Str_chomp(buf);
 
-  DEBUG("Response from SIP server: %s\n", buf);
+        DEBUG("Response from SIP server: %s\n", buf);
 
-  if(! sscanf(buf, "%*s %d", &status)) {
-    socket_setError(socket, "SIP error: cannot parse SIP status in response: %s", buf);
-    return FALSE;
-  }
+        if (! sscanf(buf, "%*s %d", &status)) {
+                socket_setError(socket, "SIP error: cannot parse SIP status in response: %s", buf);
+                return FALSE;
+        }
 
-  if(status >= 400) {
-    socket_setError(socket, "SIP error: Server returned status %d", status);
-    return FALSE;
-  }
+        if (status >= 400) {
+                socket_setError(socket, "SIP error: Server returned status %d", status);
+                return FALSE;
+        }
 
-  if(status >= 300 && status < 400) {
-    socket_setError(socket, "SIP info: Server redirection. Returned status %d", status);
-    return FALSE;
-  }
+        if (status >= 300 && status < 400) {
+                socket_setError(socket, "SIP info: Server redirection. Returned status %d", status);
+                return FALSE;
+        }
 
-  if(status > 100 && status < 200) {
-    socket_setError(socket, "SIP error: Provisional response . Returned status %d", status);
-    return FALSE;
-  }
+        if (status > 100 && status < 200) {
+                socket_setError(socket, "SIP error: Provisional response . Returned status %d", status);
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 
 }

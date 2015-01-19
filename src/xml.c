@@ -326,12 +326,12 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                                     "<type>%s</type>"
                                                                     "<responsetime>%.3f</responsetime>"
                                                                     "</port>",
-                                                                    p->hostname?p->hostname:"",
+                                                                    p->hostname ? p->hostname : "",
                                                                     p->port,
-                                                                    p->request?p->request:"",
-                                                                    p->protocol->name?p->protocol->name:"",
+                                                                    p->request ? p->request : "",
+                                                                    p->protocol->name ? p->protocol->name : "",
                                                                     Util_portTypeDescription(p),
-                                                                    p->is_available?p->response:-1.);
+                                                                    p->is_available ? p->response : -1.);
                                         else if (p->family == AF_UNIX)
                                                 StringBuffer_append(B,
                                                                     "<unix>"
@@ -339,9 +339,9 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                                     "<protocol>%s</protocol>"
                                                                     "<responsetime>%.3f</responsetime>"
                                                                     "</unix>",
-                                                                    p->pathname?p->pathname:"",
-                                                                    p->protocol->name?p->protocol->name:"",
-                                                                    p->is_available?p->response:-1.);
+                                                                    p->pathname ? p->pathname : "",
+                                                                    p->protocol->name ? p->protocol->name : "",
+                                                                    p->is_available ? p->response : -1.);
                                 }
                         }
                         if (S->type == TYPE_SYSTEM && Run.doprocess) {

@@ -40,63 +40,63 @@
 
 int check_tns(Socket_T socket) {
 
-  unsigned char  buf[STRLEN];
+        unsigned char  buf[STRLEN];
 
-  unsigned char requestPing[] = {
-    0x00, 0x57,                           /** Packet Length */
-    0x00, 0x00,                           /** Packet Checksum */
-    0x01,                                 /** Packet Type: CONNECT */
-    0x00,                                 /** Reserved */
-    0x00, 0x00,                           /** Header Checksum */
-    0x01, 0x36,                           /** Version */
-    0x01, 0x2c,                           /** Compatible */
-    0x00, 0x00,                           /** Service Options */
-    0x08, 0x00,                           /** Session Data Unit Size */
-    0x7f, 0xff,                           /** Maximum Transmission Data Unit Size */
-    0xa3, 0x0a,                           /** NT Protocol Characteristics */
-    0x00, 0x00,                           /** Line Turnaround Value */
-    0x01, 0x00,                           /** Value of 1 in Hardware */
-    0x00, 0x1d,                           /** Length of Connect Data */
-    0x00, 0x3a,                           /** Offset of Connect Data */
-    0x00, 0x00, 0x00, 0x00,               /** Maximum Receivable Connect Data */
-    0x00,                                 /** Connect flags 0 */
-    0x00,                                 /** Connect flags 1 */
-    0x00, 0x00, 0x00, 0x00,               /** Trace Cross Facility Item 1 */
-    0x00, 0x00, 0x00, 0x00,               /** Trace Cross Facility Item 2 */
-    0x00, 0x00, 0x0b, 0x1c,               /** Trace Unique Connection ID */
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x28, 0x43, 0x4f, 0x4e,               /** Connect Data */
-    0x4e, 0x45, 0x43, 0x54,               /** (CONNECT_DATA=(COMMAND=ping)) */
-    0x5f, 0x44, 0x41, 0x54,
-    0x41, 0x3d, 0x28, 0x43,
-    0x4f, 0x4d, 0x4d, 0x41,
-    0x4e, 0x44, 0x3d, 0x70,
-    0x69, 0x6e, 0x67, 0x29,
-    0x29
-  };
+        unsigned char requestPing[] = {
+                0x00, 0x57,                           /** Packet Length */
+                0x00, 0x00,                           /** Packet Checksum */
+                0x01,                                 /** Packet Type: CONNECT */
+                0x00,                                 /** Reserved */
+                0x00, 0x00,                           /** Header Checksum */
+                0x01, 0x36,                           /** Version */
+                0x01, 0x2c,                           /** Compatible */
+                0x00, 0x00,                           /** Service Options */
+                0x08, 0x00,                           /** Session Data Unit Size */
+                0x7f, 0xff,                           /** Maximum Transmission Data Unit Size */
+                0xa3, 0x0a,                           /** NT Protocol Characteristics */
+                0x00, 0x00,                           /** Line Turnaround Value */
+                0x01, 0x00,                           /** Value of 1 in Hardware */
+                0x00, 0x1d,                           /** Length of Connect Data */
+                0x00, 0x3a,                           /** Offset of Connect Data */
+                0x00, 0x00, 0x00, 0x00,               /** Maximum Receivable Connect Data */
+                0x00,                                 /** Connect flags 0 */
+                0x00,                                 /** Connect flags 1 */
+                0x00, 0x00, 0x00, 0x00,               /** Trace Cross Facility Item 1 */
+                0x00, 0x00, 0x00, 0x00,               /** Trace Cross Facility Item 2 */
+                0x00, 0x00, 0x0b, 0x1c,               /** Trace Unique Connection ID */
+                0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+                0x28, 0x43, 0x4f, 0x4e,               /** Connect Data */
+                0x4e, 0x45, 0x43, 0x54,               /** (CONNECT_DATA=(COMMAND=ping)) */
+                0x5f, 0x44, 0x41, 0x54,
+                0x41, 0x3d, 0x28, 0x43,
+                0x4f, 0x4d, 0x4d, 0x41,
+                0x4e, 0x44, 0x3d, 0x70,
+                0x69, 0x6e, 0x67, 0x29,
+                0x29
+        };
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  if(socket_write(socket, (unsigned char *)requestPing, sizeof(requestPing)) < 0) {
-    socket_setError(socket, "TNS: error sending ping -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_write(socket, (unsigned char *)requestPing, sizeof(requestPing)) < 0) {
+                socket_setError(socket, "TNS: error sending ping -- %s", STRERROR);
+                return FALSE;
+        }
 
-  /* read just first few bytes which contains enough information */
-  if(socket_read(socket, (unsigned char *)buf, 5) < 5) {
-    socket_setError(socket, "TNS: error receiving ping response -- %s", STRERROR);
-    return FALSE;
-  }
+        /* read just first few bytes which contains enough information */
+        if (socket_read(socket, (unsigned char *)buf, 5) < 5) {
+                socket_setError(socket, "TNS: error receiving ping response -- %s", STRERROR);
+                return FALSE;
+        }
 
-  /* compare packet type */
-  if(buf[4] != TNS_TYPE_REFUSED)
-  {
-    socket_setError(socket, "TNS: invalid ping response");
-    return FALSE;
-  }
+        /* compare packet type */
+        if (buf[4] != TNS_TYPE_REFUSED)
+        {
+                socket_setError(socket, "TNS: invalid ping response");
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 }
 

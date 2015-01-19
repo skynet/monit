@@ -147,13 +147,13 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
         ProcessTree_T     *pt;
         struct kinfo_proc *pinfo;
 
-        if (!(kvm_handle = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, prog))) {
+        if (! (kvm_handle = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, prog))) {
                 LogError("system statistic error -- cannot initialize kvm interface\n");
                 return FALSE;
         }
 
         pinfo = kvm_getprocs(kvm_handle, KERN_PROC_PROC, 0, &treesize);
-        if (!pinfo || (treesize < 1)) {
+        if (! pinfo || (treesize < 1)) {
                 LogError("system statistic error -- cannot get process tree\n");
                 kvm_close(kvm_handle);
                 return FALSE;

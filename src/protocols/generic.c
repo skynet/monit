@@ -74,7 +74,7 @@ int check_generic(Socket_T socket) {
 
         ASSERT(socket);
 
-        if(socket_get_Port(socket))
+        if (socket_get_Port(socket))
                 g = ((Port_T)(socket_get_Port(socket)))->generic;
 
         buf = CALLOC(sizeof(char), Run.expectbuffer + 1);
@@ -88,7 +88,7 @@ int check_generic(Socket_T socket) {
                         char *X = Str_dup(g->send);
                         int l = Util_handle0Escapes(X);
 
-                        if(socket_write(socket, X, l) < 0) {
+                        if (socket_write(socket, X, l) < 0) {
                                 socket_setError(socket, "GENERIC: error sending data -- %s", STRERROR);
                                 FREE(X);
                                 FREE(buf);

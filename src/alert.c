@@ -88,12 +88,12 @@ int handle_alert(Event_T E) {
         ASSERT(E);
 
         s = Event_get_source(E);
-        if(!s) {
+        if (! s) {
                 LogError("Aborting alert\n");
                 return rv;
         }
 
-        if(s->maillist || Run.maillist) {
+        if (s->maillist || Run.maillist) {
                 Mail_T m;
                 Mail_T n;
                 Mail_T list = NULL;
@@ -101,19 +101,19 @@ int handle_alert(Event_T E) {
                  * Build a mail-list with local recipients that has registered interest
                  * for this event.
                  */
-                for(m = s->maillist; m; m = m->next) {
+                for (m = s->maillist; m; m = m->next) {
 
-                        if(
-                           /* particular event notification type is allowed for given recipient */
-                           IS_EVENT_SET(m->events, Event_get_id(E)) &&
-                           (
-                            /* state change notification is sent always */
-                            E->state_changed       ||
-                            /* in the case that the state is failed for more cycles we check
-                             * whether we should send the reminder */
-                            (E->state && m->reminder && E->count % m->reminder == 0)
+                        if (
+                            /* particular event notification type is allowed for given recipient */
+                            IS_EVENT_SET(m->events, Event_get_id(E)) &&
+                            (
+                             /* state change notification is sent always */
+                             E->state_changed       ||
+                             /* in the case that the state is failed for more cycles we check
+                              * whether we should send the reminder */
+                             (E->state && m->reminder && E->count % m->reminder == 0)
+                             )
                             )
-                           )
                         {
                                 Mail_T tmp = NULL;
 
@@ -135,29 +135,29 @@ int handle_alert(Event_T E) {
                  * for this event. Recipients which are defined in the service localy
                  * overrides the same recipient events which are registered globaly.
                  */
-                for(m = Run.maillist; m; m = m->next) {
+                for (m = Run.maillist; m; m = m->next) {
                         int skip = FALSE;
 
-                        for(n = s->maillist; n; n = n->next) {
-                                if(IS(m->to, n->to)) {
+                        for (n = s->maillist; n; n = n->next) {
+                                if (IS(m->to, n->to)) {
                                         skip = TRUE;
                                         break;
                                 }
                         }
 
-                        if(
-                           /* the local service alert definition has not overrided the global one */
-                           !skip &&
-                           /* particular event notification type is allowed for given recipient */
-                           IS_EVENT_SET(m->events, Event_get_id(E)) &&
-                           (
-                            /* state change notification is sent always */
-                            E->state_changed       ||
-                            /* in the case that the state is failed for more cycles we check
-                             * whether we should send the reminder */
-                            (E->state && m->reminder && E->count % m->reminder == 0)
+                        if (
+                            /* the local service alert definition has not overrided the global one */
+                            ! skip &&
+                            /* particular event notification type is allowed for given recipient */
+                            IS_EVENT_SET(m->events, Event_get_id(E)) &&
+                            (
+                             /* state change notification is sent always */
+                             E->state_changed       ||
+                             /* in the case that the state is failed for more cycles we check
+                              * whether we should send the reminder */
+                             (E->state && m->reminder && E->count % m->reminder == 0)
+                             )
                             )
-                           )
                         {
 
                                 Mail_T tmp = NULL;
@@ -175,9 +175,9 @@ int handle_alert(Event_T E) {
 
                 }
 
-                if(list) {
+                if (list) {
 
-                        if(sendmail(list))
+                        if (sendmail(list))
                                 rv = HANDLER_ALERT;
                         gc_mail_list(&list);
 
@@ -221,30 +221,10 @@ static void copy_mail(Mail_T n, Mail_T o) {
         ASSERT(n && o);
 
         n->to = Str_dup(o->to);
-        n->from=
-        o->from?
-        Str_dup(o->from):
-        Run.MailFormat.from?
-        Str_dup(Run.MailFormat.from):
-        Str_dup(ALERT_FROM);
-        n->replyto =
-        o->replyto?
-        Str_dup(o->replyto):
-        Run.MailFormat.replyto?
-        Str_dup(Run.MailFormat.replyto):
-        NULL;
-        n->subject=
-        o->subject?
-        Str_dup(o->subject):
-        Run.MailFormat.subject?
-        Str_dup(Run.MailFormat.subject):
-        Str_dup(ALERT_SUBJECT);
-        n->message=
-        o->message?
-        Str_dup(o->message):
-        Run.MailFormat.message?
-        Str_dup(Run.MailFormat.message):
-        Str_dup(ALERT_MESSAGE);
+        n->from = o->from ? Str_dup(o->from) : Run.MailFormat.from ? Str_dup(Run.MailFormat.from) : Str_dup(ALERT_FROM);
+        n->replyto = o->replyto ? Str_dup(o->replyto) : Run.MailFormat.replyto ? Str_dup(Run.MailFormat.replyto) : NULL;
+        n->subject = o->subject ? Str_dup(o->subject) : Run.MailFormat.subject ? Str_dup(Run.MailFormat.subject) : Str_dup(ALERT_SUBJECT);
+        n->message = o->message ? Str_dup(o->message) : Run.MailFormat.message ? Str_dup(Run.MailFormat.message) : Str_dup(ALERT_MESSAGE);
 }
 
 

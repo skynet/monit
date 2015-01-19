@@ -173,7 +173,7 @@ Socket_T socket_create(void *port) {
                 } else {
                         S->host = Str_dup(p->hostname);
                 }
-                if (p->SSL.use_ssl && !socket_switch2ssl(S, p->SSL)) {
+                if (p->SSL.use_ssl && ! socket_switch2ssl(S, p->SSL)) {
                         socket_free(&S);
                         return NULL;
                 }
@@ -202,7 +202,7 @@ Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int ti
                 S->timeout = timeout;
                 S->host = Str_dup(host);
                 S->connection_type = TYPE_LOCAL;
-                if (ssl.use_ssl && !socket_switch2ssl(S, ssl)) {
+                if (ssl.use_ssl && ! socket_switch2ssl(S, ssl)) {
                         socket_free(&S);
                         return NULL;
                 }
@@ -279,7 +279,7 @@ int socket_getTimeout(Socket_T S) {
 
 int socket_is_ready(Socket_T S) {
         ASSERT(S);
-        switch(S->type) {
+        switch (S->type) {
                 case SOCK_STREAM:
                         return check_socket(S->socket);
                 case SOCK_DGRAM:
@@ -380,7 +380,7 @@ int socket_switch2ssl(Socket_T S, Ssl_T ssl)  {
                 return FALSE;
         if (! embed_ssl_socket(S->ssl, S->socket))
                 return FALSE;
-        if (ssl.certmd5 && !check_ssl_md5sum(S->ssl, ssl.certmd5)) {
+        if (ssl.certmd5 && ! check_ssl_md5sum(S->ssl, ssl.certmd5)) {
                 LogError("md5sum of certificate does not match!\n");
                 return FALSE;
         }

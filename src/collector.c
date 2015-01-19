@@ -79,7 +79,7 @@ static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
                               C->url->hostname, C->url->port,
                               (unsigned long)strlen(D),
                               VERSION,
-                              auth?auth:"",
+                              auth ? auth : "",
                               D);
         FREE(auth);
         if (rv <0) {

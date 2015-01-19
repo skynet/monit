@@ -333,7 +333,7 @@ static void do_reinit() {
          globale process table which a sigchld handler can check */
         waitforchildren();
 
-        if(Run.mmonits && heartbeatRunning) {
+        if (Run.mmonits && heartbeatRunning) {
                 if ((status = pthread_cond_signal(&heartbeatCond)) != 0)
                         LogError("Failed to signal the heartbeat thread -- %s\n", strerror(status));
                 if ((status = pthread_join(heartbeatThread, NULL)) != 0)
@@ -392,7 +392,7 @@ static void do_reinit() {
         /* send the monit startup notification */
         Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_RELOAD, "Monit reloaded");
 
-        if(Run.mmonits && ((status = pthread_create(&heartbeatThread, NULL, heartbeat, NULL)) != 0))
+        if (Run.mmonits && ((status = pthread_create(&heartbeatThread, NULL, heartbeat, NULL)) != 0))
                 LogError("Failed to create the heartbeat thread -- %s\n", strerror(status));
         else
                 heartbeatRunning = TRUE;
@@ -485,11 +485,11 @@ static void do_exit() {
 
         set_signal_block(&ns, NULL);
         Run.stopped = TRUE;
-        if (Run.isdaemon && !Run.once) {
+        if (Run.isdaemon && ! Run.once) {
                 if (can_http())
                         monit_http(STOP_HTTP);
 
-                if(Run.mmonits && heartbeatRunning) {
+                if (Run.mmonits && heartbeatRunning) {
                         if ((status = pthread_cond_signal(&heartbeatCond)) != 0)
                                 LogError("Failed to signal the heartbeat thread -- %s\n", strerror(status));
                         if ((status = pthread_join(heartbeatThread, NULL)) != 0)
@@ -564,7 +564,7 @@ static void do_default() {
                 /* send the monit startup notification */
                 Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_START, "Monit started");
 
-                if(Run.mmonits && ((status = pthread_create(&heartbeatThread, NULL, heartbeat, NULL)) != 0))
+                if (Run.mmonits && ((status = pthread_create(&heartbeatThread, NULL, heartbeat, NULL)) != 0))
                         LogError("Failed to create the heartbeat thread -- %s\n", strerror(status));
                 else
                         heartbeatRunning = TRUE;
@@ -574,7 +574,7 @@ static void do_default() {
                         State_save();
 
                         /* In the case that there is no pending action then sleep */
-                        if (!Run.doaction)
+                        if (! Run.doaction)
                                 sleep(Run.polltime);
 
                         if (Run.dowakeup) {
@@ -723,7 +723,7 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 case '?':
                                 {
-                                        switch(optopt) {
+                                        switch (optopt) {
                                                 case 'c':
                                                 case 'd':
                                                 case 'g':

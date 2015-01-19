@@ -46,33 +46,33 @@ int check_dwp(Socket_T socket) {
 
 #define REQ_LENGTH  1024
 
-  int n;
-  int status;
-  char buf[STRLEN];
-  char proto[STRLEN];
+        int n;
+        int status;
+        char buf[STRLEN];
+        char proto[STRLEN];
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  if(socket_print(socket, "HEAD / HTTP/1.1\r\n"
-                  "Connection: close\r\n\r\n") < 0) {
-    socket_setError(socket, "DWP: error sending data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_print(socket, "HEAD / HTTP/1.1\r\n"
+                         "Connection: close\r\n\r\n") < 0) {
+                socket_setError(socket, "DWP: error sending data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  if(! socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "DWP: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "DWP: error receiving data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  Str_chomp(buf);
+        Str_chomp(buf);
 
-  n = sscanf(buf, "%255s %d", proto, &status);
-  if(n!=2 || (status >= 400)) {
-    socket_setError(socket, "DWP error: %s", buf);
-    return FALSE;
-  }
+        n = sscanf(buf, "%255s %d", proto, &status);
+        if (n != 2 || (status >= 400)) {
+                socket_setError(socket, "DWP error: %s", buf);
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 
 }
 

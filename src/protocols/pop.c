@@ -38,41 +38,41 @@
  */
 int check_pop(Socket_T socket) {
 
-  char buf[STRLEN];
-  const char *ok = "+OK";
+        char buf[STRLEN];
+        const char *ok = "+OK";
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "POP: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "POP: error receiving data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  Str_chomp(buf);
+        Str_chomp(buf);
 
-  if(strncasecmp(buf, ok, strlen(ok)) != 0) {
-    socket_setError(socket, "POP error: %s", buf);
-    return FALSE;
-  }
+        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
+                socket_setError(socket, "POP error: %s", buf);
+                return FALSE;
+        }
 
-  if(socket_print(socket, "QUIT\r\n") < 0) {
-    socket_setError(socket, "POP: error sending data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_print(socket, "QUIT\r\n") < 0) {
+                socket_setError(socket, "POP: error sending data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  if(!socket_readln(socket, buf, sizeof(buf))) {
-    socket_setError(socket, "POP: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (! socket_readln(socket, buf, sizeof(buf))) {
+                socket_setError(socket, "POP: error receiving data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  Str_chomp(buf);
+        Str_chomp(buf);
 
-  if(strncasecmp(buf, ok, strlen(ok)) != 0) {
-    socket_setError(socket, "POP error: %s", buf);
-    return FALSE;
-  }
+        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
+                socket_setError(socket, "POP error: %s", buf);
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 
 }
 

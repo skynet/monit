@@ -465,7 +465,7 @@ int control_service(const char *S, int A) {
                 LogError("Service '%s' -- doesn't exist\n", S);
                 return FALSE;
         }
-        switch(A) {
+        switch (A) {
                 case ACTION_START:
                         _doDepend(s, ACTION_STOP, FALSE);
                         _doStart(s);

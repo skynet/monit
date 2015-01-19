@@ -113,11 +113,11 @@
 #define pagetok(size) ((size) << pageshift)
 
 static int    page_size;
-static int    pageshift=0;
-static long   old_cpu_user=0;
-static long   old_cpu_syst=0;
-static long   old_cpu_wait=0;
-static long   old_total=0;
+static int    pageshift = 0;
+static long   old_cpu_user = 0;
+static long   old_cpu_syst = 0;
+static long   old_cpu_wait = 0;
+static long   old_total = 0;
 
 #define MAXSTRSIZE 80
 
@@ -333,7 +333,7 @@ again:
                 goto again;
         }
         for (i = 0; i < n; i++) {
-                if (!(s->swt_ent[i].ste_flags & ST_INDEL) && !(s->swt_ent[i].ste_flags & ST_DOINGDEL)) {
+                if (! (s->swt_ent[i].ste_flags & ST_INDEL) && ! (s->swt_ent[i].ste_flags & ST_DOINGDEL)) {
                         total += s->swt_ent[i].ste_pages;
                         used  += s->swt_ent[i].ste_pages - s->swt_ent[i].ste_free;
                 }

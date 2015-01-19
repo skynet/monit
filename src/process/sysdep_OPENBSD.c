@@ -302,8 +302,8 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
                 total     = total_new - total_old;
                 total_old = total_new;
 
-                si->total_cpu_user_percent = (total > 0)?(int)(1000 * (double)(cp_time[CP_USER] - cpu_user_old) / total):-10;
-                si->total_cpu_syst_percent = (total > 0)?(int)(1000 * (double)(cp_time[CP_SYS] - cpu_syst_old) / total):-10;
+                si->total_cpu_user_percent = (total > 0) ? (int)(1000 * (double)(cp_time[CP_USER] - cpu_user_old) / total) : -10;
+                si->total_cpu_syst_percent = (total > 0) ? (int)(1000 * (double)(cp_time[CP_SYS] - cpu_syst_old) / total) : -10;
                 si->total_cpu_wait_percent = 0; /* there is no wait statistic available */
 
                 cpu_user_old = cp_time[CP_USER];

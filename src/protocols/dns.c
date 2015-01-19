@@ -46,106 +46,106 @@
  *  @file
  */
 int check_dns(Socket_T socket) {
-  int            offset_request  = 0;
-  int            offset_response = 0;
-  int            rc;
-  unsigned char  buf[STRLEN];
-  unsigned char *response = NULL;
-  unsigned char  request[19] = {
-    0x00,          /** Request Length field for DNS via TCP */
-    0x11,
+        int            offset_request  = 0;
+        int            offset_response = 0;
+        int            rc;
+        unsigned char  buf[STRLEN];
+        unsigned char *response = NULL;
+        unsigned char  request[19] = {
+                0x00,          /** Request Length field for DNS via TCP */
+                0x11,
 
-    0x00,                                /** Transaction ID */
-    0x01,
+                0x00,                                /** Transaction ID */
+                0x01,
 
-    0x01,                                         /** Flags */
-    0x00,
+                0x01,                                         /** Flags */
+                0x00,
 
-    0x00,                                 /** Queries count */
-    0x01,
+                0x00,                                 /** Queries count */
+                0x01,
 
-    0x00,                 /** Answer resource records count */
-    0x00,
+                0x00,                 /** Answer resource records count */
+                0x00,
 
-    0x00,              /** Authority resource records count */
-    0x00,
+                0x00,              /** Authority resource records count */
+                0x00,
 
-    0x00,             /** Additional resource records count */
-    0x00,
+                0x00,             /** Additional resource records count */
+                0x00,
 
-                                                 /** Query: */
+                /** Query: */
 
-    0x00,                 /** Name: DNS root (empty string) */
+                0x00,                 /** Name: DNS root (empty string) */
 
-    0x00,                                      /** Type: NS */
-    0x02,
+                0x00,                                      /** Type: NS */
+                0x02,
 
-    0x00,                                     /** Class: IN */
-    0x01
-  };
+                0x00,                                     /** Class: IN */
+                0x01
+        };
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  switch (socket_get_type(socket)) {
-    case SOCK_DGRAM:
-      offset_request  = 2; /*  Skip Length field in request */
-      offset_response = 0;
-      break;
-    case SOCK_STREAM:
-      offset_request  = 0;
-      offset_response = 2; /*  Skip Length field in response */
-      break;
-    default:
-      socket_setError(socket, "DNS: unsupported socket type -- protocol test skipped");
-      return TRUE;
-  }
+        switch (socket_get_type(socket)) {
+                case SOCK_DGRAM:
+                        offset_request  = 2; /*  Skip Length field in request */
+                        offset_response = 0;
+                        break;
+                case SOCK_STREAM:
+                        offset_request  = 0;
+                        offset_response = 2; /*  Skip Length field in response */
+                        break;
+                default:
+                        socket_setError(socket, "DNS: unsupported socket type -- protocol test skipped");
+                        return TRUE;
+        }
 
-  if (socket_write(socket, (unsigned char *)request + offset_request, sizeof(request) - offset_request) < 0) {
-    socket_setError(socket, "DNS: error sending query -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_write(socket, (unsigned char *)request + offset_request, sizeof(request) - offset_request) < 0) {
+                socket_setError(socket, "DNS: error sending query -- %s", STRERROR);
+                return FALSE;
+        }
 
-  /* Response should have at least 14 bytes */
-  if (socket_read(socket, (unsigned char *)buf, 15) <= 14) {
-    socket_setError(socket, "DNS: error receiving response -- %s", STRERROR);
-    return FALSE;
-  }
+        /* Response should have at least 14 bytes */
+        if (socket_read(socket, (unsigned char *)buf, 15) <= 14) {
+                socket_setError(socket, "DNS: error receiving response -- %s", STRERROR);
+                return FALSE;
+        }
 
-  response = buf + offset_response;
+        response = buf + offset_response;
 
-  /* Compare transaction ID (it should be the same as in our request): */
-  if (response[0] != 0x00 && response[1] != 0x01) {
-    socket_setError(socket, "DNS: response transaction ID mismatch -- received 0x%x%x, expected 0x1", response[0], response[1]);
-    return FALSE;
-  }
+        /* Compare transaction ID (it should be the same as in our request): */
+        if (response[0] != 0x00 && response[1] != 0x01) {
+                socket_setError(socket, "DNS: response transaction ID mismatch -- received 0x%x%x, expected 0x1", response[0], response[1]);
+                return FALSE;
+        }
 
-  /* Compare flags: */
+        /* Compare flags: */
 
-  /* Response type */
-  if ((response[2] & 0x80) != 0x80) {
-    socket_setError(socket, "DNS: invalid response type: 0x%x", response[2] & 0x80);
-    return FALSE;
-  }
+        /* Response type */
+        if ((response[2] & 0x80) != 0x80) {
+                socket_setError(socket, "DNS: invalid response type: 0x%x", response[2] & 0x80);
+                return FALSE;
+        }
 
-  /* Response code: accept request refusal as correct response as the server may disallow NS root query but the negative response means, it reacts to requests */
-  rc = response[3] & 0x0F;
-  if (rc != 0x0 && rc != 0x5) {
-    socket_setError(socket, "DNS: invalid response code: 0x%x", rc);
-    return FALSE;
-  }
+        /* Response code: accept request refusal as correct response as the server may disallow NS root query but the negative response means, it reacts to requests */
+        rc = response[3] & 0x0F;
+        if (rc != 0x0 && rc != 0x5) {
+                socket_setError(socket, "DNS: invalid response code: 0x%x", rc);
+                return FALSE;
+        }
 
-  /* Compare queries count (it should be one as in our request): */
-  if (response[4] != 0x00 && response[5] != 0x01) {
-    socket_setError(socket, "DNS: invalid query count in response -- received 0x%x%x, expected 1", response[4], response[5]);
-    return FALSE;
-  }
+        /* Compare queries count (it should be one as in our request): */
+        if (response[4] != 0x00 && response[5] != 0x01) {
+                socket_setError(socket, "DNS: invalid query count in response -- received 0x%x%x, expected 1", response[4], response[5]);
+                return FALSE;
+        }
 
-  /* Compare answer and authority resource record counts (they shouldn't be both zero) */
-  if (rc == 0 && response[6] == 0x00 && response[7] == 0x00 && response[8] == 0x00 && response[9] == 0x00) {
-    socket_setError(socket, "DNS: no answer or authority records returned");
-    return FALSE;
-  }
+        /* Compare answer and authority resource record counts (they shouldn't be both zero) */
+        if (rc == 0 && response[6] == 0x00 && response[7] == 0x00 && response[8] == 0x00 && response[9] == 0x00) {
+                socket_setError(socket, "DNS: no answer or authority records returned");
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 }
 

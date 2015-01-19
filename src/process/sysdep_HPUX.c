@@ -123,14 +123,14 @@ int init_process_info_sysdep(void) {
         struct pst_dynamic psd;
         struct pst_static pst;
 
-        if (pstat_getdynamic(&psd,sizeof(psd),(size_t)1,0) != -1)
-                systeminfo.cpus=psd.psd_proc_cnt;
+        if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) != -1)
+                systeminfo.cpus = psd.psd_proc_cnt;
         else
                 return FALSE;
 
         if (pstat_getstatic(&pst, sizeof(pst), (size_t) 1, 0) != -1) {
-                systeminfo.mem_kbyte_max=(unsigned long)(pst.physical_memory * (pst.page_size / 1024));
-                page_size=pst.page_size;
+                systeminfo.mem_kbyte_max = (unsigned long)(pst.physical_memory * (pst.page_size / 1024));
+                page_size = pst.page_size;
         } else {
                 return FALSE;
         }
@@ -232,11 +232,11 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
         unsigned long long  used  = 0ULL;
 
         /* Memory */
-        if(pstat_getstatic(&pst, sizeof(pst), (size_t)1, 0) == -1) {
+        if (pstat_getstatic(&pst, sizeof(pst), (size_t)1, 0) == -1) {
                 LogError("system statistic error -- pstat_getstatic failed: %s\n", STRERROR);
                 return FALSE;
         }
-        if(pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) == -1) {
+        if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) == -1) {
                 LogError("system statistic error -- pstat_getdynamic failed: %s\n", STRERROR);
                 return FALSE;
         }
@@ -272,7 +272,7 @@ again:
                 goto again;
         }
         for (i = 0; i < n; i++) {
-                if (!(s->swt_ent[i].ste_flags & ST_INDEL) && !(s->swt_ent[i].ste_flags & ST_DOINGDEL)) {
+                if (! (s->swt_ent[i].ste_flags & ST_INDEL) && ! (s->swt_ent[i].ste_flags & ST_DOINGDEL)) {
                         total += s->swt_ent[i].ste_pages;
                         used  += s->swt_ent[i].ste_pages - s->swt_ent[i].ste_free;
                 }
@@ -301,7 +301,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
 
         pstat_getdynamic(&psd, sizeof(psd), 1, 0);
 
-        for(i = 0; i < CPUSTATES; i++)
+        for (i = 0; i < CPUSTATES; i++)
                 cpu_total_new += psd.psd_cpu_time[i];
         cpu_total     = cpu_total_new - cpu_total_old;
         cpu_total_old = cpu_total_new;
@@ -309,9 +309,9 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
         cpu_syst      = psd.psd_cpu_time[CP_SYS];
         cpu_wait      = psd.psd_cpu_time[CP_WAIT];
 
-        si->total_cpu_user_percent = (cpu_total > 0)?(int)(1000 * (double)(cpu_user - cpu_user_old) / cpu_total):-10;
-        si->total_cpu_syst_percent = (cpu_total > 0)?(int)(1000 * (double)(cpu_syst - cpu_syst_old) / cpu_total):-10;
-        si->total_cpu_wait_percent = (cpu_total > 0)?(int)(1000 * (double)(cpu_wait - cpu_wait_old) / cpu_total):-10;
+        si->total_cpu_user_percent = (cpu_total > 0) ? (int)(1000 * (double)(cpu_user - cpu_user_old) / cpu_total) : -10;
+        si->total_cpu_syst_percent = (cpu_total > 0) ? (int)(1000 * (double)(cpu_syst - cpu_syst_old) / cpu_total) : -10;
+        si->total_cpu_wait_percent = (cpu_total > 0) ? (int)(1000 * (double)(cpu_wait - cpu_wait_old) / cpu_total) : -10;
 
         cpu_user_old = cpu_user;
         cpu_syst_old = cpu_syst;

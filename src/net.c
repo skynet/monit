@@ -206,15 +206,15 @@ static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int
 static unsigned short checksum_ip(unsigned char *_addr, int count) {
         register long sum = 0;
         unsigned short *addr = (unsigned short *)_addr;
-        while(count > 1) {
+        while (count > 1) {
                 sum += *addr++;
                 count -= 2;
         }
         /* Add left-over byte, if any */
-        if(count > 0)
+        if (count > 0)
                 sum += *(unsigned char *)addr;
         /* Fold 32-bit sum to 16 bits */
-        while(sum >> 16)
+        while (sum >> 16)
                 sum = (sum & 0xffff) + (sum >> 16);
         return ~sum;
 }
@@ -231,7 +231,7 @@ int check_host(const char *hostname) {
         ASSERT(hostname);
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = PF_INET; /* we support just IPv4 currently */
-        if(getaddrinfo(hostname, NULL, &hints, &res) != 0)
+        if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
                 return FALSE;
         freeaddrinfo(res);
         return TRUE;
@@ -253,7 +253,7 @@ int check_udp_socket(int socket) {
          */
         Net_write(socket, token, 1, 0);
         if (Net_read(socket, token, 1, 1200) < 0) {
-                switch(errno) {
+                switch (errno) {
                         case ECONNREFUSED:
                                 return FALSE;
                         default:
@@ -274,11 +274,11 @@ int create_socket(const char *hostname, int port, int type, int timeout) {
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET;
 
-        if((status = getaddrinfo(hostname, NULL, &hints, &result)) != 0) {
+        if ((status = getaddrinfo(hostname, NULL, &hints, &result)) != 0) {
                 LogError("Cannot translate '%s' to IP address -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return -1;
         }
-        if((s = socket(AF_INET, type, 0)) < 0) {
+        if ((s = socket(AF_INET, type, 0)) < 0) {
                 LogError("Cannot create socket -- %s\n", STRERROR);
                 freeaddrinfo(result);
                 return -1;
@@ -288,7 +288,7 @@ int create_socket(const char *hostname, int port, int type, int timeout) {
         sin.sin_family = AF_INET;
         sin.sin_port = htons(port);
         freeaddrinfo(result);
-        if(! Net_setNonBlocking(s)) {
+        if (! Net_setNonBlocking(s)) {
                 LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
                 goto error;
         }
@@ -310,14 +310,14 @@ int create_unix_socket(const char *pathname, int type, int timeout) {
         int s;
         struct sockaddr_un unixsocket;
         ASSERT(pathname);
-        if((s = socket(PF_UNIX, type, 0)) < 0)
+        if ((s = socket(PF_UNIX, type, 0)) < 0)
                 return -1;
         unixsocket.sun_family = AF_UNIX;
         snprintf(unixsocket.sun_path, sizeof(unixsocket.sun_path), "%s", pathname);
-        if(! Net_setNonBlocking(s)) {
+        if (! Net_setNonBlocking(s)) {
                 goto error;
         }
-        if(do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout) < 0) {
+        if (do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout) < 0) {
                 goto error;
         }
         return s;
@@ -330,19 +330,19 @@ error:
 int create_server_socket(int port, int backlog, const char *bindAddr) {
         int s, status, flag = 1;
         struct sockaddr_in myaddr;
-        if((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 LogError("Cannot create socket -- %s\n", STRERROR);
                 return -1;
         }
         memset(&myaddr, 0, sizeof(struct sockaddr_in));
-        if(bindAddr) {
+        if (bindAddr) {
                 struct sockaddr_in *sa;
                 struct addrinfo hints;
                 struct addrinfo *result;
 
                 memset(&hints, 0, sizeof(struct addrinfo));
                 hints.ai_family = AF_INET;
-                if((status = getaddrinfo(bindAddr, NULL, &hints, &result)) != 0) {
+                if ((status = getaddrinfo(bindAddr, NULL, &hints, &result)) != 0) {
                         LogError("Cannot translate '%s' to IP address -- %s\n", bindAddr, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                         goto error;
                 }
@@ -354,21 +354,21 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
         }
         myaddr.sin_family = AF_INET;
         myaddr.sin_port = htons(port);
-        if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)  {
+        if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)  {
                 LogError("Cannot set reuseaddr option -- %s\n", STRERROR);
                 goto error;
         }
-        if(! Net_setNonBlocking(s))
+        if (! Net_setNonBlocking(s))
                 goto error;
-        if(fcntl(s, F_SETFD, FD_CLOEXEC) == -1) {
+        if (fcntl(s, F_SETFD, FD_CLOEXEC) == -1) {
                 LogError("Cannot set close on exec option -- %s\n", STRERROR);
                 goto error;
         }
-        if(bind(s, (struct sockaddr *)&myaddr, sizeof(struct sockaddr_in)) < 0) {
+        if (bind(s, (struct sockaddr *)&myaddr, sizeof(struct sockaddr_in)) < 0) {
                 LogError("Cannot bind -- %s\n", STRERROR);
                 goto error;
         }
-        if(listen(s, backlog) < 0) {
+        if (listen(s, backlog) < 0) {
                 LogError("Cannot listen -- %s\n", STRERROR);
                 goto error;
         }
@@ -489,7 +489,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                 sout.sin_port   = 0;
                 do {
                         n = (int)sendto(s, (char *)icmpout, len_out, 0, (struct sockaddr *)&sout, sizeof(struct sockaddr));
-                } while(n == -1 && errno == EINTR);
+                } while (n == -1 && errno == EINTR);
                 if (n < 0) {
                         LogError("Ping request for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                         continue;
@@ -500,7 +500,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                         socklen_t size = sizeof(struct sockaddr_in);
                         do {
                                 n = (int)recvfrom(s, buf, STRLEN, 0, (struct sockaddr *)&sout, &size);
-                        } while(n == -1 && errno == EINTR);
+                        } while (n == -1 && errno == EINTR);
                         if (n < 0) {
                                 LogError("Ping response for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                                 continue;
@@ -530,7 +530,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
 error1:
         do {
                 r = close(s);
-        } while(r == -1 && errno == EINTR);
+        } while (r == -1 && errno == EINTR);
         if (r == -1)
                 LogError("Socket %d close failed -- %s\n", s, STRERROR);
 error2:

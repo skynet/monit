@@ -142,7 +142,7 @@ void spawn(Service_T S, command_t C, Event_T E) {
         ASSERT(S);
         ASSERT(C);
 
-        if(access(C->arg[0], X_OK) != 0) {
+        if (access(C->arg[0], X_OK) != 0) {
                 LogError("Error: Could not execute %s\n", C->arg[0]);
                 return;
         }
@@ -156,32 +156,32 @@ void spawn(Service_T S, command_t C, Event_T E) {
 
         Time_string(Time_now(), date);
         pid = fork();
-        if(pid < 0) {
+        if (pid < 0) {
                 LogError("Cannot fork a new process -- %s\n", STRERROR);
                 exit(1);
         }
 
-        if(pid == 0) {
+        if (pid == 0) {
 
                 /*
                  * Switch uid/gid if requested
                  */
-                if(C->has_gid) {
-                        if(0 != setgid(C->gid)) {
+                if (C->has_gid) {
+                        if (0 != setgid(C->gid)) {
                                 stat_loc |= setgid_ERROR;
                         }
                 }
-                if(C->has_uid) {
-                        if(0 != setuid(C->uid)) {
+                if (C->has_uid) {
+                        if (0 != setuid(C->uid)) {
                                 stat_loc |= setuid_ERROR;
                         }
                 }
 
                 set_monit_environment(S, C, E, date);
 
-                if(! Run.isdaemon) {
-                        for(int i = 0; i < 3; i++)
-                                if(close(i) == -1 || open("/dev/null", O_RDWR) != i)
+                if (! Run.isdaemon) {
+                        for (int i = 0; i < 3; i++)
+                                if (close(i) == -1 || open("/dev/null", O_RDWR) != i)
                                         stat_loc |= redirect_ERROR;
                 }
 
@@ -190,12 +190,12 @@ void spawn(Service_T S, command_t C, Event_T E) {
                 setsid();
 
                 pid = fork();
-                if(pid < 0) {
+                if (pid < 0) {
                         stat_loc |= fork_ERROR;
                         _exit(stat_loc);
                 }
 
-                if(pid == 0) {
+                if (pid == 0) {
                         /*
                          * Reset all signals, so the spawned process is *not* created
                          * with any inherited SIG_BLOCKs
@@ -217,7 +217,7 @@ void spawn(Service_T S, command_t C, Event_T E) {
         }
 
         /* Wait for first child - aka second parent, to exit */
-        if(waitpid(pid, &stat_loc, 0) != pid) {
+        if (waitpid(pid, &stat_loc, 0) != pid) {
                 LogError("Waitpid error\n");
         }
 

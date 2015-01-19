@@ -147,11 +147,11 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
 
         p = buf + strlen(buf);
 
-        l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; to64(p, l, 4); p += 4;
-        l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; to64(p, l, 4); p += 4;
-        l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; to64(p, l, 4); p += 4;
-        l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; to64(p, l, 4); p += 4;
-        l = (final[ 4]<<16) | (final[10]<<8) | final[ 5]; to64(p, l, 4); p += 4;
+        l = (final[ 0] << 16) | (final[ 6] << 8) | final[12]; to64(p, l, 4); p += 4;
+        l = (final[ 1] << 16) | (final[ 7] << 8) | final[13]; to64(p, l, 4); p += 4;
+        l = (final[ 2] << 16) | (final[ 8] << 8) | final[14]; to64(p, l, 4); p += 4;
+        l = (final[ 3] << 16) | (final[ 9] << 8) | final[15]; to64(p, l, 4); p += 4;
+        l = (final[ 4] << 16) | (final[10] << 8) | final[ 5]; to64(p, l, 4); p += 4;
         l =                    final[11]                ; to64(p, l, 2); p += 2;
         *p = '\0';
 

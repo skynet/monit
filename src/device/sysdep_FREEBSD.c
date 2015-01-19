@@ -86,7 +86,7 @@ int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
 
         ASSERT(inf);
 
-        if(statfs(mntpoint, &usage) != 0) {
+        if (statfs(mntpoint, &usage) != 0) {
                 LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
                 return FALSE;
         }

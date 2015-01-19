@@ -82,9 +82,9 @@ void file_init() {
         char buf[STRLEN];
 
         /* Check if the pidfile was already set during configfile parsing */
-        if(Run.pidfile == NULL) {
+        if (Run.pidfile == NULL) {
                 /* Set the location of this programs pidfile */
-                if(! getuid()) {
+                if (! getuid()) {
                         snprintf(pidfile, STRLEN, "%s/%s", MYPIDDIR, MYPIDFILE);
                 } else {
                         snprintf(pidfile, STRLEN, "%s/.%s", Run.Env.home, MYPIDFILE);
@@ -93,14 +93,14 @@ void file_init() {
         }
 
         /* Set the location of monit's id file */
-        if(Run.idfile == NULL) {
+        if (Run.idfile == NULL) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYIDFILE);
                 Run.idfile = Str_dup(buf);
         }
         Util_monitId(Run.idfile);
 
         /* Set the location of monit's state file */
-        if(Run.statefile == NULL) {
+        if (Run.statefile == NULL) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYSTATEFILE);
                 Run.statefile = Str_dup(buf);
         }
@@ -119,12 +119,12 @@ time_t file_getTimestamp(char *object, mode_t type) {
 
         ASSERT(object);
 
-        if(! stat(object, &buf)) {
-                if(((type == S_IFREG) && S_ISREG(buf.st_mode)) ||
-                   ((type == S_IFDIR) && S_ISDIR(buf.st_mode)) ||
-                   ((type == S_IFSOCK) && S_ISSOCK(buf.st_mode)) ||
-                   ((type == (S_IFREG|S_IFDIR)) && (S_ISREG(buf.st_mode) || S_ISDIR(buf.st_mode)))
-                   ) {
+        if (! stat(object, &buf)) {
+                if (((type == S_IFREG) && S_ISREG(buf.st_mode)) ||
+                    ((type == S_IFDIR) && S_ISDIR(buf.st_mode)) ||
+                    ((type == S_IFSOCK) && S_ISSOCK(buf.st_mode)) ||
+                    ((type == (S_IFREG|S_IFDIR)) && (S_ISREG(buf.st_mode) || S_ISDIR(buf.st_mode)))
+                    ) {
                         return MAX(buf.st_mtime, buf.st_ctime);
                 } else {
                         LogError("Invalid object type - %s\n", object);
@@ -141,22 +141,22 @@ char *file_findControlFile() {
         char *rcfile = CALLOC(sizeof(char), STRLEN + 1);
 
         snprintf(rcfile, STRLEN, "%s/.%s", Run.Env.home, MONITRC);
-        if(file_exist(rcfile)) {
+        if (file_exist(rcfile)) {
                 return rcfile;
         }
         snprintf(rcfile, STRLEN, "/etc/%s", MONITRC);
-        if(file_exist(rcfile)) {
+        if (file_exist(rcfile)) {
                 return rcfile;
         }
         snprintf(rcfile, STRLEN, "%s/%s", SYSCONFDIR, MONITRC);
-        if(file_exist(rcfile)) {
+        if (file_exist(rcfile)) {
                 return rcfile;
         }
         snprintf(rcfile, STRLEN, "/usr/local/etc/%s", MONITRC);
-        if(file_exist(rcfile)) {
+        if (file_exist(rcfile)) {
                 return rcfile;
         }
-        if(file_exist(MONITRC)) {
+        if (file_exist(MONITRC)) {
                 snprintf(rcfile, STRLEN, "%s/%s", Run.Env.cwd, MONITRC);
                 return rcfile;
         }
@@ -234,19 +234,19 @@ int file_checkStat(char *filename, char *description, int permmask) {
         ASSERT(filename);
         ASSERT(description);
 
-        if(stat(filename, &buf) < 0) {
+        if (stat(filename, &buf) < 0) {
                 LogError("Cannot stat the %s '%s' -- %s\n", description, filename, STRERROR);
                 return FALSE;
         }
-        if(!S_ISREG(buf.st_mode)) {
+        if (! S_ISREG(buf.st_mode)) {
                 LogError("The %s '%s' is not a regular file.\n", description,  filename);
                 return FALSE;
         }
-        if(buf.st_uid != geteuid())  {
+        if (buf.st_uid != geteuid())  {
                 LogError("The %s '%s' must be owned by you.\n", description, filename);
                 return FALSE;
         }
-        if((buf.st_mode & 0777 ) & ~permmask) {
+        if ((buf.st_mode & 0777 ) & ~permmask) {
                 /*
                  Explanation:
 
@@ -258,25 +258,25 @@ int file_checkStat(char *filename, char *description, int permmask) {
                  */
                 LogError("The %s '%s' must have permissions no more than -%c%c%c%c%c%c%c%c%c (0%o); right now permissions are -%c%c%c%c%c%c%c%c%c (0%o).\n",
                          description, filename,
-                         permmask&S_IRUSR?'r':'-',
-                         permmask&S_IWUSR?'w':'-',
-                         permmask&S_IXUSR?'x':'-',
-                         permmask&S_IRGRP?'r':'-',
-                         permmask&S_IWGRP?'w':'-',
-                         permmask&S_IXGRP?'x':'-',
-                         permmask&S_IROTH?'r':'-',
-                         permmask&S_IWOTH?'w':'-',
-                         permmask&S_IXOTH?'x':'-',
+                         permmask&S_IRUSR ? 'r' : '-',
+                         permmask&S_IWUSR ? 'w' : '-',
+                         permmask&S_IXUSR ? 'x' : '-',
+                         permmask&S_IRGRP ? 'r' : '-',
+                         permmask&S_IWGRP ? 'w' : '-',
+                         permmask&S_IXGRP ? 'x' : '-',
+                         permmask&S_IROTH ? 'r' : '-',
+                         permmask&S_IWOTH ? 'w' : '-',
+                         permmask&S_IXOTH ? 'x' : '-',
                          permmask&0777,
-                         buf.st_mode&S_IRUSR?'r':'-',
-                         buf.st_mode&S_IWUSR?'w':'-',
-                         buf.st_mode&S_IXUSR?'x':'-',
-                         buf.st_mode&S_IRGRP?'r':'-',
-                         buf.st_mode&S_IWGRP?'w':'-',
-                         buf.st_mode&S_IXGRP?'x':'-',
-                         buf.st_mode&S_IROTH?'r':'-',
-                         buf.st_mode&S_IWOTH?'w':'-',
-                         buf.st_mode&S_IXOTH?'x':'-',
+                         buf.st_mode&S_IRUSR ? 'r' : '-',
+                         buf.st_mode&S_IWUSR ? 'w' : '-',
+                         buf.st_mode&S_IXUSR ? 'x' : '-',
+                         buf.st_mode&S_IRGRP ? 'r' : '-',
+                         buf.st_mode&S_IWGRP ? 'w' : '-',
+                         buf.st_mode&S_IXGRP ? 'x' : '-',
+                         buf.st_mode&S_IROTH ? 'r' : '-',
+                         buf.st_mode&S_IWOTH ? 'w' : '-',
+                         buf.st_mode&S_IXOTH ? 'x' : '-',
                          buf.st_mode& 0777);
                 return FALSE;
         }
@@ -289,9 +289,9 @@ int file_checkStat(char *filename, char *description, int permmask) {
 int file_checkQueueDirectory(char *path) {
         struct stat st;
 
-        if(stat(path, &st)) {
-                if(errno == ENOENT) {
-                        if(mkdir(path, 0700)) {
+        if (stat(path, &st)) {
+                if (errno == ENOENT) {
+                        if (mkdir(path, 0700)) {
                                 LogError("Cannot create the event queue directory %s -- %s\n", path, STRERROR);
                                 return FALSE;
                         }
@@ -299,7 +299,7 @@ int file_checkQueueDirectory(char *path) {
                         LogError("Cannot read the event queue directory %s -- %s\n", path, STRERROR);
                         return FALSE;
                 }
-        } else if(! S_ISDIR(st.st_mode)) {
+        } else if (! S_ISDIR(st.st_mode)) {
                 LogError("Event queue: the %s is not directory\n", path);
                 return FALSE;
         }
@@ -312,17 +312,17 @@ int file_checkQueueLimit(char *path, int limit) {
         DIR           *dir = NULL;
         struct dirent *de = NULL;
 
-        if(limit < 0)
+        if (limit < 0)
                 return TRUE;
 
-        if(! (dir = opendir(path)) ) {
+        if (! (dir = opendir(path)) ) {
                 LogError("Cannot open the event queue directory %s -- %s\n", path, STRERROR);
                 return FALSE;
         }
-        while( (de = readdir(dir)) ) {
+        while ( (de = readdir(dir)) ) {
                 struct stat st;
 
-                if(!stat(de->d_name, &st) && S_ISREG(st.st_mode) && ++used > limit) {
+                if (! stat(de->d_name, &st) && S_ISREG(st.st_mode) && ++used > limit) {
                         LogError("Event queue is full\n");
                         closedir(dir);
                         return FALSE;
@@ -339,7 +339,7 @@ int file_writeQueue(FILE *file, void *data, size_t size) {
         ASSERT(file);
 
         /* write size */
-        if((rv = fwrite(&size, 1, sizeof(size_t), file)) != sizeof(size_t)) {
+        if ((rv = fwrite(&size, 1, sizeof(size_t), file)) != sizeof(size_t)) {
                 if (feof(file) || ferror(file))
                         LogError("Queued event file: unable to write event size -- %s\n", feof(file) ? "end of file" : "stream error");
                 else
@@ -348,8 +348,8 @@ int file_writeQueue(FILE *file, void *data, size_t size) {
         }
 
         /* write data if any */
-        if(size > 0) {
-                if((rv = fwrite(data, 1, size, file)) != size) {
+        if (size > 0) {
+                if ((rv = fwrite(data, 1, size, file)) != size) {
                         if (feof(file) || ferror(file))
                                 LogError("Queued event file: unable to write event size -- %s\n", feof(file) ? "end of file" : "stream error");
                         else
@@ -369,7 +369,7 @@ void *file_readQueue(FILE *file, size_t *size) {
         ASSERT(file);
 
         /* read size */
-        if((rv = fread(size, 1, sizeof(size_t), file)) != sizeof(size_t)) {
+        if ((rv = fread(size, 1, sizeof(size_t), file)) != sizeof(size_t)) {
                 if (feof(file) || ferror(file))
                         LogError("Queued event file: unable to read event size -- %s\n", feof(file) ? "end of file" : "stream error");
                 else
@@ -378,9 +378,9 @@ void *file_readQueue(FILE *file, size_t *size) {
         }
 
         /* read data if any (allow 1MB at maximum to prevent enormous memory allocation) */
-        if(*size > 0 && *size < 1048576) {
+        if (*size > 0 && *size < 1048576) {
                 data = CALLOC(1, *size);
-                if((rv = fread(data, 1, *size, file)) != *size) {
+                if ((rv = fread(data, 1, *size, file)) != *size) {
                         FREE(data);
                         if (feof(file) || ferror(file))
                                 LogError("Queued event file: unable to read event data -- %s\n", feof(file) ? "end of file" : "stream error");

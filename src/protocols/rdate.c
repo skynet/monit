@@ -53,40 +53,40 @@
  */
 int check_rdate(Socket_T socket) {
 
-/* Offset of 00:00:00 UTC, January 1, 1970 from 00:00:00 UTC, January 1, 1900 */
+        /* Offset of 00:00:00 UTC, January 1, 1970 from 00:00:00 UTC, January 1, 1900 */
 #define  TIME_OFFSET    2208988800UL
 #define  TIME_TOLERANCE (time_t)3
 
-  time_t delta;
-  time_t rdatet;
-  time_t systemt;
+        time_t delta;
+        time_t rdatet;
+        time_t systemt;
 
-  ASSERT(socket);
+        ASSERT(socket);
 
-  if(socket_read(socket,(char*) &rdatet, sizeof(time_t)) <= 0) {
-    socket_setError(socket, "RDATE: error receiving data -- %s", STRERROR);
-    return FALSE;
-  }
+        if (socket_read(socket,(char*) &rdatet, sizeof(time_t)) <= 0) {
+                socket_setError(socket, "RDATE: error receiving data -- %s", STRERROR);
+                return FALSE;
+        }
 
-  /* Get remote time and substract offset to allow unix time comparision */
-  rdatet = ntohl(rdatet) - TIME_OFFSET;
+        /* Get remote time and substract offset to allow unix time comparision */
+        rdatet = ntohl(rdatet) - TIME_OFFSET;
 
-  if((systemt = time(NULL)) == -1) {
-    socket_setError(socket, "RDATE error: cannot get system time -- %s", STRERROR);
-    return FALSE;
-  }
+        if ((systemt = time(NULL)) == -1) {
+                socket_setError(socket, "RDATE error: cannot get system time -- %s", STRERROR);
+                return FALSE;
+        }
 
-  if(rdatet >= systemt)
-    delta = (rdatet-systemt);
-  else
-    delta = (systemt-rdatet);
+        if (rdatet >= systemt)
+                delta = (rdatet-systemt);
+        else
+                delta = (systemt-rdatet);
 
-  if(delta > TIME_TOLERANCE) {
-    socket_setError(socket, "RDATE error: time does not match system time -- %s", STRERROR);
-    return FALSE;
-  }
+        if (delta > TIME_TOLERANCE) {
+                socket_setError(socket, "RDATE error: time does not match system time -- %s", STRERROR);
+                return FALSE;
+        }
 
-  return TRUE;
+        return TRUE;
 
 }
 

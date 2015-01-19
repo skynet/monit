@@ -82,7 +82,7 @@ int filesystem_usage(Service_T s) {
                                 return FALSE;
                         }
                         // If the target is device, get its mountpoint
-                        if(S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
+                        if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
                                 char dev[PATH_MAX+1];
                                 snprintf(dev, sizeof(dev), "%s", buf);
                                 if (! device_mountpoint_sysdep(dev, buf, sizeof(buf)))
@@ -91,7 +91,7 @@ int filesystem_usage(Service_T s) {
                 } else if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode)) {
                         // File or directory: we have mountpoint or filesystem subdirectory already (no need to map)
                         snprintf(buf, sizeof(buf), "%s", s->path);
-                } else if(S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
+                } else if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
                         // Block or character device: look for mountpoint
                         if (! device_mountpoint_sysdep(s->path, buf, sizeof(buf)))
                                 return FALSE;

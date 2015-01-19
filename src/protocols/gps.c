@@ -38,32 +38,32 @@
  */
 int check_gps(Socket_T socket) {
         char buf[STRLEN];
-        const char *ok_gps_device="GPSD,G=GPS";
-        const char *ok_rtcm104_device="GPSD,G=RTCM104";
-        const char *ok_rtcm104v2_device="GPSD,G=RTCM104v2";
+        const char *ok_gps_device = "GPSD,G=GPS";
+        const char *ok_rtcm104_device = "GPSD,G=RTCM104";
+        const char *ok_rtcm104v2_device = "GPSD,G=RTCM104v2";
 
         ASSERT(socket);
 
-        if(socket_print(socket, "G\r\n") < 0) {
+        if (socket_print(socket, "G\r\n") < 0) {
                 socket_setError(socket, "GPS: error sending data -- %s", STRERROR);
                 return FALSE;
         }
 
-        if(!socket_readln(socket, buf, sizeof(buf))) {
+        if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "GPS: error receiving data -- %s", STRERROR);
                 return FALSE;
         }
 
         Str_chomp(buf);
-        if(strncasecmp(buf, ok_gps_device, strlen(ok_gps_device)) != 0) {
-                if(strncasecmp(buf, ok_rtcm104v2_device, strlen(ok_rtcm104v2_device)) != 0) {
-                        if(strncasecmp(buf, ok_rtcm104_device, strlen(ok_rtcm104_device)) != 0) {
+        if (strncasecmp(buf, ok_gps_device, strlen(ok_gps_device)) != 0) {
+                if (strncasecmp(buf, ok_rtcm104v2_device, strlen(ok_rtcm104v2_device)) != 0) {
+                        if (strncasecmp(buf, ok_rtcm104_device, strlen(ok_rtcm104_device)) != 0) {
                                 socket_setError(socket, "GPS error (no device): %s", buf);
                                 return FALSE;
                         }
                 }
         }
-
+        
         return TRUE;
 }
 

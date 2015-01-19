@@ -86,13 +86,13 @@ void  daemonize() {
         /*
          * Become a session leader to lose our controlling terminal
          */
-        if((pid = fork ()) < 0) {
+        if ((pid = fork ()) < 0) {
 
                 LogError("Cannot fork of a new process\n");
                 exit (1);
 
         }
-        else if(pid != 0) {
+        else if (pid != 0) {
 
                 _exit(0);
 
@@ -100,13 +100,13 @@ void  daemonize() {
 
         setsid();
 
-        if((pid = fork ()) < 0) {
+        if ((pid = fork ()) < 0) {
 
                 LogError("Cannot fork of a new process\n");
                 exit (1);
 
         }
-        else if(pid != 0) {
+        else if (pid != 0) {
 
                 _exit(0);
 
@@ -117,7 +117,7 @@ void  daemonize() {
          * Change current directory to the root so that other file systems
          * can be unmounted while we're running
          */
-        if(chdir("/") < 0) {
+        if (chdir("/") < 0) {
 
                 LogError("Cannot chdir to / -- %s\n", STRERROR);
                 exit(1);
@@ -158,7 +158,7 @@ int kill_daemon(int sig) {
 
         }
 
-        if(sig == SIGTERM) {
+        if (sig == SIGTERM) {
 
                 fprintf(stdout, "Monit daemon with pid [%d] killed\n", (int)pid);
                 fflush(stdout);
@@ -180,8 +180,8 @@ int exist_daemon() {
 
         errno = 0;
 
-        if( (pid = Util_getPid(Run.pidfile)) )
-                if( (getpgid(pid)) > -1 || (errno == EPERM) )
+        if ( (pid = Util_getPid(Run.pidfile)) )
+                if ( (getpgid(pid)) > -1 || (errno == EPERM) )
                         return((int)pid);
 
         return(FALSE);

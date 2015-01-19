@@ -170,10 +170,10 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
         int ssl_error;
         time_t ssl_time;
 
-        if (!ssl)
+        if (! ssl)
                 return FALSE;
 
-        if (!ssl_initialized)
+        if (! ssl_initialized)
                 start_ssl();
 
         if (socket >= 0) {
@@ -209,10 +209,10 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
                         goto sslerror;
                 }
 
-                if (!handle_error(ssl_error, ssl))
+                if (! handle_error(ssl_error, ssl))
                         goto sslerror;
 
-                if (!BIO_should_retry(ssl->socket_bio))
+                if (! BIO_should_retry(ssl->socket_bio))
                         goto sslerror;
         }
 
@@ -260,7 +260,7 @@ int check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
 int close_ssl_socket(ssl_connection *ssl) {
         int rv;
 
-        if (!ssl)
+        if (! ssl)
                 return FALSE;
 
         if (! (rv = SSL_shutdown(ssl->handler))) {
@@ -280,12 +280,12 @@ int close_ssl_socket(ssl_connection *ssl) {
  * @param ssl ssl connection
  */
 void delete_ssl_socket(ssl_connection *ssl) {
-        if (!ssl)
+        if (! ssl)
                 return;
 
         cleanup_ssl_socket(ssl);
 
-        if (ssl->ctx && !ssl->accepted)
+        if (ssl->ctx && ! ssl->accepted)
                 SSL_CTX_free(ssl->ctx);
 
         ssl->ctx = NULL;
@@ -301,14 +301,14 @@ void delete_ssl_socket(ssl_connection *ssl) {
  */
 ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
         ASSERT(pemfile);
-        if (!ssl_initialized)
+        if (! ssl_initialized)
                 start_ssl();
         ssl_server_connection *ssl_server = new_ssl_server_connection(pemfile, clientpemfile);
-        if (!(ssl_server->method = SSLv23_server_method())) {
+        if (! (ssl_server->method = SSLv23_server_method())) {
                 LogError("Cannot initialize the SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
-        if (!(ssl_server->ctx = SSL_CTX_new(ssl_server->method))) {
+        if (! (ssl_server->ctx = SSL_CTX_new(ssl_server->method))) {
                 LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
@@ -333,7 +333,7 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
         /*
          * We need this to force transmission of client certs
          */
-        if (!verify_init(ssl_server)) {
+        if (! verify_init(ssl_server)) {
                 LogError("Verification engine was not properly initialized -- %s\n", SSLERROR);
                 goto sslerror;
         }
@@ -353,7 +353,7 @@ sslerror:
  * @param ssl_server data for ssl server connection
  */
 void delete_ssl_server_socket(ssl_server_connection *ssl_server) {
-        if (!ssl_server)
+        if (! ssl_server)
                 return;
 
         cleanup_ssl_server_socket(ssl_server);
@@ -375,7 +375,7 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
 
         ASSERT(ssl_server);
 
-        if (!ssl_initialized)
+        if (! ssl_initialized)
                 start_ssl();
 
         NEW(ssl);
@@ -418,7 +418,7 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
  * @param ssl data the connection to be deleted
  */
 void close_accepted_ssl_socket(ssl_server_connection *ssl_server, ssl_connection *ssl) {
-        if (!ssl || !ssl_server)
+        if (! ssl || ! ssl_server)
                 return;
 
         Net_close(ssl->socket);
@@ -450,10 +450,10 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
 
         ssl->socket = socket;
 
-        if (!ssl_initialized)
+        if (! ssl_initialized)
                 start_ssl();
 
-        if (!(ssl->handler = SSL_new(ssl->ctx))) {
+        if (! (ssl->handler = SSL_new(ssl->ctx))) {
                 LogError("Cannot initialize the SSL handler -- %s\n", SSLERROR);
                 return FALSE;
         }
@@ -465,7 +465,7 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
 
         Net_setNonBlocking(ssl->socket);
 
-        if (!(ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE))) {
+        if (! (ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE))) {
                 LogError("Cannot create IO buffer -- %s\n", SSLERROR);
                 return FALSE;
         }
@@ -481,17 +481,17 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
                         return FALSE;
                 }
 
-                if (!handle_error(ssl_error, ssl))
+                if (! handle_error(ssl_error, ssl))
                         return FALSE;
 
-                if (!BIO_should_retry(ssl->socket_bio))
+                if (! BIO_should_retry(ssl->socket_bio))
                         return FALSE;
 
         }
 
         ssl->cipher = (char *)SSL_get_cipher(ssl->handler);
 
-        if (!update_ssl_cert_data(ssl) && ssl->clientpemfile) {
+        if (! update_ssl_cert_data(ssl) && ssl->clientpemfile) {
                 LogError("The client did not supply a required client certificate\n");
                 return FALSE;
         }
@@ -573,7 +573,7 @@ void stop_ssl() {
 ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
         ssl_connection *ssl;
 
-        if (!ssl_initialized)
+        if (! ssl_initialized)
                 start_ssl();
 
         NEW(ssl);
@@ -632,12 +632,12 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
 
         }
 
-        if (!ssl->method) {
+        if (! ssl->method) {
                 LogError("Cannot initialize SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
-        if (!(ssl->ctx = SSL_CTX_new(ssl->method))) {
+        if (! (ssl->ctx = SSL_CTX_new(ssl->method))) {
                 LogError("Cannot initialize SSL client certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
@@ -657,7 +657,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                         goto sslerror;
                 }
 
-                if (!SSL_CTX_check_private_key(ssl->ctx)) {
+                if (! SSL_CTX_check_private_key(ssl->ctx)) {
                         LogError("Private key does not match the certificate public key -- %s\n", SSLERROR);
                         goto sslerror;
                 }
@@ -681,7 +681,7 @@ sslerror:
 static int verify_init(ssl_server_connection *ssl_server) {
         struct stat stat_buf;
 
-        if (!ssl_server->clientpemfile) {
+        if (! ssl_server->clientpemfile) {
                 SSL_CTX_set_verify(ssl_server->ctx, SSL_VERIFY_NONE, NULL);
                 return TRUE;
         }
@@ -693,7 +693,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
         if (S_ISDIR(stat_buf.st_mode)) {
 
-                if (!SSL_CTX_load_verify_locations(ssl_server->ctx, NULL , ssl_server->clientpemfile)) {
+                if (! SSL_CTX_load_verify_locations(ssl_server->ctx, NULL , ssl_server->clientpemfile)) {
                         LogError("Error setting verify directory to %s -- %s\n", Run.httpsslclientpem, SSLERROR);
                         return FALSE;
                 }
@@ -702,7 +702,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
                 /* Monit's server cert for cli support */
 
-                if (!SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
+                if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
                         LogError("Error loading verify certificates from %s -- %s\n", ssl_server->pemfile, SSLERROR);
                         return FALSE;
                 }
@@ -711,7 +711,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
         } else if (S_ISREG(stat_buf.st_mode)) {
 
-                if (!SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->clientpemfile, NULL)) {
+                if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->clientpemfile, NULL)) {
                         LogError("Error loading verify certificates from %s -- %s\n", Run.httpsslclientpem, SSLERROR);
                         return FALSE;
                 }
@@ -720,7 +720,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
                 /* Monits server cert for cli support ! */
 
-                if (!SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
+                if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
                         LogError("Error loading verify certificates from %s -- %s\n", ssl_server->pemfile, SSLERROR);
                         return FALSE;
                 }
@@ -749,7 +749,7 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx) {
 
         X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), subject, STRLEN-1);
 
-        if (!preverify_ok && !check_preverify(ctx))
+        if (! preverify_ok && ! check_preverify(ctx))
                 return 0;
 
         if (ctx->error_depth == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(ctx->current_cert), &found_cert) != 1) {
@@ -853,7 +853,7 @@ static int handle_error(int code, ssl_connection *ssl) {
  * @param ssl ssl connection
  */
 static void cleanup_ssl_socket(ssl_connection *ssl) {
-        if (!ssl)
+        if (! ssl)
                 return;
 
         if (ssl->cert) {
@@ -883,7 +883,7 @@ static void cleanup_ssl_socket(ssl_connection *ssl) {
  * @param ssl_server data for ssl server connection
  */
 static void cleanup_ssl_server_socket(ssl_server_connection *ssl_server) {
-        if (!ssl_server)
+        if (! ssl_server)
                 return;
 
         FREE(ssl_server->pemfile);
@@ -907,11 +907,11 @@ static int update_ssl_cert_data(ssl_connection *ssl) {
 
         ASSERT(ssl);
 
-        if (!(ssl->cert = SSL_get_peer_certificate(ssl->handler)))
+        if (! (ssl->cert = SSL_get_peer_certificate(ssl->handler)))
                 return FALSE;
 
 #ifdef OPENSSL_FIPS
-        if (!FIPS_mode()) {
+        if (! FIPS_mode()) {
                 /* In FIPS-140 mode, MD5 is unavailable. */
 #endif
                 ssl->cert_issuer = X509_NAME_oneline (X509_get_issuer_name(ssl->cert), 0, 0);
@@ -950,7 +950,7 @@ static ssl_server_connection *new_ssl_server_connection(char * pemfile, char * c
  * Enable FIPS mode, if it isn't enabled yet.
  */
 void enable_fips_mode() {
-        if (!FIPS_mode()) {
+        if (! FIPS_mode()) {
                 ASSERT(FIPS_mode_set(1));
                 LogInfo("FIPS-140 mode is enabled\n");
         }
@@ -981,10 +981,10 @@ static int start_ssl() {
                 CRYPTO_set_locking_callback(ssl_mutex_lock);
                 SSL_library_init();
                 if (file_exist(URANDOM_DEVICE)) {
-                        return(RAND_load_file(URANDOM_DEVICE, RANDOM_BYTES)==RANDOM_BYTES);
+                        return(RAND_load_file(URANDOM_DEVICE, RANDOM_BYTES) == RANDOM_BYTES);
                 } else if (file_exist(RANDOM_DEVICE)) {
                         DEBUG("Gathering entropy from the random device\n");
-                        return(RAND_load_file(RANDOM_DEVICE, RANDOM_BYTES)==RANDOM_BYTES);
+                        return(RAND_load_file(RANDOM_DEVICE, RANDOM_BYTES) == RANDOM_BYTES);
                 }
                 return FALSE;
         }

@@ -228,11 +228,11 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                 stat_pid = atoi(globbuf.gl_pathv[i] + strlen("/proc/"));
 
                 /********** /proc/PID/stat **********/
-                if (!read_proc_file(buf, sizeof(buf), "stat", stat_pid, NULL)) {
+                if (! read_proc_file(buf, sizeof(buf), "stat", stat_pid, NULL)) {
                         DEBUG("system statistic error -- cannot read /proc/%d/stat\n", stat_pid);
                         continue;
                 }
-                if (!(tmp = strrchr(buf, ')'))) {
+                if (! (tmp = strrchr(buf, ')'))) {
                         DEBUG("system statistic error -- file /proc/%d/stat parse error\n", stat_pid);
                         continue;
                 }
@@ -408,7 +408,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
         unsigned long long cpu_softirq;
         char               buf[1024];
 
-        if (!read_proc_file(buf, 1024, "stat", -1, NULL)) {
+        if (! read_proc_file(buf, 1024, "stat", -1, NULL)) {
                 LogError("system statistic error -- cannot read /proc/stat\n");
                 goto error;
         }

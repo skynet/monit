@@ -153,7 +153,7 @@ retry:
 
         /* Open a socket to the destination INET[hostname:port] or UNIX[pathname] */
         socket = socket_create(p);
-        if (!socket) {
+        if (! socket) {
                 snprintf(report, STRLEN, "failed, cannot open a connection to %s", Util_portDescription(p, buf, sizeof(buf)));
                 rv = FALSE;
                 goto error;
@@ -189,7 +189,7 @@ retry:
 error:
         if (socket)
                 socket_free(&socket);
-        if (!rv) {
+        if (! rv) {
                 if (retry_count-- > 1) {
                         DEBUG("'%s' %s (attempt %d/%d)\n", s->name, report, p->retry - retry_count, p->retry);
                         goto retry;
@@ -267,7 +267,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
 
         ASSERT(s && r);
 
-        switch(r->resource_id) {
+        switch (r->resource_id) {
 
                 case RESOURCE_ID_CPU_PERCENT:
                         if (s->monitor & MONITOR_INIT || s->inf->priv.process.cpu_percent < 0) {
@@ -447,7 +447,7 @@ static void check_checksum(Service_T s) {
                         snprintf(cs->hash, sizeof(cs->hash), "%s", s->inf->priv.file.cs_sum);
                 }
 
-                switch(cs->type) {
+                switch (cs->type) {
                         case HASH_MD5:
                                 changed = strncmp(cs->hash, s->inf->priv.file.cs_sum, 32);
                                 break;
@@ -600,7 +600,7 @@ static void check_size(Service_T s) {
         for (Size_T sl = s->sizelist; sl; sl = sl->next) {
                 /* if we are testing for changes only, the value is variable */
                 if (sl->test_changes) {
-                        if (!sl->initialized) {
+                        if (! sl->initialized) {
                                 /* the size was not initialized during monit start, so set the size now
                                  * and allow further size change testing */
                                 sl->initialized = TRUE;
@@ -800,7 +800,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                 return;
         }
 
-        switch(td->resource) {
+        switch (td->resource) {
 
                 case RESOURCE_ID_INODE:
                         if (s->inf->priv.filesystem.f_files <= 0) {
@@ -993,7 +993,7 @@ int check_process(Service_T s) {
         Resource_T pr = NULL;
         ASSERT(s);
         /* Test for running process */
-        if (!(pid = Util_isProcessRunning(s, FALSE))) {
+        if (! (pid = Util_isProcessRunning(s, FALSE))) {
                 for (Nonexist_T l = s->nonexistlist; l; l = l->next)
                         Event_post(s, Event_Nonexist, STATE_FAILED, l->action, "process is not running");
                 return FALSE;
@@ -1093,7 +1093,7 @@ int check_file(Service_T s) {
                         Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "file exists");
         }
 
-        if (!S_ISREG(s->inf->st_mode) && !S_ISSOCK(s->inf->st_mode)) {
+        if (! S_ISREG(s->inf->st_mode) && ! S_ISSOCK(s->inf->st_mode)) {
                 Event_post(s, Event_Invalid, STATE_FAILED, s->action_INVALID, "is neither a regular file nor a socket");
                 return FALSE;
         } else {
@@ -1149,7 +1149,7 @@ int check_directory(Service_T s) {
                         Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "directory exists");
         }
 
-        if (!S_ISDIR(s->inf->st_mode)) {
+        if (! S_ISDIR(s->inf->st_mode)) {
                 Event_post(s, Event_Invalid, STATE_FAILED, s->action_INVALID, "is not directory");
                 return FALSE;
         } else {
@@ -1196,7 +1196,7 @@ int check_fifo(Service_T s) {
                         Event_post(s, Event_Nonexist, STATE_SUCCEEDED, l->action, "fifo exists");
         }
 
-        if (!S_ISFIFO(s->inf->st_mode)) {
+        if (! S_ISFIFO(s->inf->st_mode)) {
                 Event_post(s, Event_Invalid, STATE_FAILED, s->action_INVALID, "is not fifo");
                 return FALSE;
         } else {
@@ -1299,7 +1299,7 @@ int check_remote_host(Service_T s) {
         /* Test each icmp type in the service's icmplist */
         for (Icmp_T icmp = s->icmplist; icmp; icmp = icmp->next) {
 
-                switch(icmp->type) {
+                switch (icmp->type) {
                         case ICMP_ECHO:
 
                                 icmp->response = icmp_echo(s->path, icmp->timeout, icmp->count);

@@ -51,7 +51,7 @@ int check_redis(Socket_T socket) {
                 socket_setError(socket, "REDIS: PING command error -- %s", STRERROR);
                 return FALSE;
         }
-        if(! socket_readln(socket, buf, sizeof(buf))) {
+        if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "REDIS: PING response error -- %s", STRERROR);
                 return FALSE;
         }

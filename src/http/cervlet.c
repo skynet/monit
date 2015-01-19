@@ -557,7 +557,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                                     "<tr><td>PEM key/certificate file</td><td>%s</td></tr>",
                                     Run.httpsslpem);
 
-                if (Run.httpsslclientpem!=NULL) {
+                if (Run.httpsslclientpem != NULL) {
                         StringBuffer_append(res->outputbuffer,
                                             "<tr><td>Client PEM key/certification"
                                             "</td><td>%s</td></tr>", "Enabled");
@@ -576,7 +576,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
 
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>httpd auth. style</td><td>%s</td></tr>",
-                            (Run.credentials!=NULL) && (has_hosts_allow()) ? "Basic Authentication and Host/Net allow list" : (Run.credentials!=NULL) ? "Basic Authentication" : (has_hosts_allow()) ? "Host/Net allow list" : "No authentication");
+                            (Run.credentials != NULL) && (has_hosts_allow()) ? "Basic Authentication and Host/Net allow list" : (Run.credentials != NULL) ? "Basic Authentication" : (has_hosts_allow()) ? "Host/Net allow list" : "No authentication");
 
         print_alerts(res, Run.maillist);
 
@@ -666,7 +666,7 @@ static void handle_action(HttpRequest req, HttpResponse res) {
         const char *action;
         Service_T s;
 
-        if (!(s = Util_getService(++name))) {
+        if (! (s = Util_getService(++name))) {
                 send_error(res, SC_NOT_FOUND, "There is no service by that name");
                 return;
         }

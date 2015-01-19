@@ -151,7 +151,7 @@ void sha1_finish(sha1_context_t *context, unsigned char digest[SHA1_DIGEST_SIZE]
                 sha1_append(context, (unsigned char *)"\0", 1);
         sha1_append(context, finalcount, 8);  /* Should cause a sha1_transform() */
         for (i = 0; i < SHA1_DIGEST_SIZE; i++)
-                digest[i] = (unsigned char)((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
+                digest[i] = (unsigned char)((context->state[i >> 2] >> ((3-(i & 3)) * 8) ) & 255);
 
         /* Wipe variables */
         memset(context->buffer, 0, 64);

@@ -143,12 +143,12 @@ int check_apache_status(Socket_T socket) {
         ASSERT(socket);
         char host[STRLEN];
         if (socket_print(socket,
-                "GET /server-status?auto HTTP/1.1\r\n"
-                "Host: %s\r\n"
-                "Accept: */*\r\n"
-                "User-Agent: Monit/%s\r\n"
-                "Connection: close\r\n\r\n",
-                Util_getHTTPHostHeader(socket, host, STRLEN), VERSION) < 0)
+                         "GET /server-status?auto HTTP/1.1\r\n"
+                         "Host: %s\r\n"
+                         "Accept: */*\r\n"
+                         "User-Agent: Monit/%s\r\n"
+                         "Connection: close\r\n\r\n",
+                         Util_getHTTPHostHeader(socket, host, STRLEN), VERSION) < 0)
         {
                 socket_setError(socket, "HTTP: error sending data -- %s", STRERROR);
                 return FALSE;

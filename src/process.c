@@ -75,7 +75,7 @@
 int init_process_info(void) {
         memset(&systeminfo, 0, sizeof(SystemInfo_T));
         gettimeofday(&systeminfo.collected, NULL);
-        if(uname(&systeminfo.uname) < 0) {
+        if (uname(&systeminfo.uname) < 0) {
                 LogError("'%s' resource monitoring initialization error -- uname failed: %s\n", Run.system->name, STRERROR);
                 return FALSE;
         }

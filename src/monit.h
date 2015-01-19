@@ -252,25 +252,25 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #undef MIN
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
-#define IS(a,b)  ((a&&b)?!strcasecmp(a, b):0)
+#define IS(a,b)  ((a&&b) ? !strcasecmp(a, b) : 0)
 #define DEBUG LogDebug
 #define FLAG(x, y) (x & y) == y
-#define NVLSTR(x) (x?x:"")
+#define NVLSTR(x) (x ? x : "")
 
 
 /** ------------------------------------------------- Synchronization macros */
 
 
 #define LOCK(mutex) do { pthread_mutex_t *_yymutex = &(mutex); \
-assert(pthread_mutex_lock(_yymutex)==0);
-#define END_LOCK assert(pthread_mutex_unlock(_yymutex)==0); } while (0)
+assert(pthread_mutex_lock(_yymutex) == 0);
+#define END_LOCK assert(pthread_mutex_unlock(_yymutex) == 0); } while (0)
 
 
 /** ------------------------------------------ Simple Assert Exception macro */
 
 
-#define ASSERT(e) do { if(!(e)) { LogCritical("AssertException: " #e \
-" at %s:%d\naborting..\n", __FILE__, __LINE__); abort(); } } while(0)
+#define ASSERT(e) do { if (!(e)) { LogCritical("AssertException: " #e \
+" at %s:%d\naborting..\n", __FILE__, __LINE__); abort(); } } while (0)
 
 
 /* --------------------------------------------------------- Data structures */

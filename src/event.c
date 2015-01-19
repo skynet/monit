@@ -181,7 +181,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
                         e = e->next;
                 } while (e);
 
-                if (!e) {
+                if (! e) {
                         /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
                         if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
                                 DEBUG("'%s' %s\n", service->name, message);
@@ -235,7 +235,7 @@ Service_T Event_get_source(Event_T E) {
 
         ASSERT(E);
 
-        if (!(s = Util_getService(E->source)))
+        if (! (s = Util_getService(E->source)))
                 LogError("Service %s not found in monit configuration\n", E->source);
 
         return s;
@@ -303,14 +303,14 @@ short Event_check_state(Event_T E, short S) {
 
         ASSERT(E);
 
-        if (!(service = Event_get_source(E)))
+        if (! (service = Event_get_source(E)))
                 return TRUE;
 
         /* Only true failed/changed state condition can change the initial state */
-        if (!state && E->state == STATE_INIT && !(service->error & E->id))
+        if (! state && E->state == STATE_INIT && ! (service->error & E->id))
                 return FALSE;
 
-        action = !state ? E->action->succeeded : E->action->failed;
+        action = ! state ? E->action->succeeded : E->action->failed;
 
         /* Compare as many bits as cycles able to trigger the action */
         for (i = 0; i < action->cycles; i++) {
@@ -483,7 +483,7 @@ void Event_queue_process() {
 
                 snprintf(file_name, STRLEN, "%s/%s", Run.eventlist_dir, de->d_name);
 
-                if (!stat(file_name, &st) && S_ISREG(st.st_mode)) {
+                if (! stat(file_name, &st) && S_ISREG(st.st_mode)) {
                         DEBUG("Processing queued event %s\n", file_name);
 
                         if (! (file = fopen(file_name, "r")) ) {
@@ -492,7 +492,7 @@ void Event_queue_process() {
                         }
 
                         /* read event structure version */
-                        if (!(version = file_readQueue(file, &size))) {
+                        if (! (version = file_readQueue(file, &size))) {
                                 LogError("skipping queued event %s - unknown data format\n", file_name);
                                 goto error2;
                         }
@@ -506,21 +506,21 @@ void Event_queue_process() {
                         }
 
                         /* read event structure */
-                        if (!(e = file_readQueue(file, &size)))
+                        if (! (e = file_readQueue(file, &size)))
                                 goto error3;
                         if (size != sizeof(*e))
                                 goto error4;
 
                         /* read source */
-                        if (!(e->source = file_readQueue(file, &size)))
+                        if (! (e->source = file_readQueue(file, &size)))
                                 goto error4;
 
                         /* read message */
-                        if (!(e->message = file_readQueue(file, &size)))
+                        if (! (e->message = file_readQueue(file, &size)))
                                 goto error5;
 
                         /* read event action */
-                        if (!(action = file_readQueue(file, &size)))
+                        if (! (action = file_readQueue(file, &size)))
                                 goto error6;
                         if (size != sizeof(short))
                                 goto error7;
@@ -615,7 +615,7 @@ static void handle_event(Service_T S, Event_T E) {
         /* We will handle only first succeeded event, recurrent succeeded events
          * or insufficient succeeded events during failed service state are
          * ignored. Failed events are handled each time. */
-        if (!E->state_changed && (E->state == STATE_SUCCEEDED || E->state == STATE_CHANGEDNOT || ((E->state_map & 0x1) ^ 0x1))) {
+        if (! E->state_changed && (E->state == STATE_SUCCEEDED || E->state == STATE_CHANGEDNOT || ((E->state_map & 0x1) ^ 0x1))) {
                 DEBUG("'%s' %s\n", S->name, E->message);
                 return;
         }
@@ -679,7 +679,7 @@ static void handle_action(Event_T E, Action_T A) {
                         LogError("Aborting event\n");
         }
 
-        if (!(s = Event_get_source(E))) {
+        if (! (s = Event_get_source(E))) {
                 LogError("Event action handling aborted\n");
                 return;
         }
@@ -718,12 +718,12 @@ static void Event_queue_add(Event_T E) {
         ASSERT(E);
         ASSERT(E->flag != HANDLER_SUCCEEDED);
 
-        if (!file_checkQueueDirectory(Run.eventlist_dir)) {
+        if (! file_checkQueueDirectory(Run.eventlist_dir)) {
                 LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
                 return;
         }
 
-        if (!file_checkQueueLimit(Run.eventlist_dir, Run.eventlist_slots)) {
+        if (! file_checkQueueLimit(Run.eventlist_dir, Run.eventlist_slots)) {
                 LogError("Aborting event - queue over quota\n");
                 return;
         }
@@ -740,35 +740,35 @@ static void Event_queue_add(Event_T E) {
         }
 
         /* write event structure version */
-        if (!(rv = file_writeQueue(file, &version, sizeof(int))))
+        if (! (rv = file_writeQueue(file, &version, sizeof(int))))
                 goto error;
 
         /* write event structure */
-        if (!(rv = file_writeQueue(file, E, sizeof(*E))))
+        if (! (rv = file_writeQueue(file, E, sizeof(*E))))
                 goto error;
 
         /* write source */
-        if (!(rv = file_writeQueue(file, E->source, E->source ? strlen(E->source)+1 : 0)))
+        if (! (rv = file_writeQueue(file, E->source, E->source ? strlen(E->source)+1 : 0)))
                 goto error;
 
         /* write message */
-        if (!(rv = file_writeQueue(file, E->message, E->message ? strlen(E->message)+1 : 0)))
+        if (! (rv = file_writeQueue(file, E->message, E->message ? strlen(E->message)+1 : 0)))
                 goto error;
 
         /* write event action */
-        if (!(rv = file_writeQueue(file, &action, sizeof(short))))
+        if (! (rv = file_writeQueue(file, &action, sizeof(short))))
                 goto error;
 
 error:
         fclose(file);
-        if (!rv) {
+        if (! rv) {
                 LogError("Aborting event - unable to save event information to %s\n",  file_name);
                 if (unlink(file_name) < 0)
                         LogError("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);
         } else {
-                if (!Run.handler_init && E->flag & HANDLER_ALERT)
+                if (! Run.handler_init && E->flag & HANDLER_ALERT)
                         Run.handler_queue[HANDLER_ALERT]++;
-                if (!Run.handler_init && E->flag & HANDLER_MMONIT)
+                if (! Run.handler_init && E->flag & HANDLER_MMONIT)
                         Run.handler_queue[HANDLER_MMONIT]++;
         }
 
@@ -789,7 +789,7 @@ static void Event_queue_update(Event_T E, const char *file_name) {
         ASSERT(E);
         ASSERT(E->flag != HANDLER_SUCCEEDED);
 
-        if (!file_checkQueueDirectory(Run.eventlist_dir)) {
+        if (! file_checkQueueDirectory(Run.eventlist_dir)) {
                 LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
                 return;
         }
@@ -803,28 +803,28 @@ static void Event_queue_update(Event_T E, const char *file_name) {
         }
 
         /* write event structure version */
-        if (!(rv = file_writeQueue(file, &version, sizeof(int))))
+        if (! (rv = file_writeQueue(file, &version, sizeof(int))))
                 goto error;
 
         /* write event structure */
-        if (!(rv = file_writeQueue(file, E, sizeof(*E))))
+        if (! (rv = file_writeQueue(file, E, sizeof(*E))))
                 goto error;
 
         /* write source */
-        if (!(rv = file_writeQueue(file, E->source, E->source ? strlen(E->source)+1 : 0)))
+        if (! (rv = file_writeQueue(file, E->source, E->source ? strlen(E->source) + 1 : 0)))
                 goto error;
 
         /* write message */
-        if (!(rv = file_writeQueue(file, E->message, E->message ? strlen(E->message)+1 : 0)))
+        if (! (rv = file_writeQueue(file, E->message, E->message ? strlen(E->message) + 1 : 0)))
                 goto error;
 
         /* write event action */
-        if (!(rv = file_writeQueue(file, &action, sizeof(short))))
+        if (! (rv = file_writeQueue(file, &action, sizeof(short))))
                 goto error;
 
 error:
         fclose(file);
-        if (!rv) {
+        if (! rv) {
                 LogError("Aborting event - unable to update event information to %s\n", file_name);
                 if (unlink(file_name) < 0)
                         LogError("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);

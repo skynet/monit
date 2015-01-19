@@ -312,7 +312,7 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                 struct pam_response *response;
 
                 /* Sanity checking */
-                if (!msg || !resp || !user )
+                if (! msg || ! resp || ! user )
                         return PAM_CONV_ERR;
 
                 response = CALLOC(sizeof(struct pam_response), num_msg);
@@ -389,10 +389,10 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
 
                 ASSERT(uname);
 
-                if (!(pwd = getpwnam(uname)))
+                if (! (pwd = getpwnam(uname)))
                         return NULL;
 
-                if (!(grp = getgrgid(pwd->pw_gid)))
+                if (! (grp = getgrgid(pwd->pw_gid)))
                         return NULL;
 
                 while (c) {
@@ -434,27 +434,27 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                 i = Util_countWords(*src, old);
                 d = strlen(new)-strlen(old);
 
-                if (i==0)
+                if (i == 0)
                         return *src;
-                if (d>0)
-                        d*= i;
+                if (d > 0)
+                        d *= i;
                 else
                         d = 0;
 
                 {
                         char *p, *q;
                         size_t l = strlen(old);
-                        char *buf = CALLOC(sizeof(char), strlen(*src)+d+1);
+                        char *buf = CALLOC(sizeof(char), strlen(*src) + d + 1);
 
                         q = *src;
                         *buf = 0;
 
-                        while((p = strstr(q, old))) {
+                        while ((p = strstr(q, old))) {
 
                                 *p = '\0';
                                 strcat(buf, q);
                                 strcat(buf, new);
-                                p+= l;
+                                p += l;
                                 q = p;
 
                         }
@@ -473,7 +473,7 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
 
                 ASSERT(s && word);
 
-                while((p = strstr(p, word))) { i++;  p++; }
+                while ((p = strstr(p, word))) { i++;  p++; }
                 return i;
         }
 
@@ -484,61 +484,61 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
 
                 ASSERT(buf);
 
-                for (editpos=insertpos=0; *(buf+editpos)!='\0'; editpos++, insertpos++) {
-                        if (*(buf+editpos) == '\\' ) {
-                                switch (*(buf+editpos+1)) {
+                for (editpos = insertpos = 0; *(buf + editpos) != '\0'; editpos++, insertpos++) {
+                        if (*(buf + editpos) == '\\' ) {
+                                switch (*(buf + editpos + 1)) {
                                         case 'n':
-                                                *(buf+insertpos)='\n';
+                                                *(buf + insertpos) = '\n';
                                                 editpos++;
                                                 break;
 
                                         case 't':
-                                                *(buf+insertpos)='\t';
+                                                *(buf + insertpos) = '\t';
                                                 editpos++;
                                                 break;
 
                                         case 'r':
-                                                *(buf+insertpos)='\r';
+                                                *(buf + insertpos) = '\r';
                                                 editpos++;
                                                 break;
 
                                         case ' ':
-                                                *(buf+insertpos)=' ';
+                                                *(buf + insertpos) = ' ';
                                                 editpos++;
                                                 break;
 
                                         case '0':
-                                                if (*(buf+editpos+2)=='x') {
-                                                        if ((*(buf+editpos+3)=='0' && *(buf+editpos+4)=='0')) {
+                                                if (*(buf + editpos+2) == 'x') {
+                                                        if ((*(buf + editpos + 3) == '0' && *(buf + editpos + 4) == '0')) {
                                                                 /* Don't swap \0x00 with 0 to avoid truncating the string.
                                                                  Currently the only place where we support sending of 0 bytes
                                                                  is in check_generic(). The \0x00 -> 0 byte swap is performed
                                                                  there and in-place.
                                                                  */
-                                                                *(buf+insertpos)=*(buf+editpos);
+                                                                *(buf + insertpos) = *(buf+editpos);
                                                         } else {
-                                                                *(buf+insertpos)=x2c(&buf[editpos+3]);
-                                                                editpos+=4;
+                                                                *(buf + insertpos) = x2c(&buf[editpos + 3]);
+                                                                editpos += 4;
                                                         }
                                                 }
                                                 break;
 
                                         case '\\':
-                                                *(buf+insertpos)='\\';
+                                                *(buf + insertpos) = '\\';
                                                 editpos++;
                                                 break;
 
                                         default:
-                                                *(buf+insertpos)=*(buf+editpos);
+                                                *(buf + insertpos) = *(buf + editpos);
 
                                 }
 
                         } else {
-                                *(buf+insertpos)=*(buf+editpos);
+                                *(buf + insertpos) = *(buf + editpos);
                         }
 
                 }
-                *(buf+insertpos)='\0';
+                *(buf + insertpos) = '\0';
         }
 
 
@@ -548,26 +548,26 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
 
                 ASSERT(buf);
 
-                for (editpos=insertpos=0; *(buf+editpos)!='\0'; editpos++, insertpos++) {
-                        if (*(buf+editpos) == '\\' ) {
-                                switch (*(buf+editpos+1)) {
+                for (editpos = insertpos = 0; *(buf + editpos) != '\0'; editpos++, insertpos++) {
+                        if (*(buf + editpos) == '\\' ) {
+                                switch (*(buf + editpos + 1)) {
                                         case '0':
-                                                if (*(buf+editpos+2)=='x') {
-                                                        *(buf+insertpos)=x2c(&buf[editpos+3]);
-                                                        editpos+=4;
+                                                if (*(buf + editpos + 2) == 'x') {
+                                                        *(buf + insertpos) = x2c(&buf[editpos+3]);
+                                                        editpos += 4;
                                                 }
                                                 break;
 
                                         default:
-                                                *(buf+insertpos)=*(buf+editpos);
+                                                *(buf + insertpos) = *(buf + editpos);
 
                                 }
 
                         } else {
-                                *(buf+insertpos)=*(buf+editpos);
+                                *(buf + insertpos) = *(buf + editpos);
                         }
                 }
-                *(buf+insertpos)='\0';
+                *(buf + insertpos) = '\0';
                 return insertpos;
         }
 
@@ -770,14 +770,15 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
         int Util_getNumberOfServices() {
                 int i = 0;
                 Service_T s;
-                for (s = servicelist; s; s = s->next) i+=1;
+                for (s = servicelist; s; s = s->next)
+                        i += 1;
                 return i;
         }
 
 
         int Util_existService(const char *name) {
                 ASSERT(name);
-                return Util_getService(name)?TRUE:FALSE;
+                return Util_getService(name) ? TRUE : FALSE;
         }
 
 
@@ -788,11 +789,11 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                 printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.pidfile));
                 printf(" %-18s = %s\n", "Id file", is_str_defined(Run.idfile));
                 printf(" %-18s = %s\n", "State file", is_str_defined(Run.statefile));
-                printf(" %-18s = %s\n", "Debug", Run.debug?"True":"False");
-                printf(" %-18s = %s\n", "Log", Run.dolog?"True":"False");
-                printf(" %-18s = %s\n", "Use syslog", Run.use_syslog?"True":"False");
-                printf(" %-18s = %s\n", "Is Daemon", Run.isdaemon?"True":"False");
-                printf(" %-18s = %s\n", "Use process engine", Run.doprocess?"True":"False");
+                printf(" %-18s = %s\n", "Debug", Run.debug ? "True" : "False");
+                printf(" %-18s = %s\n", "Log", Run.dolog ? "True" : "False");
+                printf(" %-18s = %s\n", "Use syslog", Run.use_syslog ? "True" : "False");
+                printf(" %-18s = %s\n", "Is Daemon", Run.isdaemon ? "True" : "False");
+                printf(" %-18s = %s\n", "Use process engine", Run.doprocess ? "True" : "False");
                 printf(" %-18s = %d seconds with start delay %d seconds\n", "Poll time", Run.polltime, Run.startdelay);
                 printf(" %-18s = %d bytes\n", "Expect buffer", Run.expectbuffer);
 
@@ -817,10 +818,10 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                                        c->timeout / 1000,
                                        (c->ssl.use_ssl && c->ssl.version) ? " ssl version " : "",
                                        (c->ssl.use_ssl && c->ssl.version) ? sslnames[c->ssl.version] : "",
-                                       c->ssl.certmd5?" server cert md5 sum ":"",
-                                       c->ssl.certmd5?c->ssl.certmd5:"",
-                                       c->url->user?" using credentials":"",
-                                       c->next?",\n                    = ":"");
+                                       c->ssl.certmd5 ? " server cert md5 sum " : "",
+                                       c->ssl.certmd5 ? c->ssl.certmd5 : "",
+                                       c->url->user ? " using credentials" : "",
+                                       c->next ? ",\n                    = " : "");
                         }
                         if (! Run.dommonitcredentials)
                                 printf("\n                      register without credentials");
@@ -834,8 +835,8 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                                 printf("%s:%d%s%s",
                                        mta->host,
                                        mta->port,
-                                       mta->ssl.use_ssl?"(ssl)":"",
-                                       mta->next?", ":" ");
+                                       mta->ssl.use_ssl ? "(ssl)" : "",
+                                       mta->next ? ", " : " ");
                         printf("with timeout %d seconds", Run.mailserver_timeout/1000);
                         if (Run.mail_hostname)
                                 printf(" using '%s' as my hostname", Run.mail_hostname);
@@ -843,44 +844,36 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                 }
 
                 printf(" %-18s = %s\n", "Mail from", is_str_defined(Run.MailFormat.from));
-                printf(" %-18s = %s\n", "Mail subject",
-                       is_str_defined(Run.MailFormat.subject));
+                printf(" %-18s = %s\n", "Mail subject", is_str_defined(Run.MailFormat.subject));
                 printf(" %-18s = %-.20s%s\n", "Mail message",
-                       Run.MailFormat.message?
-                       Run.MailFormat.message:"(not defined)",
-                       Run.MailFormat.message?"..(truncated)":"");
+                       Run.MailFormat.message ? Run.MailFormat.message : "(not defined)",
+                       Run.MailFormat.message ? "..(truncated)" : "");
 
-                printf(" %-18s = %s\n", "Start monit httpd", Run.dohttpd?"True":"False");
+                printf(" %-18s = %s\n", "Start monit httpd", Run.dohttpd ? "True" : "False");
 
                 if (Run.dohttpd) {
 
-                        printf(" %-18s = %s\n", "httpd bind address",
-                               Run.bind_addr?Run.bind_addr:"Any/All");
+                        printf(" %-18s = %s\n", "httpd bind address", Run.bind_addr ? Run.bind_addr : "Any/All");
                         printf(" %-18s = %d\n", "httpd portnumber", Run.httpdport);
-                        printf(" %-18s = %s\n", "httpd signature", Run.httpdsig?"True":"False");
-                        printf(" %-18s = %s\n", "Use ssl encryption", Run.httpdssl?"True":"False");
+                        printf(" %-18s = %s\n", "httpd signature", Run.httpdsig ? "True" : "False");
+                        printf(" %-18s = %s\n", "Use ssl encryption", Run.httpdssl ? "True" : "False");
 
                         if (Run.httpdssl) {
 
                                 printf(" %-18s = %s\n", "PEM key/cert file", Run.httpsslpem);
 
-                                if (Run.httpsslclientpem!=NULL) {
+                                if (Run.httpsslclientpem != NULL) {
                                         printf(" %-18s = %s\n", "Client cert file", Run.httpsslclientpem);
                                 } else {
                                         printf(" %-18s = %s\n", "Client cert file", "None");
                                 }
 
-                                printf(" %-18s = %s\n", "Allow self certs",
-                                       Run.allowselfcert?"True":"False");
+                                printf(" %-18s = %s\n", "Allow self certs", Run.allowselfcert ? "True":"False");
 
                         }
 
                         printf(" %-18s = %s\n", "httpd auth. style",
-                               (Run.credentials!=NULL)&&has_hosts_allow()?
-                               "Basic Authentication and Host/Net allow list":
-                               (Run.credentials!=NULL)?"Basic Authentication":
-                               has_hosts_allow()?"Host/Net allow list":
-                               "No authentication!");
+                               (Run.credentials != NULL)&&has_hosts_allow() ? "Basic Authentication and Host/Net allow list" : (Run.credentials != NULL) ? "Basic Authentication" : has_hosts_allow() ? "Host/Net allow list" : "No authentication!");
 
                 }
 
@@ -1490,8 +1483,8 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                         p = escaped = ALLOC(i + n + 1);
                         for (; *url; url++, p++) {
                                 if (urlunsafe[(unsigned char)(*p = *url)]) {
-                                        *p++= '%';
-                                        *p++= b2x[(unsigned char)(*url)][0];
+                                        *p++ = '%';
+                                        *p++ = b2x[(unsigned char)(*url)][0];
                                         *p = b2x[(unsigned char)(*url)][1];
                                 }
                         }
@@ -1553,7 +1546,7 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                 char *auth, *b64;
                 char  buf[STRLEN];
 
-                if (!username)
+                if (! username)
                         return NULL;
 
                 snprintf(buf, STRLEN, "%s:%s", username, password ? password : "");
@@ -1561,7 +1554,7 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                         LogError("Failed to base64 encode authentication header\n");
                         return NULL;
                 }
-                auth = CALLOC(sizeof(char), STRLEN+1);
+                auth = CALLOC(sizeof(char), STRLEN + 1);
                 snprintf(auth, STRLEN, "Authorization: Basic %s\r\n", b64);
                 FREE(b64);
                 return auth;
@@ -1626,14 +1619,14 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
                                  */
                                 id[sizeof(id) - 1] = 0;
                                 strncpy(id, c->passwd, sizeof(id) - 1);
-                                if (! (temp = strchr(id+1, '$'))) {
+                                if (! (temp = strchr(id + 1, '$'))) {
                                         LogError("Password not in MD5 format.\n");
                                         return FALSE;
                                 }
                                 temp += 1;
                                 *temp = '\0';
                                 salt[sizeof(salt) - 1] = 0;
-                                strncpy(salt, c->passwd+strlen(id), sizeof(salt) - 1);
+                                strncpy(salt, c->passwd + strlen(id), sizeof(salt) - 1);
                                 if (! (temp = strchr(salt, '$'))) {
                                         LogError("Password not in MD5 format.\n");
                                         return FALSE;
@@ -1726,12 +1719,12 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
 
 
         int Util_hasServiceStatus(Service_T s) {
-                return((s->monitor & MONITOR_YES) && !(s->error & Event_Nonexist) && !(s->error & Event_Data));
+                return((s->monitor & MONITOR_YES) && ! (s->error & Event_Nonexist) && ! (s->error & Event_Data));
         }
 
 
         char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
-                if (socket_get_remote_port(s)==80)
+                if (socket_get_remote_port(s) == 80)
                         snprintf(hostBuf, len, "%s", socket_get_remote_host(s));
                 else
                         snprintf(hostBuf, len, "%s:%d", socket_get_remote_host(s), socket_get_remote_port(s));
@@ -1893,7 +1886,7 @@ static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response *
         char *Util_portTypeDescription(Port_T p) {
                 switch (p->type) {
                         case SOCK_STREAM:
-                                return p->SSL.use_ssl?"TCPSSL":"TCP";
+                                return p->SSL.use_ssl ? "TCPSSL" : "TCP";
                         case SOCK_DGRAM:
                                 return "UDP";
                         default:
