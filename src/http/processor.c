@@ -141,16 +141,12 @@ static int get_next_token(char *s, int *cursor, char **r);
  * @param s A Socket_T representing the client connection
  */
 void *http_processor(Socket_T s) {
-
-        if (! can_read(socket_get_socket(s), REQUEST_TIMEOUT * 1000)) {
+        if (! can_read(socket_get_socket(s), REQUEST_TIMEOUT * 1000))
                 internal_error(s, SC_REQUEST_TIMEOUT, "Time out when handling the Request");
-        } else {
+        else
                 do_service(s);
-        }
         socket_free(&s);
-
         return NULL;
-
 }
 
 
@@ -209,7 +205,7 @@ void set_header(HttpResponse res, const char *name, const char *value) {
         h->value = Str_dup(value);
         if (res->headers) {
                 HttpHeader n, p;
-                for ( n = p = res->headers; p; n = p, p = p->next) {
+                for (n = p = res->headers; p; n = p, p = p->next) {
                         if (! strcasecmp(p->name, name)) {
                                 FREE(p->value);
                                 p->value = Str_dup(value);
@@ -253,13 +249,9 @@ void set_content_type(HttpResponse res, const char *mime) {
  * @return The value of the specified header, NULL if not found
  */
 const char *get_header(HttpRequest req, const char *name) {
-        HttpHeader p;
-
-        for (p = req->headers; p; p = p->next) {
-                if (! strcasecmp(p->name, name)) {
+        for (HttpHeader p = req->headers; p; p = p->next)
+                if (! strcasecmp(p->name, name))
                         return (p->value);
-                }
-        }
         return NULL;
 }
 
@@ -271,13 +263,9 @@ const char *get_header(HttpRequest req, const char *name) {
  * @return The value of the specified parameter, or NULL if not found
  */
 const char *get_parameter(HttpRequest req, const char *name) {
-        HttpParameter p;
-
-        for (p = req->params; p; p = p->next) {
-                if (! strcasecmp(p->name, name)) {
+        for (HttpParameter p = req->params; p; p = p->next)
+                if (! strcasecmp(p->name, name))
                         return (p->value);
-                }
-        }
         return NULL;
 }
 
@@ -290,14 +278,11 @@ const char *get_parameter(HttpRequest req, const char *name) {
  * @return A String containing all headers set in the Response object
  */
 char *get_headers(HttpResponse res) {
-        HttpHeader p;
         char buf[RES_STRLEN];
         char *b = buf;
-
         *buf = 0;
-        for (p = res->headers; (((b - buf) + STRLEN) < RES_STRLEN) && p; p = p->next) {
+        for (HttpHeader p = res->headers; (((b - buf) + STRLEN) < RES_STRLEN) && p; p = p->next)
                 b += snprintf(b, STRLEN,"%s: %s\r\n", p->name, p->value);
-        }
         return buf[0] ? Str_dup(buf) : NULL;
 }
 
@@ -406,16 +391,14 @@ const char *get_status_string(int status) {
 static void do_service(Socket_T s) {
         volatile HttpResponse res = create_HttpResponse(s);
         volatile HttpRequest req = create_HttpRequest(s);
-
         if (res && req) {
                 if (is_authenticated(req, res)) {
-                        if (IS(req->method, METHOD_GET)) {
+                        if (IS(req->method, METHOD_GET))
                                 Impl.doGet(req, res);
-                        } else if (IS(req->method, METHOD_POST)) {
+                        else if (IS(req->method, METHOD_POST))
                                 Impl.doPost(req, res);
-                        } else {
+                        else
                                 send_error(res, SC_NOT_IMPLEMENTED, "Method not implemented");
-                        }
                 }
                 send_response(res);
         }
@@ -428,11 +411,9 @@ static void do_service(Socket_T s) {
  */
 static char *get_date(char *result, int size) {
         time_t now;
-
         time(&now);
-        if (strftime(result, size, DATEFMT, gmtime(&now)) <= 0) {
+        if (strftime(result, size, DATEFMT, gmtime(&now)) <= 0)
                 *result = 0;
-        }
         return result;
 }
 
@@ -526,7 +507,6 @@ static HttpRequest create_HttpRequest(Socket_T S) {
  */
 static HttpResponse create_HttpResponse(Socket_T S) {
         HttpResponse res = NULL;
-
         NEW(res);
         res->S = S;
         res->status = SC_OK;
@@ -548,7 +528,7 @@ static void create_headers(HttpRequest req) {
         char line[REQ_STRLEN];
 
         S = req->S;
-        while (1) {
+        while (TRUE) {
                 if (! socket_readln(S, line, sizeof(line)))
                         break;
                 if (! strcasecmp(line, "\r\n") || ! strcasecmp(line, "\n"))
@@ -580,16 +560,14 @@ static int create_parameters(HttpRequest req) {
                 int len;
                 Socket_T S = req->S;
                 const char *cl = get_header(req, "Content-Length");
-                if (! cl || sscanf(cl, "%d", &len) != 1) {
+                if (! cl || sscanf(cl, "%d", &len) != 1)
                         return FALSE;
-                }
                 if (len < 0 || len >= REQ_STRLEN)
                         return FALSE;
                 if (len == 0)
                         return TRUE;
-                if (((n = socket_read(S, query_string, len)) <= 0) || (n != len)) {
+                if (((n = socket_read(S, query_string, len)) <= 0) || (n != len))
                         return FALSE;
-                }
                 query_string[n] = 0;
         } else if (IS(req->method, METHOD_GET)) {
                 char *p;
@@ -673,10 +651,8 @@ static void destroy_HttpResponse(HttpResponse res) {
  */
 static void destroy_entry(void *p) {
         struct entry *h = p;
-
-        if (h->next) {
+        if (h->next)
                 destroy_entry(h->next);
-        }
         FREE(h->name);
         FREE(h->value);
         FREE(h);
@@ -716,23 +692,19 @@ static int basic_authenticate(HttpRequest req) {
         char uname[STRLEN];
         const char *credentials = get_header(req, "Authorization");
 
-        if (! (credentials && Str_startsWith(credentials, "Basic "))) {
+        if (! (credentials && Str_startsWith(credentials, "Basic ")))
                 return FALSE;
-        }
         strncpy(buf, &credentials[6], sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = 0;
-        if ((n = decode_base64((unsigned char*)uname, buf))<=0) {
+        if ((n = decode_base64((unsigned char*)uname, buf)) <= 0)
                 return FALSE;
-        }
         uname[n] = 0;
         password = strchr(uname, ':');
-        if (password == NULL) {
+        if (password == NULL)
                 return FALSE;
-        }
         *password++ = 0;
-        if (*uname == 0 || *password == 0) {
+        if (*uname == 0 || *password == 0)
                 return FALSE;
-        }
         /* Check if user exist */
         if (NULL == Util_getUserCredentials(uname)) {
                 LogError("Warning: Client '%s' supplied unknown user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
@@ -798,7 +770,8 @@ static HttpParameter parse_parameters(char *query_string) {
                         key = value;
                 else if (token == VALUE) {
                         HttpParameter p = NULL;
-                        if (! key) goto error;
+                        if (! key)
+                                goto error;
                         NEW(p);
                         p->name = key;
                         p->value = value;
@@ -811,9 +784,8 @@ static HttpParameter parse_parameters(char *query_string) {
 error:
         FREE(key);
         FREE(value);
-        if ( head != NULL ) {
+        if ( head != NULL )
                 destroy_entry(head);
-        }
         return NULL;
 }
 
@@ -835,11 +807,13 @@ static int get_next_token(char *s, int *cursor, char **r) {
                         if (s[*cursor] == '&') {
                                 *r = Str_ndup(&s[i+1], (*cursor-i)-1);
                                 *cursor += 1;
-                        }  else
+                        }  else {
                                 *r = Str_ndup(&s[i+1], (*cursor-i));
+                        }
                         return VALUE;
                 }
                 *cursor += 1;
         }
         return FALSE;
 }
+

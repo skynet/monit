@@ -149,62 +149,36 @@ static int  parse_network(char *, struct ulong_net *);
  * @param bindAddr the local address the server will bind to
  */
 void start_httpd(int port, int backlog, char *bindAddr) {
-
         Socket_T S = NULL;
-
         stopped = Run.stopped;
-
         if ((myServerSocket = create_server_socket(port, backlog, bindAddr)) < 0) {
-
-                LogError("http server: Could not create a server socket at port %d -- %s\n",
-                         port, STRERROR);
-
+                LogError("http server: Could not create a server socket at port %d -- %s\n", port, STRERROR);
                 LogError("Monit HTTP server not available\n");
-
                 if (Run.init) {
-
                         sleep(1);
                         kill_daemon(SIGTERM);
-
                 }
-
         } else {
-
                 initialize_service();
-
                 if (Run.httpdssl) {
-
                         mySSLServerConnection = init_ssl_server( Run.httpsslpem, Run.httpsslclientpem);
-
                         if (mySSLServerConnection == NULL) {
-
                                 LogError("HTTP server: Could not initialize SSL engine\n");
-
                                 LogError("Monit HTTP server not available\n");
-
                                 return;
                         }
-
 #ifdef HAVE_OPENSSL
                         mySSLServerConnection->server_socket = myServerSocket;
 #endif
                 }
-
                 while (! stopped) {
-
-                        if (! (S = socket_producer(myServerSocket, port, mySSLServerConnection))) {
+                        if (! (S = socket_producer(myServerSocket, port, mySSLServerConnection)))
                                 continue;
-                        }
-
                         http_processor(S);
-
                 }
-
                 delete_ssl_server_socket(mySSLServerConnection);
                 Net_close(myServerSocket);
-
         }
-
 }
 
 
@@ -212,9 +186,7 @@ void start_httpd(int port, int backlog, char *bindAddr) {
  * Stop the HTTPD server.
  */
 void stop_httpd() {
-
         stopped = TRUE;
-
 }
 
 
@@ -228,10 +200,8 @@ void stop_httpd() {
  * @return FALSE if the given host does not resolve, otherwise TRUE
  */
 int add_host_allow(char *name) {
-
         struct addrinfo hints;
         struct addrinfo *res;
-        struct addrinfo *_res;
 
         ASSERT(name);
 
@@ -241,7 +211,7 @@ int add_host_allow(char *name) {
         if (getaddrinfo(name, NULL, &hints, &res) != 0)
                 return FALSE;
 
-        for (_res = res; _res; _res = _res->ai_next) {
+        for (struct addrinfo *_res = res; _res; _res = _res->ai_next) {
                 if (_res->ai_family == AF_INET) {
                         HostsAllow h;
                         struct sockaddr_in *sin = (struct sockaddr_in *)_res->ai_addr;
@@ -263,17 +233,16 @@ int add_host_allow(char *name) {
                                 n->next = h;
                         } else {
                                 DEBUG("Adding host allow '%s'\n", name);
-
                                 hostlist = h;
                         }
                 done:
                         END_LOCK;
                 }
         }
-
         freeaddrinfo(res);
         return TRUE;
 }
+
 
 /**
  * Add network allowed to connect to this server.
@@ -282,50 +251,37 @@ int add_host_allow(char *name) {
  * @return FALSE if no correct network identifier is provided,
  * otherwise TRUE
  */
-
 int add_net_allow(char *s_network) {
-
         struct ulong_net net = {0, 0};
         HostsAllow h;
 
         ASSERT(s_network);
 
         /* Add the network */
-
         if (! parse_network(s_network, &net))
                 return FALSE;
 
         NEW(h);
-
         h->network = net.network;
         h->mask = net.mask;
-
         LOCK(hostlist_mutex)
-
         if (hostlist) {
-
                 HostsAllow p, n;
-
                 for (n = p = hostlist; p; n = p, p = p->next) {
-
                         if ((p->network == net.network) && ((p->mask == net.mask))) {
                                 DEBUG("Skipping redundant net '%s'\n", s_network);
                                 destroy_host_allow(h);
                                 goto done;
                         }
-
                 }
                 DEBUG("Adding net allow '%s'\n", s_network);
                 n->next = h;
-
         } else {
                 DEBUG("Adding net allow '%s'\n", s_network);
                 hostlist = h;
         }
-
 done:
         END_LOCK;
-
         return TRUE;
 }
 
@@ -335,15 +291,12 @@ done:
  * @return TRUE if the host allow list is non-empty, otherwise FALSE
  */
 int has_hosts_allow() {
-
         int rv;
 
         LOCK(hostlist_mutex)
         rv = (hostlist != NULL);
         END_LOCK;
-
         return rv;
-
 }
 
 
@@ -351,17 +304,14 @@ int has_hosts_allow() {
  * Free the host allow list
  */
 void destroy_hosts_allow() {
-
         if (has_hosts_allow()) {
-
                 LOCK(hostlist_mutex)
                 destroy_host_allow(hostlist);
                 hostlist = NULL;
                 END_LOCK;
-
         }
-
 }
+
 
 /* ----------------------------------------------------------------- Private */
 
@@ -373,10 +323,8 @@ void destroy_hosts_allow() {
  * initialize each cervlet.
  */
 static void initialize_service() {
-
         init_service();
         check_Impl();
-
 }
 
 
@@ -384,14 +332,10 @@ static void initialize_service() {
  * Abort if no Service implementors are found
  */
 static void check_Impl() {
-
         if ((Impl.doGet == 0) || (Impl.doPost == 0)) {
-
                 LogError("http server: Service Methods not implemented\n");
                 _exit(1);
-
         }
-
 }
 
 
@@ -401,23 +345,12 @@ static void check_Impl() {
  * object, authentication is delegated to the processor module.
  */
 static int authenticate(const struct in_addr addr) {
-
-        if (is_host_allow(addr)) {
-
+        if (is_host_allow(addr))
                 return TRUE;
-
-        }
-
-        if (! has_hosts_allow() && (Run.credentials != NULL)) {
-
+        if (! has_hosts_allow() && (Run.credentials != NULL))
                 return TRUE;
-
-        }
-
         LogError("Denied connection from non-authorized client [%s]\n", inet_ntoa(addr));
-
         return FALSE;
-
 }
 
 
@@ -426,30 +359,19 @@ static int authenticate(const struct in_addr addr) {
  * this server
  */
 static int is_host_allow(const struct in_addr addr) {
-
-        HostsAllow p;
         int rv = FALSE;
 
         LOCK(hostlist_mutex)
-
-        for (p = hostlist; p; p = p->next) {
-
+        for (HostsAllow p = hostlist; p; p = p->next) {
                 if ((p->network & p->mask) == (addr.s_addr & p->mask)) {
-
                         rv = TRUE;
                         break;
-
                 }
-
         }
-
         END_LOCK;
-
         if (rv)
                 return rv;
-
         return rv;
-
 }
 
 
@@ -460,7 +382,6 @@ static int is_host_allow(const struct in_addr addr) {
  * @return FALSE if parsing fails otherwise TRUE
  */
 static int parse_network(char *s_network, struct ulong_net *net) {
-
         char *temp = NULL;
         char *copy = NULL;
         char *longmask = NULL;
@@ -475,125 +396,73 @@ static int parse_network(char *s_network, struct ulong_net *net) {
         ASSERT(net);
 
         temp = copy = Str_dup(s_network);
-
-        /* decide if we have xxx.xxx.xxx.xxx/yyy or
-         xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy */
+        /* decide if we have xxx.xxx.xxx.xxx/yyy or xxx.xxx.xxx.xxx/yyy.yyy.yyy.yyy */
         while (*temp != 0) {
                 if (*temp == '/') {
-
                         /* We have found a "/" -> we are preceeding to the netmask */
-
-                        if ((slashcount == 1) || (dotcount != 3)) {
-
-                                /* We have already found a "/" or we haven't had enough dots
-                                 before finding the slash -> Error! */
-
+                        if ((slashcount == 1) || (dotcount != 3))
+                                /* We have already found a "/" or we haven't had enough dots before finding the slash -> Error! */
                                 goto done;
-
-                        }
-
                         *temp = 0;
                         longmask = *(temp+1) ? temp + 1 : NULL;
                         count = 0;
                         slashcount = 1;
                         dotcount = 0;
-
                 } else if (*temp == '.') {
-
                         /* We have found the next dot! */
-
                         dotcount++;
-
                 } else if (! isdigit((int)*temp)) {
-
                         /* No number, "." or "/" -> Error! */
-
                         goto done;
-
                 }
-
                 count++;
                 temp++;
         }
-
         if (slashcount == 0) {
-
                 /* We have just host portion */
-
                 shortmask = 32;
-
         } else if ((dotcount == 0) && (count > 1) && (count < 4)) {
-
                 /* We have no dots but 1 or 2 numbers after the slash -> short netmask */
-
                 if (longmask != NULL) {
-
                         shortmask = atoi(longmask);
                         longmask = NULL;
-
                 }
-
         } else if (dotcount != 3) {
-
                 /* A long netmask requires three dots */
-
                 goto done;
-
         }
-
         /* Parse the network */
-
         if (inet_aton(copy, &inp) == 0) {
-
                 /* Failed! */
                 goto done;
-
         }
         net->network = inp.s_addr;
-
         /* Convert short netmasks to integer */
         if (longmask == NULL) {
-
                 if ((shortmask > 32) || (shortmask < 0)) {
-
                         goto done;
-
                 } else if ( shortmask == 32 ) {
-
                         net->mask = -1;
-
                 } else {
-
                         net->mask = (1 << shortmask) - 1;
                         net->mask = htonl(net->mask << (32-shortmask));
-
                 }
-
         } else {
-
                 /* Parse long netmasks */
                 if (inet_aton(longmask, &inp) == 0) {
-
                         goto done;
-
                 }
-
                 net->mask = inp.s_addr;
-
         }
-
         /* Remove bogus network components */
         net->network &= net->mask;
-
         /* Everything went fine, so we return TRUE! */
         rv = TRUE;
-
 done:
-
         FREE(copy);
         return rv;
-
 }
+
 
 /* --------------------------------------------------------------- Factories */
 
@@ -603,53 +472,33 @@ done:
  * each successful accept. If accept fails, return a NULL object
  */
 static Socket_T socket_producer(int server, int port, void *sslserver) {
-
         int client;
         struct sockaddr_in in;
         socklen_t len = sizeof(struct sockaddr_in);
 
         if (can_read(server, 1000)) {
 
-                if ( (client = accept(server, (struct sockaddr*)&in, &len)) < 0) {
-
-                        if (stopped) {
+                if ((client = accept(server, (struct sockaddr*)&in, &len)) < 0) {
+                        if (stopped)
                                 LogError("http server: service stopped\n");
-                        }  else {
+                        else
                                 LogError("http server: cannot accept connection -- %s\n", STRERROR);
-                        }
-
                         return NULL;
-
                 }
-
         } else {
-
-                /* If timeout or error occured, return NULL to allow the caller to
-                 * handle various states (such as stopped) which can occure in the
-                 * meantime */
+                /* If timeout or error occured, return NULL to allow the caller to handle various states (such as stopped) which can occure in the meantime */
                 return NULL;
-
         }
-
-        if (Net_setNonBlocking(client) < 0) {
+        if (Net_setNonBlocking(client) < 0)
                 goto error;
-        }
-
-        if (! check_socket(client)) {
+        if (! check_socket(client))
                 goto error;
-        }
-
-        if (! authenticate(in.sin_addr)) {
+        if (! authenticate(in.sin_addr))
                 goto error;
-        }
-
-
         return socket_create_a(client, inet_ntoa(in.sin_addr), port, sslserver);
-
 error:
         Net_abort(client);
         return NULL;
-
 }
 
 
@@ -657,17 +506,12 @@ error:
 
 
 /**
- * Free a (linked list of) host_allow ojbect(s).
+ * Free a (linked list of) host_allow object(s).
  */
 static void destroy_host_allow(HostsAllow p) {
-
         HostsAllow a = p;
-
-        if (a->next) {
+        if (a->next)
                 destroy_host_allow(a->next);
-        }
-
         FREE(a);
-
 }
 
