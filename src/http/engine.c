@@ -294,9 +294,7 @@ static Socket_T _socketProducer(int server, int port, void *sslserver) {
 
 void Engine_start(int port, int backlog, char *addr) {
         stopped = Run.stopped;
-        if ((myServerSocket = create_server_socket(port, backlog, addr)) < 0) {
-                LogError("HTTP server: not available -- could not create a socket at port %d -- %s\n", port, STRERROR);
-        } else {
+        if ((myServerSocket = create_server_socket(port, backlog, addr)) >= 0) {
                 init_service();
                 if (Run.httpdssl) {
                         if (! (mySSLServerConnection = init_ssl_server(Run.httpsslpem, Run.httpsslclientpem))) {
@@ -314,6 +312,8 @@ void Engine_start(int port, int backlog, char *addr) {
                 }
                 delete_ssl_server_socket(mySSLServerConnection);
                 Net_close(myServerSocket);
+        } else {
+                LogError("HTTP server: not available -- could not create a socket at port %d -- %s\n", port, STRERROR);
         }
 }
 
