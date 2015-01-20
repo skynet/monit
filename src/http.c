@@ -60,11 +60,15 @@
 #include "net.h"
 #include "engine.h"
 
+// libmonit
+#include "exceptions/AssertException.h"
+
+
 /* Private prototypes */
 static void *thread_wrapper(void *arg);
 
 /* The HTTP Thread */
-static pthread_t thread;
+static Thread_T thread;
 
 static volatile int running = FALSE;
 
@@ -103,27 +107,20 @@ int can_http() {
  * @param action START_HTTP or STOP_HTTP
  */
 void monit_http(int action) {
-        int status;
         switch (action) {
                 case STOP_HTTP:
                         if (! running) break;
                         LogInfo("Shutting down Monit HTTP server\n");
                         Engine_stop();
-                        if ( (status = pthread_join(thread, NULL)) != 0) {
-                                LogError("Monit: Failed to stop the http server. Thread error -- %s.\n", strerror(status));
-                        } else {
-                                LogInfo("Monit HTTP server stopped\n");
-                                running = FALSE;
-                        }
+                        Thread_join(thread);
+                        LogInfo("Monit HTTP server stopped\n");
+                        running = FALSE;
                         break;
                 case START_HTTP:
                         LogInfo("Starting Monit HTTP server at [%s:%d]\n", Run.bind_addr ? Run.bind_addr : "*", Run.httpdport);
-                        if ( (status = pthread_create(&thread, NULL, thread_wrapper, NULL)) != 0) {
-                                LogError("Monit: Failed to create the http server. Thread error -- %s.\n", strerror(status));
-                        } else {
-                                LogInfo("Monit HTTP server started\n");
-                                running = TRUE;
-                        }
+                        Thread_create(thread, thread_wrapper, NULL);
+                        LogInfo("Monit HTTP server started\n");
+                        running = TRUE;
                         break;
                 default:
                         LogError("Monit: Unknown http server action\n");

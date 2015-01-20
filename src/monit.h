@@ -86,6 +86,7 @@
 #include "util/Str.h"
 #include "util/StringBuffer.h"
 #include "system/Link.h"
+#include "thread/Thread.h"
 
 
 #define MONITRC            "monitrc"
@@ -256,14 +257,6 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #define DEBUG LogDebug
 #define FLAG(x, y) (x & y) == y
 #define NVLSTR(x) (x ? x : "")
-
-
-/** ------------------------------------------------- Synchronization macros */
-
-
-#define LOCK(mutex) do { pthread_mutex_t *_yymutex = &(mutex); \
-assert(pthread_mutex_lock(_yymutex) == 0);
-#define END_LOCK assert(pthread_mutex_unlock(_yymutex) == 0); } while (0)
 
 
 /** ------------------------------------------ Simple Assert Exception macro */
@@ -925,7 +918,7 @@ typedef struct myservice {
         char *path;  /**< Path to the filesys, file, directory or process pid file */
 
         /** For internal use */
-        pthread_mutex_t   mutex;        /**< Mutex used for action synchronization */
+        Mutex_T mutex;                  /**< Mutex used for action synchronization */
         struct myservice *next;                         /**< next service in chain */
         struct myservice *next_conf;      /**< next service according to conf file */
         struct myservice *next_depend;           /**< next depend service in chain */
@@ -1000,7 +993,7 @@ struct myrun {
                 char *message;                            /**< The standard mail message */
         } MailFormat;
 
-        pthread_mutex_t mutex;    /**< Mutex used for service data synchronization */
+        Mutex_T mutex;            /**< Mutex used for service data synchronization */
 #ifdef OPENSSL_FIPS
         int fipsEnabled;                /** TRUE if monit should use FIPS-140 mode */
 #endif

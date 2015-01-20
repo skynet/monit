@@ -31,9 +31,9 @@
  * Start the HTTPD server
  * @param port The Port number to start the server at
  * @param backlog The maximum length of the incomming connection queue
- * @param bindAddr the local address the server will bind to
+ * @param addr the local address the server will bind to
  */
-void Engine_start(int port, int backlog, char *bindAddr);
+void Engine_start(int port, int backlog, char *addr);
 
 
 /**
@@ -44,21 +44,20 @@ void Engine_stop();
 
 /**
  * Add hosts allowed to connect to this server.
- * @param name A hostname (A-Record) or IP address to be added to the
- * hosts allow list
+ * @param pattern A hostname (A-Record) or IP address to be added to the hosts allow list
  * @return FALSE if the given host does not resolve, otherwise TRUE
  */
-int Engine_addHostAllow(char *);
+int Engine_addHostAllow(char *pattern);
 
 
 /**
  * Add network allowed to connect to this server.
- * @param s_network A network identifier in IP/mask format to be added
+ * @param pattern A network identifier in IP/mask format to be added
  * to the hosts allow list
  * @return FALSE if no correct network identifier is provided,
  * otherwise TRUE
  */
-int Engine_addNetAllow(char *);
+int Engine_addNetAllow(char *pattern);
 
 
 /**

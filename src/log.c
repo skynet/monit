@@ -95,7 +95,7 @@
 
 
 static FILE *LOG = NULL;
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+static Mutex_T log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 static struct mylogpriority {
@@ -411,37 +411,39 @@ static void log_log(int priority, const char *s, va_list ap) {
         ASSERT(s);
 
         LOCK(log_mutex)
+        {
 
-        FILE *output = priority < LOG_INFO ? stderr : stdout;
+                FILE *output = priority < LOG_INFO ? stderr : stdout;
 #ifdef HAVE_VA_COPY
-        va_copy(ap_copy, ap);
-        vfprintf(output, s, ap_copy);
-        va_end(ap_copy);
+                va_copy(ap_copy, ap);
+                vfprintf(output, s, ap_copy);
+                va_end(ap_copy);
 #else
-        vfprintf(output, s, ap);
+                vfprintf(output, s, ap);
 #endif
-        fflush(output);
+                fflush(output);
 
-        if (Run.dolog) {
-                if (Run.use_syslog) {
+                if (Run.dolog) {
+                        if (Run.use_syslog) {
 #ifdef HAVE_VA_COPY
-                        va_copy(ap_copy, ap);
-                        vsyslog(priority, s, ap_copy);
-                        va_end(ap_copy);
+                                va_copy(ap_copy, ap);
+                                vsyslog(priority, s, ap_copy);
+                                va_end(ap_copy);
 #else
-                        vsyslog(priority, s, ap);
+                                vsyslog(priority, s, ap);
 #endif
-                } else if (LOG) {
-                        char datetime[STRLEN];
-                        fprintf(LOG, "[%s] %-8s : ", timefmt(datetime, STRLEN), logPriorityDescription(priority));
+                        } else if (LOG) {
+                                char datetime[STRLEN];
+                                fprintf(LOG, "[%s] %-8s : ", timefmt(datetime, STRLEN), logPriorityDescription(priority));
 #ifdef HAVE_VA_COPY
-                        va_copy(ap_copy, ap);
-                        vfprintf(LOG, s, ap_copy);
-                        va_end(ap_copy);
+                                va_copy(ap_copy, ap);
+                                vfprintf(LOG, s, ap_copy);
+                                va_end(ap_copy);
 #else
-                        vfprintf(LOG, s, ap);
+                                vfprintf(LOG, s, ap);
 #endif
 
+                        }
                 }
         }
         END_LOCK;

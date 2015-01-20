@@ -119,6 +119,7 @@
 // libmonit
 #include "io/File.h"
 #include "util/Str.h"
+#include "thread/Thread.h"
 
 
 /* ------------------------------------------------------------- Definitions */
@@ -2212,10 +2213,12 @@ int parse(char *controlfile) {
          * Creation of the global service list is synchronized
          */
         LOCK(Run.mutex)
-        preparse();
-        yyparse();
-        fclose(yyin);
-        postparse();
+        {
+                preparse();
+                yyparse();
+                fclose(yyin);
+                postparse();
+        }
         END_LOCK;
 
         FREE(currentfile);

@@ -68,10 +68,6 @@
 #include <netdb.h>
 #endif
 
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -100,6 +96,7 @@
 
 // libmonit
 #include "system/Net.h"
+#include "exceptions/AssertException.h"
 
 
 /* -------------------------------------------------------------- Prototypes */
@@ -107,7 +104,7 @@
 
 #define SSLERROR ERR_error_string(ERR_get_error(),NULL)
 
-static int unsigned long ssl_thread_id();
+static unsigned long ssl_thread_id();
 static void ssl_mutex_lock(int, int n, const char *, int );
 static int verify_init(ssl_server_connection *);
 static int verify_callback(int, X509_STORE_CTX *);
@@ -119,9 +116,9 @@ static int update_ssl_cert_data(ssl_connection *);
 static ssl_server_connection *new_ssl_server_connection(char *, char *);
 static int start_ssl();
 
-static int              ssl_initialized          = FALSE;
-static pthread_mutex_t  ssl_mutex                = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t *ssl_mutex_table;
+static int      ssl_initialized          = FALSE;
+static Mutex_T  ssl_mutex = PTHREAD_MUTEX_INITIALIZER;
+static Mutex_T *ssl_mutex_table;
 
 
 /* ------------------------------------------------------------- Definitions */
@@ -379,34 +376,19 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
                 start_ssl();
 
         NEW(ssl);
-        ssl->method = NULL;
-        ssl->handler = NULL;
-        ssl->cert = NULL;
-        ssl->cipher = NULL;
-        ssl->socket = 0;
-        ssl->next = NULL;
-        ssl->accepted = FALSE;
-        ssl->cert_md5 = NULL;
-        ssl->cert_md5_len = 0;
-        ssl->clientpemfile = NULL;
-
-        if (ssl_server->clientpemfile != NULL)
-                ssl->clientpemfile = Str_dup(ssl_server->clientpemfile);
-
-        LOCK(ssl_mutex);
-
-        ssl->prev = NULL;
-        ssl->next = ssl_server->ssl_conn_list;
-
-        if ( ssl->next != NULL )
-                ssl->next->prev = ssl;
-
-        END_LOCK;
-
-        ssl_server->ssl_conn_list = ssl;
-        ssl->ctx = ssl_server->ctx;
         ssl->accepted = TRUE;
-
+        if (ssl_server->clientpemfile)
+                ssl->clientpemfile = Str_dup(ssl_server->clientpemfile);
+        LOCK(ssl_mutex)
+        {
+                if (ssl_server->ssl_conn_list) {
+                        ssl->next = ssl_server->ssl_conn_list;
+                        ssl->next->prev = ssl;
+                }
+                ssl->ctx = ssl_server->ctx;
+                ssl_server->ssl_conn_list = ssl;
+        }
+        END_LOCK;
         return ssl;
 }
 
@@ -420,18 +402,15 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
 void close_accepted_ssl_socket(ssl_server_connection *ssl_server, ssl_connection *ssl) {
         if (! ssl || ! ssl_server)
                 return;
-
         Net_close(ssl->socket);
-
         LOCK(ssl_mutex);
-
-        if (ssl->prev == NULL)
-                ssl_server->ssl_conn_list = ssl->next;
-        else
-                ssl->prev->next = ssl->next;
-
+        {
+                if (ssl->prev)
+                        ssl->prev->next = ssl->next;
+                else
+                        ssl_server->ssl_conn_list = ssl->next;
+        }
         END_LOCK;
-
         delete_ssl_socket(ssl);
 }
 
@@ -558,7 +537,7 @@ void stop_ssl() {
                 CRYPTO_set_id_callback(NULL);
                 CRYPTO_set_locking_callback(NULL);
                 for (int i = 0; i < CRYPTO_num_locks(); i++)
-                        assert(pthread_mutex_destroy(&ssl_mutex_table[i]) == 0);
+                        Mutex_destroy(ssl_mutex_table[i]);
                 FREE(ssl_mutex_table);
                 RAND_cleanup();
         }
@@ -576,16 +555,8 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 start_ssl();
 
         NEW(ssl);
-        ssl->socket_bio = NULL;
-        ssl->handler = NULL;
-        ssl->cert = NULL;
-        ssl->cipher = NULL;
-        ssl->socket = 0;
-        ssl->next = NULL;
-        ssl->accepted = FALSE;
-        ssl->cert_md5 = NULL;
-        ssl->cert_md5_len = 0;
-        ssl->clientpemfile = clientpemfile ? Str_dup(clientpemfile) : NULL;
+        if (clientpemfile)
+                ssl->clientpemfile = Str_dup(clientpemfile);
 
         switch (sslversion) {
                 case SSL_VERSION_SSLV2:
@@ -789,8 +760,8 @@ static int check_preverify(X509_STORE_CTX *ctx) {
  * Helper function for the SSL threadding support
  * @return current thread number
  */
-static int unsigned long ssl_thread_id() {
-        return ((unsigned long) pthread_self());
+static unsigned long ssl_thread_id() {
+        return (unsigned long)Thread_self();
 }
 
 
@@ -799,9 +770,9 @@ static int unsigned long ssl_thread_id() {
  */
 static void ssl_mutex_lock(int mode, int n, const char *file, int line) {
         if (mode & CRYPTO_LOCK)
-                assert(pthread_mutex_lock( & ssl_mutex_table[n]) == 0);
+                Mutex_lock(ssl_mutex_table[n]);
         else
-                assert(pthread_mutex_unlock( & ssl_mutex_table[n]) == 0);
+                Mutex_unlock(ssl_mutex_table[n]);
 }
 
 
@@ -972,9 +943,9 @@ static int start_ssl() {
 
                 ssl_initialized = TRUE;
                 ERR_load_crypto_strings();
-                ssl_mutex_table = CALLOC(locks, sizeof(pthread_mutex_t));
+                ssl_mutex_table = CALLOC(locks, sizeof(Mutex_T));
                 for (int i = 0; i < locks; i++)
-                        pthread_mutex_init(&ssl_mutex_table[i], NULL);
+                        Mutex_init(ssl_mutex_table[i]);
                 CRYPTO_set_id_callback(ssl_thread_id);
                 CRYPTO_set_locking_callback(ssl_mutex_lock);
                 SSL_library_init();

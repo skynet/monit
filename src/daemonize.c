@@ -79,57 +79,35 @@
  * Transform a program into a daemon. Inspired by code from Stephen
  * A. Rago's book, Unix System V Network Programming.
  */
-void  daemonize() {
-
+void daemonize() {
         pid_t pid;
-
         /*
          * Become a session leader to lose our controlling terminal
          */
         if ((pid = fork ()) < 0) {
-
                 LogError("Cannot fork of a new process\n");
                 exit (1);
-
-        }
-        else if (pid != 0) {
-
+        } else if (pid != 0) {
                 _exit(0);
-
         }
-
         setsid();
-
         if ((pid = fork ()) < 0) {
-
                 LogError("Cannot fork of a new process\n");
                 exit (1);
-
-        }
-        else if (pid != 0) {
-
+        } else if (pid != 0) {
                 _exit(0);
-
         }
-
-
         /*
-         * Change current directory to the root so that other file systems
-         * can be unmounted while we're running
+         * Change current directory to the root so that other file systems can be unmounted while we're running
          */
         if (chdir("/") < 0) {
-
                 LogError("Cannot chdir to / -- %s\n", STRERROR);
                 exit(1);
-
         }
-
         /*
-         * Attach standard descriptors to /dev/null. Other descriptors
-         * should be closed in env.c
+         * Attach standard descriptors to /dev/null. Other descriptors should be closed in env.c
          */
         Util_redirectStdFds();
-
 }
 
 
@@ -139,34 +117,21 @@ void  daemonize() {
  * @return TRUE if signal was send, otherwise FALSE
  */
 int kill_daemon(int sig) {
-
         pid_t pid;
-
-        if ( (pid = exist_daemon()) > 0 ) {
-
-                if ( kill(pid, sig) < 0 ) {
-
+        if ((pid = exist_daemon()) > 0) {
+                if (kill(pid, sig) < 0) {
                         LogError("Cannot send signal to daemon process -- %s\n", STRERROR);
                         return FALSE;
-
                 }
-
         } else {
-
                 LogInfo("No daemon process found\n");
                 return TRUE;
-
         }
-
         if (sig == SIGTERM) {
-
                 fprintf(stdout, "Monit daemon with pid [%d] killed\n", (int)pid);
                 fflush(stdout);
-
         }
-
         return TRUE;
-
 }
 
 
@@ -175,16 +140,10 @@ int kill_daemon(int sig) {
  * otherwise FALSE
  */
 int exist_daemon() {
-
-        pid_t pid;
-
         errno = 0;
-
-        if ( (pid = Util_getPid(Run.pidfile)) )
-                if ( (getpgid(pid)) > -1 || (errno == EPERM) )
-                        return((int)pid);
-
-        return(FALSE);
-
+        pid_t pid;
+        if ((pid = Util_getPid(Run.pidfile)) && (getpgid(pid) > -1 || errno == EPERM))
+                return (int)pid;
+        return FALSE;
 }
 
