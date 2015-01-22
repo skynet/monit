@@ -328,7 +328,7 @@ int Engine_addHostAllow(char *pattern) {
 
         struct addrinfo hints;
         memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = PF_INET; /* we support just IPv4 currently */
+        hints.ai_family = AI_ADDRCONFIG;
         struct addrinfo *res;
         if (getaddrinfo(pattern, NULL, &hints, &res) != 0)
                 return FALSE;

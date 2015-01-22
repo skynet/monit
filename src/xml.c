@@ -302,47 +302,42 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                             S->inf->priv.process.total_cpu_percent/10.0);
                                 }
                         }
-                        if (S->type == TYPE_HOST && S->icmplist) {
-                                for (Icmp_T i = S->icmplist; i; i = i->next) {
-                                        StringBuffer_append(B,
-                                                            "<icmp>"
-                                                            "<type>%s</type>"
-                                                            "<responsetime>%.3f</responsetime>"
-                                                            "</icmp>",
-                                                            icmpnames[i->type],
-                                                            i->is_available ? i->response : -1.);
-                                }
+                        for (Icmp_T i = S->icmplist; i; i = i->next) {
+                                StringBuffer_append(B,
+                                                    "<icmp>"
+                                                    "<type>%s</type>"
+                                                    "<responsetime>%.3f</responsetime>"
+                                                    "</icmp>",
+                                                    icmpnames[i->type],
+                                                    i->is_available ? i->response : -1.);
                         }
-                        if ((S->type == TYPE_HOST || S->type == TYPE_PROCESS) && S-> portlist) {
-                                Port_T p;
-                                for (p = S->portlist; p; p = p->next) {
-                                        if (p->family == AF_INET)
-                                                StringBuffer_append(B,
-                                                                    "<port>"
-                                                                    "<hostname>%s</hostname>"
-                                                                    "<portnumber>%d</portnumber>"
-                                                                    "<request><![CDATA[%s]]></request>"
-                                                                    "<protocol>%s</protocol>"
-                                                                    "<type>%s</type>"
-                                                                    "<responsetime>%.3f</responsetime>"
-                                                                    "</port>",
-                                                                    p->hostname ? p->hostname : "",
-                                                                    p->port,
-                                                                    p->request ? p->request : "",
-                                                                    p->protocol->name ? p->protocol->name : "",
-                                                                    Util_portTypeDescription(p),
-                                                                    p->is_available ? p->response : -1.);
-                                        else if (p->family == AF_UNIX)
-                                                StringBuffer_append(B,
-                                                                    "<unix>"
-                                                                    "<path>%s</path>"
-                                                                    "<protocol>%s</protocol>"
-                                                                    "<responsetime>%.3f</responsetime>"
-                                                                    "</unix>",
-                                                                    p->pathname ? p->pathname : "",
-                                                                    p->protocol->name ? p->protocol->name : "",
-                                                                    p->is_available ? p->response : -1.);
-                                }
+                        for (Port_T p = S->portlist; p; p = p->next) {
+                                StringBuffer_append(B,
+                                                    "<port>"
+                                                    "<hostname>%s</hostname>"
+                                                    "<portnumber>%d</portnumber>"
+                                                    "<request><![CDATA[%s]]></request>"
+                                                    "<protocol>%s</protocol>"
+                                                    "<type>%s</type>"
+                                                    "<responsetime>%.3f</responsetime>"
+                                                    "</port>",
+                                                    p->hostname ? p->hostname : "",
+                                                    p->port,
+                                                    p->request ? p->request : "",
+                                                    p->protocol->name ? p->protocol->name : "",
+                                                    Util_portTypeDescription(p),
+                                                    p->is_available ? p->response : -1.);
+                        }
+                        for (Port_T p = S->socketlist; p; p = p->next) {
+                                StringBuffer_append(B,
+                                                    "<unix>"
+                                                    "<path>%s</path>"
+                                                    "<protocol>%s</protocol>"
+                                                    "<responsetime>%.3f</responsetime>"
+                                                    "</unix>",
+                                                    p->pathname ? p->pathname : "",
+                                                    p->protocol->name ? p->protocol->name : "",
+                                                    p->is_available ? p->response : -1.);
                         }
                         if (S->type == TYPE_SYSTEM && Run.doprocess) {
                                 StringBuffer_append(B,

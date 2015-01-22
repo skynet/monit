@@ -988,12 +988,9 @@ int validate() {
  * its configuration. In case of a fatal event FALSE is returned.
  */
 int check_process(Service_T s) {
-        pid_t  pid = -1;
-        Port_T pp = NULL;
-        Resource_T pr = NULL;
         ASSERT(s);
-        /* Test for running process */
-        if (! (pid = Util_isProcessRunning(s, FALSE))) {
+        pid_t pid = Util_isProcessRunning(s, FALSE);
+        if (! pid) {
                 for (Nonexist_T l = s->nonexistlist; l; l = l->next)
                         Event_post(s, Event_Nonexist, STATE_FAILED, l->action, "process is not running");
                 return FALSE;
@@ -1020,18 +1017,24 @@ int check_process(Service_T s) {
                                 check_gid(s);
                         if (s->uptimelist)
                                 check_uptime(s);
-                        for (pr = s->resourcelist; pr; pr = pr->next)
+                        for (Resource_T pr = s->resourcelist; pr; pr = pr->next)
                                 check_process_resources(s, pr);
-                } else
+                } else {
                         LogError("'%s' failed to get service data\n", s->name);
+                }
         }
-        /* Test each host:port and protocol in the service's portlist */
-        if (s->portlist)
-        /* skip further tests during startup timeout */
-                if (s->start)
-                        if (s->inf->priv.process.uptime < s->start->timeout) return TRUE;
-        for (pp = s->portlist; pp; pp = pp->next)
-                check_connection(s, pp);
+        if (s->portlist) {
+                /* pause port tests int the start timeout timeframe while the process is starting (it may take some time to the process before it starts accepting connections) */
+                if (s->start && s->inf->priv.process.uptime > s->start->timeout)
+                        for (Port_T pp = s->portlist; pp; pp = pp->next)
+                                check_connection(s, pp);
+        }
+        if (s->socketlist) {
+                /* pause socket tests int the start timeout timeframe while the process is starting (it may take some time to the process before it starts accepting connections) */
+                if (s->start && s->inf->priv.process.uptime > s->start->timeout)
+                        for (Port_T pp = s->socketlist; pp; pp = pp->next)
+                                check_connection(s, pp);
+        }
         return TRUE;
 }
 

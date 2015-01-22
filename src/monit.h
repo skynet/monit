@@ -851,7 +851,8 @@ typedef struct myservice {
         Filesystem_T filesystemlist;                    /**< Filesystem check list */
         Icmp_T      icmplist;                                 /**< ICMP check list */
         Perm_T      perm;                                    /**< Permission check */
-        Port_T      portlist; /**< Portnumbers to check, either local or at a host */
+        Port_T      portlist;                            /**< Portnumbers to check */
+        Port_T      socketlist;                         /**< Unix sockets to check */
         Resource_T  resourcelist;                          /**< Resouce check list */
         Size_T      sizelist;                                 /**< Size check list */
         Uptime_T    uptimelist;                             /**< Uptime check list */

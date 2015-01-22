@@ -124,6 +124,7 @@ static void print_buttons(HttpRequest, HttpResponse, Service_T);
 static void print_service_rules_timeout(HttpResponse, Service_T);
 static void print_service_rules_existence(HttpResponse, Service_T);
 static void print_service_rules_port(HttpResponse, Service_T);
+static void print_service_rules_socket(HttpResponse, Service_T);
 static void print_service_rules_icmp(HttpResponse, Service_T);
 static void print_service_rules_perm(HttpResponse, Service_T);
 static void print_service_rules_uid(HttpResponse, Service_T);
@@ -148,19 +149,43 @@ static void print_service_rules_ppid(HttpResponse, Service_T);
 static void print_service_rules_program(HttpResponse, Service_T);
 static void print_service_rules_resource(HttpResponse, Service_T);
 static void print_service_status_port(HttpResponse, Service_T);
+static void print_service_status_socket(HttpResponse, Service_T);
 static void print_service_status_icmp(HttpResponse, Service_T);
 static void print_service_status_perm(HttpResponse, Service_T);
 static void print_service_status_uid(HttpResponse, Service_T);
 static void print_service_status_gid(HttpResponse, Service_T);
 static void print_service_status_timestamp(HttpResponse, Service_T);
-static void print_service_status_filesystem(HttpResponse, Service_T);
+static void print_service_status_filesystem_flags(HttpResponse, Service_T);
+static void print_service_status_filesystem_blockstotal(HttpResponse, Service_T);
+static void print_service_status_filesystem_blocksfree(HttpResponse, Service_T);
+static void print_service_status_filesystem_blocksfreetotal(HttpResponse, Service_T);
+static void print_service_status_filesystem_blocksize(HttpResponse, Service_T);
+static void print_service_status_filesystem_inodestotal(HttpResponse, Service_T);
+static void print_service_status_filesystem_inodesfree(HttpResponse, Service_T);
 static void print_service_status_size(HttpResponse, Service_T);
 static void print_service_status_match(HttpResponse, Service_T);
 static void print_service_status_checksum(HttpResponse, Service_T);
-static void print_service_status_process(HttpResponse, Service_T);
-static void print_service_status_resource(HttpResponse, Service_T);
-static void print_service_status_program(HttpResponse, Service_T);
-static void print_service_status_net(HttpResponse, Service_T);
+static void print_service_status_process_pid(HttpResponse, Service_T);
+static void print_service_status_process_ppid(HttpResponse, Service_T);
+static void print_service_status_process_uid(HttpResponse, Service_T);
+static void print_service_status_process_euid(HttpResponse, Service_T);
+static void print_service_status_process_gid(HttpResponse, Service_T);
+static void print_service_status_process_uptime(HttpResponse, Service_T);
+static void print_service_status_process_children(HttpResponse, Service_T);
+static void print_service_status_process_cpu(HttpResponse, Service_T);
+static void print_service_status_process_cputotal(HttpResponse, Service_T);
+static void print_service_status_process_memory(HttpResponse, Service_T);
+static void print_service_status_process_memorytotal(HttpResponse, Service_T);
+static void print_service_status_system_loadavg(HttpResponse, Service_T);
+static void print_service_status_system_cpu(HttpResponse, Service_T);
+static void print_service_status_system_memory(HttpResponse, Service_T);
+static void print_service_status_system_swap(HttpResponse, Service_T);
+static void print_service_status_program_started(HttpResponse, Service_T);
+static void print_service_status_program_status(HttpResponse, Service_T);
+static void print_service_status_program_output(HttpResponse, Service_T);
+static void print_service_status_link(HttpResponse, Service_T);
+static void print_service_status_download(HttpResponse, Service_T);
+static void print_service_status_upload(HttpResponse, Service_T);
 static void print_status(HttpRequest, HttpResponse, int);
 static void status_service_txt(Service_T, HttpResponse, short);
 static char *get_monitoring_status(Service_T s, char *, int);
@@ -827,24 +852,49 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         // Status
         print_service_status_icmp(res, s);
         print_service_status_port(res, s);
+        print_service_status_socket(res, s);
         print_service_status_perm(res, s);
         print_service_status_uid(res, s);
         print_service_status_gid(res, s);
         print_service_status_timestamp(res, s);
-        print_service_status_filesystem(res, s);
+        print_service_status_filesystem_flags(res, s);
+        print_service_status_filesystem_blockstotal(res, s);
+        print_service_status_filesystem_blocksfree(res, s);
+        print_service_status_filesystem_blocksfreetotal(res, s);
+        print_service_status_filesystem_blocksize(res, s);
+        print_service_status_filesystem_inodestotal(res, s);
+        print_service_status_filesystem_inodesfree(res, s);
         print_service_status_size(res, s);
         print_service_status_match(res, s);
         print_service_status_checksum(res, s);
-        print_service_status_process(res, s);
-        print_service_status_resource(res, s);
-        print_service_status_program(res, s);
-        print_service_status_net(res, s);
+        print_service_status_process_pid(res, s);
+        print_service_status_process_ppid(res, s);
+        print_service_status_process_uid(res, s);
+        print_service_status_process_euid(res, s);
+        print_service_status_process_gid(res, s);
+        print_service_status_process_uptime(res, s);
+        print_service_status_process_children(res, s);
+        print_service_status_process_cpu(res, s);
+        print_service_status_process_cputotal(res, s);
+        print_service_status_process_memory(res, s);
+        print_service_status_process_memorytotal(res, s);
+        print_service_status_system_loadavg(res, s);
+        print_service_status_system_cpu(res, s);
+        print_service_status_system_memory(res, s);
+        print_service_status_system_swap(res, s);
+        print_service_status_program_started(res, s);
+        print_service_status_program_status(res, s);
+        print_service_status_program_output(res, s);
+        print_service_status_link(res, s);
+        print_service_status_download(res, s);
+        print_service_status_upload(res, s);
         StringBuffer_append(res->outputbuffer, "<tr><td>Data collected</td><td>%s</td></tr>", Time_string(s->collected.tv_sec, buf));
         // Rules
         print_service_rules_timeout(res, s);
         print_service_rules_existence(res, s);
         print_service_rules_icmp(res, s);
         print_service_rules_port(res, s);
+        print_service_rules_socket(res, s);
         print_service_rules_perm(res, s);
         print_service_rules_uid(res, s);
         print_service_rules_euid(res, s);
@@ -1501,23 +1551,26 @@ static void print_service_rules_existence(HttpResponse res, Service_T s) {
 
 static void print_service_rules_port(HttpResponse res, Service_T s) {
         for (Port_T p = s->portlist; p; p = p->next) {
-                if (p->family == AF_INET) {
-                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Port</td><td>");
-                        if (p->retry > 1)
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000, p->retry);
-                        else
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000);
-                        StringBuffer_append(res->outputbuffer, "</td></tr>");
-                        if (p->SSL.certmd5 != NULL)
-                                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
-                } else if (p->family == AF_UNIX) {
-                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Unix Socket</td><td>");
-                        if (p->retry > 1)
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout / 1000, p->retry);
-                        else
-                                Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds]", p->pathname, p->protocol->name, p->timeout / 1000);
-                        StringBuffer_append(res->outputbuffer, "</td></tr>");
-                }
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Port</td><td>");
+                if (p->retry > 1)
+                        Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000, p->retry);
+                else
+                        Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
+                if (p->SSL.certmd5 != NULL)
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
+        }
+}
+
+
+static void print_service_rules_socket(HttpResponse res, Service_T s) {
+        for (Port_T p = s->socketlist; p; p = p->next) {
+                StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Unix Socket</td><td>");
+                if (p->retry > 1)
+                        Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout / 1000, p->retry);
+                else
+                        Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds]", p->pathname, p->protocol->name, p->timeout / 1000);
+                StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
 
@@ -1875,372 +1928,553 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
 
 
 static void print_service_status_port(HttpResponse res, Service_T s) {
-        if ((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
-                if (! Util_hasServiceStatus(s)) {
-                        for (Port_T p = s->portlist; p; p = p->next)
-                                if (p->family == AF_INET)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Port Response time</td><td>-</td></tr>");
-                                else if (p->family == AF_UNIX)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket Response time</td><td>-</td></tr>");
-                } else {
-                        for (Port_T p = s->portlist; p; p = p->next) {
-                                if (p->family == AF_INET) {
-                                        if (! p->is_available) {
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "<tr><td>Port Response time</td>"
-                                                                    "<td class='red-text'>connection failed to %s:%d%s [%s via %s]</td>"
-                                                                    "</tr>",
-                                                                    p->hostname, p->port, p->request ? p->request : "",
-                                                                    p->protocol->name, Util_portTypeDescription(p));
-                                        } else {
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "<tr><td>Port Response time</td>"
-                                                                    "<td>%.3fs to %s:%d%s [%s via %s]</td></tr>",
-                                                                    p->response, p->hostname, p->port, p->request ? p->request : "",
-                                                                    p->protocol->name, Util_portTypeDescription(p));
-                                        }
-                                } else if (p->family == AF_UNIX) {
-                                        if (! p->is_available) {
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "<tr><td>Unix Socket Response time</td>"
-                                                                    "<td class='red-text'>connection failed to %s [%s]</td>"
-                                                                    "</tr>",
-                                                                    p->pathname, p->protocol->name);
-                                        } else {
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "<tr><td>Unix Socket Response time</td>"
-                                                                    "<td>%.3fs to %s [%s]</td></tr>",
-                                                                    p->response, p->pathname, p->protocol->name);
-                                        }
-                                }
-                        }
-                }
+        int status = Util_hasServiceStatus(s);
+        for (Port_T p = s->portlist; p; p = p->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Port Response time</td>");
+                if (! status)
+                        StringBuffer_append(res->outputbuffer, "<td>-<td>");
+                else if (! p->is_available)
+                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s:%d%s [%s via %s]</td>", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p));
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s:%d%s [%s via %s]</td>", p->response, p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p));
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_socket(HttpResponse res, Service_T s) {
+        int status = Util_hasServiceStatus(s);
+        for (Port_T p = s->socketlist; p; p = p->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Unix Socket Response time</td>");
+                if (! status)
+                        StringBuffer_append(res->outputbuffer, "<td>-<td>");
+                else if (! p->is_available)
+                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s [%s]</td>", p->pathname, p->protocol->name);
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s [%s]</td>", p->response, p->pathname, p->protocol->name);
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_icmp(HttpResponse res, Service_T s) {
-        if (s->type == TYPE_HOST && s->icmplist) {
-                if (! Util_hasServiceStatus(s)) {
-                        for (Icmp_T i = s->icmplist; i; i = i->next)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>-</td></tr>");
-                } else {
-                        for (Icmp_T i = s->icmplist; i; i = i->next) {
-                                if (! i->is_available)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='red-text'>connection failed</td></tr>");
-                                else if (i->response < 0)
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td class='gray-text'>N/A</td></tr>");
-                                else
-                                        StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td><td>%.3fs</td></tr>", i->response);
-                        }
-                }
+        int status = Util_hasServiceStatus(s);
+        for (Icmp_T i = s->icmplist; i; i = i->next) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Ping Response time</td>");
+                if (! status)
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else if (! i->is_available)
+                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed</td>");
+                else if (i->response < 0)
+                        StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%.3fs</td>", i->response);
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_perm(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td>");
                 if (! Util_hasServiceStatus(s))
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 else
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td><td class='%s'>%o</td></tr>", (s->error & Event_Permission) ? "red-text" : "", s->inf->st_mode & 07777);
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%o</td>", (s->error & Event_Permission) ? "red-text" : "", s->inf->st_mode & 07777);
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_uid(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>UID</td>");
                 if (! Util_hasServiceStatus(s))
-                        StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 else
-                        StringBuffer_append(res->outputbuffer, "<tr><td>UID</td><td class='%s'>%d</td></tr>", (s->error & Event_Uid) ? "red-text" : "", (int)s->inf->st_uid);
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Uid) ? "red-text" : "", (int)s->inf->st_uid);
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_gid(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>GID</td>");
                 if (! Util_hasServiceStatus(s))
-                        StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 else
-                        StringBuffer_append(res->outputbuffer, "<tr><td>GID</td><td class='%s'>%d</td></tr>", (s->error & Event_Gid) ? "red-text" : "", (int)s->inf->st_gid);
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Gid) ? "red-text" : "", (int)s->inf->st_gid);
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
-static void print_service_status_net(HttpResponse res, Service_T s) {
+static void print_service_status_link(HttpResponse res, Service_T s) {
         if (s->type == TYPE_NET) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Link</td>");
                 if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Link</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        long long speed = Link_getSpeed(s->inf->priv.net.stats);
+                        if (speed > 0)
+                                StringBuffer_append(res->outputbuffer, "<td class='%s'>%.0lf Mb&#47;s %s-duplex</td>", s->error & Event_Speed ? "red-text" : "", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                        else
+                                StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_download(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_NET) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Download</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         char buf[STRLEN];
                         long long speed = Link_getSpeed(s->inf->priv.net.stats);
-                        if (speed > 0)
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Link capacity</td><td class='%s'>%.0lf Mb&#47;s %s-duplex</td></tr>",
-                                                    s->error & Event_Speed ? "red-text" : "",
-                                                    (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
-
                         long long ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Download</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s/s [%lld packets/s] [%lld errors]",
                                             (s->error & Event_ByteIn || s->error & Event_PacketIn) ? "red-text" : "",
                                             Str_bytesToSize(ibytes, buf),
                                             Link_getPacketsInPerSecond(s->inf->priv.net.stats),
                                             Link_getErrorsInPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && ibytes > 0)
                                 StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
-                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "</td>");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
 
+
+static void print_service_status_upload(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_NET) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        long long speed = Link_getSpeed(s->inf->priv.net.stats);
                         long long obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td><td class='%s'>%s/s [%lld packets/s] [%lld errors]",
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s/s [%lld packets/s] [%lld errors]",
                                             (s->error & Event_ByteOut || s->error & Event_PacketOut) ? "red-text" : "",
                                             Str_bytesToSize(obytes, buf),
                                             Link_getPacketsOutPerSecond(s->inf->priv.net.stats),
                                             Link_getErrorsOutPerSecond(s->inf->priv.net.stats));
                         if (speed > 0 && obytes > 0)
                                 StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
-                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "</td>");
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_timestamp(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Timestamp</td>");
                 if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Timestamp</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         char t[32];
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Timestamp</td><td class='%s'>%s</td></tr>",
-                                            (s->error & Event_Timestamp) ? "red-text" : "", Time_string(s->inf->timestamp, t));
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Timestamp) ? "red-text" : "", Time_string(s->inf->timestamp, t));
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
-static void print_service_status_filesystem(HttpResponse res, Service_T s) {
+static void print_service_status_filesystem_flags(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Filesystem flags</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>0x%x</td>", s->inf->priv.filesystem.flags);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_filesystem_blockstotal(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Blocks total</td>");
                 if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Filesystem flags</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Blocks total</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Blocks free for non superuser</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Blocks free total</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Block size</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Inodes total</td><td>-</td></tr>");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Inodes free</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        StringBuffer_append(res->outputbuffer, "<td>%lld [%s]</td>", s->inf->priv.filesystem.f_blocks, s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_filesystem_blocksfree(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Blocks free for non superuser</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        StringBuffer_append(res->outputbuffer, "<td>%lld [%s] [%.1f%%]</td>", s->inf->priv.filesystem.f_blocksfree,
+                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
+                                            s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_filesystem_blocksfreetotal(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Blocks free total</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         char buf[STRLEN];
                         StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Filesystem flags</td><td>0x%x</td></tr>",
-                                            s->inf->priv.filesystem.flags);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Blocks total</td><td>%lld [%s]</td></tr>",
-                                            s->inf->priv.filesystem.f_blocks,
-                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Blocks free for non superuser</td>"
-                                            "<td>%lld [%s] [%.1f%%]</td></tr>",
-                                            s->inf->priv.filesystem.f_blocksfree,
-                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
-                                            s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Blocks free total</td>"
-                                            "<td class='%s'>%lld [%s] [%.1f%%]</td></tr>",
-                                            (s->error & Event_Resource) ? "red-text" : "",
-                                            s->inf->priv.filesystem.f_blocksfreetotal,
+                                            "<td class='%s'>%lld [%s] [%.1f%%]</td>", (s->error & Event_Resource) ? "red-text" : "", s->inf->priv.filesystem.f_blocksfreetotal,
                                             s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
                                             s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Block size</td><td>%s</td></tr>", Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
-                        if (s->inf->priv.filesystem.f_files > 0) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Inodes total</td><td>%lld</td></tr>", s->inf->priv.filesystem.f_files);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Inodes free</td><td class='%s'>%lld [%.1f%%]</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    s->inf->priv.filesystem.f_filesfree,
-                                                    (float)100 * (float)s->inf->priv.filesystem.f_filesfree / (float)s->inf->priv.filesystem.f_files);
-                        }
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_filesystem_blocksize(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Block size</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        StringBuffer_append(res->outputbuffer, "<td>%s</td>", Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_filesystem_inodestotal(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Inodes total</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        if (s->inf->priv.filesystem.f_files > 0)
+                                StringBuffer_append(res->outputbuffer, "<td>%lld</td>", s->inf->priv.filesystem.f_files);
+                        else
+                                StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_filesystem_inodesfree(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_FILESYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Inodes free</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        if (s->inf->priv.filesystem.f_files > 0)
+                                StringBuffer_append(res->outputbuffer, "<td class='%s'>%lld [%.1f%%]</td>", (s->error & Event_Resource) ? "red-text" : "", s->inf->priv.filesystem.f_filesfree, (float)100 * (float)s->inf->priv.filesystem.f_filesfree / (float)s->inf->priv.filesystem.f_files);
+                        else
+                                StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_size(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Size</td>");
                 if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Size</td><td>-</td></tr>");
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         char buf[STRLEN];
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Size</td><td class='%s'>%s</td></tr>",
-                                            (s->error & Event_Size) ? "red-text" : "",
-                                            Str_bytesToSize(s->inf->priv.file.st_size, buf));
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Size) ? "red-text" : "", Str_bytesToSize(s->inf->priv.file.st_size, buf));
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 static void print_service_status_match(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE) {
-                if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Match regex</td><td>-</td></tr>");
-                } else {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Match regex</td><td class='%s'>%s</td></tr>",
-                                            (s->error & Event_Content) ? "red-text" : "",
-                                            (s->error & Event_Content) ? "yes" : "no");
-                }
+                StringBuffer_append(res->outputbuffer, "<tr><td>Match regex</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Content) ? "red-text" : "", (s->error & Event_Content) ? "yes" : "no");
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
 static void print_service_status_checksum(HttpResponse res, Service_T s) {
         if (s->type == TYPE_FILE && s->checksum) {
-                if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer, "<tr><td>Checksum</td><td>-</td></tr>");
-                } else {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Checksum</td><td class='%s'>%s(%s)</td></tr>",
-                                            (s->error & Event_Checksum) ? "red-text" : "", s->inf->priv.file.cs_sum,
-                                            checksumnames[s->checksum->type]);
-                }
+                StringBuffer_append(res->outputbuffer, "<tr><td>Checksum</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s(%s)</td>", (s->error & Event_Checksum) ? "red-text" : "", s->inf->priv.file.cs_sum, checksumnames[s->checksum->type]);
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
-static void print_service_status_process(HttpResponse res, Service_T s) {
+static void print_service_status_process_pid(HttpResponse res, Service_T s) {
         if (s->type == TYPE_PROCESS) {
-                if (! Util_hasServiceStatus(s)) {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Process id </td><td>-</td></tr>"
-                                            "<tr><td>Parent process id </td><td>-</td></tr>"
-                                            "<tr><td>Process uptime</td><td>-</td></tr>");
+                StringBuffer_append(res->outputbuffer, "<tr><td>Process id</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.pid > 0 ? s->inf->priv.process.pid : 0);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
 
+
+static void print_service_status_process_ppid(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Parent process id</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.ppid > 0 ? s->inf->priv.process.ppid : 0);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_uid(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>UID</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.uid);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_euid(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Effective UID</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.euid);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_gid(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>GID</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.gid);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_uptime(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Process uptime</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Process id </td><td>%d</td></tr>",
-                                            s->inf->priv.process.pid > 0 ? s->inf->priv.process.pid : 0);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Parent process id </td><td>%d</td></tr>",
-                                            s->inf->priv.process.ppid > 0 ? s->inf->priv.process.ppid : 0);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>UID</td><td>%d</td></tr>",
-                                            s->inf->priv.process.uid);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Effective UID</td><td>%d</td></tr>",
-                                            s->inf->priv.process.euid);
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>GID</td><td>%d</td></tr>",
-                                            s->inf->priv.process.gid);
                         char *uptime = Util_getUptime(s->inf->priv.process.uptime, "&nbsp;");
-                        StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Process uptime</td><td>%s</td></tr>",
-                                            uptime);
+                        StringBuffer_append(res->outputbuffer, "<td>%s</td>", uptime);
                         FREE(uptime);
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
-static void print_service_status_resource(HttpResponse res, Service_T s) {
-        if (Run.doprocess && (s->type == TYPE_PROCESS || s->type == TYPE_SYSTEM) ) {
+static void print_service_status_process_children(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Children</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Resource) ? "red-text" : "", s->inf->priv.process.children);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_cpu(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>CPU usage</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%.1f%% (Usage / Number of CPUs)</td>", (s->error & Event_Resource) ? "red-text" : "", s->inf->priv.process.cpu_percent/10.0);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_cputotal(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Total CPU usage (incl. children)</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%.1f%%</td>", (s->error & Event_Resource) ? "red-text"  :"", s->inf->priv.process.total_cpu_percent/10.0);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_process_memory(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Memory usage</td>");
                 if (! Util_hasServiceStatus(s)) {
-                        if (s->type == TYPE_PROCESS) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>CPU usage</td><td>-</td></tr>"
-                                                    "<tr><td>Memory usage</td><td>-</td></tr>"
-                                                    "<tr><td>Children</td><td>-</td></tr>"
-                                                    "<tr><td>Total CPU usage (incl. children)</td><td>-</td></tr>"
-                                                    "<tr><td>Total memory usage (incl. children)</td><td>-</td></tr>");
-                        } else if (s->type == TYPE_SYSTEM) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Load average</td><td>-</td></tr>"
-                                                    "<tr><td>CPU usage</td><td>-</td></tr>"
-                                                    "<tr><td>Memory usage</td><td>-</td></tr>");
-                        }
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         char buf[STRLEN];
-                        if (s->type == TYPE_PROCESS) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Children</td><td class='%s'>%d</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    s->inf->priv.process.children);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>CPU usage</td><td class='%s'>%.1f%%  &nbsp;&nbsp;(Usage / Number of CPUs)</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    s->inf->priv.process.cpu_percent/10.0);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Total CPU usage (incl. children)</td><td class='%s'>%.1f%%</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text"  :"",
-                                                    s->inf->priv.process.total_cpu_percent/10.0);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Memory usage</td><td class='%s'>%.1f%% [%s]</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    s->inf->priv.process.mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Total memory usage (incl. children)</td><td class='%s'>%.1f%% [%s]</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    s->inf->priv.process.total_mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
-                        } else if (s->type == TYPE_SYSTEM) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Load average</td><td class='%s'>[%.2f] [%.2f] [%.2f]</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    systeminfo.loadavg[0],
-                                                    systeminfo.loadavg[1],
-                                                    systeminfo.loadavg[2]);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>CPU usage</td><td class='%s'>%.1f%%us %.1f%%sy"
-#ifdef HAVE_CPU_WAIT
-                                                    " %.1f%%wa"
-#endif
-                                                    "%s",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent / 10. : 0,
-                                                    systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent / 10. : 0,
-#ifdef HAVE_CPU_WAIT
-                                                    systeminfo.total_cpu_wait_percent > 0 ? systeminfo.total_cpu_wait_percent / 10. : 0,
-#endif
-                                                    "</td></tr>");
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Memory usage</td><td class='%s'>%s [%.1f%%]</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf),
-                                                    systeminfo.total_mem_percent / 10.);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "<tr><td>Swap usage</td><td class='%s'>%s [%.1f%%]</td></tr>",
-                                                    (s->error & Event_Resource) ? "red-text" : "",
-                                                    Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf),
-                                                    systeminfo.total_swap_percent/10.);
-                        }
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%.1f%% [%s]</td>", (s->error & Event_Resource) ? "red-text" : "", s->inf->priv.process.mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
 
-static void print_service_status_program(HttpResponse res, Service_T s) {
-        if (s->type == TYPE_PROGRAM) {
+static void print_service_status_process_memorytotal(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_PROCESS) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Total memory usage (incl. children)</td>");
                 if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%.1f%% [%s]</td>", (s->error & Event_Resource) ? "red-text" : "", s->inf->priv.process.total_mem_percent/10.0, Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_system_loadavg(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_SYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Load average</td>");
+                if (! Util_hasServiceStatus(s))
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                else
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>[%.2f] [%.2f] [%.2f]</td>", (s->error & Event_Resource) ? "red-text" : "", systeminfo.loadavg[0], systeminfo.loadavg[1], systeminfo.loadavg[2]);
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_system_cpu(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_SYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>CPU usage</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
                         StringBuffer_append(res->outputbuffer,
-                                            "<tr><td>Last started</td><td>-</td></tr>"
-                                            "<tr><td>Last exit value</td><td>-</td></tr>"
-                                            "<tr><td>Last output</td><td>-</td></tr>");
+                                            "<td class='%s'>%.1f%%us %.1f%%sy"
+#ifdef HAVE_CPU_WAIT
+                                            " %.1f%%wa"
+#endif
+                                            "%s",
+                                            (s->error & Event_Resource) ? "red-text" : "",
+                                            systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent / 10. : 0,
+                                            systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent / 10. : 0,
+#ifdef HAVE_CPU_WAIT
+                                            systeminfo.total_cpu_wait_percent > 0 ? systeminfo.total_cpu_wait_percent / 10. : 0,
+#endif
+                                            "</td>");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_system_memory(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_SYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Memory usage</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s [%.1f%%]</td>", (s->error & Event_Resource) ? "red-text" : "", Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf), systeminfo.total_mem_percent / 10.);
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_system_swap(HttpResponse res, Service_T s) {
+        if (Run.doprocess && s->type == TYPE_SYSTEM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Swap usage</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        char buf[STRLEN];
+                        StringBuffer_append(res->outputbuffer, "<td class='%s'>%s [%.1f%%]</td>", (s->error & Event_Resource) ? "red-text" : "", Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf), systeminfo.total_swap_percent/10.);
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_program_started(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROGRAM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         if (s->program->started) {
                                 char t[32];
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>%s</td></tr>", Time_string(s->program->started, t));
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>%d</td></tr>", s->program->exitStatus);
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td>");
+                                StringBuffer_append(res->outputbuffer, "<td>%s</td>", Time_string(s->program->started, t));
+                        } else {
+                                StringBuffer_append(res->outputbuffer, "<td>Not yet started</td>");
+                        }
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_program_status(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROGRAM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        if (s->program->started)
+                                StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->program->exitStatus);
+                        else
+                                StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
+                }
+                StringBuffer_append(res->outputbuffer, "</tr>");
+        }
+}
+
+
+static void print_service_status_program_output(HttpResponse res, Service_T s) {
+        if (s->type == TYPE_PROGRAM) {
+                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td>");
+                if (! Util_hasServiceStatus(s)) {
+                        StringBuffer_append(res->outputbuffer, "<td>-</td>");
+                } else {
+                        if (s->program->started) {
+                                StringBuffer_append(res->outputbuffer, "<td>");
                                 if (StringBuffer_length(s->program->output)) {
                                         // If the output contains multiple line, wrap use <pre>, otherwise keep as is
                                         int multiline = StringBuffer_lastIndexOf(s->program->output, "\n") > 0;
@@ -2252,13 +2486,12 @@ static void print_service_status_program(HttpResponse res, Service_T s) {
                                 } else {
                                         StringBuffer_append(res->outputbuffer, "no output");
                                 }
-                                StringBuffer_append(res->outputbuffer, "</td></tr>");
+                                StringBuffer_append(res->outputbuffer, "</td>");
                         } else {
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last started</td><td>Not yet started</td></tr>");
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last exit value</td><td>N/A</td></tr>");
-                                StringBuffer_append(res->outputbuffer, "<tr><td>Last output</td><td>N/A</td></tr>");
+                                StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
                         }
                 }
+                StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
 
@@ -2444,38 +2677,33 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                             "cpu percent total", s->inf->priv.process.total_cpu_percent/10.0);
                                 }
                         }
-                        if (s->type == TYPE_HOST && s->icmplist) {
-                                for (Icmp_T i = s->icmplist; i; i = i->next) {
-                                        if (! i->is_available)
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "  %-33s connection failed\n",
-                                                                    "ping response time");
-                                        else if (i->response < 0)
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "  %-33s N/A\n",
-                                                                    "ping response time");
-                                        else
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "  %-33s %.3fs\n",
-                                                                    "ping response time", i->response);
-                                }
+                        for (Icmp_T i = s->icmplist; i; i = i->next) {
+                                if (! i->is_available)
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s connection failed\n",
+                                                            "ping response time");
+                                else if (i->response < 0)
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s N/A\n",
+                                                            "ping response time");
+                                else
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s %.3fs\n",
+                                                            "ping response time", i->response);
                         }
-                        if ((s->type == TYPE_HOST || s->type == TYPE_PROCESS) && s-> portlist) {
-                                for (Port_T p = s->portlist; p; p = p->next) {
-                                        if (p->family == AF_INET) {
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "  %-33s %.3fs to %s:%d%s [%s via %s]\n",
-                                                                    "port response time", p->is_available ? p->response : 0.,
-                                                                    p->hostname,
-                                                                    p->port, p->request ? p->request : "", p->protocol->name,
-                                                                    Util_portTypeDescription(p));
-                                        } else if (p->family == AF_UNIX) {
-                                                StringBuffer_append(res->outputbuffer,
-                                                                    "  %-33s %.3fs to %s [%s]\n",
-                                                                    "unix socket response time", p->is_available ? p->response : 0.,
-                                                                    p->pathname, p->protocol->name);
-                                        }
-                                }
+                        for (Port_T p = s->portlist; p; p = p->next) {
+                                StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s %.3fs to %s:%d%s [%s via %s]\n",
+                                                    "port response time", p->is_available ? p->response : 0.,
+                                                    p->hostname,
+                                                    p->port, p->request ? p->request : "", p->protocol->name,
+                                                    Util_portTypeDescription(p));
+                        }
+                        for (Port_T p = s->socketlist; p; p = p->next) {
+                                StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s %.3fs to %s [%s]\n",
+                                                    "unix socket response time", p->is_available ? p->response : 0.,
+                                                    p->pathname, p->protocol->name);
                         }
                         if (s->type == TYPE_SYSTEM && Run.doprocess) {
                                 StringBuffer_append(res->outputbuffer,

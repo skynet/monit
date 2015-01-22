@@ -175,6 +175,8 @@ static void _gc_service(Service_T *s) {
         }
         if ((*s)->portlist)
                 _gcppl(&(*s)->portlist);
+        if ((*s)->socketlist)
+                _gcppl(&(*s)->socketlist);
         if ((*s)->filesystemlist)
                 _gcfilesystem(&(*s)->filesystemlist);
         if ((*s)->icmplist)

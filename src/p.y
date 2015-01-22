@@ -203,7 +203,7 @@ static Service_T createservice(int, char *, char *, int (*)(Service_T));
 static void  addservice(Service_T);
 static void  adddependant(char *);
 static void  addservicegroup(char *);
-static void  addport(Port_T);
+static void  addport(Port_T *, Port_T);
 static void  addresource(Resource_T);
 static void  addtimestamp(Timestamp_T, int);
 static void  addactionrate(ActionRate_T);
@@ -1019,7 +1019,7 @@ connection      : IF FAILED host port type protocol urloption nettimeout retry r
                      TODO: Parser is in need of refactoring */
                     portset.url_request = urlrequest;
                     addeventaction(&(portset).action, $<number>12, $<number>13);
-                    addport(&portset);
+                    addport(&(current->portlist), &portset);
                   }
                 | IF FAILED URL URLOBJECT urloption nettimeout retry rate1
                   THEN action1 recovery {
@@ -1027,7 +1027,7 @@ connection      : IF FAILED host port type protocol urloption nettimeout retry r
                     portset.timeout = $<number>6;
                     portset.retry = $<number>7;
                     addeventaction(&(portset).action, $<number>10, $<number>11);
-                    addport(&portset);
+                    addport(&(current->portlist), &portset);
                   }
                 ;
 
@@ -1036,7 +1036,7 @@ connectionunix  : IF FAILED unixsocket type protocol nettimeout retry rate1
                    portset.timeout = $<number>6;
                    portset.retry = $<number>7;
                    addeventaction(&(portset).action, $<number>10, $<number>11);
-                   addport(&portset);
+                   addport(&(current->socketlist), &portset);
                   }
                 ;
 
@@ -2433,54 +2433,54 @@ static void addservice(Service_T s) {
         // Test sanity check
         switch (s->type) {
                 case TYPE_HOST:
-                // Verify that a remote service has a port or an icmp list
-                if (! s->portlist && ! s->icmplist) {
-                        LogError("'check host' statement is incomplete: Please specify a port number to test\n or an icmp test at the remote host: '%s'\n", s->name);
-                        cfg_errflag++;
-                }
-                break;
+                        // Verify that a remote service has a port or an icmp list
+                        if (! s->portlist && ! s->icmplist) {
+                                LogError("'check host' statement is incomplete: Please specify a port number to test\n or an icmp test at the remote host: '%s'\n", s->name);
+                                cfg_errflag++;
+                        }
+                        break;
                 case TYPE_PROGRAM:
-                // Verify that a program test has a status test
-                if (! s->statuslist) {
-                        LogError("'check program %s' is incomplete: Please add an 'if status != n' test\n", s->name);
-                        cfg_errflag++;
-                }
-                // Create the Command object
-                s->program->C = Command_new(s->path, NULL);
-                // Append any arguments
-                for (int i = 1; i < s->program->args->length; i++)
-                Command_appendArgument(s->program->C, s->program->args->arg[i]);
-                if (s->program->args->has_uid)
-                Command_setUid(s->program->C, s->program->args->uid);
-                if (s->program->args->has_gid)
-                Command_setGid(s->program->C, s->program->args->gid);
-                break;
+                        // Verify that a program test has a status test
+                        if (! s->statuslist) {
+                                LogError("'check program %s' is incomplete: Please add an 'if status != n' test\n", s->name);
+                                cfg_errflag++;
+                        }
+                        // Create the Command object
+                        s->program->C = Command_new(s->path, NULL);
+                        // Append any arguments
+                        for (int i = 1; i < s->program->args->length; i++)
+                                Command_appendArgument(s->program->C, s->program->args->arg[i]);
+                        if (s->program->args->has_uid)
+                                Command_setUid(s->program->C, s->program->args->uid);
+                        if (s->program->args->has_gid)
+                                Command_setGid(s->program->C, s->program->args->gid);
+                        break;
                 case TYPE_NET:
-                if (! s->linkstatuslist) {
-                        // Add link status test if not defined
-                        addeventaction(&(linkstatusset).action, ACTION_ALERT, ACTION_ALERT);
-                        addlinkstatus(s, &linkstatusset);
-                }
-                break;
+                        if (! s->linkstatuslist) {
+                                // Add link status test if not defined
+                                addeventaction(&(linkstatusset).action, ACTION_ALERT, ACTION_ALERT);
+                                addlinkstatus(s, &linkstatusset);
+                        }
+                        break;
                 case TYPE_FILESYSTEM:
-                if (! s->fsflaglist) {
-                        // Add filesystem flags change test if not defined
-                        addeventaction(&(fsflagset).action, ACTION_ALERT, ACTION_IGNORE);
-                        addfsflag(&fsflagset);
-                }
-                break;
+                        if (! s->fsflaglist) {
+                                // Add filesystem flags change test if not defined
+                                addeventaction(&(fsflagset).action, ACTION_ALERT, ACTION_IGNORE);
+                                addfsflag(&fsflagset);
+                        }
+                        break;
                 case TYPE_DIRECTORY:
                 case TYPE_FIFO:
                 case TYPE_FILE:
                 case TYPE_PROCESS:
-                if (! s->nonexistlist) {
-                        // Add existence test if not defined
-                        addeventaction(&(nonexistset).action, ACTION_RESTART, ACTION_ALERT);
-                        addnonexist(&nonexistset);
-                }
-                break;
+                        if (! s->nonexistlist) {
+                                // Add existence test if not defined
+                                addeventaction(&(nonexistset).action, ACTION_RESTART, ACTION_ALERT);
+                                addnonexist(&nonexistset);
+                        }
+                        break;
                 default:
-                break;
+                        break;
         }
 
         /* Add the service to the end of the service list */
@@ -2570,11 +2570,10 @@ static void addmail(char *mailto, Mail_T f, Mail_T *l) {
 /*
  * Add the given portset to the current service's portlist
  */
-static void addport(Port_T port) {
-        Port_T p;
-
+static void addport(Port_T *list, Port_T port) {
         ASSERT(port);
 
+        Port_T p;
         NEW(p);
         p->port               = port->port;
         p->type               = port->type;
@@ -2600,11 +2599,11 @@ static void addport(Port_T port) {
         if (p->request_checksum) {
                 cleanup_hash_string(p->request_checksum);
                 if (strlen(p->request_checksum) == 32)
-                p->request_hashtype = HASH_MD5;
+                        p->request_hashtype = HASH_MD5;
                 else if (strlen(p->request_checksum) == 40)
-                p->request_hashtype = HASH_SHA1;
+                        p->request_hashtype = HASH_SHA1;
                 else
-                yyerror2("invalid checksum [%s]", p->request_checksum);
+                        yyerror2("invalid checksum [%s]", p->request_checksum);
         } else
         p->request_hashtype = 0;
 
@@ -2621,8 +2620,8 @@ static void addport(Port_T port) {
                 }
         }
         p->maxforward = port->maxforward;
-        p->next = current->portlist;
-        current->portlist = p;
+        p->next = *list;
+        *list = p;
 
         reset_portset();
 
