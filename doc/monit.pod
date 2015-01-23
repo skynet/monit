@@ -1883,7 +1883,12 @@ Example:
 Monit can test a filesystem or disk for space usage. This test may only
 be used in the context of a filesystem service type.
 
-Monit will check the total space usage, including reserved blocks.
+Filesystems usually have some space reserved for the root user. Tools like
+C<df> usually does not report this reserved space. When C<df> reports 96% used,
+the disk might actually be full for regular users since they cannot write to
+the file-system. Monit space usage test B<includes> reserved space to take this
+situation into account. The effect is that Monit can report higher usage than
+C<df> does.
 
 Syntax:
 
