@@ -13,6 +13,13 @@ New: Support for multiple fsflag tests (available in the filesystem check contex
     if changed fsflags then alert
     if changed fsflags for 10 cycles then exec "/usr/bin/myscript.sh"
 
+New: Space usage test now tests the free blocks without accounting for reserved
+blocks. Previously Monit computed the space usage by subtracting blocks free for
+non-super user from the total blocks count, which showed the filesystem usage as
+100% as soon as all non-reserved blocks were allocated, whereas there still may be
+some free space available to root user (usually ~ 2-5%). The space test value
+will now match the output of utilities like "df".
+
 Fixed: Linux: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
 
 Fixed: Linux 32-bit + FreeBSD 32-bit + MaxOSX: Issue #138: handle 32-bit counter wraps.
