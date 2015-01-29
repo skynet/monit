@@ -37,6 +37,8 @@ in the case of timeout reported value 1000x higher.
 
 Fixed: Issue #144: Websocket protocol test - mask frames per RFC-6455.
 
+Fixed: Issue #146: Monit didn't start if checksum test was set for nonexistent file.
+
 Fixed: "monit validate" returns exit value 1 only if there were some errors.
 
 

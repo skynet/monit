@@ -2827,9 +2827,6 @@ static void addnonexist(Nonexist_T ff) {
  * Set Checksum object in the current service
  */
 static void addchecksum(Checksum_T cs) {
-        int len;
-        Checksum_T c;
-
         ASSERT(cs);
 
         cs->initialized = TRUE;
@@ -2839,13 +2836,13 @@ static void addchecksum(Checksum_T cs) {
                         cs->type = DEFAULT_HASH;
                 if (! (Util_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
                         /* If the file doesn't exist, set dummy value */
-                        snprintf(cs->hash, sizeof(cs->hash), "0000000000000000000000000000000000000000");
+                        snprintf(cs->hash, sizeof(cs->hash), cs->type == HASH_MD5 ? "00000000000000000000000000000000" : "0000000000000000000000000000000000000000");
                         cs->initialized = FALSE;
                         yywarning2("Cannot compute a checksum for file %s", current->path);
                 }
         }
 
-        len = cleanup_hash_string(cs->hash);
+        int len = cleanup_hash_string(cs->hash);
 
         if (cs->type == HASH_UNKNOWN) {
                 if (len == 32) {
@@ -2857,14 +2854,14 @@ static void addchecksum(Checksum_T cs) {
                         reset_checksumset();
                         return;
                 }
-        } else if (( cs->type == HASH_MD5 && len != 32 ) || ( cs->type == HASH_SHA1 && len != 40 )) {
+        } else if ((cs->type == HASH_MD5 && len != 32) || (cs->type == HASH_SHA1 && len != 40)) {
                 yyerror2("Invalid checksum [%s] for file %s", cs->hash, current->path);
                 reset_checksumset();
                 return;
         }
 
+        Checksum_T c;
         NEW(c);
-
         c->type         = cs->type;
         c->test_changes = cs->test_changes;
         c->initialized  = cs->initialized;
