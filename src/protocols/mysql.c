@@ -47,7 +47,12 @@
 
 
 #define MYSQL_ERROR 0xff
-typedef struct {unsigned int len:24, seq:8; unsigned char *msg; unsigned char buf[STRLEN + 1];} mysql_packet_t;
+typedef struct {
+        unsigned int len:24,
+        seq:8;
+        unsigned char *msg;
+        unsigned char buf[STRLEN + 1];
+} __attribute__((__packed__)) mysql_packet_t;
 
 
 /* --------------------------------------------------------------- Private */

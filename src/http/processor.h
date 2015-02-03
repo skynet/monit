@@ -63,7 +63,7 @@ struct entry {
   char *value;
   /* For internal use */
   struct entry *next;
-};
+} __attribute__((__packed__));
 typedef struct entry *HttpHeader;
 typedef struct entry *HttpParameter;
 
@@ -77,7 +77,7 @@ typedef struct request {
   HttpHeader headers;
   ssl_connection *ssl;
   HttpParameter params;
-} *HttpRequest;
+} __attribute__((__packed__)) *HttpRequest;
 
 typedef struct response {
   int status;
@@ -88,13 +88,13 @@ typedef struct response {
   ssl_connection *ssl;
   const char *status_msg;
   StringBuffer_T outputbuffer;
-} *HttpResponse;
+} __attribute__((__packed__)) *HttpResponse;
 
 
 struct  ServiceImpl {
   void(*doGet)(HttpRequest, HttpResponse);
   void(*doPost)(HttpRequest, HttpResponse);
-};
+} __attribute__((__packed__));
 
 /*
  * An object for implementors of the service functions; doGet and

@@ -96,7 +96,7 @@ enum ExitStatus_E {
         setuid_ERROR   = 0x2,
         redirect_ERROR = 0x4,
         fork_ERROR     = 0x8
-};
+} __attribute__((__packed__));
 
 
 /* ----------------------------------------------------------------- Private */

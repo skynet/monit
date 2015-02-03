@@ -126,7 +126,7 @@ typedef struct HostsAllow_T {
         unsigned long mask;
         /* For internal use */
         struct HostsAllow_T *next;
-} *HostsAllow_T;
+} __attribute__((__packed__)) *HostsAllow_T;
 
 
 static volatile int stopped = FALSE;
