@@ -58,7 +58,7 @@ typedef struct {
         int32_t cursorStart;     // cursor start
         int32_t returned;        // returned documents count
         unsigned char *response; // BSON encoded response object
-} __attribute__((__packed__)) op_reply_t;
+} op_reply_t; /* Keep position, don't memory pack! */
 
 
 /* --------------------------------------------------------------- Private */

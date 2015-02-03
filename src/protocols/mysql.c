@@ -52,7 +52,7 @@ typedef struct {
         seq:8;
         unsigned char *msg;
         unsigned char buf[STRLEN + 1];
-} __attribute__((__packed__)) mysql_packet_t;
+} mysql_packet_t; /* Keep position, don't memory pack! */
 
 
 /* --------------------------------------------------------------- Private */
