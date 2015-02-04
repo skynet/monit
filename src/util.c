@@ -1896,10 +1896,10 @@ char *Util_portTypeDescription(Port_T p) {
 
 
 char *Util_portDescription(Port_T p, char *buf, int bufsize) {
-        if (p->family == AF_INET)
-                snprintf(buf, STRLEN, "INET[%s:%d%s] via %s", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p));
-        else if (p->family == AF_UNIX)
-                snprintf(buf, STRLEN, "UNIX[%s]", p->pathname);
+        if (p->family == Port_Net)
+                snprintf(buf, STRLEN, "[%s]:%d%s via %s", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p));
+        else if (p->family == Port_Unix)
+                snprintf(buf, STRLEN, "%s", p->pathname);
         else
                 *buf = 0;
         return buf;

@@ -13,6 +13,11 @@ New: Support for multiple fsflag tests (available in the filesystem check contex
     if changed fsflags then alert
     if changed fsflags for 10 cycles then exec "/usr/bin/myscript.sh"
 
+New: Support for testing IPv6 hosts with ping and TCP/UDP connections. Example:
+    check host myhost with address "2001:db8::1234"
+        if failed ping then alert
+        if failed port 80 then alert
+
 Fixed: Linux: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
 
 Fixed: Linux 32-bit + FreeBSD 32-bit + MaxOSX: Issue #138: handle 32-bit counter wraps.
@@ -29,6 +34,10 @@ in the case of timeout reported value 1000x higher.
 Fixed: Issue #144: Websocket protocol test - mask frames per RFC-6455.
 
 Fixed: "monit validate" returns exit value 1 only if there were some errors.
+
+Fixed: port test: if the hostname has multiple IP addresses, try each IP address until first success
+or all addresses failed. Originally Monit tried only the first interface in the resolved set, ignoring
+the rest.
 
 
 Version 5.11

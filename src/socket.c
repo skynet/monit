@@ -60,6 +60,10 @@
 #include <netinet/tcp.h>
 #endif
 
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+
 #include "net.h"
 #include "ssl.h"
 #include "monit.h"
@@ -144,21 +148,11 @@ Socket_T socket_new(const char *host, int port, int type, int use_ssl, int timeo
 
 
 Socket_T socket_create(void *port) {
-        int socket;
+        ASSERT(port);
+
         Socket_T S = NULL;
         Port_T p = port;
-        ASSERT(port);
-        switch (p->family) {
-                case AF_UNIX:
-                        socket = create_unix_socket(p->pathname, p->type, p->timeout);
-                        break;
-                case AF_INET:
-                        socket = create_socket(p->hostname, p->port, p->type, p->timeout);
-                        break;
-                default:
-                        LogError("Invalid Port Protocol family\n");
-                        return NULL;
-        }
+        int socket = p->family == Port_Unix ? create_unix_socket(p->pathname, p->type, p->timeout) : create_socket(p->hostname, p->port, p->type, p->timeout);
         if (socket < 0) {
                 LogError("socket_create: Could not create socket -- %s\n", STRERROR);
         } else {
@@ -168,11 +162,7 @@ Socket_T socket_create(void *port) {
                 S->port = p->port;
                 S->timeout = p->timeout;
                 S->connection_type = TYPE_LOCAL;
-                if (p->family == AF_UNIX) {
-                        S->host = Str_dup(LOCALHOST);
-                } else {
-                        S->host = Str_dup(p->hostname);
-                }
+                S->host = Str_dup(p->family == Port_Unix ? LOCALHOST : p->hostname);
                 if (p->SSL.use_ssl && ! socket_switch2ssl(S, p->SSL)) {
                         socket_free(&S);
                         return NULL;
@@ -187,11 +177,11 @@ Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int ti
         int s;
         int proto = type == SOCKET_UDP ? SOCK_DGRAM : SOCK_STREAM;
         ASSERT(host);
-        ASSERT((type == SOCKET_UDP)||(type == SOCKET_TCP));
+        ASSERT(type == SOCKET_UDP || type == SOCKET_TCP);
         if (ssl.use_ssl) {
                 ASSERT(type == SOCKET_TCP);
         }
-        ASSERT(timeout>0);
+        ASSERT(timeout > 0);
         timeout = timeout * 1000; // Internally milliseconds is used
         if ((s = create_socket(host, port, proto, timeout)) != -1) {
                 Socket_T S = NULL;
@@ -334,24 +324,34 @@ const char *socket_get_remote_host(Socket_T S) {
 
 
 int socket_get_local_port(Socket_T S) {
-        struct sockaddr sock;
-        socklen_t len = sizeof(sock);
         ASSERT(S);
-        if (getsockname (S->socket, &sock, &len ) == 0)
-                return ntohs (((struct sockaddr_in *)&sock)->sin_port);
+        struct sockaddr_storage addr;
+        socklen_t addrlen = sizeof(addr);
+        if (getsockname(S->socket, (struct sockaddr *)&addr, &addrlen) == 0) {
+                if (addr.ss_family == AF_INET)
+                        return ntohs(((struct sockaddr_in *)&addr)->sin_port);
+#ifdef IPV6
+                else if (addr.ss_family == AF_INET6)
+                        return ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
+#endif
+        }
         return -1;
 
 }
 
 
-const char *socket_get_local_host(Socket_T S) {
-        struct sockaddr sock;
-        socklen_t len = sizeof(sock);
+const char *socket_get_local_host(Socket_T S, char *host, int hostlen) {
         ASSERT(S);
-        if (getsockname(S->socket, &sock, &len) == 0)
-                return inet_ntoa(((struct sockaddr_in *)&sock)->sin_addr);
-        return NULL;
-
+        struct sockaddr_storage addr;
+        socklen_t addrlen = sizeof(addr);
+        if (! getsockname(S->socket, (struct sockaddr *)&addr, &addrlen)) {
+                int status = getnameinfo((struct sockaddr *)&addr, addrlen, host, hostlen, NULL, 0, 0);
+                if (status) {
+                        LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                        return NULL;
+                }
+        }
+        return host;
 }
 
 
@@ -431,10 +431,9 @@ int socket_write(Socket_T S, void *b, size_t size) {
 
 int socket_read_byte(Socket_T S) {
         ASSERT(S);
-        if (S->offset >= S->length) {
+        if (S->offset >= S->length)
                 if (fill(S, S->timeout) <= 0)
                         return -1;
-        }
         return S->buffer[S->offset++];
 }
 
@@ -443,10 +442,9 @@ int socket_read(Socket_T S, void *b, int size) {
         int c;
         unsigned char *p = b;
         ASSERT(S);
-        while ((size-- > 0) && ((c = socket_read_byte(S)) >= 0)) {
+        while ((size-- > 0) && ((c = socket_read_byte(S)) >= 0))
                 *p++ = c;
-        }
-        return  (int)((long)p - (long)b);
+        return (int)((long)p - (long)b);
 }
 
 
@@ -469,7 +467,8 @@ char *socket_readln(Socket_T S, char *s, int size) {
 void socket_reset(Socket_T S) {
         ASSERT(S);
         /* Throw away any pending incomming data */
-        while (fill(S, 0) > 0);
+        while (fill(S, 0) > 0)
+                ;
         S->offset = 0;
         S->length = 0;
 }

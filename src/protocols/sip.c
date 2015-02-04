@@ -67,25 +67,17 @@
 /* -------------------------------------------------------------- Public*/
 
 int check_sip(Socket_T socket) {
-        int status;
-        char buf[STRLEN];
-        int port;
-        char *transport;
-        Port_T P;
-        const char *request;
-        const char *myip;
-        char *rport = "";
-        char *proto;
-
         ASSERT(socket);
 
-        P = socket_get_Port(socket);
+        Port_T P = socket_get_Port(socket);
         ASSERT(P);
-        request = P->request ? P->request : "monit@foo.bar";
+        const char *request = P->request ? P->request : "monit@foo.bar";
 
-        port = socket_get_local_port(socket);
-        proto = socket_is_secure(socket) ? "sips" : "sip";
+        int port = socket_get_local_port(socket);
+        char *proto = socket_is_secure(socket) ? "sips" : "sip";
 
+        char *transport;
+        char *rport = "";
         switch (socket_get_type(socket)) {
                 case SOCK_DGRAM:
                 {
@@ -105,7 +97,8 @@ int check_sip(Socket_T socket) {
                 }
         }
 
-        myip = socket_get_local_host(socket);
+        char buf[STRLEN];
+        const char *myip = socket_get_local_host(socket, buf, sizeof(buf));
 
         if (socket_print(socket,
                          "OPTIONS %s:%s SIP/2.0\r\n"
@@ -151,6 +144,7 @@ int check_sip(Socket_T socket) {
 
         DEBUG("Response from SIP server: %s\n", buf);
 
+        int status;
         if (! sscanf(buf, "%*s %d", &status)) {
                 socket_setError(socket, "SIP error: cannot parse SIP status in response: %s", buf);
                 return FALSE;

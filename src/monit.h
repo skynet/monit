@@ -154,6 +154,13 @@ typedef enum {
         Operator_Changed
 } Operator_Type;
 
+
+typedef enum {
+        Port_Unix = 0,
+        Port_Net
+} Port_Family;
+
+
 #define TIME_SECOND        1
 #define TIME_MINUTE        60
 #define TIME_HOUR          3600
@@ -450,15 +457,15 @@ typedef struct mygenericproto {
 /** Defines a port object */
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
-        List_T http_headers; /**< Optional list of HTTP headers to send with request */
+        List_T http_headers;    /**< Optional list of headers to send with request */
         char *request;                              /**< Specific protocol request */
         char *request_checksum;     /**< The optional checksum for a req. document */
-        char *request_hostheader;            /**< The optional Host: header to use. Deprecated */
+        char *request_hostheader;/**< The optional Host: header to use. Deprecated */
         char *pathname;                   /**< Pathname, in case of an UNIX socket */
         Generic_T generic;                                /**< Generic test handle */
         volatile int socket;                       /**< Socket used for connection */
         int type;                   /**< Socket type used for connection (UDP/TCP) */
-        int family;             /**< Socket family used for connection (INET/UNIX) */
+        Port_Family family;      /**< Socket family used for connection (NET/UNIX) */
         int port;                                                  /**< Portnumber */
         int request_hashtype;   /**< The optional type of hash for a req. document */
         int maxforward;            /**< Optional max forward for protocol checking */

@@ -199,9 +199,11 @@ int socket_get_local_port(Socket_T S);
 /**
  * Get the local interface IP address
  * @param S A Socket object
+ * @param host A buffer for the hostname
+ * @param hostlen A buffer length
  * @return The local host interface address or NULL if an error occurred
  */
-const char *socket_get_local_host(Socket_T S);
+const char *socket_get_local_host(Socket_T S, char *host, int hostlen);
 
 
 /**

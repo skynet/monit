@@ -403,7 +403,7 @@ char *Util_portTypeDescription(Port_T p);
 
 
 /**
- * Print full port description <INET|UNIX>\[<host>:<port>[request]\][via TCP|TCPSSL|UDP]
+ * Print full port description \[<host>\]:<port>[request][ via TCP|TCPSSL|UDP]
  * @param p A port structure
  * @param buf Buffer
  * @param bufsize Buffer size

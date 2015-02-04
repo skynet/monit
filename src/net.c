@@ -108,6 +108,10 @@
 #include <netinet/ip_icmp.h>
 #endif
 
+#ifdef HAVE_NETINET_ICMP6_H
+#include <netinet/icmp6.h>
+#endif
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -140,6 +144,7 @@
 
 // libmonit
 #include "system/Net.h"
+#include "exceptions/IOException.h"
 
 
 /**
@@ -172,7 +177,7 @@ static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int
                 return -1;
         }
         fds[0].fd = s;
-        fds[0].events = POLLIN|POLLOUT;
+        fds[0].events = POLLIN | POLLOUT;
         error = poll(fds, 1, timeout);
         if (error == 0) {
                 LogError("Connection timed out\n");
@@ -230,7 +235,7 @@ int check_host(const char *hostname) {
         struct addrinfo *res;
         ASSERT(hostname);
         memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = PF_INET; /* we support just IPv4 currently */
+        hints.ai_flags = AI_ADDRCONFIG;
         if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
                 return FALSE;
         freeaddrinfo(res);
@@ -265,95 +270,94 @@ int check_udp_socket(int socket) {
 
 
 int create_socket(const char *hostname, int port, int type, int timeout) {
-        int s, status;
-        struct sockaddr_in sin;
-        struct sockaddr_in *sa;
-        struct addrinfo hints;
-        struct addrinfo *result;
         ASSERT(hostname);
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET;
 
-        if ((status = getaddrinfo(hostname, NULL, &hints, &result)) != 0) {
+        char _port[6];
+        snprintf(_port, sizeof(_port), "%d", port);
+        struct addrinfo hints;
+        memset(&hints, 0, sizeof(struct addrinfo));
+#ifdef IPV6
+        hints.ai_family = AF_UNSPEC;
+#else
+        hints.ai_family = AF_INET;
+#endif
+        hints.ai_socktype = type;
+        hints.ai_flags = AI_ADDRCONFIG;
+        struct addrinfo *result, *r;
+        int status = getaddrinfo(hostname, _port, &hints, &result);
+        if (status) {
                 LogError("Cannot translate '%s' to IP address -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return -1;
         }
-        if ((s = socket(AF_INET, type, 0)) < 0) {
+        int s = -1;
+        for (r = result; r; r = r->ai_next)
+                if ((s = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) >= 0)
+                        break;
+        if (s >= 0) {
+                if (Net_setNonBlocking(s)) {
+                        if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
+                                if (! do_connect(s, r->ai_addr, r->ai_addrlen, timeout)) {
+                                        freeaddrinfo(result);
+                                        return s;
+                                }
+                        } else {
+                                LogError("Cannot set socket close on exec -- %s\n", STRERROR);
+                        }
+                } else {
+                        LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
+                }
+                Net_close(s);
+        } else {
                 LogError("Cannot create socket -- %s\n", STRERROR);
-                freeaddrinfo(result);
-                return -1;
         }
-        sa = (struct sockaddr_in *)result->ai_addr;
-        memcpy(&sin, sa, result->ai_addrlen);
-        sin.sin_family = AF_INET;
-        sin.sin_port = htons(port);
         freeaddrinfo(result);
-        if (! Net_setNonBlocking(s)) {
-                LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
-                goto error;
-        }
-        if (fcntl(s, F_SETFD, FD_CLOEXEC) == -1) {
-                LogError("Cannot set socket close on exec -- %s\n", STRERROR);
-                goto error;
-        }
-        if (do_connect(s, (struct sockaddr *)&sin, sizeof(sin), timeout) < 0) {
-                goto error;
-        }
-        return s;
-error:
-        Net_close(s);
         return -1;
 }
 
 
 int create_unix_socket(const char *pathname, int type, int timeout) {
-        int s;
         struct sockaddr_un unixsocket;
         ASSERT(pathname);
-        if ((s = socket(PF_UNIX, type, 0)) < 0)
-                return -1;
-        unixsocket.sun_family = AF_UNIX;
-        snprintf(unixsocket.sun_path, sizeof(unixsocket.sun_path), "%s", pathname);
-        if (! Net_setNonBlocking(s)) {
-                goto error;
+        int s = socket(PF_UNIX, type, 0);
+        if (s >= 0) {
+                unixsocket.sun_family = AF_UNIX;
+                snprintf(unixsocket.sun_path, sizeof(unixsocket.sun_path), "%s", pathname);
+                if (Net_setNonBlocking(s))
+                        if (! do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout))
+                                return s;
+                Net_close(s);
         }
-        if (do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout) < 0) {
-                goto error;
-        }
-        return s;
-error:
-        Net_close(s);
         return -1;
 }
 
 
+//FIXME: we support IPv4 only currently
 int create_server_socket(int port, int backlog, const char *bindAddr) {
-        int s, status, flag = 1;
-        struct sockaddr_in myaddr;
-        if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        int s = socket(AF_INET, SOCK_STREAM, 0);
+        if (s < 0) {
                 LogError("Cannot create socket -- %s\n", STRERROR);
                 return -1;
         }
-        memset(&myaddr, 0, sizeof(struct sockaddr_in));
+        struct sockaddr_in addr;
+        memset(&addr, 0, sizeof(struct sockaddr_in));
         if (bindAddr) {
-                struct sockaddr_in *sa;
                 struct addrinfo hints;
-                struct addrinfo *result;
-
                 memset(&hints, 0, sizeof(struct addrinfo));
                 hints.ai_family = AF_INET;
-                if ((status = getaddrinfo(bindAddr, NULL, &hints, &result)) != 0) {
+                struct addrinfo *result;
+                int status = getaddrinfo(bindAddr, NULL, &hints, &result);
+                if (status) {
                         LogError("Cannot translate '%s' to IP address -- %s\n", bindAddr, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                         goto error;
                 }
-                sa = (struct sockaddr_in *)result->ai_addr;
-                memcpy(&myaddr, sa, result->ai_addrlen);
+                memcpy(&addr, result->ai_addr, result->ai_addrlen);
                 freeaddrinfo(result);
         } else {
-                myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+                addr.sin_addr.s_addr = htonl(INADDR_ANY);
         }
-        myaddr.sin_family = AF_INET;
-        myaddr.sin_port = htons(port);
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        int flag = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)  {
                 LogError("Cannot set reuseaddr option -- %s\n", STRERROR);
                 goto error;
@@ -364,7 +368,7 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
                 LogError("Cannot set close on exec option -- %s\n", STRERROR);
                 goto error;
         }
-        if (bind(s, (struct sockaddr *)&myaddr, sizeof(struct sockaddr_in)) < 0) {
+        if (bind(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
                 LogError("Cannot bind -- %s\n", STRERROR);
                 goto error;
         }
@@ -407,7 +411,7 @@ int udp_write(int socket, void *b, size_t len, int timeout) {
 
 /*
  * Create a ICMP socket against hostname, send echo and wait for response.
- * The 'count' echo requests  is send and we expect at least one reply.
+ * The 'count' echo requests is send and we expect at least one reply.
  * @param hostname The host to open a socket at
  * @param timeout If response will not come within timeout milliseconds abort
  * @param count How many pings to send
@@ -416,33 +420,43 @@ int udp_write(int socket, void *b, size_t len, int timeout) {
  * privilege on Solaris)
  */
 double icmp_echo(const char *hostname, int timeout, int count) {
-        struct sockaddr_in sout;
-        struct sockaddr_in *sa;
-        struct addrinfo hints;
-        struct addrinfo *result;
-        struct ip *iphdrin;
-        int len_out = offsetof(struct icmp, icmp_data) + DATALEN;
-        int len_in = sizeof(struct ip) + sizeof(struct icmp);
-        struct icmp *icmpin = NULL;
-        struct icmp *icmpout = NULL;
-        uint16_t id_in, id_out, seq_in;
-        int r, s, n = 0, status, read_timeout;
-        struct timeval t_in, t_out;
-        char buf[STRLEN];
-        double response = -1.;
-#if ! defined NETBSD && ! defined AIX
-        int sol_ip;
-        unsigned ttl = 255;
-#endif
         ASSERT(hostname);
-        ASSERT(len_out < sizeof(buf));
+        double response = -1.;
+        struct addrinfo hints;
         memset(&hints, 0, sizeof(struct addrinfo));
+#ifdef IPV6
+        struct icmp6_filter filter;
+        ICMP6_FILTER_SETBLOCKALL(&filter);
+        ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filter);
+        hints.ai_family = AF_UNSPEC;
+#else
         hints.ai_family = AF_INET;
-        if ((status = getaddrinfo(hostname, NULL, &hints, &result)) != 0) {
+#endif
+        hints.ai_flags = AI_ADDRCONFIG;
+        struct addrinfo *result;
+        int status = getaddrinfo(hostname, NULL, &hints, &result);
+        if (status) {
                 LogError("Ping for %s -- getaddrinfo failed: %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return response;
         }
-        if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
+        struct addrinfo *r = result;
+        int s = -1;
+        while (s < 0 && r) {
+                switch (r->ai_family) {
+                        case AF_INET:
+                                s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+                                break;
+#ifdef IPV6
+                        case AF_INET6:
+                                s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+                                break;
+#endif
+                        default:
+                                break;
+                }
+                r = r->ai_next;
+        }
+        if (s < 0) {
                 if (errno == EACCES || errno == EPERM) {
                         DEBUG("Ping for %s -- cannot create socket: %s\n", hostname, STRERROR);
                         response = -2.;
@@ -451,77 +465,129 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                 }
                 goto error2;
         }
-#if ! defined NETBSD && ! defined AIX
-#ifdef HAVE_SOL_IP
-        sol_ip = SOL_IP;
-#else
-        {
-                struct protoent *pent;
-                pent = getprotobyname("ip");
-                sol_ip = pent ? pent->p_proto : 0;
-        }
+        int rv = -1;
+        int ttl = 255;
+        switch (r->ai_family) {
+                case AF_INET:
+                        setsockopt(s, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+                        break;
+#ifdef IPV6
+                case AF_INET6:
+                        setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl));
+                        setsockopt(s, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl));
+                        setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER, &filter, sizeof(struct icmp6_filter));
+                        break;
 #endif
-        if (setsockopt(s, sol_ip, IP_TTL, (char *)&ttl, sizeof(ttl)) < 0) {
-                LogError("Ping for %s -- setsockopt failed: %s\n", hostname, STRERROR);
-                goto error1;
+                default:
+                        break;
         }
-#endif
-        id_out = getpid() & 0xFFFF;
-        icmpout = (struct icmp *)buf;
+        uint16_t id_out = getpid() & 0xFFFF;
         for (int i = 0; i < count; i++) {
-                unsigned char *data = (unsigned char *)icmpout->icmp_data;
-                icmpout->icmp_code  = 0;
-                icmpout->icmp_type  = ICMP_ECHO;
-                icmpout->icmp_id    = htons(id_out);
-                icmpout->icmp_seq   = htons(i);
-                icmpout->icmp_cksum = 0;
-                /* Add originate timestamp to data section */
-                gettimeofday(&t_out, NULL);
-                memcpy(data, &t_out, sizeof(struct timeval));
-                data += sizeof(struct timeval);
-                /* Initialize rest of data section to numeric sequence */
-                for (int j = 0; j < DATALEN - sizeof(struct timeval); j++)
-                        data[j] = j;
-                icmpout->icmp_cksum = checksum_ip((unsigned char *)icmpout, len_out);
-                sa = (struct sockaddr_in *)result->ai_addr;
-                memcpy(&sout, sa, result->ai_addrlen);
-                sout.sin_family = AF_INET;
-                sout.sin_port   = 0;
+                char buf[STRLEN];
+                memset(buf, 0, sizeof(buf));
+                int in_len, out_len;
+                uint16_t in_id, in_seq;
+                struct timeval out_time;
+                gettimeofday(&out_time, NULL);
+                void *out_icmp = NULL;
+                unsigned char *data = NULL;
+                struct icmp *in_icmp4, *out_icmp4;
+                struct ip *in_iphdr4;
+#ifdef IPV6
+                struct icmp6_hdr *in_icmp6, *out_icmp6;
+#endif
+                switch (r->ai_family) {
+                        case AF_INET:
+                                out_icmp4 = (struct icmp *)buf;
+                                out_icmp4->icmp_type = ICMP_ECHO;
+                                out_icmp4->icmp_code = 0;
+                                out_icmp4->icmp_cksum = 0;
+                                out_icmp4->icmp_id = htons(id_out);
+                                out_icmp4->icmp_seq = htons(i);
+                                gettimeofday((struct timeval *)(out_icmp4->icmp_data), NULL); // set data to timestamp
+                                in_len = sizeof(struct ip) + sizeof(struct icmp);
+                                out_len = offsetof(struct icmp, icmp_data) + DATALEN;
+                                out_icmp4->icmp_cksum = checksum_ip((unsigned char *)out_icmp4, out_len); // IPv4 requires checksum computation
+                                out_icmp = out_icmp4;
+                                break;
+#ifdef IPV6
+                        case AF_INET6:
+                                out_icmp6 = (struct icmp6_hdr *)buf;
+                                out_icmp6->icmp6_type = ICMP6_ECHO_REQUEST;
+                                out_icmp6->icmp6_code = 0;
+                                out_icmp6->icmp6_cksum = 0;
+                                out_icmp6->icmp6_id = htons(id_out);
+                                out_icmp6->icmp6_seq = htons(i);
+                                gettimeofday((struct timeval *)(out_icmp6 + 1), NULL); // set data to timestamp
+                                in_len = sizeof(struct icmp6_hdr);
+                                out_len = sizeof(struct icmp6_hdr) + DATALEN;
+                                out_icmp = out_icmp6;
+                                break;
+#endif
+                        default:
+                                break;
+                }
+                if (! out_icmp) {
+                        LogError("Ping request for %s %d/%d failed -- unable to prepare echo request\n", hostname, i + 1, count);
+                        continue;
+                }
+                ssize_t n;
                 do {
-                        n = (int)sendto(s, (char *)icmpout, len_out, 0, (struct sockaddr *)&sout, sizeof(struct sockaddr));
+                        n = sendto(s, out_icmp, out_len, 0, r->ai_addr, r->ai_addrlen);
                 } while (n == -1 && errno == EINTR);
                 if (n < 0) {
                         LogError("Ping request for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                         continue;
                 }
-                read_timeout = timeout;
-        readnext:
+                int read_timeout = timeout;
+readnext:
                 if (Net_canRead(s, read_timeout)) {
-                        socklen_t size = sizeof(struct sockaddr_in);
+                        struct sockaddr_storage addr;
+                        socklen_t addrlen = sizeof(addr);
                         do {
-                                n = (int)recvfrom(s, buf, STRLEN, 0, (struct sockaddr *)&sout, &size);
+                                n = recvfrom(s, buf, STRLEN, 0, (struct sockaddr *)&addr, &addrlen);
                         } while (n == -1 && errno == EINTR);
                         if (n < 0) {
                                 LogError("Ping response for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                                 continue;
-                        } else if (n < len_in) {
-                                LogError("Ping response for %s %d/%d failed -- received %d bytes, expected at least %d bytes\n", hostname, i + 1, count, n, len_in);
+                        } else if (n < in_len) {
+                                LogError("Ping response for %s %d/%d failed -- received %ld bytes, expected at least %d bytes\n", hostname, i + 1, count, n, in_len);
                                 continue;
                         }
-                        iphdrin = (struct ip *)buf;
-                        icmpin  = (struct icmp *)(buf + iphdrin->ip_hl * 4);
-                        id_in   = ntohs(icmpin->icmp_id);
-                        seq_in  = ntohs(icmpin->icmp_seq);
-                        gettimeofday(&t_in, NULL);
-                        /* The read from connection-less raw socket via recvfrom() provides messages regardless of origin, the source IP address is set in sout, we have to check the IP and skip responses belonging to other ICMP conversations */
-                        if (sout.sin_addr.s_addr != sa->sin_addr.s_addr || icmpin->icmp_type != ICMP_ECHOREPLY || id_in != id_out || seq_in >= (uint16_t)count) {
-                                if ((read_timeout = timeout - ((t_in.tv_sec - t_out.tv_sec) * 1000 + (t_in.tv_usec - t_out.tv_usec) / 1000.)) > 0)
+                        int in_addrmatch = FALSE, in_typematch = FALSE;
+                        struct timeval in_time, out_time;
+                        gettimeofday(&in_time, NULL);
+                        /* read from raw socket via recvfrom() provides messages regardless of origin, we have to check the IP and skip responses belonging to other conversations */
+                        switch (addr.ss_family) {
+                                case AF_INET:
+                                        in_addrmatch = memcmp(&((struct sockaddr_in *)&addr)->sin_addr, &((struct sockaddr_in *)(r->ai_addr))->sin_addr, sizeof(struct in_addr)) ? FALSE : TRUE;
+                                        in_iphdr4 = (struct ip *)buf;
+                                        in_icmp4 = (struct icmp *)(buf + in_iphdr4->ip_hl * 4);
+                                        in_typematch = in_icmp4->icmp_type == ICMP_ECHOREPLY ? TRUE : FALSE;
+                                        in_id = ntohs(in_icmp4->icmp_id);
+                                        in_seq = ntohs(in_icmp4->icmp_seq);
+                                        data = (unsigned char *)in_icmp4->icmp_data;
+                                        break;
+#ifdef IPV6
+                                case AF_INET6:
+                                        in_addrmatch = memcmp(&((struct sockaddr_in6 *)&addr)->sin6_addr, &((struct sockaddr_in6 *)(r->ai_addr))->sin6_addr, sizeof(struct in6_addr)) ? FALSE : TRUE;
+                                        in_icmp6 = (struct icmp6_hdr *)buf;
+                                        in_typematch = in_icmp6->icmp6_type == ICMP6_ECHO_REPLY ? TRUE : FALSE;
+                                        in_id = ntohs(in_icmp6->icmp6_id);
+                                        in_seq = ntohs(in_icmp6->icmp6_seq);
+                                        data = (unsigned char *)(in_icmp6 + 1);
+                                        break;
+#endif
+                                default:
+                                        break;
+                        }
+                        if (addr.ss_family != r->ai_family || ! in_addrmatch || ! in_typematch || in_id != id_out || in_seq >= (uint16_t)count) {
+                                if ((read_timeout = timeout - ((in_time.tv_sec - out_time.tv_sec) * 1000 + (in_time.tv_usec - out_time.tv_usec) / 1000.)) > 0)
                                         goto readnext; // Try to read next packet, but don't exceed the timeout while waiting for our response so we won't loop forever if the socket is flooded with other ICMP packets
                         } else {
-                                data = (unsigned char *)icmpin->icmp_data;
-                                memcpy(&t_out, data, sizeof(struct timeval));
-                                response = (double)(t_in.tv_sec - t_out.tv_sec) + (double)(t_in.tv_usec - t_out.tv_usec) / 1000000;
-                                DEBUG("Ping response for %s %d/%d succeeded -- received id=%d sequence=%d response_time=%fs\n", hostname, i + 1, count, id_in, seq_in, response);
+                                memcpy(&out_time, data, sizeof(struct timeval));
+                                response = (double)(in_time.tv_sec - out_time.tv_sec) + (double)(in_time.tv_usec - out_time.tv_usec) / 1000000;
+                                DEBUG("Ping response for %s %d/%d succeeded -- received id=%d sequence=%d response_time=%fs\n", hostname, i + 1, count, in_id, in_seq, response);
                                 break; // Wait for one response only
                         }
                 } else
@@ -529,11 +595,12 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         }
 error1:
         do {
-                r = close(s);
-        } while (r == -1 && errno == EINTR);
-        if (r == -1)
+                rv = close(s);
+        } while (rv == -1 && errno == EINTR);
+        if (rv == -1)
                 LogError("Socket %d close failed -- %s\n", s, STRERROR);
 error2:
         freeaddrinfo(result);
         return response;
 }
+

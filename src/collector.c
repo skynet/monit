@@ -136,7 +136,8 @@ int handle_mmonit(Event_T E) {
                 if (! socket_set_tcp_nodelay(socket)) {
                         LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
                 }
-                status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket));
+                char buf[STRLEN];
+                status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket, buf, sizeof(buf)));
                 if (! data_send(socket, C, StringBuffer_toString(sb))) {
                         LogError("M/Monit: cannot send %s message to %s\n", E ? "event" : "status", C->url->url);
                         goto error;

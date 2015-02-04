@@ -76,9 +76,15 @@
 #include <time.h>
 #endif
 
-#ifndef HAVE_SOL_IP
+#ifdef HAVE_NETINET_IN_SYSTM_H
 #include <netinet/in_systm.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+
+#ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
 #endif
 
@@ -151,7 +157,7 @@ retry:
         /* Get time of connection attempt beginning */
         gettimeofday(&t1, NULL);
 
-        /* Open a socket to the destination INET[hostname:port] or UNIX[pathname] */
+        /* Open a socket to the destination NET[hostname:port] or UNIX[pathname] */
         socket = socket_create(p);
         if (! socket) {
                 snprintf(report, STRLEN, "failed, cannot open a connection to %s", Util_portDescription(p, buf, sizeof(buf)));

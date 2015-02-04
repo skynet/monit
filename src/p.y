@@ -93,9 +93,15 @@
 #include <syslog.h>
 #endif
 
-#ifndef HAVE_SOL_IP
+#ifdef HAVE_NETINET_IN_SYSTM_H
 #include <netinet/in_systm.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+
+#ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
 #endif
 
@@ -1009,8 +1015,7 @@ hostname        : /* EMPTY */     { $<string>$ = NULL; }
                 | HOSTNAME STRING { $<string>$ = $2; }
                 ;
 
-connection      : IF FAILED host port type protocol urloption nettimeout retry rate1
-                  THEN action1 recovery {
+connection      : IF FAILED host port type protocol urloption nettimeout retry rate1 THEN action1 recovery {
                     portset.timeout = $<number>8;
                     portset.retry = $<number>9;
                     /* This is a workaround to support content match without having to create
@@ -1021,8 +1026,7 @@ connection      : IF FAILED host port type protocol urloption nettimeout retry r
                     addeventaction(&(portset).action, $<number>12, $<number>13);
                     addport(&(current->portlist), &portset);
                   }
-                | IF FAILED URL URLOBJECT urloption nettimeout retry rate1
-                  THEN action1 recovery {
+                | IF FAILED URL URLOBJECT urloption nettimeout retry rate1 THEN action1 recovery {
                     prepare_urlrequest($<url>4);
                     portset.timeout = $<number>6;
                     portset.retry = $<number>7;
@@ -1031,21 +1035,20 @@ connection      : IF FAILED host port type protocol urloption nettimeout retry r
                   }
                 ;
 
-connectionunix  : IF FAILED unixsocket type protocol nettimeout retry rate1
-                  THEN action1 recovery {
-                   portset.timeout = $<number>6;
-                   portset.retry = $<number>7;
-                   addeventaction(&(portset).action, $<number>10, $<number>11);
-                   addport(&(current->socketlist), &portset);
+connectionunix  : IF FAILED unixsocket type protocol nettimeout retry rate1 THEN action1 recovery {
+                        portset.timeout = $<number>6;
+                        portset.retry = $<number>7;
+                        addeventaction(&(portset).action, $<number>10, $<number>11);
+                        addport(&(current->socketlist), &portset);
                   }
                 ;
 
 icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action1 recovery {
-                   icmpset.type = $<number>4;
-                   icmpset.count = $<number>5;
-                   icmpset.timeout = $<number>6;
-                   addeventaction(&(icmpset).action, $<number>9, $<number>10);
-                   addicmp(&icmpset);
+                        icmpset.type = $<number>4;
+                        icmpset.count = $<number>5;
+                        icmpset.timeout = $<number>6;
+                        addeventaction(&(icmpset).action, $<number>9, $<number>10);
+                        addicmp(&icmpset);
                   }
                 | IF FAILED PING icmpcount nettimeout rate1 THEN action1 recovery {
                         icmpset.type = ICMP_ECHO;
@@ -1057,19 +1060,23 @@ icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action
                 ;
 
 host            : /* EMPTY */ {
-                    if (current->type == TYPE_HOST)
-                      portset.hostname = Str_dup(current->path);
-                    else
-                      portset.hostname = Str_dup(LOCALHOST);
+                        portset.hostname = Str_dup(current->type == TYPE_HOST ? current->path : LOCALHOST);
                   }
-                | HOST STRING { check_hostname($2); portset.hostname = $2; }
+                | HOST STRING {
+                        check_hostname($2);
+                        portset.hostname = $2;
+                  }
                 ;
 
-port            : PORT NUMBER { portset.port = $2; portset.family = AF_INET; }
+port            : PORT NUMBER {
+                        portset.port = $2;
+                        portset.family = Port_Net;
+                  }
                 ;
 
 unixsocket      : UNIXSOCKET PATH {
-                    portset.pathname = $2; portset.family = AF_UNIX;
+                        portset.pathname = $2;
+                        portset.family = Port_Unix;
                   }
                 ;
 
@@ -3742,7 +3749,7 @@ static void reset_portset() {
         memset(&portset, 0, sizeof(struct myport));
         portset.socket = -1;
         portset.type = SOCK_STREAM;
-        portset.family = AF_INET;
+        portset.family = Port_Net;
         portset.SSL.version = SSL_VERSION_AUTO;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;

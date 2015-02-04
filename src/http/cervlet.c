@@ -2518,8 +2518,9 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
                 level = LEVEL_SUMMARY;
 
         if (stringFormat && Str_startsWith(stringFormat, "xml")) {
+                char buf[STRLEN];
                 StringBuffer_T sb = StringBuffer_create(256);
-                status_xml(sb, NULL, level, version, socket_get_local_host(req->S));
+                status_xml(sb, NULL, level, version, socket_get_local_host(req->S, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "%s", StringBuffer_toString(sb));
                 StringBuffer_free(&sb);
                 set_content_type(res, "text/xml");

@@ -266,11 +266,10 @@ static int _authenticateHost(const struct in_addr addr) {
  */
 static Socket_T _socketProducer(int server, int port, void *sslserver) {
         int client;
-        struct sockaddr_in in;
-
+        struct sockaddr_in addr;
         if (can_read(server, 1000)) {
-                socklen_t len = sizeof(struct sockaddr_in);
-                if ((client = accept(server, (struct sockaddr*)&in, &len)) < 0) {
+                socklen_t addrlen = sizeof(struct sockaddr_storage);
+                if ((client = accept(server, (struct sockaddr *)&addr, &addrlen)) < 0) {
                         if (stopped)
                                 LogError("HTTP server: service stopped\n");
                         else
@@ -281,11 +280,11 @@ static Socket_T _socketProducer(int server, int port, void *sslserver) {
                 /* If timeout or error occured, return NULL to allow the caller to handle various states (such as stopped) which can occure in the meantime */
                 return NULL;
         }
-        if (Net_setNonBlocking(client) < 0 || ! check_socket(client) || ! _authenticateHost(in.sin_addr)) {
+        if (Net_setNonBlocking(client) < 0 || ! check_socket(client) || ! _authenticateHost(addr.sin_addr)) {
                 Net_abort(client);
                 return NULL;
         }
-        return socket_create_a(client, inet_ntoa(in.sin_addr), port, sslserver);
+        return socket_create_a(client, inet_ntoa(addr.sin_addr), port, sslserver);
 }
 
 
@@ -323,12 +322,12 @@ void Engine_stop() {
 }
 
 
+//FIXME: don't store the translated hostname->IPaddress on Monit startup to support DHCP hosts ... resolve the hostname in _authenticateHost()
 int Engine_addHostAllow(char *pattern) {
         ASSERT(pattern);
-
         struct addrinfo hints;
         memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AI_ADDRCONFIG;
+        hints.ai_family = PF_INET; /* we support just IPv4 currently */
         struct addrinfo *res;
         if (getaddrinfo(pattern, NULL, &hints, &res) != 0)
                 return FALSE;
