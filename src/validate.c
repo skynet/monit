@@ -836,7 +836,15 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                                 }
                         } else {
                                 if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.space_total, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, STATE_FAILED, td->action, "space usage %lld blocks matches resource limit [space usage%s%lld blocks]", s->inf->priv.filesystem.space_total, operatorshortnames[td->operator], td->limit_absolute);
+                                        if (s->inf->priv.filesystem.f_bsize > 0) {
+                                                char buf1[STRLEN];
+                                                char buf2[STRLEN];
+                                                Str_bytesToSize(s->inf->priv.filesystem.space_total * s->inf->priv.filesystem.f_bsize, buf1);
+                                                Str_bytesToSize(td->limit_absolute * s->inf->priv.filesystem.f_bsize, buf2);
+                                                Event_post(s, Event_Resource, STATE_FAILED, td->action, "space usage %s matches resource limit [space usage%s%s]", buf1, operatorshortnames[td->operator], buf2);
+                                        } else {
+                                                Event_post(s, Event_Resource, STATE_FAILED, td->action, "space usage %lld blocks matches resource limit [space usage%s%lld blocks]", s->inf->priv.filesystem.space_total, operatorshortnames[td->operator], td->limit_absolute);
+                                        }
                                         return;
                                 }
                         }

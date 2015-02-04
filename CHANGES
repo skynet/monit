@@ -25,6 +25,9 @@ non-super user from the total blocks count, which showed the filesystem usage as
 some free space available to root user (usually ~ 2-5%). The space test value
 will now match the output of utilities like "df".
 
+New: Space usage test events and status now presents the usage using byte-based unit
+rather then blocks count.
+
 Fixed: Linux: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
 
 Fixed: Issue #147: invalid total (up/down)load values.
