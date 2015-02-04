@@ -2106,7 +2106,9 @@ static void print_service_status_filesystem_blockstotal(HttpResponse res, Servic
                         StringBuffer_append(res->outputbuffer, "<td>-</td>");
                 } else {
                         char buf[STRLEN];
-                        StringBuffer_append(res->outputbuffer, "<td>%s</td>", s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB");
+                        StringBuffer_append(res->outputbuffer, "<td>%s (of which %.1f%% is reserved for root user)</td>",
+                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
+                                            s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)(s->inf->priv.filesystem.f_blocksfreetotal - s->inf->priv.filesystem.f_blocksfree) / (float)s->inf->priv.filesystem.f_blocks) : 0);
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
         }
@@ -2614,9 +2616,10 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                     "block size",
                                                     Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
                                 StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %s\n",
+                                                    "  %-33s %s (of which %.1f%% is reserved for root user)\n",
                                                     "space total",
-                                                    s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize((long long)(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize), buf) : "0 MB");
+                                                    s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize((long long)(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize), buf) : "0 MB",
+                                                    s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)(s->inf->priv.filesystem.f_blocksfreetotal - s->inf->priv.filesystem.f_blocksfree) / (float)s->inf->priv.filesystem.f_blocks) : 0);
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %s [%.1f%%]\n",
                                                     "space free for non superuser",

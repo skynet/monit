@@ -1883,7 +1883,11 @@ Example:
 Monit can test a filesystem or disk for space usage. This test may only
 be used in the context of a filesystem service type.
 
-Monit will check the total space usage, including reserved blocks.
+Filesystems usually have some space reserved for the root user (ca. 1-5%),
+so non-superusers cannot write to a nearly full filesystem. If you set a
+limit for the filesystem which is used by non-root users you should reflect
+the reserved blocks (Monit reports the reserved blocks percent in the CLI
+status and HTTP interface for the given filesystem).
 
 Syntax:
 

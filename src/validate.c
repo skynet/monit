@@ -815,7 +815,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                         }
 
                         if (td->limit_percent >= 0) {
-                                if (Util_evalQExpression( td->operator, s->inf->priv.filesystem.inode_percent, td->limit_percent)) {
+                                if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.inode_percent, td->limit_percent)) {
                                         Event_post(s, Event_Resource, STATE_FAILED, td->action, "inode usage %.1f%% matches resource limit [inode usage%s%.1f%%]", s->inf->priv.filesystem.inode_percent/10., operatorshortnames[td->operator], td->limit_percent/10.);
                                         return;
                                 }
@@ -830,7 +830,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
 
                 case RESOURCE_ID_SPACE:
                         if (td->limit_percent >= 0) {
-                                if (Util_evalQExpression( td->operator, s->inf->priv.filesystem.space_percent, td->limit_percent)) {
+                                if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.space_percent, td->limit_percent)) {
                                         Event_post(s, Event_Resource, STATE_FAILED, td->action, "space usage %.1f%% matches resource limit [space usage%s%.1f%%]", s->inf->priv.filesystem.space_percent/10., operatorshortnames[td->operator], td->limit_percent/10.);
                                         return;
                                 }

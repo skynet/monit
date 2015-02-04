@@ -2231,7 +2231,7 @@ int parse(char *controlfile) {
         FREE(currentfile);
 
         if (argyytext != NULL)
-        FREE(argyytext);
+                FREE(argyytext);
 
         /*
          * Secure check the monitrc file. The run control file must have the
@@ -2239,7 +2239,7 @@ int parse(char *controlfile) {
          * no greater than 700 and it must not be a symbolic link.
          */
         if (! file_checkStat(controlfile, "control file", S_IRUSR|S_IWUSR|S_IXUSR))
-        return FALSE;
+                return FALSE;
 
         return(cfg_errflag == 0);
 }
@@ -2296,7 +2296,7 @@ static void preparse() {
         Run.fipsEnabled         = FALSE;
         #endif
         for (i = 0; i <= HANDLER_MAX; i++)
-        Run.handler_queue[i] = 0;
+                Run.handler_queue[i] = 0;
         /*
          * Initialize objects
          */
@@ -2331,7 +2331,7 @@ static void postparse() {
 
         /* If defined - add the last service to the service list */
         if (current)
-        addservice(current);
+                addservice(current);
 
         /* Check that we do not start monit in daemon mode without having a poll time */
         if (! Run.polltime && (Run.isdaemon || Run.init)) {
@@ -2340,7 +2340,7 @@ static void postparse() {
         }
 
         if (Run.logfile)
-        Run.dolog = TRUE;
+                Run.dolog = TRUE;
 
         /* Add the default general system service if not specified explicitly: service name default to hostname */
         if (! Run.system) {
@@ -2369,10 +2369,11 @@ static void postparse() {
                                         }
                                 }
                                 if (! Run.mmonitcredentials)
-                                LogWarning("M/Monit registration with credentials enabled, but no suitable credentials found in monit configuration file -- please add 'allow user:password' option to 'set httpd' statement\n");
+                                        LogWarning("M/Monit registration with credentials enabled, but no suitable credentials found in monit configuration file -- please add 'allow user:password' option to 'set httpd' statement\n");
                         }
-                } else
-                LogWarning("M/Monit enabled but no httpd allowed -- please add 'set httpd' statement\n");
+                } else {
+                        LogWarning("M/Monit enabled but no httpd allowed -- please add 'set httpd' statement\n");
+                }
         }
 
         /* Check the sanity of any dependency graph */
@@ -2391,7 +2392,7 @@ static Service_T createservice(int type, char *name, char *value, int (*check)(S
         check_name(name);
 
         if (current)
-        addservice(current);
+                addservice(current);
 
         NEW(current);
 
@@ -2513,8 +2514,8 @@ static void addservicegroup(char *name) {
 
         /* Check if service group with the same name is defined already */
         for (g = servicegrouplist; g; g = g->next)
-        if (! strcasecmp(g->name, name))
-        break;
+                if (! strcasecmp(g->name, name))
+                        break;
 
         if (! g) {
                 NEW(g);
@@ -2541,8 +2542,8 @@ static void adddependant(char *dependant) {
 
         NEW(d);
 
-        if (current->dependantlist != NULL)
-        d->next = current->dependantlist;
+        if (current->dependantlist)
+                d->next = current->dependantlist;
 
         d->dependant = dependant;
         current->dependantlist = d;
@@ -2611,8 +2612,9 @@ static void addport(Port_T *list, Port_T port) {
                         p->request_hashtype = HASH_SHA1;
                 else
                         yyerror2("invalid checksum [%s]", p->request_checksum);
-        } else
-        p->request_hashtype = 0;
+        } else {
+                p->request_hashtype = 0;
+        }
 
         if (port->SSL.use_ssl == TRUE) {
                 if (! have_ssl()) {
@@ -2645,7 +2647,7 @@ static void addresource(Resource_T rr) {
 
         NEW(r);
         if (! Run.doprocess)
-        yyerror("Cannot activate service check. The process status engine was disabled. On certain systems you must run monit as root to utilize this feature)\n");
+                yyerror("Cannot activate service check. The process status engine was disabled. On certain systems you must run monit as root to utilize this feature)\n");
         r->resource_id = rr->resource_id;
         r->limit       = rr->limit;
         r->action      = rr->action;
@@ -2695,9 +2697,9 @@ static void addactionrate(ActionRate_T ar) {
         ASSERT(ar);
 
         if (ar->count > ar->cycle)
-        yyerror2("The number of restarts must be less than poll cycles");
+                yyerror2("The number of restarts must be less than poll cycles");
         if (ar->count <= 0 || ar->cycle <= 0)
-        yyerror2("Zero or negative values not allowed in a action rate statement");
+                yyerror2("Zero or negative values not allowed in a action rate statement");
 
         NEW(a);
         a->count  = ar->count;
@@ -2730,7 +2732,7 @@ static void addsize(Size_T ss) {
         if (s->test_changes) {
                 s->initialized = ! stat(current->path, &buf);
                 if (s->initialized)
-                s->size = (unsigned long long)buf.st_size;
+                        s->size = (unsigned long long)buf.st_size;
         }
 
         s->next = current->sizelist;
@@ -2781,16 +2783,16 @@ static void addpid(Pid_T pp) {
  * Add a new PPid object to the current service ppid list
  */
 static void addppid(Pid_T pp) {
-  ASSERT(pp);
+        ASSERT(pp);
 
-  Pid_T p;
-  NEW(p);
-  p->action = pp->action;
+        Pid_T p;
+        NEW(p);
+        p->action = pp->action;
 
-  p->next = current->ppidlist;
-  current->ppidlist = p;
+        p->next = current->ppidlist;
+        current->ppidlist = p;
 
-  reset_ppidset();
+        reset_ppidset();
 }
 
 
@@ -2798,16 +2800,16 @@ static void addppid(Pid_T pp) {
  * Add a new Fsflag object to the current service fsflag list
  */
 static void addfsflag(Fsflag_T ff) {
-  ASSERT(ff);
+        ASSERT(ff);
 
-  Fsflag_T f;
-  NEW(f);
-  f->action = ff->action;
+        Fsflag_T f;
+        NEW(f);
+        f->action = ff->action;
 
-  f->next = current->fsflaglist;
-  current->fsflaglist = f;
+        f->next = current->fsflaglist;
+        current->fsflaglist = f;
 
-  reset_fsflagset();
+        reset_fsflagset();
 }
 
 
@@ -2815,16 +2817,16 @@ static void addfsflag(Fsflag_T ff) {
  * Add a new Nonexist object to the current service list
  */
 static void addnonexist(Nonexist_T ff) {
-  ASSERT(ff);
+        ASSERT(ff);
 
-  Nonexist_T f;
-  NEW(f);
-  f->action = ff->action;
+        Nonexist_T f;
+        NEW(f);
+        f->action = ff->action;
 
-  f->next = current->nonexistlist;
-  current->nonexistlist = f;
+        f->next = current->nonexistlist;
+        current->nonexistlist = f;
 
-  reset_nonexistset();
+        reset_nonexistset();
 }
 
 
@@ -2832,54 +2834,50 @@ static void addnonexist(Nonexist_T ff) {
  * Set Checksum object in the current service
  */
 static void addchecksum(Checksum_T cs) {
+        ASSERT(cs);
 
-  int len;
-  Checksum_T c;
+        cs->initialized = TRUE;
 
-  ASSERT(cs);
+        if (! *cs->hash) {
+                if (cs->type == HASH_UNKNOWN)
+                        cs->type = DEFAULT_HASH;
+                if (! (Util_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
+                        /* If the file doesn't exist, set dummy value */
+                        snprintf(cs->hash, sizeof(cs->hash), cs->type == HASH_MD5 ? "00000000000000000000000000000000" : "0000000000000000000000000000000000000000");
+                        cs->initialized = FALSE;
+                        yywarning2("Cannot compute a checksum for file %s", current->path);
+                }
+        }
 
-  cs->initialized = TRUE;
+        int len = cleanup_hash_string(cs->hash);
 
-  if (! *cs->hash) {
-    if (cs->type == HASH_UNKNOWN)
-      cs->type = DEFAULT_HASH;
-    if ( ! (Util_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
-      /* If the file doesn't exist, set dummy value */
-      snprintf(cs->hash, sizeof(cs->hash), "0000000000000000000000000000000000000000");
-      cs->initialized = FALSE;
-      yywarning2("Cannot compute a checksum for file %s", current->path);
-    }
-  }
+        if (cs->type == HASH_UNKNOWN) {
+                if (len == 32) {
+                        cs->type = HASH_MD5;
+                } else if (len == 40) {
+                        cs->type = HASH_SHA1;
+                } else {
+                        yyerror2("Unknown checksum type [%s] for file %s", cs->hash, current->path);
+                        reset_checksumset();
+                        return;
+                }
+        } else if ((cs->type == HASH_MD5 && len != 32) || (cs->type == HASH_SHA1 && len != 40)) {
+                yyerror2("Invalid checksum [%s] for file %s", cs->hash, current->path);
+                reset_checksumset();
+                return;
+        }
 
-  len = cleanup_hash_string(cs->hash);
+        Checksum_T c;
+        NEW(c);
+        c->type         = cs->type;
+        c->test_changes = cs->test_changes;
+        c->initialized  = cs->initialized;
+        c->action       = cs->action;
+        snprintf(c->hash, sizeof(c->hash), "%s", cs->hash);
 
-  if (cs->type == HASH_UNKNOWN) {
-    if (len == 32) {
-      cs->type = HASH_MD5;
-    } else if (len == 40) {
-      cs->type = HASH_SHA1;
-    } else {
-      yyerror2("Unknown checksum type [%s] for file %s", cs->hash, current->path);
-      reset_checksumset();
-      return;
-    }
-  } else if (( cs->type == HASH_MD5 && len != 32 ) || ( cs->type == HASH_SHA1 && len != 40 )) {
-    yyerror2("Invalid checksum [%s] for file %s", cs->hash, current->path);
-    reset_checksumset();
-    return;
-  }
+        current->checksum = c;
 
-  NEW(c);
-
-  c->type         = cs->type;
-  c->test_changes = cs->test_changes;
-  c->initialized  = cs->initialized;
-  c->action       = cs->action;
-  snprintf(c->hash, sizeof(c->hash), "%s", cs->hash);
-
-  current->checksum = c;
-
-  reset_checksumset();
+        reset_checksumset();
 
 }
 
@@ -2888,60 +2886,60 @@ static void addchecksum(Checksum_T cs) {
  * Set Perm object in the current service
  */
 static void addperm(Perm_T ps) {
-  Perm_T p;
+        Perm_T p;
 
-  ASSERT(ps);
+        ASSERT(ps);
 
-  NEW(p);
-  p->perm       = ps->perm;
-  p->action     = ps->action;
-  current->perm = p;
-  reset_permset();
-
+        NEW(p);
+        p->perm       = ps->perm;
+        p->action     = ps->action;
+        current->perm = p;
+        reset_permset();
+        
 }
 
 
 static void addlinkstatus(Service_T s, LinkStatus_T L) {
-  ASSERT(L);
-
-  LinkStatus_T l;
-  NEW(l);
-  l->action = L->action;
-
-  l->next = s->linkstatuslist;
-  s->linkstatuslist = l;
-
-  reset_linkstatusset();
+        ASSERT(L);
+        
+        LinkStatus_T l;
+        NEW(l);
+        l->action = L->action;
+        
+        l->next = s->linkstatuslist;
+        s->linkstatuslist = l;
+        
+        reset_linkstatusset();
 }
 
 
 static void addlinkspeed(Service_T s, LinkSpeed_T L) {
-  ASSERT(L);
-
-  LinkSpeed_T l;
-  NEW(l);
-  l->action = L->action;
-
-  l->next = s->linkspeedlist;
-  s->linkspeedlist = l;
-
-  reset_linkspeedset();
+        ASSERT(L);
+        
+        LinkSpeed_T l;
+        NEW(l);
+        l->action = L->action;
+        
+        l->next = s->linkspeedlist;
+        s->linkspeedlist = l;
+        
+        reset_linkspeedset();
 }
 
 
 static void addlinksaturation(Service_T s, LinkSaturation_T L) {
-  ASSERT(L);
-
-  LinkSaturation_T l;
-  NEW(l);
-  l->operator = L->operator;
-  l->limit = L->limit;
-  l->action = L->action;
-
-  l->next = s->linksaturationlist;
-  s->linksaturationlist = l;
-
-  reset_linksaturationset();
+        ASSERT(L);
+        
+        LinkSaturation_T l;
+        NEW(l);
+        l->operator = L->operator;
+        l->limit = L->limit;
+        l->action = L->action;
+        
+        l->next = s->linksaturationlist;
+        s->linksaturationlist = l;
+        
+        reset_linksaturationset();
 }
 
 
@@ -2981,15 +2979,15 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
 
 
 static void appendmatch(Match_T *list, Match_T item) {
-  if (*list) {
-    /* Find the end of the list (keep the same patterns order as in the config file) */
-    Match_T last;
-    for (last = *list; last->next; last = last->next)
-      ;
-    last->next = item;
-  } else {
-    *list = item;
-  }
+        if (*list) {
+                /* Find the end of the list (keep the same patterns order as in the config file) */
+                Match_T last;
+                for (last = *list; last->next; last = last->next)
+                        ;
+                last->next = item;
+        } else {
+                *list = item;
+        }
 }
 
 
@@ -2997,92 +2995,92 @@ static void appendmatch(Match_T *list, Match_T item) {
  * Set Match object in the current service
  */
 static void addmatch(Match_T ms, int actionnumber, int linenumber) {
-  Match_T m;
-  int     reg_return;
+        Match_T m;
+        int     reg_return;
 
-  ASSERT(ms);
+        ASSERT(ms);
 
-  NEW(m);
+        NEW(m);
 #ifdef HAVE_REGEX_H
-  NEW(m->regex_comp);
+        NEW(m->regex_comp);
 #endif
 
-  m->match_string = ms->match_string;
-  m->match_path   = ms->match_path ? Str_dup(ms->match_path) : NULL;
-  m->action       = ms->action;
-  m->not          = ms->not;
-  m->ignore       = ms->ignore;
-  m->next         = NULL;
+        m->match_string = ms->match_string;
+        m->match_path   = ms->match_path ? Str_dup(ms->match_path) : NULL;
+        m->action       = ms->action;
+        m->not          = ms->not;
+        m->ignore       = ms->ignore;
+        m->next         = NULL;
 
-  addeventaction(&(m->action), actionnumber, ACTION_IGNORE);
+        addeventaction(&(m->action), actionnumber, ACTION_IGNORE);
 
 #ifdef HAVE_REGEX_H
-  reg_return = regcomp(m->regex_comp, ms->match_string, REG_NOSUB|REG_EXTENDED);
+        reg_return = regcomp(m->regex_comp, ms->match_string, REG_NOSUB|REG_EXTENDED);
 
-  if (reg_return != 0) {
-    char errbuf[STRLEN];
-    regerror(reg_return, ms->regex_comp, errbuf, STRLEN);
-    if (m->match_path != NULL)
-      yyerror2("Regex parsing error: %s on line %i of", errbuf, linenumber);
-    else
-      yyerror2("Regex parsing error: %s", errbuf);
-  }
+        if (reg_return != 0) {
+                char errbuf[STRLEN];
+                regerror(reg_return, ms->regex_comp, errbuf, STRLEN);
+                if (m->match_path != NULL)
+                        yyerror2("Regex parsing error: %s on line %i of", errbuf, linenumber);
+                else
+                        yyerror2("Regex parsing error: %s", errbuf);
+        }
 #endif
-  appendmatch(m->ignore ? &current->matchignorelist : &current->matchlist, m);
+        appendmatch(m->ignore ? &current->matchignorelist : &current->matchlist, m);
 }
 
 
 static void addmatchpath(Match_T ms, int actionnumber) {
 
-  FILE *handle;
-  command_t savecommand = NULL;
-  char buf[2048];
-  int linenumber = 0;
+        FILE *handle;
+        command_t savecommand = NULL;
+        char buf[2048];
+        int linenumber = 0;
 
-  ASSERT(ms->match_path);
+        ASSERT(ms->match_path);
 
-  handle = fopen(ms->match_path, "r");
-  if (handle == NULL) {
-    yyerror2("Cannot read regex match file (%s)", ms->match_path);
-    return;
-  }
+        handle = fopen(ms->match_path, "r");
+        if (handle == NULL) {
+                yyerror2("Cannot read regex match file (%s)", ms->match_path);
+                return;
+        }
 
-  while (! feof(handle)) {
-    size_t len;
+        while (! feof(handle)) {
+                size_t len;
 
-    linenumber++;
+                linenumber++;
 
-    if (! fgets(buf, 2048, handle))
-      continue;
+                if (! fgets(buf, 2048, handle))
+                        continue;
 
-    len = strlen(buf);
+                len = strlen(buf);
 
-    if (len == 0 || buf[0] == '\n')
-      continue;
+                if (len == 0 || buf[0] == '\n')
+                        continue;
 
-    if (buf[len-1] == '\n')
-      buf[len-1] = 0;
+                if (buf[len-1] == '\n')
+                        buf[len-1] = 0;
 
-    ms->match_string = Str_dup(buf);
+                ms->match_string = Str_dup(buf);
 
-    /* The addeventaction() called from addmatch() will reset the
-     * command1 to NULL, but we need to duplicate the command for
-     * each line, thus need to save it here */
-    if (actionnumber == ACTION_EXEC) {
-      if (command1 == NULL) {
-        ASSERT(savecommand);
-        command1 = savecommand;
-      }
-      savecommand = copycommand(command1);
-    }
-
-    addmatch(ms, actionnumber, linenumber);
-  }
-
-  if (actionnumber == ACTION_EXEC && savecommand)
-    gccmd(&savecommand);
-
-  fclose(handle);
+                /* The addeventaction() called from addmatch() will reset the
+                 * command1 to NULL, but we need to duplicate the command for
+                 * each line, thus need to save it here */
+                if (actionnumber == ACTION_EXEC) {
+                        if (command1 == NULL) {
+                                ASSERT(savecommand);
+                                command1 = savecommand;
+                        }
+                        savecommand = copycommand(command1);
+                }
+                
+                addmatch(ms, actionnumber, linenumber);
+        }
+        
+        if (actionnumber == ACTION_EXEC && savecommand)
+                gccmd(&savecommand);
+        
+        fclose(handle);
 }
 
 
@@ -3138,21 +3136,21 @@ static Gid_T addgid(Gid_T g) {
  * Add a new filesystem to the current service's filesystem list
  */
 static void addfilesystem(Filesystem_T ds) {
-  Filesystem_T dev;
+        Filesystem_T dev;
 
-  ASSERT(ds);
+        ASSERT(ds);
 
-  NEW(dev);
-  dev->resource           = ds->resource;
-  dev->operator           = ds->operator;
-  dev->limit_absolute     = ds->limit_absolute;
-  dev->limit_percent      = ds->limit_percent;
-  dev->action             = ds->action;
+        NEW(dev);
+        dev->resource           = ds->resource;
+        dev->operator           = ds->operator;
+        dev->limit_absolute     = ds->limit_absolute;
+        dev->limit_percent      = ds->limit_percent;
+        dev->action             = ds->action;
 
-  dev->next               = current->filesystemlist;
-  current->filesystemlist = dev;
-
-  reset_filesystemset();
+        dev->next               = current->filesystemlist;
+        current->filesystemlist = dev;
+        
+        reset_filesystemset();
 
 }
 
@@ -3161,22 +3159,22 @@ static void addfilesystem(Filesystem_T ds) {
  * Add a new icmp object to the current service's icmp list
  */
 static void addicmp(Icmp_T is) {
-  Icmp_T icmp;
+        Icmp_T icmp;
 
-  ASSERT(is);
+        ASSERT(is);
 
-  NEW(icmp);
-  icmp->type         = is->type;
-  icmp->count        = is->count;
-  icmp->timeout      = is->timeout;
-  icmp->action       = is->action;
-  icmp->is_available = FALSE;
-  icmp->response     = -1;
+        NEW(icmp);
+        icmp->type         = is->type;
+        icmp->count        = is->count;
+        icmp->timeout      = is->timeout;
+        icmp->action       = is->action;
+        icmp->is_available = FALSE;
+        icmp->response     = -1;
 
-  icmp->next         = current->icmplist;
-  current->icmplist  = icmp;
+        icmp->next         = current->icmplist;
+        current->icmplist  = icmp;
 
-  reset_icmpset();
+        reset_icmpset();
 }
 
 
@@ -3184,33 +3182,33 @@ static void addicmp(Icmp_T is) {
  * Set EventAction object
  */
 static void addeventaction(EventAction_T *_ea, int failed, int succeeded) {
-  EventAction_T ea;
+        EventAction_T ea;
 
-  ASSERT(_ea);
+        ASSERT(_ea);
 
-  NEW(ea);
-  NEW(ea->failed);
-  NEW(ea->succeeded);
+        NEW(ea);
+        NEW(ea->failed);
+        NEW(ea->succeeded);
 
-  ea->failed->id     = failed;
-  ea->failed->count  = rate1.count;
-  ea->failed->cycles = rate1.cycles;
-  if (failed == ACTION_EXEC) {
-    ASSERT(command1);
-    ea->failed->exec = command1;
-    command1 = NULL;
-  }
+        ea->failed->id     = failed;
+        ea->failed->count  = rate1.count;
+        ea->failed->cycles = rate1.cycles;
+        if (failed == ACTION_EXEC) {
+                ASSERT(command1);
+                ea->failed->exec = command1;
+                command1 = NULL;
+        }
 
-  ea->succeeded->id     = succeeded;
-  ea->succeeded->count  = rate2.count;
-  ea->succeeded->cycles = rate2.cycles;
-  if (succeeded == ACTION_EXEC) {
-    ASSERT(command2);
-    ea->succeeded->exec = command2;
-    command2 = NULL;
-  }
-  *_ea = ea;
-  reset_rateset();
+        ea->succeeded->id     = succeeded;
+        ea->succeeded->count  = rate2.count;
+        ea->succeeded->cycles = rate2.cycles;
+        if (succeeded == ACTION_EXEC) {
+                ASSERT(command2);
+                ea->succeeded->exec = command2;
+                command2 = NULL;
+        }
+        *_ea = ea;
+        reset_rateset();
 }
 
 
@@ -3218,38 +3216,38 @@ static void addeventaction(EventAction_T *_ea, int failed, int succeeded) {
  * Add a generic protocol handler to
  */
 static void addgeneric(Port_T port, char *send, char *expect) {
-  Generic_T g = port->generic;
+        Generic_T g = port->generic;
 
-  if (g == NULL) {
-    NEW(g);
-    port->generic = g;
-  } else {
-    while (g->next != NULL)
-      g = g->next;
-    NEW(g->next);
-    g = g->next;
-  }
+        if (g == NULL) {
+                NEW(g);
+                port->generic = g;
+        } else {
+                while (g->next)
+                        g = g->next;
+                NEW(g->next);
+                g = g->next;
+        }
 
-  if (send != NULL) {
-    g->send = send;
-    g->expect = NULL;
-  } else if (expect != NULL) {
+        if (send != NULL) {
+                g->send = send;
+                g->expect = NULL;
+        } else if (expect != NULL) {
 #ifdef HAVE_REGEX_H
 
-    int   reg_return;
-    NEW(g->expect);
-    reg_return = regcomp(g->expect, expect, REG_NOSUB|REG_EXTENDED);
-    FREE(expect);
-    if (reg_return != 0) {
-      char errbuf[STRLEN];
-      regerror(reg_return, g->expect, errbuf, STRLEN);
-      yyerror2("Regex parsing error: %s", errbuf);
-    }
+                int   reg_return;
+                NEW(g->expect);
+                reg_return = regcomp(g->expect, expect, REG_NOSUB|REG_EXTENDED);
+                FREE(expect);
+                if (reg_return != 0) {
+                        char errbuf[STRLEN];
+                        regerror(reg_return, g->expect, errbuf, STRLEN);
+                        yyerror2("Regex parsing error: %s", errbuf);
+                }
 #else
-    g->expect = expect;
+                g->expect = expect;
 #endif
-    g->send = NULL;
-  }
+                g->send = NULL;
+        }
 }
 
 
@@ -3259,15 +3257,15 @@ static void addgeneric(Port_T port, char *send, char *expect) {
  */
 static void addcommand(int what, unsigned timeout) {
 
-  switch (what) {
-          case START:   current->start = command; break;
-          case STOP:    current->stop = command; break;
-          case RESTART: current->restart = command; break;
-  }
+        switch (what) {
+                case START:   current->start = command; break;
+                case STOP:    current->stop = command; break;
+                case RESTART: current->restart = command; break;
+        }
 
-  command->timeout = timeout;
-
-  command = NULL;
+        command->timeout = timeout;
+        
+        command = NULL;
 
 }
 
@@ -3290,7 +3288,7 @@ static void addargument(char *argument) {
         command->arg[command->length] = NULL;
 
         if (command->length >= ARGMAX)
-        yyerror("Exceeded maximum number of program arguments");
+                yyerror("Exceeded maximum number of program arguments");
 
 }
 
@@ -3305,7 +3303,7 @@ static void prepare_urlrequest(URL_T U) {
         portset.protocol = Protocol_get(Protocol_HTTP);
 
         if (urlrequest == NULL)
-        NEW(urlrequest);
+                NEW(urlrequest);
         urlrequest->url = U;
         portset.hostname = Str_dup(U->hostname);
         check_hostname(portset.hostname);
@@ -3318,7 +3316,7 @@ static void prepare_urlrequest(URL_T U) {
          the future */
         portset.protocol = Protocol_get(Protocol_HTTP);
         if (IS(U->protocol, "https"))
-        portset.SSL.use_ssl = TRUE;
+                portset.SSL.use_ssl = TRUE;
 
 }
 
@@ -3331,7 +3329,7 @@ static void  seturlrequest(int operator, char *regex) {
         ASSERT(regex);
 
         if (! urlrequest)
-        NEW(urlrequest);
+                NEW(urlrequest);
         urlrequest->operator = operator;
         #ifdef HAVE_REGEX_H
         {
@@ -3379,7 +3377,7 @@ static void addmmonit(URL_T url, int timeout, int sslversion, char *certmd5) {
         if (Run.mmonits) {
                 Mmonit_T C;
                 for (C = Run.mmonits; C->next; C = C->next)
-                /* Empty */ ;
+                        /* Empty */ ;
                 C->next = c;
         } else {
                 Run.mmonits = c;
@@ -3409,7 +3407,8 @@ static void addmailserver(MailServer_T mailserver) {
 
         if (Run.mailservers) {
                 MailServer_T l;
-                for (l = Run.mailservers; l->next; l = l->next) /* empty */;
+                for (l = Run.mailservers; l->next; l = l->next)
+                        /* empty */;
                 l->next = s;
         } else {
                 Run.mailservers = s;
@@ -3430,14 +3429,14 @@ static uid_t get_uid(char *user, uid_t uid) {
         if (user) {
                 pwd = getpwnam(user);
 
-                if (pwd == NULL) {
+                if (! pwd) {
                         yyerror2("Requested user not found on the system");
                         return(0);
                 }
 
         } else {
 
-                if ( (pwd = getpwuid(uid)) == NULL ) {
+                if (! (pwd = getpwuid(uid))) {
                         yyerror2("Requested uid not found on the system");
                         return(0);
                 }
@@ -3459,14 +3458,14 @@ static gid_t get_gid(char *group, gid_t gid) {
         if (group) {
                 grd = getgrnam(group);
 
-                if (grd == NULL) {
+                if (! grd) {
                         yyerror2("Requested group not found on the system");
                         return(0);
                 }
 
         } else {
 
-                if ( (grd = getgrgid(gid)) == NULL ) {
+                if (! (grd = getgrgid(gid))) {
                         yyerror2("Requested gid not found on the system");
                         return(0);
                 }
@@ -3485,8 +3484,9 @@ static void addeuid(uid_t uid) {
         if (! getuid()) {
                 command->has_uid = TRUE;
                 command->uid = uid;
-        } else
-        yyerror("UID statement requires root privileges");
+        } else {
+                yyerror("UID statement requires root privileges");
+        }
 }
 
 
@@ -3497,8 +3497,9 @@ static void addegid(gid_t gid) {
         if (! getuid()) {
                 command->has_gid = TRUE;
                 command->gid = gid;
-        } else
-        yyerror("GID statement requires root privileges");
+        } else {
+                yyerror("GID statement requires root privileges");
+        }
 }
 
 
@@ -3510,8 +3511,9 @@ static void setlogfile(char *logfile) {
                 if (IS(Run.logfile, logfile)) {
                         FREE(logfile);
                         return;
-                } else
-                FREE(Run.logfile);
+                } else {
+                        FREE(Run.logfile);
+                }
         }
         Run.logfile = logfile;
 }
@@ -3525,8 +3527,9 @@ static void setpidfile(char *pidfile) {
                 if (IS(Run.pidfile, pidfile)) {
                         FREE(pidfile);
                         return;
-                } else
-                FREE(Run.pidfile);
+                } else {
+                        FREE(Run.pidfile);
+                }
         }
         Run.pidfile = pidfile;
 }
@@ -3548,9 +3551,9 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
 
         if ( handle == NULL ) {
                 if (username != NULL)
-                yyerror2("Cannot read htpasswd (%s)", filename);
+                        yyerror2("Cannot read htpasswd (%s)", filename);
                 else
-                yyerror2("Cannot read htpasswd", filename);
+                        yyerror2("Cannot read htpasswd", filename);
                 return;
         }
 
@@ -3558,7 +3561,7 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
                 char *colonindex = NULL;
 
                 if (! fgets(buf, STRLEN, handle))
-                continue;
+                        continue;
 
                 Str_rtrim(buf);
                 Str_curtail(buf, "#");
@@ -3580,10 +3583,10 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
 
                 if (username == NULL) {
                         if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
-                        credentials_added++;
+                                credentials_added++;
                 } else if (strcmp(username, ht_username) == 0)  {
                         if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
-                        credentials_added++;
+                                credentials_added++;
                 } else {
                         FREE(ht_passwd);
                         FREE(ht_username);
@@ -3592,9 +3595,9 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
 
         if (credentials_added == 0) {
                 if ( username == NULL )
-                yywarning2("htpasswd file (%s) has no usable credentials", filename);
+                        yywarning2("htpasswd file (%s) has no usable credentials", filename);
                 else
-                yywarning2("htpasswd file (%s) has no usable credentials for user %s", filename, username);
+                        yywarning2("htpasswd file (%s) has no usable credentials for user %s", filename, username);
         }
         fclose(handle);
 }
@@ -3608,7 +3611,7 @@ static void addpamauth(char* groupname, int readonly) {
         ASSERT(groupname);
 
         if (Run.credentials == NULL)
-        NEW(Run.credentials);
+                NEW(Run.credentials);
 
         c = Run.credentials;
         do {
@@ -3661,8 +3664,8 @@ static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
 
                 c = Run.credentials;
 
-                while ( c->next != NULL )
-                c = c->next;
+                while (c->next != NULL)
+                        c = c->next;
 
                 NEW(c->next);
                 c = c->next;
@@ -3697,25 +3700,25 @@ static void setsyslog(char *facility) {
 
         if (facility) {
                 if (IS(facility,"log_local0"))
-                Run.facility = LOG_LOCAL0;
+                        Run.facility = LOG_LOCAL0;
                 else if (IS(facility, "log_local1"))
-                Run.facility = LOG_LOCAL1;
+                        Run.facility = LOG_LOCAL1;
                 else if (IS(facility, "log_local2"))
-                Run.facility = LOG_LOCAL2;
+                        Run.facility = LOG_LOCAL2;
                 else if (IS(facility, "log_local3"))
-                Run.facility = LOG_LOCAL3;
+                        Run.facility = LOG_LOCAL3;
                 else if (IS(facility, "log_local4"))
-                Run.facility = LOG_LOCAL4;
+                        Run.facility = LOG_LOCAL4;
                 else if (IS(facility, "log_local5"))
-                Run.facility = LOG_LOCAL5;
+                        Run.facility = LOG_LOCAL5;
                 else if (IS(facility, "log_local6"))
-                Run.facility = LOG_LOCAL6;
+                        Run.facility = LOG_LOCAL6;
                 else if (IS(facility, "log_local7"))
-                Run.facility = LOG_LOCAL7;
+                        Run.facility = LOG_LOCAL7;
                 else if (IS(facility, "log_daemon"))
-                Run.facility = LOG_DAEMON;
+                        Run.facility = LOG_DAEMON;
                 else
-                yyerror2("Invalid syslog facility");
+                        yyerror2("Invalid syslog facility");
         } else {
                 Run.facility = LOG_USER;
         }
@@ -3966,9 +3969,9 @@ static void check_name(char *name) {
         ASSERT(name);
 
         if (Util_existService(name) || (current && IS(name, current->name)))
-        yyerror2("Service name conflict, %s already defined", name);
+                yyerror2("Service name conflict, %s already defined", name);
         if (name && *name == '/')
-        yyerror2("Service name '%s' must not start with '/' -- ", name);
+                yyerror2("Service name '%s' must not start with '/' -- ", name);
 }
 
 
@@ -3984,8 +3987,8 @@ static int check_perm(int perm) {
 
         result = (int)strtol(buf, &status, 8);
 
-        if ( *status != '\0' || result < 0 || result > 07777 )
-        yyerror2("Permission statements must have an octal value between 0 and 7777");
+        if (*status != '\0' || result < 0 || result > 07777)
+                yyerror2("Permission statements must have an octal value between 0 and 7777");
 
         return result;
 }
@@ -3999,7 +4002,7 @@ static void check_hostname(char *hostname) {
         ASSERT(hostname);
 
         if (! check_host(hostname))
-        yywarning2("Hostname did not resolve");
+                yywarning2("Hostname did not resolve");
 }
 
 /*
@@ -4021,7 +4024,7 @@ static void check_depend() {
                 for (s = servicelist; s; s = s->next) {
                         Dependant_T d;
                         if (s->visited)
-                        continue;
+                                continue;
                         done = FALSE; // still unvisited nodes
                         depends_on = NULL;
                         for (d = s->dependantlist; d; d = d->next) {
@@ -4054,7 +4057,7 @@ static void check_depend() {
         servicelist = depend_list;
 
         for (s = depend_list; s; s = s->next_depend)
-        s->next = s->next_depend;
+                s->next = s->next_depend;
 
         reset_depend();
 }
@@ -4065,9 +4068,9 @@ static void check_depend() {
  */
 static void check_exec(char *exec) {
         if (! File_exist(exec))
-        yywarning2("Program does not exist:");
+                yywarning2("Program does not exist:");
         else if (! File_isExecutable(exec))
-        yywarning2("Program is not executable:");
+                yywarning2("Program is not executable:");
 }
 
 
@@ -4076,9 +4079,9 @@ static int verifyMaxForward(int mf) {
         int max = 70;
 
         if (mf >= 0 && mf <= 255)
-        max = mf;
+                max = mf;
         else
-        yywarning2("SIP max forward is outside the range [0..255]. Setting max forward to 70");
+                yywarning2("SIP max forward is outside the range [0..255]. Setting max forward to 70");
 
         return max;
 }

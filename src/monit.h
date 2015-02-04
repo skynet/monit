@@ -152,7 +152,7 @@ typedef enum {
         Operator_Equal,
         Operator_NotEqual,
         Operator_Changed
-} Operator_Type;
+} __attribute__((__packed__)) Operator_Type;
 
 
 typedef enum {
@@ -295,7 +295,7 @@ typedef struct mycommand {
         int   has_gid;          /**< TRUE if a new gid is defined for this Command */
         gid_t gid;        /**< The group id to switch to when running this Command */
         unsigned timeout;     /**< Max seconds which we wait for method to execute */
-} *command_t;
+} __attribute__((__packed__)) *command_t;
 
 
 /** Defines an event action object */
@@ -304,14 +304,14 @@ typedef struct myaction {
         command_t exec;                    /**< Optional command to be executed  */
         unsigned  count;           /**< Event count needed to trigger the action */
         unsigned  cycles;    /**< Cycles during which count limit can be reached */
-} *Action_T;
+} __attribute__((__packed__)) *Action_T;
 
 
 /** Defines event's up and down actions */
 typedef struct myeventaction {
         Action_T  failed;                  /**< Action in the case of failure down */
         Action_T  succeeded;                    /**< Action in the case of failure up */
-} *EventAction_T;
+} __attribute__((__packed__)) *EventAction_T;
 
 
 /** Defines an url object */
@@ -324,7 +324,7 @@ typedef struct myurl {
         int   port;                                        /**< URL port     part */
         char *path;                                        /**< URL path     part */
         char *query;                                       /**< URL query    part */
-} *URL_T;
+} __attribute__((__packed__)) *URL_T;
 
 
 /** Defines a HTTP client request object */
@@ -336,7 +336,7 @@ typedef struct myrequest {
 #else
         char *regex;                 /* string to search for in the response body */
 #endif
-} *Request_T;
+} __attribute__((__packed__)) *Request_T;
 
 
 /** Defines an event notification and status receiver object */
@@ -347,7 +347,7 @@ typedef struct mymmonit {
 
         /** For internal use */
         struct mymmonit *next;                         /**< next receiver in chain */
-} *Mmonit_T;
+} __attribute__((__packed__)) *Mmonit_T;
 
 
 /** Defines a mailinglist object */
@@ -362,7 +362,7 @@ typedef struct mymail {
 
         /** For internal use */
         struct mymail *next;                          /**< next recipient in chain */
-} *Mail_T;
+} __attribute__((__packed__)) *Mail_T;
 
 
 /** Defines a mail server address */
@@ -375,7 +375,7 @@ typedef struct mymailserver {
 
         /** For internal use */
         struct mymailserver *next;        /**< Next server to try on connect error */
-} *MailServer_T;
+} __attribute__((__packed__)) *MailServer_T;
 
 
 typedef struct myauthentication {
@@ -385,7 +385,7 @@ typedef struct myauthentication {
         int   digesttype;                      /**< How did we store the password */
         int   is_readonly;     /**< TRUE if this is a read-only authenticated user*/
         struct myauthentication *next;       /**< Next credential or NULL if last */
-} *Auth_T;
+} __attribute__((__packed__)) *Auth_T;
 
 
 /** Defines process tree - data storage backend*/
@@ -414,7 +414,7 @@ typedef struct myprocesstree {
 
         int           parent;
         int          *children;
-} ProcessTree_T;
+} __attribute__((__packed__)) ProcessTree_T;
 
 
 /** Defines data for systemwide statistic */
@@ -432,14 +432,14 @@ typedef struct mysysteminfo {
         int    total_cpu_syst_percent; /**< Total CPU in use in kernel space (pct.)*/
         int    total_cpu_wait_percent;      /**< Total CPU in use in waiting (pct.)*/
         struct utsname uname;        /**< Platform information provided by uname() */
-} SystemInfo_T;
+} __attribute__((__packed__)) SystemInfo_T;
 
 
 /** Defines a protocol object with protocol functions */
 typedef struct Protocol_T {
         const char *name;                                       /**< Protocol name */
         int(*check)(Socket_T);                 /**< Protocol verification function */
-} *Protocol_T;
+} __attribute__((__packed__)) *Protocol_T;
 
 
 /** Defines a send/expect object used for generic protocol tests */
@@ -452,7 +452,7 @@ typedef struct mygenericproto {
 #endif
         /** For internal use */
         struct mygenericproto *next;
-} *Generic_T;
+} __attribute__((__packed__)) *Generic_T;
 
 /** Defines a port object */
 typedef struct myport {
@@ -507,7 +507,7 @@ typedef struct myport {
 
         /** For internal use */
         struct myport *next;                               /**< next port in chain */
-} *Port_T;
+} __attribute__((__packed__)) *Port_T;
 
 
 /** Defines a ICMP/Ping object */
@@ -521,7 +521,7 @@ typedef struct myicmp {
 
         /** For internal use */
         struct myicmp *next;                               /**< next icmp in chain */
-} *Icmp_T;
+} __attribute__((__packed__)) *Icmp_T;
 
 
 typedef struct myservicegroupmember {
@@ -529,7 +529,7 @@ typedef struct myservicegroupmember {
 
         /** For internal use */
         struct myservicegroupmember *next;              /**< next service in chain */
-} *ServiceGroupMember_T;
+} __attribute__((__packed__)) *ServiceGroupMember_T;
 
 
 typedef struct myservicegroup {
@@ -538,7 +538,7 @@ typedef struct myservicegroup {
 
         /** For internal use */
         struct myservicegroup *next;              /**< next service group in chain */
-} *ServiceGroup_T;
+} __attribute__((__packed__)) *ServiceGroup_T;
 
 
 typedef struct mydependant {
@@ -546,7 +546,7 @@ typedef struct mydependant {
 
         /** For internal use */
         struct mydependant *next;             /**< next dependant service in chain */
-} *Dependant_T;
+} __attribute__((__packed__)) *Dependant_T;
 
 
 /** Defines resource data */
@@ -558,7 +558,7 @@ typedef struct myresource {
 
         /** For internal use */
         struct myresource *next;                       /**< next resource in chain */
-} *Resource_T;
+} __attribute__((__packed__)) *Resource_T;
 
 
 /** Defines timestamp object */
@@ -571,7 +571,7 @@ typedef struct mytimestamp {
 
         /** For internal use */
         struct mytimestamp *next;                     /**< next timestamp in chain */
-} *Timestamp_T;
+} __attribute__((__packed__)) *Timestamp_T;
 
 
 /** Defines action rate object */
@@ -582,7 +582,7 @@ typedef struct myactionrate {
 
         /** For internal use */
         struct myactionrate *next;                   /**< next actionrate in chain */
-} *ActionRate_T;
+} __attribute__((__packed__)) *ActionRate_T;
 
 
 /** Defines when to run a check for a service. This type suports both the old
@@ -597,7 +597,7 @@ typedef struct myevery {
                 } cycle; /**< Old cycle based every check */
                 char *cron; /* A crontab format string */
         } spec;
-} Every_T;
+} __attribute__((__packed__)) Every_T;
 
 
 typedef struct mystatus {
@@ -608,7 +608,7 @@ typedef struct mystatus {
 
         /** For internal use */
         struct mystatus *next;                       /**< next exit value in chain */
-} *Status_T;
+} __attribute__((__packed__)) *Status_T;
 
 
 typedef struct myprogram {
@@ -619,7 +619,7 @@ typedef struct myprogram {
         time_t started;                      /**< When the sub-process was started */
         int exitStatus;                 /**< Sub-process exit status for reporting */
         StringBuffer_T output;                            /**< Last program output */
-} *Program_T;
+} __attribute__((__packed__)) *Program_T;
 
 
 /** Defines size object */
@@ -632,7 +632,7 @@ typedef struct mysize {
 
         /** For internal use */
         struct mysize *next;                               /**< next size in chain */
-} *Size_T;
+} __attribute__((__packed__)) *Size_T;
 
 
 /** Defines uptime object */
@@ -643,7 +643,7 @@ typedef struct myuptime {
 
         /** For internal use */
         struct myuptime *next;                           /**< next uptime in chain */
-} *Uptime_T;
+} __attribute__((__packed__)) *Uptime_T;
 
 
 typedef struct mylinkstatus {
@@ -651,7 +651,7 @@ typedef struct mylinkstatus {
 
         /** For internal use */
         struct mylinkstatus *next;                      /**< next link in chain */
-} *LinkStatus_T;
+} __attribute__((__packed__)) *LinkStatus_T;
 
 
 typedef struct mylinkspeed {
@@ -661,7 +661,7 @@ typedef struct mylinkspeed {
 
         /** For internal use */
         struct mylinkspeed *next;                       /**< next link in chain */
-} *LinkSpeed_T;
+} __attribute__((__packed__)) *LinkSpeed_T;
 
 
 typedef struct mylinksaturation {
@@ -671,7 +671,7 @@ typedef struct mylinksaturation {
 
         /** For internal use */
         struct mylinksaturation *next;                  /**< next link in chain */
-} *LinkSaturation_T;
+} __attribute__((__packed__)) *LinkSaturation_T;
 
 
 typedef struct mybandwidth {
@@ -683,7 +683,7 @@ typedef struct mybandwidth {
 
         /** For internal use */
         struct mybandwidth *next;                     /**< next bandwidth in chain */
-} *Bandwidth_T;
+} __attribute__((__packed__)) *Bandwidth_T;
 
 
 /** Defines checksum object */
@@ -694,14 +694,14 @@ typedef struct mychecksum {
         int   test_changes;           /**< TRUE if we only should test for changes */
         int   initialized;                   /**< TRUE if checksum was initialized */
         EventAction_T action;  /**< Description of the action upon event occurence */
-} *Checksum_T;
+} __attribute__((__packed__)) *Checksum_T;
 
 
 /** Defines permission object */
 typedef struct myperm {
         int       perm;                                     /**< Access permission */
         EventAction_T action;  /**< Description of the action upon event occurence */
-} *Perm_T;
+} __attribute__((__packed__)) *Perm_T;
 
 /** Defines match object */
 typedef struct mymatch {
@@ -717,21 +717,21 @@ typedef struct mymatch {
 
         /** For internal use */
         struct mymatch *next;                             /**< next match in chain */
-} *Match_T;
+} __attribute__((__packed__)) *Match_T;
 
 
 /** Defines uid object */
 typedef struct myuid {
         uid_t     uid;                                            /**< Owner's uid */
         EventAction_T action;  /**< Description of the action upon event occurence */
-} *Uid_T;
+} __attribute__((__packed__)) *Uid_T;
 
 
 /** Defines gid object */
 typedef struct mygid {
         gid_t     gid;                                            /**< Owner's gid */
         EventAction_T action;  /**< Description of the action upon event occurence */
-} *Gid_T;
+} __attribute__((__packed__)) *Gid_T;
 
 
 /** Defines pid object */
@@ -740,7 +740,7 @@ typedef struct mypid {
 
         /** For internal use */
         struct mypid *next;                                 /**< next pid in chain */
-} *Pid_T;
+} __attribute__((__packed__)) *Pid_T;
 
 
 typedef struct myfsflag {
@@ -748,7 +748,7 @@ typedef struct myfsflag {
 
         /** For internal use */
         struct myfsflag *next;
-} *Fsflag_T;
+} __attribute__((__packed__)) *Fsflag_T;
 
 
 typedef struct mynonexist {
@@ -756,7 +756,7 @@ typedef struct mynonexist {
 
         /** For internal use */
         struct mynonexist *next;
-} *Nonexist_T;
+} __attribute__((__packed__)) *Nonexist_T;
 
 
 /** Defines filesystem configuration */
@@ -769,7 +769,7 @@ typedef struct myfilesystem {
 
         /** For internal use */
         struct myfilesystem *next;                   /**< next filesystem in chain */
-} *Filesystem_T;
+} __attribute__((__packed__)) *Filesystem_T;
 
 
 /** Defines service data */
@@ -827,7 +827,7 @@ typedef struct myinfo {
                         Link_T stats;
                 } net;
         } priv;
-} *Info_T;
+} __attribute__((__packed__)) *Info_T;
 
 
 /** Defines service data */
@@ -930,7 +930,7 @@ typedef struct myservice {
         struct myservice *next;                         /**< next service in chain */
         struct myservice *next_conf;      /**< next service according to conf file */
         struct myservice *next_depend;           /**< next depend service in chain */
-} *Service_T;
+} __attribute__((__packed__)) *Service_T;
 
 
 typedef struct myevent *Event_T;
@@ -1005,7 +1005,7 @@ struct myrun {
 #ifdef OPENSSL_FIPS
         int fipsEnabled;                /** TRUE if monit should use FIPS-140 mode */
 #endif
-};
+} __attribute__((__packed__));
 
 
 /* -------------------------------------------------------- Global variables */

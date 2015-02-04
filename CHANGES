@@ -18,7 +18,16 @@ New: Support for testing IPv6 hosts with ping and TCP/UDP connections. Example:
         if failed ping then alert
         if failed port 80 then alert
 
+New: Space usage test now tests the free blocks without accounting for reserved
+blocks. Previously Monit computed the space usage by subtracting blocks free for
+non-super user from the total blocks count, which showed the filesystem usage as
+100% as soon as all non-reserved blocks were allocated, whereas there still may be
+some free space available to root user (usually ~ 2-5%). The space test value
+will now match the output of utilities like "df".
+
 Fixed: Linux: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
+
+Fixed: Issue #147: invalid total (up/down)load values.
 
 Fixed: Linux 32-bit + FreeBSD 32-bit + MaxOSX: Issue #138: handle 32-bit counter wraps.
 
@@ -32,6 +41,8 @@ Fixed: Issue #143: Ping test may block longer then timeout settings and the even
 in the case of timeout reported value 1000x higher.
 
 Fixed: Issue #144: Websocket protocol test - mask frames per RFC-6455.
+
+Fixed: Issue #146: Monit didn't start if checksum test was set for nonexistent file.
 
 Fixed: "monit validate" returns exit value 1 only if there were some errors.
 

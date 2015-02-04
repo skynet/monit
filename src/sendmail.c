@@ -92,7 +92,7 @@ typedef struct {
         const char *password;
         Ssl_T ssl;
         char localhost[STRLEN];
-} SendMail_T;
+} __attribute__((__packed__)) SendMail_T;
 
 
 /* ----------------------------------------------------------------- Private */

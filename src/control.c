@@ -73,7 +73,7 @@
 typedef enum {
         Process_Stopped = 0,
         Process_Started
-} Process_Status;
+} __attribute__((__packed__)) Process_Status;
 
 
 /* ----------------------------------------------------------------- Private */
