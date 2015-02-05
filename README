@@ -59,7 +59,7 @@ QUICK START
 
 After you have built Monit you can simply start the monit program from the
 build directory to test it. Monit will use the monitrc control file located
-in this directory for it's configuration. The file is setup to start
+in this directory for its configuration. The file is setup to start
 Monit's http server so you have something interesting to look at; After you
 have started monit, point your browser to http://127.0.0.1:2812/ and log in
 with the username admin and password monit.
