@@ -172,6 +172,37 @@ void *socket_get_Port(Socket_T S);
 
 
 /**
+ * Get a hostname of the given IP address
+ * @param addr A socket address
+ * @param addrlen A socket address length
+ * @param name A buffer for the name
+ * @param namelen A buffer length
+ * @return The hostname or NULL if an error occurred
+ */
+const char *socket_name(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen);
+
+
+/**
+ * Get a string representation of the given IP address
+ * @param addr A socket address
+ * @param addrlen A socket address length
+ * @param name A buffer
+ * @param namelen A buffer length
+ * @return The IP address string or NULL if an error occurred
+ */
+const char *socket_ip(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen);
+
+
+/**
+ * Get a socket port
+ * @param addr A socket address
+ * @param addrlen A socket address length
+ * @return The socket port or 0 if failed
+ */
+in_port_t socket_port(const struct sockaddr *addr, socklen_t addrlen);
+
+
+/**
  * Get the remote port number the socket is connected to
  * @param S A Socket object
  * @return The remote host's port number

@@ -167,37 +167,35 @@
  * Do a non blocking connect, timeout if not connected within timeout milliseconds
  */
 static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout) {
-        int error = 0;
-        struct pollfd fds[1];
-        error = connect(s, addr, addrlen);
-        if (error == 0) {
+        int error = connect(s, addr, addrlen);
+        if (! error) {
                 return 0;
         } else if (errno != EINPROGRESS) {
-                LogError("Connection failed -- %s\n", STRERROR);
+                LogError("Connection to [%s]:%d -- failed: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), STRERROR);
                 return -1;
         }
+        struct pollfd fds[1];
         fds[0].fd = s;
         fds[0].events = POLLIN | POLLOUT;
         error = poll(fds, 1, timeout);
         if (error == 0) {
-                LogError("Connection timed out\n");
+                LogError("Connection to [%s]:%d -- timed out\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen));
                 return -1;
         } else if (error == -1) {
-                LogError("Poll failed -- %s\n", STRERROR);
+                LogError("Connection to [%s]:%d -- poll failed: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), STRERROR);
                 return -1;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
-                socklen_t len = sizeof(error);
-                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-                        LogError("Cannot get socket error -- %s\n", STRERROR);
+                socklen_t errorlen = sizeof(error);
+                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &errorlen) < 0) {
+                        LogError("Connection to [%s]:%d -- read of error details failed: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), STRERROR);
                         return -1;
                 } else if (error) {
-                        errno = error;
-                        LogError("Socket error -- %s\n", STRERROR);
+                        LogError("Connection to [%s]:%d -- error: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), strerror(error));
                         return -1;
                 }
         } else {
-                LogError("Socket not ready for I/O\n");
+                LogError("Connection to [%s]:%d -- not ready for I/O\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen));
                 return -1;
         }
         return 0;
@@ -290,26 +288,26 @@ int create_socket(const char *hostname, int port, int type, int timeout) {
                 return -1;
         }
         int s = -1;
-        for (r = result; r; r = r->ai_next)
-                if ((s = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) >= 0)
-                        break;
-        if (s >= 0) {
-                if (Net_setNonBlocking(s)) {
-                        if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
-                                if (! do_connect(s, r->ai_addr, r->ai_addrlen, timeout)) {
-                                        freeaddrinfo(result);
-                                        return s;
+        for (r = result; r; r = r->ai_next) {
+                if ((s = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) >= 0) {
+                        if (s >= 0) {
+                                if (Net_setNonBlocking(s)) {
+                                        if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
+                                                if (! do_connect(s, r->ai_addr, r->ai_addrlen, timeout)) {
+                                                        freeaddrinfo(result);
+                                                        return s;
+                                                }
+                                        } else {
+                                                LogError("Cannot set socket close on exec -- %s\n", STRERROR);
+                                        }
+                                } else {
+                                        LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
                                 }
-                        } else {
-                                LogError("Cannot set socket close on exec -- %s\n", STRERROR);
+                                Net_close(s);
                         }
-                } else {
-                        LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
                 }
-                Net_close(s);
-        } else {
-                LogError("Cannot create socket -- %s\n", STRERROR);
         }
+        LogError("Cannot create socket for [%s]:%d -- %s\n", hostname, port, STRERROR);
         freeaddrinfo(result);
         return -1;
 }

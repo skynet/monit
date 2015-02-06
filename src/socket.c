@@ -311,6 +311,54 @@ void *socket_get_Port(Socket_T S) {
 }
 
 
+const char *socket_name(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen) {
+        ASSERT(addr);
+        ASSERT(addrlen);
+        ASSERT(name);
+        ASSERT(namelen);
+        int oerrno = errno;
+        int status = getnameinfo(addr, addrlen, name, namelen, NULL, 0, 0);
+        if (status) {
+                LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                *name = 0;
+        }
+        errno = oerrno;
+        return name;
+}
+
+
+const char *socket_ip(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen) {
+        ASSERT(addr);
+        ASSERT(addrlen);
+        ASSERT(name);
+        ASSERT(namelen);
+        int oerrno = errno;
+        int status = getnameinfo(addr, addrlen, name, namelen, NULL, 0, NI_NUMERICHOST);
+        if (status) {
+                LogError("Cannot translate address to string -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                *name = 0;
+        }
+        errno = oerrno;
+        return name;
+}
+
+
+in_port_t socket_port(const struct sockaddr *addr, socklen_t addrlen) {
+        ASSERT(addr);
+        ASSERT(addrlen);
+        char port[6];
+        in_port_t _port = 0;
+        int oerrno = errno;
+        int status = getnameinfo(addr, addrlen, NULL, 0, port, sizeof(port), NI_NUMERICSERV);
+        if (status)
+                LogError("Cannot get port -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+        else
+                _port = atoi(port);
+        errno = oerrno;
+        return _port;
+}
+
+
 int socket_get_remote_port(Socket_T S) {
         ASSERT(S);
         return S->port;
@@ -344,14 +392,9 @@ const char *socket_get_local_host(Socket_T S, char *host, int hostlen) {
         ASSERT(S);
         struct sockaddr_storage addr;
         socklen_t addrlen = sizeof(addr);
-        if (! getsockname(S->socket, (struct sockaddr *)&addr, &addrlen)) {
-                int status = getnameinfo((struct sockaddr *)&addr, addrlen, host, hostlen, NULL, 0, 0);
-                if (status) {
-                        LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                        return NULL;
-                }
-        }
-        return host;
+        if (! getsockname(S->socket, (struct sockaddr *)&addr, &addrlen))
+                return socket_name((struct sockaddr *)&addr, addrlen, host, hostlen);
+        return NULL;
 }
 
 
