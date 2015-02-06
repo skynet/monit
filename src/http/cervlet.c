@@ -217,27 +217,13 @@ void init_service() {
 /* ----------------------------------------------------------------- Private */
 
 
-static void _escapeHTML(StringBuffer_T sb, const char *buf) {
-        for (int i = 0; buf[i]; i++) {
-                if (buf[i] == '<')
-                        StringBuffer_append(sb, "&lt;");
-                else if (buf[i] == '>')
-                        StringBuffer_append(sb, "&gt;");
-                else if (buf[i] == '&')
-                        StringBuffer_append(sb, "&amp;");
-                else
-                        StringBuffer_append(sb, "%c", buf[i]);
-        }
-}
-
-
 static void _printServiceStatus(StringBuffer_T sb, Service_T s) {
         ASSERT(sb);
         ASSERT(s);
         StringBuffer_append(sb, "<span class='%s-text'>", (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT) ? "gray" : ((! s->error) ? "green" : "red"));
         char buf[STRLEN];
         get_service_status(s, buf, sizeof(buf));
-        _escapeHTML(sb, buf);
+        escapeHTML(sb, buf);
         StringBuffer_append(sb, "</span>");
 }
 
@@ -597,8 +583,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
 
 static void do_viewlog(HttpRequest req, HttpResponse res) {
         if (is_readonly(req)) {
-                send_error(res, SC_FORBIDDEN,
-                           "You do not have sufficent privileges to access this page");
+                send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                 return;
         }
         do_head(res, "_viewlog", "View log", 100);
@@ -636,25 +621,21 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
 
 
 static void handle_action(HttpRequest req, HttpResponse res) {
-        int doaction;
         char *name = req->url;
-        const char *action;
-        Service_T s;
-
-        if (! (s = Util_getService(++name))) {
-                send_error(res, SC_NOT_FOUND, "There is no service by that name");
+        Service_T s = Util_getService(++name);
+        if (! s) {
+                send_error(res, SC_NOT_FOUND, "There is no service named \"%s\"", name ? name : "");
                 return;
         }
-        if ((action = get_parameter(req, "action"))) {
-                const char *token = NULL;
-
+        const char *action = get_parameter(req, "action");
+        if (action) {
                 if (is_readonly(req)) {
                         send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
-                doaction = Util_getAction(action);
+                int doaction = Util_getAction(action);
                 if (doaction == ACTION_IGNORE) {
-                        send_error(res, SC_BAD_REQUEST, "Invalid action");
+                        send_error(res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
                         return;
                 }
                 if (s->doaction != ACTION_IGNORE) {
@@ -662,7 +643,7 @@ static void handle_action(HttpRequest req, HttpResponse res) {
                         return;
                 }
                 s->doaction = doaction;
-                token = get_parameter(req, "token");
+                const char *token = get_parameter(req, "token");
                 if (token) {
                         FREE(s->token);
                         s->token = Str_dup(token);
@@ -687,14 +668,14 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                         return;
                 }
                 if ((doaction = Util_getAction(action)) == ACTION_IGNORE) {
-                        send_error(res, SC_BAD_REQUEST, "Invalid action");
+                        send_error(res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
                         return;
                 }
                 for (HttpParameter p = req->params; p; p = p->next) {
                         if (! strcasecmp(p->name, "service")) {
                                 s  = Util_getService(p->value);
                                 if (! s) {
-                                        send_error(res, SC_BAD_REQUEST, "There is no service by that name");
+                                        send_error(res, SC_BAD_REQUEST, "There is no service named \"%s\"", p->value ? p->value : "");
                                         return;
                                 }
                                 if (s->doaction != ACTION_IGNORE) {
@@ -726,8 +707,7 @@ static void handle_run(HttpRequest req, HttpResponse res) {
         const char *action = get_parameter(req, "action");
         if (action) {
                 if (is_readonly(req)) {
-                        send_error(res, SC_FORBIDDEN,
-                                   "You do not have sufficent privileges to access this page");
+                        send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
                 if (IS(action, "validate")) {
@@ -735,8 +715,7 @@ static void handle_run(HttpRequest req, HttpResponse res) {
                         do_wakeupcall();
                 } else if (IS(action, "stop")) {
                         LogInfo("The Monit http server stopped on user request\n");
-                        send_error(res, SC_SERVICE_UNAVAILABLE,
-                                   "The Monit http server is stopped");
+                        send_error(res, SC_SERVICE_UNAVAILABLE, "The Monit http server is stopped");
                         Engine_stop();
                         return;
                 }
@@ -1080,7 +1059,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                 char t[32];
                                 StringBuffer_append(res->outputbuffer, "<td align='left' class='short'>");
                                 if (StringBuffer_length(s->program->output))
-                                        _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                        escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
                                 else
                                         StringBuffer_append(res->outputbuffer, "no output");
                                 StringBuffer_append(res->outputbuffer, "</td>");
@@ -2488,7 +2467,7 @@ static void print_service_status_program_output(HttpResponse res, Service_T s) {
                                         int multiline = StringBuffer_lastIndexOf(s->program->output, "\n") > 0;
                                         if (multiline)
                                                 StringBuffer_append(res->outputbuffer, "<pre>");
-                                        _escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
+                                        escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
                                         if (multiline)
                                                 StringBuffer_append(res->outputbuffer, "</pre>");
                                 } else {

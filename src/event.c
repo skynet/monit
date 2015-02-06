@@ -144,7 +144,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
                 /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
                 if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
                         DEBUG("'%s' %s\n", service->name, message);
-                        free(message);
+                        FREE(message);
                         return;
                 }
 
@@ -185,7 +185,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
                         /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
                         if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
                                 DEBUG("'%s' %s\n", service->name, message);
-                                free(message);
+                                FREE(message);
                                 return;
                         }
 

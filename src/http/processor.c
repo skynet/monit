@@ -161,26 +161,57 @@ void add_Impl(void(*doGet)(HttpRequest, HttpResponse), void(*doPost)(HttpRequest
 }
 
 
+void escapeHTML(StringBuffer_T sb, const char *s) {
+        for (int i = 0; s[i]; i++) {
+                if (s[i] == '<')
+                        StringBuffer_append(sb, "&lt;");
+                else if (s[i] == '>')
+                        StringBuffer_append(sb, "&gt;");
+                else if (s[i] == '&')
+                        StringBuffer_append(sb, "&amp;");
+                else
+                        StringBuffer_append(sb, "%c", s[i]);
+        }
+}
+
+
 /**
  * Send an error message
  * @param res HttpResponse object
  * @param code Error Code to lookup and send
  * @param msg Optional error message (may be NULL)
  */
-void send_error(HttpResponse res, int code, const char *msg) {
-        char server[STRLEN];
-        const char *err = get_status_string(code);
+void send_error(HttpResponse res, int code, const char *msg, ...) {
+        ASSERT(msg);
 
+        const char *err = get_status_string(code);
         reset_response(res);
         set_content_type(res, "text/html");
         set_status(res, code);
         StringBuffer_append(res->outputbuffer,
-                            "<html><head><title>%d %s</title></head>"\
-                            "<body bgcolor=#FFFFFF><h2>%s</h2>%s<p>"\
-                            "<hr><a href='%s'><font size=-1>%s</font></a>"\
-                            "</body></html>\r\n",
-                            code, err, err, msg ? msg : "", SERVER_URL, get_server(server, STRLEN));
-        DEBUG("HttpRequest error: %s %d %s\n", SERVER_PROTOCOL, code, msg ? msg : err);
+                            "<html>"
+                            "<head>"
+                            "<title>%d %s</title>"
+                            "</head>"
+                            "<body bgcolor=#FFFFFF>"
+                            "<h2>%s</h2>",
+                            code, err, err);
+        char *message;
+        va_list ap;
+        va_start(ap, msg);
+        message = Str_vcat(msg, ap);
+        va_end(ap);
+        escapeHTML(res->outputbuffer, message);
+        LogError("HttpRequest error: %s %d %s\n", SERVER_PROTOCOL, code, message);
+        FREE(message);
+        char server[STRLEN];
+        StringBuffer_append(res->outputbuffer,
+                            "<hr>"
+                            "<a href='%s'><font size=-1>%s</font></a>"
+                            "</body>"
+                            "</html>"
+                            "\r\n",
+                            SERVER_URL, get_server(server, STRLEN));
 }
 
 
@@ -668,11 +699,7 @@ static void destroy_entry(void *p) {
 static int is_authenticated(HttpRequest req, HttpResponse res) {
         if (Run.credentials) {
                 if (! basic_authenticate(req)) {
-                        send_error(res, SC_UNAUTHORIZED,
-                                   "You are <b>not</b> authorized to access <i>monit</i>. "
-                                   "Either you supplied the wrong credentials (e.g. bad "
-                                   "password), or your browser doesn't understand how to supply "
-                                   "the credentials required");
+                        send_error(res, SC_UNAUTHORIZED, "You are not authorized to access monit. Either you supplied the wrong credentials (e.g. bad password), or your browser doesn't understand how to supply the credentials required");
                         set_header(res, "WWW-Authenticate", "Basic realm=\"monit\"");
                         return FALSE;
                 }
