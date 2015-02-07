@@ -1532,9 +1532,9 @@ static void print_service_rules_port(HttpResponse res, Service_T s) {
         for (Port_T p = s->portlist; p; p = p->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Port</td><td>");
                 if (p->retry > 1)
-                        Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds and retry %d time(s)]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000, p->retry);
+                        Util_printRule(res->outputbuffer, p->action, "If failed [%s]:%d%s type %s protocol %s with timeout %d seconds and retry %d times", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), p->protocol->name, p->timeout / 1000, p->retry);
                 else
-                        Util_printRule(res->outputbuffer, p->action, "If failed [%s:%d%s [%s via %s] with timeout %d seconds]", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p), p->timeout / 1000);
+                        Util_printRule(res->outputbuffer, p->action, "If failed [%s]:%d%s type %s protocol %s with timeout %d seconds", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), p->protocol->name, p->timeout / 1000);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
                 if (p->SSL.certmd5 != NULL)
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Server certificate md5 sum</td><td>%s</td></tr>", p->SSL.certmd5);
@@ -1546,9 +1546,9 @@ static void print_service_rules_socket(HttpResponse res, Service_T s) {
         for (Port_T p = s->socketlist; p; p = p->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Unix Socket</td><td>");
                 if (p->retry > 1)
-                        Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds and retry %d time(s)]", p->pathname, p->protocol->name, p->timeout / 1000, p->retry);
+                        Util_printRule(res->outputbuffer, p->action, "If failed %s type %s protocol %s with timeout %d seconds and retry %d time(s)", p->pathname, Util_portTypeDescription(p), p->protocol->name, p->timeout / 1000, p->retry);
                 else
-                        Util_printRule(res->outputbuffer, p->action, "If failed [%s [%s] with timeout %ds]", p->pathname, p->protocol->name, p->timeout / 1000);
+                        Util_printRule(res->outputbuffer, p->action, "If failed %s type %s protocol %s with timeout %d seconds", p->pathname, Util_portTypeDescription(p), p->protocol->name, p->timeout / 1000);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1919,9 +1919,9 @@ static void print_service_status_port(HttpResponse res, Service_T s) {
                 if (! status)
                         StringBuffer_append(res->outputbuffer, "<td>-<td>");
                 else if (! p->is_available)
-                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s:%d%s [%s via %s]</td>", p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p));
+                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to [%s]:%d%s type %s protocol %s</td>", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), p->protocol->name);
                 else
-                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s:%d%s [%s via %s]</td>", p->response, p->hostname, p->port, p->request ? p->request : "", p->protocol->name, Util_portTypeDescription(p));
+                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s:%d%s type %s protocol %s</td>", p->response, p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), p->protocol->name);
                 StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
@@ -1934,9 +1934,9 @@ static void print_service_status_socket(HttpResponse res, Service_T s) {
                 if (! status)
                         StringBuffer_append(res->outputbuffer, "<td>-<td>");
                 else if (! p->is_available)
-                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s [%s]</td>", p->pathname, p->protocol->name);
+                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s type %s protocol %s</td>", p->pathname, Util_portTypeDescription(p), p->protocol->name);
                 else
-                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s [%s]</td>", p->response, p->pathname, p->protocol->name);
+                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s type %s protocol %s</td>", p->response, p->pathname, Util_portTypeDescription(p), p->protocol->name);
                 StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
@@ -2679,17 +2679,13 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                         }
                         for (Port_T p = s->portlist; p; p = p->next) {
                                 StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %.3fs to %s:%d%s [%s via %s]\n",
-                                                    "port response time", p->is_available ? p->response : 0.,
-                                                    p->hostname,
-                                                    p->port, p->request ? p->request : "", p->protocol->name,
-                                                    Util_portTypeDescription(p));
+                                                    "  %-33s %.3fs to [%s]:%d%s type %s protocol %s\n",
+                                                    "port response time", p->is_available ? p->response : 0., p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), p->protocol->name);
                         }
                         for (Port_T p = s->socketlist; p; p = p->next) {
                                 StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %.3fs to %s [%s]\n",
-                                                    "unix socket response time", p->is_available ? p->response : 0.,
-                                                    p->pathname, p->protocol->name);
+                                                    "  %-33s %.3fs to %s type %s protocol %s\n",
+                                                    "unix socket response time", p->is_available ? p->response : 0., p->pathname, Util_portTypeDescription(p), p->protocol->name);
                         }
                         if (s->type == TYPE_SYSTEM && Run.doprocess) {
                                 StringBuffer_append(res->outputbuffer,
