@@ -246,7 +246,9 @@ static unsigned short checksum_ip(unsigned char *_addr, int count) {
 int check_host(const char *hostname) {
         ASSERT(hostname);
         struct addrinfo hints = {
+#ifdef AI_ADDRCONFIG
                 .ai_flags = AI_ADDRCONFIG
+#endif
         };
         struct addrinfo *res;
         if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
@@ -286,7 +288,9 @@ int create_socket(const char *hostname, int port, int type, Socket_Family family
         ASSERT(hostname);
 
         struct addrinfo *result, *r, hints = {
+#ifdef AI_ADDRCONFIG
                 .ai_flags = AI_ADDRCONFIG,
+#endif
                 .ai_socktype = type,
                 .ai_protocol = IPPROTO_TCP
         };
@@ -447,7 +451,9 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         ASSERT(hostname);
         double response = -1.;
         struct addrinfo *result, hints = {
+#ifdef AI_ADDRCONFIG
                 .ai_flags = AI_ADDRCONFIG
+#endif
         };
 #ifdef IPV6
         struct icmp6_filter filter;
@@ -508,8 +514,8 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         for (int i = 0; i < count; i++) {
                 char buf[STRLEN];
                 memset(buf, 0, sizeof(buf));
-                int in_len, out_len;
-                uint16_t in_id, in_seq;
+                int in_len = 0, out_len;
+                uint16_t in_id = 0, in_seq = 0;
                 struct timeval out_time;
                 gettimeofday(&out_time, NULL);
                 void *out_icmp = NULL;
