@@ -584,7 +584,7 @@ readnext:
                                 continue;
                         }
                         int in_addrmatch = FALSE, in_typematch = FALSE;
-                        struct timeval in_time, out_time;
+                        struct timeval in_time, out_time = {.tv_sec = 0, .tv_usec = 0};
                         gettimeofday(&in_time, NULL);
                         /* read from raw socket via recvfrom() provides messages regardless of origin, we have to check the IP and skip responses belonging to other conversations */
                         switch (addr.ss_family) {
@@ -608,6 +608,7 @@ readnext:
                                         break;
 #endif
                                 default:
+                                        LogError("Invalid address family: %d\n", addr.ss_family);
                                         break;
                         }
                         if (addr.ss_family != r->ai_family || ! in_addrmatch || ! in_typematch || in_id != id_out || in_seq >= (uint16_t)count) {
