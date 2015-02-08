@@ -246,6 +246,9 @@ AC_CHECK_HEADERS([ \
         [],
         [],
         [
+         #ifdef HAVE_SYS_TYPES_H
+         #include <sys/types.h>
+         #endif
          #if HAVE_NETINET_IP_H
          #include <netinet/in.h>
          #endif
