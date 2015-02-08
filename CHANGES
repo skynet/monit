@@ -17,6 +17,8 @@ New: Support for testing IPv6 hosts with ping and TCP/UDP connections. Example:
     check host myhost with address "2001:db8::1234"
         if failed ping then alert
         if failed port 80 then alert
+IPv6 is supported also for mailserver and future M/Monit version when IPv6-enabled
+M/Monit is released. Monit HTTP interface listens still on IPv4 only.
 
 New: Space usage test now tests the free blocks without accounting for reserved
 blocks. Previously Monit computed the space usage by subtracting blocks free for

@@ -325,10 +325,9 @@ void Engine_stop() {
 //FIXME: don't store the translated hostname->IPaddress on Monit startup to support DHCP hosts ... resolve the hostname in _authenticateHost()
 int Engine_addHostAllow(char *pattern) {
         ASSERT(pattern);
-        struct addrinfo hints;
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = PF_INET; /* we support just IPv4 currently */
-        struct addrinfo *res;
+        struct addrinfo *res, hints = {
+                .ai_family = AF_INET /* we support just IPv4 currently */
+        };
         if (getaddrinfo(pattern, NULL, &hints, &res) != 0)
                 return FALSE;
         int added = 0;

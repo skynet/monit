@@ -121,15 +121,14 @@ static int data_check(Socket_T socket, Mmonit_T C) {
  * @return If failed, return HANDLER_MMONIT flag or HANDLER_SUCCEEDED flag if succeeded
  */
 int handle_mmonit(Event_T E) {
-        int       rv = HANDLER_MMONIT;
-        Socket_T  socket = NULL;
-        Mmonit_T  C = Run.mmonits;
+        int rv = HANDLER_MMONIT;
         /* The event is sent to mmonit just once - only in the case that the state changed */
-        if (! C || (E && ! E->state_changed))
+        if (! Run.mmonits || (E && ! E->state_changed))
                 return HANDLER_SUCCEEDED;
         StringBuffer_T sb = StringBuffer_create(256);
-        for (; C; C = C->next) {
-                if (! (socket = socket_create_t(C->url->hostname, C->url->port, SOCKET_TCP, C->ssl, C->timeout))) {
+        for (Mmonit_T C = Run.mmonits; C; C = C->next) {
+                Socket_T  socket = socket_create_t(C->url->hostname, C->url->port, SOCKET_TCP, Socket_Ip, C->ssl, C->timeout);
+                if (! socket) {
                         LogError("M/Monit: cannot open a connection to %s\n", C->url->url);
                         goto error;
                 }

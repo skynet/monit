@@ -139,9 +139,9 @@ static void open_server(SendMail_T *S) {
         do {
                 /* wait with ssl-connect if SSL_VERSION_TLSV1 is set (rfc2487) */
                 if (! S->ssl.use_ssl || S->ssl.version == SSL_VERSION_TLSV1 || S->ssl.version == SSL_VERSION_TLSV11 || S->ssl.version == SSL_VERSION_TLSV12)
-                        S->socket = socket_new(S->server, S->port, SOCKET_TCP, FALSE, Run.mailserver_timeout);
+                        S->socket = socket_new(S->server, S->port, SOCKET_TCP, Socket_Ip, FALSE, Run.mailserver_timeout);
                 else
-                        S->socket = socket_create_t(S->server, S->port, SOCKET_TCP, S->ssl, Run.mailserver_timeout);
+                        S->socket = socket_create_t(S->server, S->port, SOCKET_TCP, Socket_Ip, S->ssl, Run.mailserver_timeout);
                 if (S->socket)
                         break;
                 LogError("Cannot open a connection to the mailserver '%s:%i' -- %s\n", S->server, S->port, STRERROR);

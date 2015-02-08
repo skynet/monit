@@ -144,7 +144,6 @@ static void _programOutput(InputStream_T I, StringBuffer_T S) {
  * Test the connection and protocol
  */
 static void check_connection(Service_T s, Port_T p) {
-        Socket_T socket;
         volatile int retry_count = p->retry;
         volatile int rv = TRUE;
         char buf[STRLEN];
@@ -158,7 +157,7 @@ retry:
         gettimeofday(&t1, NULL);
 
         /* Open a socket to the destination NET[hostname:port] or UNIX[pathname] */
-        socket = socket_create(p);
+        Socket_T socket = socket_create(p);
         if (! socket) {
                 snprintf(report, STRLEN, "failed, cannot open a connection to %s", Util_portDescription(p, buf, sizeof(buf)));
                 rv = FALSE;

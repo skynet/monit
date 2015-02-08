@@ -1897,9 +1897,9 @@ char *Util_portTypeDescription(Port_T p) {
 
 
 char *Util_portDescription(Port_T p, char *buf, int bufsize) {
-        if (p->family == Port_Net)
+        if (p->family == Socket_Ip || p->family == Socket_Ip4 || p->family == Socket_Ip6)
                 snprintf(buf, STRLEN, "[%s]:%d%s [%s]", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p));
-        else if (p->family == Port_Unix)
+        else if (p->family == Socket_Unix)
                 snprintf(buf, STRLEN, "%s", p->pathname);
         else
                 *buf = 0;
@@ -1910,7 +1910,6 @@ char *Util_portDescription(Port_T p, char *buf, int bufsize) {
 int Util_getfqdnhostname(char *buf, unsigned len) {
         int status;
         char hostname[STRLEN];
-        struct addrinfo hints, *info = NULL;
 
         // Set the base hostname
         if (gethostname(hostname, sizeof(hostname))) {
@@ -1920,22 +1919,23 @@ int Util_getfqdnhostname(char *buf, unsigned len) {
         snprintf(buf, len, "%s", hostname);
 
         // Try to look for FQDN hostname
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_CANONNAME;
-        if ((status = getaddrinfo(hostname, NULL, &hints, &info))) {
+        struct addrinfo *result, hints = {
+                .ai_family = AF_UNSPEC,
+                .ai_flags = AI_CANONNAME,
+                .ai_socktype = SOCK_STREAM
+        };
+        if ((status = getaddrinfo(hostname, NULL, &hints, &result))) {
                 LogError("Cannot translate '%s' to FQDN name -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
         } else {
-                for (struct addrinfo *result = info; result; result = result->ai_next) {
-                        if (Str_startsWith(result->ai_canonname, hostname)) {
-                                snprintf(buf, len, "%s", result->ai_canonname);
+                for (struct addrinfo *r = result; r; r = r->ai_next) {
+                        if (Str_startsWith(r->ai_canonname, hostname)) {
+                                snprintf(buf, len, "%s", r->ai_canonname);
                                 break;
                         }
                 }
         }
-        if (info)
-                freeaddrinfo(info);
+        if (result)
+                freeaddrinfo(result);
         return 0;
 }
 

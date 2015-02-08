@@ -51,11 +51,12 @@ typedef struct Socket_T *Socket_T;
  * may be a hostname found in the DNS or an IP address string.
  * @param port The port number to connect to
  * @param type The socket type to use (SOCKET_TCP or SOCKET_UPD)
+ * @param family The socket family to use (see Socket_Family type)
  * @param use_ssl if TRUE the socket is created supporting SSL
  * @param timeout The timeout value in milliseconds
  * @return The connected Socket or NULL if an error occurred
  */
-Socket_T socket_new(const char *host, int port, int type, int use_ssl, int timeout);
+Socket_T socket_new(const char *host, int port, int type, Socket_Family family, int use_ssl, int timeout);
 
 
 /**
@@ -73,11 +74,12 @@ Socket_T socket_create(void *port);
  * may be a hostname found in the DNS or an IP address string.
  * @param port The port number to connect to
  * @param type The socket type to use (SOCKET_TCP or SOCKET_UPD)
+ * @param family The socket family to use (see Socket_Family type)
  * @param ssl Options for SSL
  * @param timeout The timeout value in milliseconds
  * @return The connected Socket or NULL if an error occurred
  */
-Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int timeout);
+Socket_T socket_create_t(const char *host, int port, int type, Socket_Family family, Ssl_T ssl, int timeout);
 
 
 /**
@@ -86,10 +88,8 @@ Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int ti
  * If the sslserver context is non-null the socket will support
  * ssl. This method does only support TCP sockets.
  * @param socket The accepted socket
- * @param remote_host The remote host from where the socket connection
- * originated
- * @param port The localhost port number from where the connection
- * arrived.
+ * @param remote_host The remote host from where the socket connection originated
+ * @param port The localhost port number from where the connection arrived.
  * @param sslserver A ssl server connection context, may be NULL
  * @return A Socket or NULL if an error occurred
  */
@@ -169,37 +169,6 @@ int socket_get_type(Socket_T S);
  * @return The Port object or NULL
  */
 void *socket_get_Port(Socket_T S);
-
-
-/**
- * Get a hostname of the given IP address
- * @param addr A socket address
- * @param addrlen A socket address length
- * @param name A buffer for the name
- * @param namelen A buffer length
- * @return The hostname or NULL if an error occurred
- */
-const char *socket_name(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen);
-
-
-/**
- * Get a string representation of the given IP address
- * @param addr A socket address
- * @param addrlen A socket address length
- * @param name A buffer
- * @param namelen A buffer length
- * @return The IP address string or NULL if an error occurred
- */
-const char *socket_ip(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen);
-
-
-/**
- * Get a socket port
- * @param addr A socket address
- * @param addrlen A socket address length
- * @return The socket port or 0 if failed
- */
-in_port_t socket_port(const struct sockaddr *addr, socklen_t addrlen);
 
 
 /**

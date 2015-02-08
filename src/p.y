@@ -642,7 +642,7 @@ mmonitlist      : mmonit credentials
                 | mmonitlist mmonit credentials
                 ;
 
-mmonit          : URLOBJECT nettimeout sslversion certmd5 {
+mmonit          : URLOBJECT nettimeout sslversion certmd5 { //FIXME: use IPv4 only
                     check_hostname(($<url>1)->hostname);
                     addmmonit($<url>1, $<number>2, $<number>3, $<string>4);
                   }
@@ -1070,13 +1070,13 @@ host            : /* EMPTY */ {
 
 port            : PORT NUMBER {
                         portset.port = $2;
-                        portset.family = Port_Net;
+                        portset.family = Socket_Ip;
                   }
                 ;
 
 unixsocket      : UNIXSOCKET PATH {
                         portset.pathname = $2;
-                        portset.family = Port_Unix;
+                        portset.family = Socket_Unix;
                   }
                 ;
 
@@ -3752,7 +3752,7 @@ static void reset_portset() {
         memset(&portset, 0, sizeof(struct myport));
         portset.socket = -1;
         portset.type = SOCK_STREAM;
-        portset.family = Port_Net;
+        portset.family = Socket_Ip;
         portset.SSL.version = SSL_VERSION_AUTO;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;

@@ -163,6 +163,21 @@
 /* ----------------------------------------------------------------- Private */
 
 
+static char *_addressToString(const struct sockaddr *addr, socklen_t addrlen, char *buf, int buflen) {
+        int oerrno = errno;
+        char ip[46], port[6];
+        int status = getnameinfo(addr, addrlen, ip, sizeof(ip), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
+        if (status) {
+                LogError("Cannot get address string -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                *buf = 0;
+        } else {
+                snprintf(buf, buflen, "[%s]:%s", ip, port);
+        }
+        errno = oerrno;
+        return buf;
+}
+
+
 /*
  * Do a non blocking connect, timeout if not connected within timeout milliseconds
  */
@@ -171,7 +186,7 @@ static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int
         if (! error) {
                 return 0;
         } else if (errno != EINPROGRESS) {
-                LogError("Connection to [%s]:%d -- failed: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), STRERROR);
+                LogError("Connection to %s -- failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
                 return -1;
         }
         struct pollfd fds[1];
@@ -179,23 +194,23 @@ static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int
         fds[0].events = POLLIN | POLLOUT;
         error = poll(fds, 1, timeout);
         if (error == 0) {
-                LogError("Connection to [%s]:%d -- timed out\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen));
+                LogError("Connection to %s -- timed out\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
                 return -1;
         } else if (error == -1) {
-                LogError("Connection to [%s]:%d -- poll failed: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), STRERROR);
+                LogError("Connection to %s -- poll failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
                 return -1;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
                 socklen_t errorlen = sizeof(error);
                 if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &errorlen) < 0) {
-                        LogError("Connection to [%s]:%d -- read of error details failed: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), STRERROR);
+                        LogError("Connection to %s -- read of error details failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
                         return -1;
                 } else if (error) {
-                        LogError("Connection to [%s]:%d -- error: %s\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen), strerror(error));
+                        LogError("Connection to %s -- error: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(error));
                         return -1;
                 }
         } else {
-                LogError("Connection to [%s]:%d -- not ready for I/O\n", socket_ip(addr, addrlen, (char[STRLEN]){}, STRLEN), socket_port(addr, addrlen));
+                LogError("Connection to %s -- not ready for I/O\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
                 return -1;
         }
         return 0;
@@ -229,11 +244,11 @@ static unsigned short checksum_ip(unsigned char *_addr, int count) {
 
 
 int check_host(const char *hostname) {
-        struct addrinfo hints;
-        struct addrinfo *res;
         ASSERT(hostname);
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_flags = AI_ADDRCONFIG;
+        struct addrinfo hints = {
+                .ai_flags = AI_ADDRCONFIG
+        };
+        struct addrinfo *res;
         if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
                 return FALSE;
         freeaddrinfo(res);
@@ -267,21 +282,32 @@ int check_udp_socket(int socket) {
 }
 
 
-int create_socket(const char *hostname, int port, int type, int timeout) {
+int create_socket(const char *hostname, int port, int type, Socket_Family family, int timeout) {
         ASSERT(hostname);
 
+        struct addrinfo *result, *r, hints = {
+                .ai_flags = AI_ADDRCONFIG,
+                .ai_socktype = type,
+                .ai_protocol = IPPROTO_TCP
+        };
+        switch (family) {
+                case Socket_Ip:
+                        hints.ai_family = AF_UNSPEC;
+                        break;
+                case Socket_Ip4:
+                        hints.ai_family = AF_INET;
+                        break;
+#ifdef IPV6
+                case Socket_Ip6:
+                        hints.ai_family = AF_INET6;
+                        break;
+#endif
+                default:
+                        LogError("create_socket: Invalid socket family %d\n", family);
+                        return -1;
+        }
         char _port[6];
         snprintf(_port, sizeof(_port), "%d", port);
-        struct addrinfo hints;
-        memset(&hints, 0, sizeof(struct addrinfo));
-#ifdef IPV6
-        hints.ai_family = AF_UNSPEC;
-#else
-        hints.ai_family = AF_INET;
-#endif
-        hints.ai_socktype = type;
-        hints.ai_flags = AI_ADDRCONFIG;
-        struct addrinfo *result, *r;
         int status = getaddrinfo(hostname, _port, &hints, &result);
         if (status) {
                 LogError("Cannot translate '%s' to IP address -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
@@ -305,9 +331,10 @@ int create_socket(const char *hostname, int port, int type, int timeout) {
                                 }
                                 Net_close(s);
                         }
+                } else {
+                        LogError("Cannot create socket for [%s]:%d -- %s\n", hostname, port, STRERROR);
                 }
         }
-        LogError("Cannot create socket for [%s]:%d -- %s\n", hostname, port, STRERROR);
         freeaddrinfo(result);
         return -1;
 }
@@ -339,10 +366,9 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(struct sockaddr_in));
         if (bindAddr) {
-                struct addrinfo hints;
-                memset(&hints, 0, sizeof(struct addrinfo));
-                hints.ai_family = AF_INET;
-                struct addrinfo *result;
+                struct addrinfo *result, hints = {
+                        .ai_family = AF_INET
+                };
                 int status = getaddrinfo(bindAddr, NULL, &hints, &result);
                 if (status) {
                         LogError("Cannot translate '%s' to IP address -- %s\n", bindAddr, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
@@ -420,8 +446,9 @@ int udp_write(int socket, void *b, size_t len, int timeout) {
 double icmp_echo(const char *hostname, int timeout, int count) {
         ASSERT(hostname);
         double response = -1.;
-        struct addrinfo hints;
-        memset(&hints, 0, sizeof(struct addrinfo));
+        struct addrinfo *result, hints = {
+                .ai_flags = AI_ADDRCONFIG
+        };
 #ifdef IPV6
         struct icmp6_filter filter;
         ICMP6_FILTER_SETBLOCKALL(&filter);
@@ -430,8 +457,6 @@ double icmp_echo(const char *hostname, int timeout, int count) {
 #else
         hints.ai_family = AF_INET;
 #endif
-        hints.ai_flags = AI_ADDRCONFIG;
-        struct addrinfo *result;
         int status = getaddrinfo(hostname, NULL, &hints, &result);
         if (status) {
                 LogError("Ping for %s -- getaddrinfo failed: %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));

@@ -94,6 +94,7 @@
 struct Socket_T {
         int port;
         int type;
+        Socket_Family family;
         int socket;
         char *host;
         Port_T Port;
@@ -141,54 +142,68 @@ static int fill(Socket_T S, int timeout) {
 /* ------------------------------------------------------------------ Public */
 
 
-Socket_T socket_new(const char *host, int port, int type, int use_ssl, int timeout) {
+Socket_T socket_new(const char *host, int port, int type, Socket_Family family, int use_ssl, int timeout) {
         Ssl_T ssl = {.use_ssl = use_ssl, .version = SSL_VERSION_AUTO};
-        return socket_create_t(host, port, type, ssl, timeout);
+        return socket_create_t(host, port, type, family, ssl, timeout);
 }
 
 
 Socket_T socket_create(void *port) {
         ASSERT(port);
-
-        Socket_T S = NULL;
         Port_T p = port;
-        int socket = p->family == Port_Unix ? create_unix_socket(p->pathname, p->type, p->timeout) : create_socket(p->hostname, p->port, p->type, p->timeout);
-        if (socket < 0) {
-                LogError("socket_create: Could not create socket -- %s\n", STRERROR);
-        } else {
+        int socket = -1;
+        switch (p->family) {
+                case Socket_Unix:
+                        socket = create_unix_socket(p->pathname, p->type, p->timeout);
+                        break;
+                case Socket_Ip:
+                case Socket_Ip4:
+                case Socket_Ip6:
+                        socket = create_socket(p->hostname, p->port, p->type, p->family, p->timeout);
+                        break;
+                default:
+                        LogError("socket_create: Invalid socket family %d\n", p->family);
+                        return NULL;
+        }
+        if (socket >= 0) {
+                Socket_T S;
                 NEW(S);
                 S->socket = socket;
                 S->type = p->type;
+                S->family = p->family;
                 S->port = p->port;
                 S->timeout = p->timeout;
                 S->connection_type = TYPE_LOCAL;
-                S->host = Str_dup(p->family == Port_Unix ? LOCALHOST : p->hostname);
+                S->host = Str_dup(p->family == Socket_Unix ? LOCALHOST : p->hostname);
                 if (p->SSL.use_ssl && ! socket_switch2ssl(S, p->SSL)) {
                         socket_free(&S);
                         return NULL;
                 }
                 S->Port = port;
+                return S;
         }
-        return S;
+        LogError("socket_create: Could not create socket -- %s\n", STRERROR);
+        return NULL;
 }
 
 
-Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int timeout) {
-        int s;
-        int proto = type == SOCKET_UDP ? SOCK_DGRAM : SOCK_STREAM;
+Socket_T socket_create_t(const char *host, int port, int type, Socket_Family family, Ssl_T ssl, int timeout) {
         ASSERT(host);
-        ASSERT(type == SOCKET_UDP || type == SOCKET_TCP);
-        if (ssl.use_ssl) {
-                ASSERT(type == SOCKET_TCP);
-        }
         ASSERT(timeout > 0);
+        if (ssl.use_ssl)
+                ASSERT(type == SOCKET_TCP);
+        else
+                ASSERT(type == SOCKET_TCP || type == SOCKET_UDP);
         timeout = timeout * 1000; // Internally milliseconds is used
-        if ((s = create_socket(host, port, proto, timeout)) != -1) {
-                Socket_T S = NULL;
+        int proto = type == SOCKET_UDP ? SOCK_DGRAM : SOCK_STREAM;
+        int s = create_socket(host, port, proto, family, timeout);
+        if (s != -1) {
+                Socket_T S;
                 NEW(S);
                 S->socket = s;
                 S->port = port;
                 S->type = proto;
+                S->family = family;
                 S->timeout = timeout;
                 S->host = Str_dup(host);
                 S->connection_type = TYPE_LOCAL;
@@ -203,29 +218,25 @@ Socket_T socket_create_t(const char *host, int port, int type, Ssl_T ssl, int ti
 
 
 Socket_T socket_create_a(int socket, const char *remote_host, int port, void *sslserver) {
-        Socket_T S;
         ASSERT(socket >= 0);
         ASSERT(remote_host);
+        Socket_T S;
         NEW(S);
         S->port = port;
         S->socket = socket;
         S->type = SOCK_STREAM;
+        S->family = Socket_Ip4; //FIXME: we use this with IPv4 HTTP engine currently => we don't need to identify the socket family at this point and hardcoded to IPv4 - change to support IPv6 when HTTP GUI will support it
         S->timeout = NET_TIMEOUT; // milliseconds
         S->host = Str_dup(remote_host);
         S->connection_type = TYPE_ACCEPT;
         if (sslserver) {
                 S->sslserver = sslserver;
-                if (! (S->ssl = insert_accepted_ssl_socket(S->sslserver))) {
-                        goto ssl_error;
-                }
-                if (! embed_accepted_ssl_socket(S->ssl, S->socket)) {
-                        goto ssl_error;
+                if (! (S->ssl = insert_accepted_ssl_socket(S->sslserver)) || ! embed_accepted_ssl_socket(S->ssl, S->socket)) {
+                        socket_free(&S);
+                        return NULL;
                 }
         }
         return S;
-ssl_error:
-        socket_free(&S);
-        return NULL;
 }
 
 
@@ -311,54 +322,6 @@ void *socket_get_Port(Socket_T S) {
 }
 
 
-const char *socket_name(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen) {
-        ASSERT(addr);
-        ASSERT(addrlen);
-        ASSERT(name);
-        ASSERT(namelen);
-        int oerrno = errno;
-        int status = getnameinfo(addr, addrlen, name, namelen, NULL, 0, 0);
-        if (status) {
-                LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                *name = 0;
-        }
-        errno = oerrno;
-        return name;
-}
-
-
-const char *socket_ip(const struct sockaddr *addr, socklen_t addrlen, char *name, int namelen) {
-        ASSERT(addr);
-        ASSERT(addrlen);
-        ASSERT(name);
-        ASSERT(namelen);
-        int oerrno = errno;
-        int status = getnameinfo(addr, addrlen, name, namelen, NULL, 0, NI_NUMERICHOST);
-        if (status) {
-                LogError("Cannot translate address to string -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                *name = 0;
-        }
-        errno = oerrno;
-        return name;
-}
-
-
-in_port_t socket_port(const struct sockaddr *addr, socklen_t addrlen) {
-        ASSERT(addr);
-        ASSERT(addrlen);
-        char port[6];
-        in_port_t _port = 0;
-        int oerrno = errno;
-        int status = getnameinfo(addr, addrlen, NULL, 0, port, sizeof(port), NI_NUMERICSERV);
-        if (status)
-                LogError("Cannot get port -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-        else
-                _port = atoi(port);
-        errno = oerrno;
-        return _port;
-}
-
-
 int socket_get_remote_port(Socket_T S) {
         ASSERT(S);
         return S->port;
@@ -390,10 +353,17 @@ int socket_get_local_port(Socket_T S) {
 
 const char *socket_get_local_host(Socket_T S, char *host, int hostlen) {
         ASSERT(S);
+        ASSERT(host);
+        ASSERT(hostlen);
         struct sockaddr_storage addr;
         socklen_t addrlen = sizeof(addr);
-        if (! getsockname(S->socket, (struct sockaddr *)&addr, &addrlen))
-                return socket_name((struct sockaddr *)&addr, addrlen, host, hostlen);
+        if (! getsockname(S->socket, (struct sockaddr *)&addr, &addrlen)) {
+                int status = getnameinfo((struct sockaddr *)&addr, addrlen, host, hostlen, NULL, 0, 0);
+                if (status) {
+                        LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                        *host = 0;
+                }
+        }
         return NULL;
 }
 

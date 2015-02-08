@@ -351,26 +351,22 @@ static void _doDepend(Service_T s, int action, int flag) {
  * @return FALSE for error, otherwise TRUE
  */
 int control_service_daemon(const char *S, const char *action) {
-        int rv = FALSE;
-        int status, content_length = 0;
-        Socket_T socket;
-        char *auth;
-        char buf[STRLEN];
         ASSERT(S);
         ASSERT(action);
+        int rv = FALSE;
         if (Util_getAction(action) == ACTION_IGNORE) {
                 LogError("Cannot %s service '%s' -- invalid action %s\n", action, S, action);
                 return FALSE;
         }
-        socket = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP,
-                                 (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
+        // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
+        Socket_T socket = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP, Socket_Ip4, (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
         if (! socket) {
                 LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
                 return FALSE;
         }
 
         /* Send request */
-        auth = Util_getBasicAuthHeaderMonit();
+        char *auth = Util_getBasicAuthHeaderMonit();
         if (socket_print(socket,
                          "POST /%s HTTP/1.0\r\n"
                          "Content-Type: application/x-www-form-urlencoded\r\n"
@@ -388,17 +384,20 @@ int control_service_daemon(const char *S, const char *action) {
         }
 
         /* Process response */
+        char buf[STRLEN];
         if (! socket_readln(socket, buf, STRLEN)) {
                 LogError("Error receiving data -- %s\n", STRERROR);
                 goto err1;
         }
         Str_chomp(buf);
+        int status;
         if (! sscanf(buf, "%*s %d", &status)) {
                 LogError("Cannot parse status in response: %s\n", buf);
                 goto err1;
         }
         if (status >= 300) {
                 char *message = NULL;
+                int content_length = 0;
 
                 /* Skip headers */
                 while (socket_readln(socket, buf, STRLEN)) {

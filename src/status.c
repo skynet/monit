@@ -78,7 +78,6 @@ int status(char *level) {
 #define LINE 1024
 
         int status = FALSE;
-        Socket_T S = NULL;
         char buf[LINE];
         char *auth = NULL;
 
@@ -86,8 +85,8 @@ int status(char *level) {
                 LogError("Status not available -- the monit daemon is not running\n");
                 return status;
         }
-        S = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP,
-                            (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
+        // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
+        Socket_T S = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP, Socket_Ip4, (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
         if (! S) {
                 LogError("Error connecting to the monit daemon\n");
                 return status;

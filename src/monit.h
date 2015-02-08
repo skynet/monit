@@ -82,7 +82,6 @@
 #endif
 
 #include "ssl.h"
-#include "socket.h"
 
 // libmonit
 #include "system/Command.h"
@@ -160,9 +159,11 @@ typedef enum {
 
 
 typedef enum {
-        Port_Unix = 0,
-        Port_Net
-} Port_Family;
+        Socket_Unix = 0,
+        Socket_Ip,      // IP, version not specified (IPv4 or IPv6)
+        Socket_Ip4,     // IPv4 only
+        Socket_Ip6      // IPv6 only
+} Socket_Family;
 
 
 #define TIME_SECOND        1
@@ -243,6 +244,9 @@ typedef enum {
 #define ICMP_ATTEMPT_COUNT 3
 
 #define EXPECT_BUFFER_MAX (UNIT_KILOBYTE * 100 + 1)
+
+
+#include "socket.h"
 
 
 /** ------------------------------------------------- Special purpose macros */
@@ -469,7 +473,7 @@ typedef struct myport {
         Generic_T generic;                                /**< Generic test handle */
         volatile int socket;                       /**< Socket used for connection */
         int type;                   /**< Socket type used for connection (UDP/TCP) */
-        Port_Family family;      /**< Socket family used for connection (NET/UNIX) */
+        Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
         int port;                                                  /**< Portnumber */
         int request_hashtype;   /**< The optional type of hash for a req. document */
         int maxforward;            /**< Optional max forward for protocol checking */

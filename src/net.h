@@ -77,10 +77,11 @@ int check_udp_socket(int socket);
  * @param hostname The host to open a socket at
  * @param port The port number to connect to
  * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
+ * @param family The socket family to use (see Socket_Family type)
  * @param timeout If not connected within timeout milliseconds abort and return -1
  * @return The socket or -1 if an error occured.
  */
-int create_socket(const char *hostname, int port, int type, int timeout);
+int create_socket(const char *hostname, int port, int type, Socket_Family family, int timeout);
 
 
 /**
