@@ -1396,9 +1396,8 @@ int check_net(Service_T s) {
                         Event_post(s, Event_Link, STATE_FAILED, link->action, "link down");
                 return FALSE; // Terminate test if the link is down
         } else {
-                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
+                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next)
                         Event_post(s, Event_Link, STATE_SUCCEEDED, link->action, "link up");
-                }
         }
         // Link errors
         long long oerrors = Link_getErrorsOutPerSecond(s->inf->priv.net.stats);
