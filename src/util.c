@@ -1422,20 +1422,6 @@ int Util_isProcessRunning(Service_T s, int refresh) {
 }
 
 
-time_t Util_getProcessUptime(char *pidfile) {
-        time_t ctime;
-
-        ASSERT(pidfile);
-
-        if ((ctime = file_getTimestamp(pidfile, S_IFREG)) ) {
-                time_t now = time(&now);
-                time_t since = now-ctime;
-                return since;
-        }
-        return (time_t)-1;
-}
-
-
 char *Util_getUptime(time_t delta, char *sep) {
         static int min = 60;
         static int hour = 3600;

@@ -37,6 +37,7 @@ int update_process_data(Service_T s, ProcessTree_T *, int treesize, pid_t pid);
 int init_process_info(void);
 int update_system_load();
 int  findprocess(int, ProcessTree_T *, int);
+time_t getProcessUptime(pid_t pid, ProcessTree_T *pt, int treesize);
 int  initprocesstree(ProcessTree_T **, int *, ProcessTree_T **, int *);
 void delprocesstree(ProcessTree_T **, int *);
 void process_testmatch(char *);

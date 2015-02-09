@@ -63,6 +63,8 @@ Fixed: port test: if the hostname has multiple IP addresses, try each IP address
 or all addresses failed. Originally Monit tried only the first interface in the resolved set, ignoring
 the rest.
 
+Fixed: Show correct Monit uptime if the system time jumped.
+
 Fixed: Don't show link capacity and upload/download rate if the link is down.
 
 Fixed: Show integer number when presenting byte-values with [B] unit (drop ".0" postfix).

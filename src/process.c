@@ -295,18 +295,26 @@ int initprocesstree(ProcessTree_T **pt_r, int *size_r, ProcessTree_T **oldpt_r, 
  * @param treesize  size of the processtree
  * @return process index if succeeded otherwise -1
  */
-int findprocess(int pid, ProcessTree_T *pt, int size) {
+int findprocess(int pid, ProcessTree_T *pt, int treesize) {
         ASSERT(pt);
 
-        if (size <= 0)
+        if (treesize <= 0)
                 return -1;
 
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < treesize; i++)
                 if (pid == pt[i].pid)
                         return i;
 
         return -1;
 }
+
+
+time_t getProcessUptime(pid_t pid, ProcessTree_T *pt, int treesize) {
+        ASSERT(pt);
+        int leaf = findprocess(pid, pt, treesize);
+        return (time_t)((leaf >= 0 && leaf < treesize) ? time(NULL) - pt[leaf].starttime : -1);
+}
+
 
 /**
  * Delete the process tree

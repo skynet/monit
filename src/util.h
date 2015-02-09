@@ -193,15 +193,6 @@ int Util_isProcessRunning(Service_T s, int refresh);
 
 
 /**
- * Compute an uptime for a process based on the ctime
- * from the pidfile.
- * @param pidfile A process pidfile
- * @return an uptime
- */
-time_t Util_getProcessUptime(char *pidfile);
-
-
-/**
  * Compute an uptime string based on the delta time in seconds. The
  * caller must free the returned string.
  * @param delta seconds.

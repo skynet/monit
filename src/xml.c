@@ -101,7 +101,7 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
                             "<startdelay>%d</startdelay>"
                             "<localhostname>%s</localhostname>"
                             "<controlfile>%s</controlfile>",
-                            (long long)Util_getProcessUptime(Run.pidfile),
+                            (long long)getProcessUptime(getpid(), ptree, ptreesize),
                             Run.polltime,
                             Run.startdelay,
                             Run.system->name ? Run.system->name : "",

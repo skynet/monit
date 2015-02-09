@@ -380,7 +380,7 @@ static void do_foot(HttpResponse res) {
 
 
 static void do_home(HttpRequest req, HttpResponse res) {
-        char *uptime = Util_getUptime(Util_getProcessUptime(Run.pidfile), "&nbsp;");
+        char *uptime = Util_getUptime(getProcessUptime(getpid(), ptree, ptreesize), "&nbsp;");
 
         do_head(res, "", "", Run.polltime);
         StringBuffer_append(res->outputbuffer,
@@ -2488,7 +2488,7 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
                 StringBuffer_free(&sb);
                 set_content_type(res, "text/xml");
         } else {
-                char *uptime = Util_getUptime(Util_getProcessUptime(Run.pidfile), " ");
+                char *uptime = Util_getUptime(getProcessUptime(getpid(), ptree, ptreesize), " ");
                 StringBuffer_append(res->outputbuffer, "The Monit daemon %s uptime: %s\n\n", VERSION, uptime);
                 FREE(uptime);
 
