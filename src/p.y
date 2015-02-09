@@ -642,7 +642,7 @@ mmonitlist      : mmonit credentials
                 | mmonitlist mmonit credentials
                 ;
 
-mmonit          : URLOBJECT nettimeout sslversion certmd5 { //FIXME: use IPv4 only
+mmonit          : URLOBJECT nettimeout sslversion certmd5 {
                     check_hostname(($<url>1)->hostname);
                     addmmonit($<url>1, $<number>2, $<number>3, $<string>4);
                   }
