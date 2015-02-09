@@ -65,6 +65,8 @@ the rest.
 
 Fixed: Don't show link capacity and upload/download rate if the link is down.
 
+Fixed: Show integer number when presenting byte-values with [B] unit (drop ".0" postfix).
+
 
 Version 5.11
 
