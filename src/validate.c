@@ -1463,7 +1463,10 @@ int check_net(Service_T s) {
                                 obytes = Link_getBytesOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         case TIME_HOUR:
-                                obytes = Link_getBytesOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                if (upload->rangecount == 1) // Use precise minutes range for "last hour"
+                                        obytes = Link_getBytesOutPerMinute(s->inf->priv.net.stats, 60);
+                                else
+                                        obytes = Link_getBytesOutPerHour(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         default:
                                 obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
@@ -1481,7 +1484,10 @@ int check_net(Service_T s) {
                                 opackets = Link_getPacketsOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         case TIME_HOUR:
-                                opackets = Link_getPacketsOutPerHour(s->inf->priv.net.stats, upload->rangecount);
+                                if (upload->rangecount == 1) // Use precise minutes range for "last hour"
+                                        opackets = Link_getPacketsOutPerMinute(s->inf->priv.net.stats, 60);
+                                else
+                                        opackets = Link_getPacketsOutPerHour(s->inf->priv.net.stats, upload->rangecount);
                                 break;
                         default:
                                 opackets = Link_getPacketsOutPerSecond(s->inf->priv.net.stats);
@@ -1500,7 +1506,10 @@ int check_net(Service_T s) {
                                 ibytes = Link_getBytesInPerMinute(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         case TIME_HOUR:
-                                ibytes = Link_getBytesInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                if (download->rangecount == 1) // Use precise minutes range for "last hour"
+                                        ibytes = Link_getBytesInPerMinute(s->inf->priv.net.stats, 60);
+                                else
+                                        ibytes = Link_getBytesInPerHour(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         default:
                                 ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
@@ -1518,7 +1527,10 @@ int check_net(Service_T s) {
                                 ipackets = Link_getPacketsInPerMinute(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         case TIME_HOUR:
-                                ipackets = Link_getPacketsInPerHour(s->inf->priv.net.stats, download->rangecount);
+                                if (download->rangecount == 1) // Use precise minutes range for "last hour"
+                                        ipackets = Link_getPacketsInPerMinute(s->inf->priv.net.stats, 60);
+                                else
+                                        ipackets = Link_getPacketsInPerHour(s->inf->priv.net.stats, download->rangecount);
                                 break;
                         default:
                                 ipackets = Link_getPacketsInPerSecond(s->inf->priv.net.stats);

@@ -44,6 +44,8 @@ Fixed: Linux: If the link was up while its state was tested, but it went down be
 link speed was tested, monit triggered speed (4294967295 Mb/s) + duplex (half-duplex)
 change events (if corresponding tests were enabled).
 
+Fixed: Higher total upload/download test precision for 'last hour' range.
+
 Fixed: Minor memory leak on monit reload if multiple pid/ppid tests were defined.
 
 Fixed: HTTP GUI: Don't show the implicit existence test for network check (not used).
