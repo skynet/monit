@@ -163,7 +163,16 @@ typedef enum {
         Socket_Ip,      // IP, version not specified (IPv4 or IPv6)
         Socket_Ip4,     // IPv4 only
         Socket_Ip6      // IPv6 only
-} Socket_Family;
+} __attribute__((__packed__)) Socket_Family;
+
+
+typedef enum {
+        Httpd_Disabled  = 0x0,
+        Httpd_Net       = 0x1, // IP
+        Httpd_Unix      = 0x2, // Unix socket
+        Httpd_Ssl       = 0x4, // SSL enabled
+        Httpd_Signature = 0x8  // Server Signature enabled
+} __attribute__((__packed__)) Httpd_Flags;
 
 
 #define TIME_SECOND        1
@@ -960,19 +969,10 @@ struct myrun {
         int  isdaemon;                 /**< TRUE if program should run as a daemon */
         int  polltime;        /**< In deamon mode, the sleeptime (sec) between run */
         int  startdelay;                    /**< the sleeptime (sec) after startup */
-        int  dohttpd;                    /**< TRUE if Monit HTTP server should run */
-        int  httpdssl;                     /**< TRUE if Monit HTTP server uses ssl */
-        char *httpsslpem;                       /**< PEM file for the HTTPS server */
-        int  clientssl;   /**< TRUE if Monit HTTP server uses ssl with client auth */
-        char *httpsslclientpem;      /**< PEM file/dir to check against at connect */
-        int  allowselfcert;   /**< TRUE if self certified client certs are allowed */
-        int  httpdsig;   /**< TRUE if Monit HTTP server presents version signature */
-        int  httpdport;                    /**< The monit http server's portnumber */
         int  once;                                       /**< TRUE - run only once */
         int  init;                   /**< TRUE - don't background to run from init */
         int  facility;              /** The facility to use when running openlog() */
         int  doprocess;                 /**< TRUE if process status engine is used */
-        char *bind_addr;                  /**< The address monit http will bind to */
         volatile int  doreload;    /**< TRUE if a monit daemon should reinitialize */
         volatile int  dowakeup;  /**< TRUE if a monit daemon was wake up by signal */
         int  doaction;             /**< TRUE if some service(s) has action pending */
@@ -984,6 +984,26 @@ struct myrun {
         char *eventlist_dir;                   /**< The event queue base directory */
         int  eventlist_slots;          /**< The event queue size - number of slots */
         int  expectbuffer; /**< Generic protocol expect buffer - STRLEN by default */
+
+        /** An object holding Monit HTTP interface setup */
+        struct {
+                Httpd_Flags flags;
+                union {
+                        struct {
+                                int  port;
+                                char *address;
+                                struct {
+                                        char *pem;
+                                        char *clientpem;
+                                        int allowselfcert;
+                                } ssl;
+                        } net;
+                        struct {
+                                char *path;
+                        } unix;
+                } socket;
+                Auth_T credentials;
+        } httpd;
 
         /** An object holding program relevant "environment" data, see: env.c */
         struct myenvironment {
@@ -997,7 +1017,6 @@ struct myrun {
         Mail_T maillist;                /**< Global alert notification mailinglist */
         MailServer_T mailservers;    /**< List of MTAs used for alert notification */
         Mmonit_T mmonits;        /**< Event notification and status receivers list */
-        Auth_T credentials;    /** A list holding Basic Authentication information */
         int dommonitcredentials;   /**< TRUE if M/Monit should receive credentials */
         Auth_T mmonitcredentials;     /**< Pointer to selected credentials or NULL */
         Event_T eventlist;              /** A list holding partialy handled events */

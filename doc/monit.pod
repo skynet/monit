@@ -553,20 +553,24 @@ files in I</etc/monit.d> that ends with the prefix I<.cfg>.
 
 =head1 MONIT HTTPD
 
-If specified in the control file, Monit will start with http support.
-From a Browser you can then start and stop services, disable or enable
-service monitoring as well as view the status of each service. Also, if
-Monit logs to its own file, you can view the content of this logfile in
-a Browser.
+If specified in the control file, Monit will start with http support
+either on TCP port or unix socket (only one type is supported for Monit
+HTTP currently, Monit cannot listen on both TCP port and unix socket at
+the same time).
 
-Note that HTTP support is required for almost all Monit CLI interface
-operation, as CLI commands (such as "monit status") are handled by
-communicating with the Monit background process via the the HTTP
-interface. So basically you should have this enable, though you can
-bind the HTTP interface to localhost only so Monit is not accessible
-from the outside.
+You can then use Monit CLI to start and stop services, disable or enable
+service monitoring as well as view the status of each service.
 
-Syntax:
+If TCP port is used instead of unix socket, you can use your web browser
+tp connect to simple HTTP GUI too.
+
+Note that if the HTTP support is disabled the Monit CLI interface won't
+work, as CLI commands (such as "monit status") are handled by communicating
+with the Monit background process via the the HTTP interface. So basically
+you should have this enabled, though you can bind the HTTP interface to
+localhost only or use unix socket so Monit is not accessible from the outside.
+
+Syntax for TCP port:
 
   SET HTTPD PORT <number> [ADDRESS <hostname | IP-address>]
       [SSL <ENABLE | DISABLE>]
@@ -584,6 +588,20 @@ Example:
 You can now use L<http://localhost:2812/|http://localhost:2812/> to
 access Monit's web interface from a browser, after you have entered
 username and password as credentials.
+
+Syntax for unix socket:
+
+  SET HTTPD UNIXSOCKET <path>
+      [SIGNATURE <ENABLE | DISABLE>]
+      ALLOW <user:password>+
+
+Example:
+
+ set httpd unixsocket /var/run/monit.sock
+     allow username:password
+
+B<UNIXSOCKET> set the path to unix socket Monit should bind to and listen
+on.
 
 B<PORT> set the port Monit should bind to and listen on. Monit is
 usually setup on port 2812.

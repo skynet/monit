@@ -524,28 +524,34 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Poll time</td><td>%d seconds with start delay %d seconds</td></tr>",
                             Run.polltime, Run.startdelay);
-        StringBuffer_append(res->outputbuffer,
-                            "<tr><td>httpd bind address</td><td>%s</td></tr>",
-                            Run.bind_addr ? Run.bind_addr : "Any/All");
-        StringBuffer_append(res->outputbuffer,
-                            "<tr><td>httpd portnumber</td><td>%d</td></tr>", Run.httpdport);
+        if (Run.httpd.flags & Httpd_Net) {
+                StringBuffer_append(res->outputbuffer,
+                                    "<tr><td>httpd bind address</td><td>%s</td></tr>",
+                                    Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "Any/All");
+                StringBuffer_append(res->outputbuffer,
+                                    "<tr><td>httpd portnumber</td><td>%d</td></tr>", Run.httpd.socket.net.port);
+        } else if (Run.httpd.flags & Httpd_Unix) {
+                StringBuffer_append(res->outputbuffer,
+                                    "<tr><td>httpd unix socket</td><td>%s</td></tr>",
+                                    Run.httpd.socket.unix.path);
+        }
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>httpd signature</td><td>%s</td></tr>",
-                            Run.httpdsig ? "True" : "False");
+                            Run.httpd.flags & Httpd_Signature ? "True" : "False");
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Use ssl encryption</td><td>%s</td></tr>",
-                            Run.httpdssl ? "True" : "False");
-        if (Run.httpdssl) {
+                            Run.httpd.flags & Httpd_Ssl ? "True" : "False");
+        if (Run.httpd.flags & Httpd_Ssl) {
                 StringBuffer_append(res->outputbuffer,
                                     "<tr><td>PEM key/certificate file</td><td>%s</td></tr>",
-                                    Run.httpsslpem);
-                if (Run.httpsslclientpem != NULL) {
+                                    Run.httpd.socket.net.ssl.pem);
+                if (Run.httpd.socket.net.ssl.clientpem != NULL) {
                         StringBuffer_append(res->outputbuffer,
                                             "<tr><td>Client PEM key/certification"
                                             "</td><td>%s</td></tr>", "Enabled");
                         StringBuffer_append(res->outputbuffer,
                                             "<tr><td>Client PEM key/certificate file"
-                                            "</td><td>%s</td></tr>", Run.httpsslclientpem);
+                                            "</td><td>%s</td></tr>", Run.httpd.socket.net.ssl.clientpem);
                 } else {
                         StringBuffer_append(res->outputbuffer,
                                             "<tr><td>Client PEM key/certification"
@@ -553,11 +559,11 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr><td>Allow self certified certificates "
-                                    "</td><td>%s</td></tr>", Run.allowselfcert ? "True" : "False");
+                                    "</td><td>%s</td></tr>", Run.httpd.socket.net.ssl.allowselfcert ? "True" : "False");
         }
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>httpd auth. style</td><td>%s</td></tr>",
-                            Run.credentials && Engine_hasHostsAllow() ? "Basic Authentication and Host/Net allow list" : Run.credentials ? "Basic Authentication" : Engine_hasHostsAllow() ? "Host/Net allow list" : "No authentication");
+                            Run.httpd.credentials && Engine_hasHostsAllow() ? "Basic Authentication and Host/Net allow list" : Run.httpd.credentials ? "Basic Authentication" : Engine_hasHostsAllow() ? "Host/Net allow list" : "No authentication");
         print_alerts(res, Run.maillist);
         StringBuffer_append(res->outputbuffer, "</table>");
         if (! is_readonly(req)) {

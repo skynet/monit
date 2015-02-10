@@ -383,7 +383,7 @@ static int PAMcheckPasswd(const char *login, const char *passwd) {
  * Check whether the user is member of allowed groups
  */
 static Auth_T PAMcheckUserGroup(const char *uname) {
-        Auth_T c = Run.credentials;
+        Auth_T c = Run.httpd.credentials;
         struct passwd *pwd = NULL;
         struct group  *grp = NULL;
 
@@ -849,31 +849,27 @@ void Util_printRunList() {
                Run.MailFormat.message ? Run.MailFormat.message : "(not defined)",
                Run.MailFormat.message ? "..(truncated)" : "");
 
-        printf(" %-18s = %s\n", "Start monit httpd", Run.dohttpd ? "True" : "False");
+        printf(" %-18s = %s\n", "Start monit httpd", (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) ? "True" : "False");
 
-        if (Run.dohttpd) {
+        if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
 
-                printf(" %-18s = %s\n", "httpd bind address", Run.bind_addr ? Run.bind_addr : "Any/All");
-                printf(" %-18s = %d\n", "httpd portnumber", Run.httpdport);
-                printf(" %-18s = %s\n", "httpd signature", Run.httpdsig ? "True" : "False");
-                printf(" %-18s = %s\n", "Use ssl encryption", Run.httpdssl ? "True" : "False");
-
-                if (Run.httpdssl) {
-
-                        printf(" %-18s = %s\n", "PEM key/cert file", Run.httpsslpem);
-
-                        if (Run.httpsslclientpem != NULL) {
-                                printf(" %-18s = %s\n", "Client cert file", Run.httpsslclientpem);
-                        } else {
-                                printf(" %-18s = %s\n", "Client cert file", "None");
-                        }
-
-                        printf(" %-18s = %s\n", "Allow self certs", Run.allowselfcert ? "True":"False");
-
+                if (Run.httpd.flags & Httpd_Net) {
+                        printf(" %-18s = %s\n", "httpd bind address", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "Any/All");
+                        printf(" %-18s = %d\n", "httpd portnumber", Run.httpd.socket.net.port);
+                        printf(" %-18s = %s\n", "httpd ssl", Run.httpd.flags & Httpd_Ssl ? "Enabled" : "Disabled");
+                } else if (Run.httpd.flags & Httpd_Unix) {
+                        printf(" %-18s = %s\n", "httpd unix socket", Run.httpd.socket.unix.path);
+                }
+                printf(" %-18s = %s\n", "httpd signature", Run.httpd.flags & Httpd_Signature ? "Enabled" : "Disabled");
+                if (Run.httpd.flags & Httpd_Ssl) {
+                        printf(" %-18s = %s\n", "PEM key/cert file", Run.httpd.socket.net.ssl.pem);
+                        if (Run.httpd.socket.net.ssl.clientpem)
+                                printf(" %-18s = %s\n", "Client cert file", Run.httpd.socket.net.ssl.clientpem);
+                        printf(" %-18s = %s\n", "Allow self certs", Run.httpd.socket.net.ssl.allowselfcert ? "True" : "False");
                 }
 
                 printf(" %-18s = %s\n", "httpd auth. style",
-                       Run.credentials && Engine_hasHostsAllow() ? "Basic Authentication and Host/Net allow list" : Run.credentials ? "Basic Authentication" : Engine_hasHostsAllow() ? "Host/Net allow list" : "No authentication!");
+                       Run.httpd.credentials && Engine_hasHostsAllow() ? "Basic Authentication and Host/Net allow list" : Run.httpd.credentials ? "Basic Authentication" : Engine_hasHostsAllow() ? "Host/Net allow list" : "No authentication!");
 
         }
 
@@ -1513,7 +1509,7 @@ char *Util_encodeServiceName(char *name) {
 
 
 char *Util_getBasicAuthHeaderMonit() {
-        Auth_T c = Run.credentials;
+        Auth_T c = Run.httpd.credentials;
 
         /* We find the first cleartext credential for authorization */
         while (c != NULL) {
@@ -1572,7 +1568,7 @@ void Util_closeFds() {
 
 Auth_T Util_getUserCredentials(char *uname) {
         /* check allowed user names */
-        for (Auth_T c = Run.credentials; c; c = c->next)
+        for (Auth_T c = Run.httpd.credentials; c; c = c->next)
                 if (c->uname && IS(c->uname, uname))
                         return c;
 

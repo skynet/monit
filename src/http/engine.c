@@ -79,6 +79,10 @@
 #include <strings.h>
 #endif
 
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -239,80 +243,106 @@ static void _destroyHostAllow(HostsAllow_T p) {
 /**
  * Returns TRUE if remote host is allowed to connect, otherwise return FALSE
  */
-static int _authenticateHost(const struct in_addr addr) {
-        int allow = FALSE;
-        LOCK(mutex)
-        {
-                if (! hostlist) {
-                        allow = TRUE;
-                } else  {
-                        for (HostsAllow_T p = hostlist; p; p = p->next) {
-                                if ((p->network & p->mask) == (addr.s_addr & p->mask)) {
-                                        allow = TRUE;
-                                        break;
+static int _authenticateHost(struct sockaddr *addr) {
+        if (addr->sa_family == AF_INET) { //FIXME: we support only IPv4 currently
+                int allow = FALSE;
+                struct sockaddr_in *a = (struct sockaddr_in *)addr;
+                LOCK(mutex)
+                {
+                        if (! hostlist) {
+                                allow = TRUE;
+                        } else  {
+                                for (HostsAllow_T p = hostlist; p; p = p->next) {
+                                        if ((p->network & p->mask) == (a->sin_addr.s_addr & p->mask)) {
+                                                allow = TRUE;
+                                                break;
+                                        }
                                 }
                         }
                 }
+                END_LOCK;
+                if (! allow)
+                        LogError("Denied connection from non-authorized client [%s]\n", inet_ntoa(a->sin_addr));
+                return allow;
+        } else if (addr->sa_family == AF_UNIX) {
+                return TRUE;
+        } else {
+                return FALSE;
         }
-        END_LOCK;
-        if (! allow)
-                LogError("Denied connection from non-authorized client [%s]\n", inet_ntoa(addr));
-        return allow;
 }
 
 
 /**
  * Accept connections from Clients and create a Socket_T object for each successful accept. If accept fails, return a NULL object
  */
-static Socket_T _socketProducer(int server, int port, void *sslserver) {
+static Socket_T _socketProducer(int server, Httpd_Flags flags) {
         int client;
-        struct sockaddr_in addr;
+        struct sockaddr_storage addr_in;
+        struct sockaddr_un addr_un;
+        struct sockaddr *addr = NULL;
+        socklen_t addrlen;
         if (can_read(server, 1000)) {
-                socklen_t addrlen = sizeof(struct sockaddr_storage);
-                if ((client = accept(server, (struct sockaddr *)&addr, &addrlen)) < 0) {
-                        if (stopped)
-                                LogError("HTTP server: service stopped\n");
-                        else
-                                LogError("HTTP server: cannot accept connection -- %s\n", STRERROR);
+                if (flags & Httpd_Net) {
+                        addr = (struct sockaddr *)&addr_in;
+                        addrlen = sizeof(struct sockaddr_storage);
+                } else {
+                        addr = (struct sockaddr *)&addr_un;
+                        addrlen = sizeof(struct sockaddr_un);
+                }
+                if ((client = accept(server, addr, &addrlen)) < 0) {
+                        LogError("HTTP server: cannot accept connection -- %s\n", stopped ? "service stopped" : STRERROR);
                         return NULL;
                 }
-        } else {
-                /* If timeout or error occured, return NULL to allow the caller to handle various states (such as stopped) which can occure in the meantime */
-                return NULL;
+                if (Net_setNonBlocking(client) < 0 || ! check_socket(client) || ! _authenticateHost(addr)) {
+                        Net_abort(client);
+                        return NULL;
+                }
+                return socket_create_a(client, addr, mySSLServerConnection);
         }
-        if (Net_setNonBlocking(client) < 0 || ! check_socket(client) || ! _authenticateHost(addr.sin_addr)) {
-                Net_abort(client);
-                return NULL;
-        }
-        return socket_create_a(client, inet_ntoa(addr.sin_addr), port, sslserver);
+        return NULL;
 }
 
 
 /* ------------------------------------------------------------------ Public */
 
 
-void Engine_start(int port, int backlog, char *addr) {
+void Engine_start() {
         stopped = Run.stopped;
-        if ((myServerSocket = create_server_socket(port, backlog, addr)) >= 0) {
-                init_service();
-                if (Run.httpdssl) {
-                        if (! (mySSLServerConnection = init_ssl_server(Run.httpsslpem, Run.httpsslclientpem))) {
-                                LogError("HTTP server: not available -- could not initialize SSL engine\n");
-                                return;
-                        }
+        init_service();
+        //FIXME: we listen currently only on one server socket: either on IP or unix socket ... should support listening on multiple sockets (IPv4, IPv6, unix)
+        if (Run.httpd.flags & Httpd_Net) {
+                if ((myServerSocket = create_server_socket(Run.httpd.socket.net.address, Run.httpd.socket.net.port, 1024)) >= 0) {
+                        if (Run.httpd.flags & Httpd_Ssl) {
+                                if (! (mySSLServerConnection = init_ssl_server(Run.httpd.socket.net.ssl.pem, Run.httpd.socket.net.ssl.clientpem))) {
+                                        LogError("HTTP server: not available -- could not initialize SSL engine\n");
+                                        Net_close(myServerSocket);
+                                        return;
+                                }
 #ifdef HAVE_OPENSSL
-                        mySSLServerConnection->server_socket = myServerSocket;
+                                mySSLServerConnection->server_socket = myServerSocket;
 #endif
+                        }
+                        while (! stopped) {
+                                Socket_T S = _socketProducer(myServerSocket, Run.httpd.flags);
+                                if (S)
+                                        http_processor(S);
+                        }
+                        delete_ssl_server_socket(mySSLServerConnection);
+                        Net_close(myServerSocket);
+                } else {
+                        LogError("HTTP server: not available -- could not create a server socket at port %d -- %s\n", Run.httpd.socket.net.port, STRERROR);
                 }
-                while (! stopped) {
-                        Socket_T S = _socketProducer(myServerSocket, port, mySSLServerConnection);
-                        if (S)
-                                http_processor(S);
+        } else if (Run.httpd.flags & Httpd_Unix) {
+                if ((myServerSocket = create_server_socket_unix(Run.httpd.socket.unix.path, 1024)) >= 0) {
+                        while (! stopped) {
+                                Socket_T S = _socketProducer(myServerSocket, Run.httpd.flags);
+                                if (S)
+                                        http_processor(S);
+                        }
+                        Net_close(myServerSocket);
+                } else {
+                        LogError("HTTP server: not available -- could not create a server socket at %s -- %s\n", Run.httpd.socket.unix.path, STRERROR);
                 }
-                delete_ssl_server_socket(mySSLServerConnection);
-                Net_close(myServerSocket);
-        } else {
-                LogError("HTTP server: not available -- could not create a socket at port %d -- %s\n", port, STRERROR);
         }
 }
 

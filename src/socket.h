@@ -83,17 +83,27 @@ Socket_T socket_create_t(const char *host, int port, int type, Socket_Family fam
 
 
 /**
+ * Create a new unix Socket for given path for connect and read.
+ * Otherwise, same as socket_new().
+ * @param path The path to unix socket
+ * @param type The socket type to use (SOCKET_TCP or SOCKET_UPD)
+ * @param timeout The timeout value in milliseconds
+ * @return The connected Socket or NULL if an error occurred
+ */
+Socket_T socket_create_u(const char *path, int type, int timeout);
+
+
+/**
  * Factory method for creating a Socket object from an accepted
  * socket. The given socket must be a socket created from accept(2).
  * If the sslserver context is non-null the socket will support
  * ssl. This method does only support TCP sockets.
  * @param socket The accepted socket
- * @param remote_host The remote host from where the socket connection originated
- * @param port The localhost port number from where the connection arrived.
+ * @param addr The socket address
  * @param sslserver A ssl server connection context, may be NULL
  * @return A Socket or NULL if an error occurred
  */
-Socket_T socket_create_a(int socket, const char *remote_host, int port, void *sslserver);
+Socket_T socket_create_a(int socket, struct sockaddr *addr, void *sslserver);
 
 
 /**

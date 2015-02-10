@@ -96,8 +96,8 @@ void gc() {
                 _gc_service_list(&servicelist);
         if (servicegrouplist)
                 _gc_servicegroup(&servicegrouplist);
-        if (Run.credentials)
-                _gcath(&Run.credentials);
+        if (Run.httpd.credentials)
+                _gcath(&Run.httpd.credentials);
         if (Run.maillist)
                 gc_mail_list(&Run.maillist);
         if (Run.mailservers)
@@ -108,9 +108,13 @@ void gc() {
                 gc_event(&Run.eventlist);
         FREE(Run.eventlist_dir);
         FREE(Run.mygroup);
-        FREE(Run.httpsslpem);
-        FREE(Run.httpsslclientpem);
-        FREE(Run.bind_addr);
+        if (Run.httpd.flags & Httpd_Net) {
+                FREE(Run.httpd.socket.net.address);
+                FREE(Run.httpd.socket.net.ssl.pem);
+                FREE(Run.httpd.socket.net.ssl.clientpem);
+        } else if (Run.httpd.flags & Httpd_Unix) {
+                FREE(Run.httpd.socket.unix.path);
+        }
         FREE(Run.MailFormat.from);
         FREE(Run.MailFormat.subject);
         FREE(Run.MailFormat.message);

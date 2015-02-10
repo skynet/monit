@@ -453,7 +453,7 @@ static char *get_date(char *result, int size) {
  * Return this server name + version
  */
 static char *get_server(char *result, int size) {
-        snprintf(result, size, "%s %s", SERVER_NAME, Run.httpdsig ? SERVER_VERSION : "");
+        snprintf(result, size, "%s %s", SERVER_NAME, Run.httpd.flags & Httpd_Signature ? SERVER_VERSION : "");
         return result;
 }
 
@@ -697,7 +697,7 @@ static void destroy_entry(void *p) {
  * Do Basic Authentication if this auth. style is allowed.
  */
 static int is_authenticated(HttpRequest req, HttpResponse res) {
-        if (Run.credentials) {
+        if (Run.httpd.credentials) {
                 if (! basic_authenticate(req)) {
                         send_error(res, SC_UNAUTHORIZED, "You are not authorized to access monit. Either you supplied the wrong credentials (e.g. bad password), or your browser doesn't understand how to supply the credentials required");
                         set_header(res, "WWW-Authenticate", "Basic realm=\"monit\"");

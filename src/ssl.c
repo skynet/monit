@@ -657,14 +657,14 @@ static int verify_init(ssl_server_connection *ssl_server) {
         }
 
         if (stat(ssl_server->clientpemfile, &stat_buf) == -1) {
-                LogError("Cannot stat the SSL pem path '%s' -- %s\n", Run.httpsslclientpem, STRERROR);
+                LogError("Cannot stat the SSL pem path '%s' -- %s\n", Run.httpd.socket.net.ssl.clientpem, STRERROR);
                 return FALSE;
         }
 
         if (S_ISDIR(stat_buf.st_mode)) {
 
                 if (! SSL_CTX_load_verify_locations(ssl_server->ctx, NULL , ssl_server->clientpemfile)) {
-                        LogError("Error setting verify directory to %s -- %s\n", Run.httpsslclientpem, SSLERROR);
+                        LogError("Error setting verify directory to %s -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
                         return FALSE;
                 }
 
@@ -682,7 +682,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
         } else if (S_ISREG(stat_buf.st_mode)) {
 
                 if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->clientpemfile, NULL)) {
-                        LogError("Error loading verify certificates from %s -- %s\n", Run.httpsslclientpem, SSLERROR);
+                        LogError("Error loading verify certificates from %s -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
                         return FALSE;
                 }
 
@@ -743,7 +743,7 @@ static int check_preverify(X509_STORE_CTX *ctx) {
                 return FALSE;
         }
 
-        if (Run.allowselfcert && (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
+        if (Run.httpd.socket.net.ssl.allowselfcert && (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
                 /* Let's accept self signed certs for the moment! */
                 LogInfo("SSL connection accepted with self signed certificate\n");
                 ctx->error = 0;

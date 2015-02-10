@@ -90,8 +90,8 @@ static volatile int running = FALSE;
  * message if monit httpd _should_ start but can't.
  */
 int can_http() {
-        if (Run.dohttpd && Run.isdaemon) {
-                if (! Engine_hasHostsAllow() && ! Run.credentials) {
+        if ((Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) && Run.isdaemon) {
+                if (! Engine_hasHostsAllow() && ! Run.httpd.credentials) {
                         LogError("%s: monit httpd not started since no connect allowed\n", prog);
                         return FALSE;
 
@@ -117,7 +117,10 @@ void monit_http(int action) {
                         running = FALSE;
                         break;
                 case START_HTTP:
-                        LogInfo("Starting Monit HTTP server at [%s:%d]\n", Run.bind_addr ? Run.bind_addr : "*", Run.httpdport);
+                        if (Run.httpd.flags & Httpd_Net)
+                                LogInfo("Starting Monit HTTP server at [%s]:%d\n", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "*", Run.httpd.socket.net.port);
+                        else if (Run.httpd.flags & Httpd_Unix)
+                                LogInfo("Starting Monit HTTP server at %s\n", Run.httpd.socket.unix.path);
                         Thread_create(thread, thread_wrapper, NULL);
                         LogInfo("Monit HTTP server started\n");
                         running = TRUE;
@@ -136,7 +139,7 @@ static void *thread_wrapper(void *arg) {
         sigset_t ns;
         /* Block collective signals in the http thread. The http server is taken down gracefully by signaling the main monit thread */
         set_signal_block(&ns, NULL);
-        Engine_start(Run.httpdport, 1024, Run.bind_addr);
+        Engine_start();
         return NULL;
 }
 

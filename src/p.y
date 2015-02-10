@@ -670,12 +670,6 @@ setmailformat   : SET MAILFORMAT '{' formatoptionlist '}' {
                  }
                 ;
 
-sethttpd        : SET HTTPD PORT NUMBER httpdlist {
-                   Run.dohttpd = TRUE;
-                   Run.httpdport = $4;
-                 }
-                ;
-
 mailserverlist  : mailserver
                 | mailserverlist mailserver
                 ;
@@ -717,27 +711,45 @@ mailserver      : STRING username password sslversion certmd5 {
                   }
                 ;
 
-httpdlist       : /* EMPTY */
-                | httpdlist httpdoption
+sethttpd        : SET HTTPD PORT NUMBER httpdnetlist {
+                        Run.httpd.flags |= Httpd_Net;
+                        Run.httpd.socket.net.port = $4;
+                 }
+                | SET HTTPD UNIXSOCKET PATH httpdunixlist {
+                        Run.httpd.flags |= Httpd_Unix;
+                        Run.httpd.socket.unix.path = $4;
+                 }
                 ;
 
-httpdoption     : ssl
+httpdnetlist    : /* EMPTY */
+                | httpdnetlist httpdnetoption
+                ;
+
+httpdnetoption  : ssl
                 | signature
                 | bindaddress
                 | allow
                 ;
 
+httpdunixlist   : /* EMPTY */
+                | httpdunixlist httpdunixoption
+                ;
+
+httpdunixoption : signature
+                | allow
+                ;
+
 ssl             : ssldisable optssllist {
-                    Run.httpdssl = FALSE;
+                        Run.httpd.flags &= ~Httpd_Ssl;
                   }
                 | sslenable optssllist {
-                    Run.httpdssl = TRUE;
-                    if (! have_ssl())
-                      yyerror("SSL is not supported");
-                    else if (! Run.httpsslpem)
-                      yyerror("SSL server PEM file is required (pemfile option)");
-                    else if (! file_checkStat(Run.httpsslpem, "SSL server PEM file", S_IRWXU))
-                      yyerror("SSL server PEM file permissions check failed");
+                        Run.httpd.flags |= Httpd_Ssl;
+                        if (! have_ssl())
+                                yyerror("SSL is not supported");
+                        else if (! Run.httpd.socket.net.ssl.pem)
+                                yyerror("SSL server PEM file is required (pemfile option)");
+                        else if (! file_checkStat(Run.httpd.socket.net.ssl.pem, "SSL server PEM file", S_IRWXU))
+                                yyerror("SSL server PEM file permissions check failed");
                   }
                 ;
 
@@ -758,8 +770,12 @@ ssldisable      : HTTPDSSL DISABLE
                 | DISABLE HTTPDSSL
                 ;
 
-signature       : sigenable  { Run.httpdsig = TRUE; }
-                | sigdisable { Run.httpdsig = FALSE; }
+signature       : sigenable  {
+                        Run.httpd.flags |= Httpd_Signature;
+                  }
+                | sigdisable {
+                        Run.httpd.flags &= ~Httpd_Signature;
+                  }
                 ;
 
 sigenable       : SIGNATURE ENABLE
@@ -770,87 +786,87 @@ sigdisable      : SIGNATURE DISABLE
                 | DISABLE SIGNATURE
                 ;
 
-bindaddress     : ADDRESS STRING { Run.bind_addr = $2; }
+bindaddress     : ADDRESS STRING {
+                        Run.httpd.socket.net.address = $2;
+                  }
                 ;
 
 pemfile         : PEMFILE PATH {
-                    Run.httpsslpem = $2;
+                        Run.httpd.socket.net.ssl.pem = $2;
                   }
                 ;
 
 clientpemfile   : CLIENTPEMFILE PATH {
-                    Run.httpsslclientpem = $2;
-                    Run.clientssl = TRUE;
-                    if (! file_checkStat(Run.httpsslclientpem, "SSL client PEM file", S_IRWXU | S_IRGRP | S_IROTH))
-                      yyerror2("SSL client PEM file has too loose permissions");
+                        Run.httpd.socket.net.ssl.clientpem = $2;
+                        if (! file_checkStat(Run.httpd.socket.net.ssl.clientpem, "SSL client PEM file", S_IRWXU | S_IRGRP | S_IROTH))
+                                yyerror2("SSL client PEM file has too loose permissions");
                   }
                 ;
 
 allowselfcert   : ALLOWSELFCERTIFICATION {
-                    Run.allowselfcert = TRUE;
+                        Run.httpd.socket.net.ssl.allowselfcert = TRUE;
                   }
                 ;
 
 allow           : ALLOW STRING':'STRING readonly {
-                    addcredentials($2,$4, DIGEST_CLEARTEXT, $<number>5);
+                        addcredentials($2,$4, DIGEST_CLEARTEXT, $<number>5);
                   }
                 | ALLOW '@'STRING readonly {
 #ifdef HAVE_LIBPAM
-                    addpamauth($3, $<number>4);
+                        addpamauth($3, $<number>4);
 #else
-                    yyerror("PAM is not supported");
-                    FREE($3);
+                        yyerror("PAM is not supported");
+                        FREE($3);
 #endif
                   }
                 | ALLOW PATH {
-                    addhtpasswdentry($2, NULL, DIGEST_CLEARTEXT);
-                    FREE($2);
+                        addhtpasswdentry($2, NULL, DIGEST_CLEARTEXT);
+                        FREE($2);
                   }
                 | ALLOW CLEARTEXT PATH {
-                    addhtpasswdentry($3, NULL, DIGEST_CLEARTEXT);
-                    FREE($3);
+                        addhtpasswdentry($3, NULL, DIGEST_CLEARTEXT);
+                        FREE($3);
                   }
                 | ALLOW MD5HASH PATH {
-                    addhtpasswdentry($3, NULL, DIGEST_MD5);
-                    FREE($3);
+                        addhtpasswdentry($3, NULL, DIGEST_MD5);
+                        FREE($3);
                   }
                 | ALLOW CRYPT PATH {
-                    addhtpasswdentry($3, NULL, DIGEST_CRYPT);
-                    FREE($3);
+                        addhtpasswdentry($3, NULL, DIGEST_CRYPT);
+                        FREE($3);
                   }
                 | ALLOW PATH {
-                    htpasswd_file = $2;
-                    digesttype = CLEARTEXT;
+                        htpasswd_file = $2;
+                        digesttype = CLEARTEXT;
                   }
                   allowuserlist {
-                    FREE(htpasswd_file);
+                        FREE(htpasswd_file);
                   }
                 | ALLOW CLEARTEXT PATH {
-                    htpasswd_file = $3;
-                    digesttype = DIGEST_CLEARTEXT;
+                        htpasswd_file = $3;
+                        digesttype = DIGEST_CLEARTEXT;
                   }
                   allowuserlist {
-                    FREE(htpasswd_file);
+                        FREE(htpasswd_file);
                   }
                 | ALLOW MD5HASH PATH {
-                    htpasswd_file = $3;
-                    digesttype = DIGEST_MD5;
+                        htpasswd_file = $3;
+                        digesttype = DIGEST_MD5;
                   }
                   allowuserlist {
-                    FREE(htpasswd_file);
+                        FREE(htpasswd_file);
                   }
                 | ALLOW CRYPT PATH {
-                    htpasswd_file = $3;
-                    digesttype = DIGEST_CRYPT;
+                        htpasswd_file = $3;
+                        digesttype = DIGEST_CRYPT;
                   }
                   allowuserlist {
-                    FREE(htpasswd_file);
+                        FREE(htpasswd_file);
                   }
                 | ALLOW STRING {
-                    if (! (Engine_addNetAllow($2) || Engine_addHostAllow($2))) {
-                      yyerror2("Erroneous network or host identifier %s", $2);
-                    }
-                    FREE($2);
+                        if (! (Engine_addNetAllow($2) || Engine_addHostAllow($2)))
+                                yyerror2("Erroneous network or host identifier %s", $2);
+                        FREE($2);
                   }
                 ;
 
@@ -858,8 +874,10 @@ allowuserlist   : allowuser
                 | allowuserlist allowuser
                 ;
 
-allowuser       : STRING { addhtpasswdentry(htpasswd_file, $1, digesttype);
-                           FREE($1); }
+allowuser       : STRING {
+                        addhtpasswdentry(htpasswd_file, $1, digesttype);
+                        FREE($1);
+                  }
                 ;
 
 readonly        : /* EMPTY */ { $<number>$ = FALSE; }
@@ -2257,43 +2275,37 @@ static void preparse() {
         /* Set instance incarnation ID */
         time(&Run.incarnation);
         /* Reset lexer */
-        buffer_stack_ptr        = 0;
-        lineno                  = 1;
-        arglineno               = 1;
-        argcurrentfile          = NULL;
-        argyytext               = NULL;
+        buffer_stack_ptr            = 0;
+        lineno                      = 1;
+        arglineno                   = 1;
+        argcurrentfile              = NULL;
+        argyytext                   = NULL;
         /* Reset parser */
-        Run.stopped             = FALSE;
-        Run.dolog               = FALSE;
-        Run.dohttpd             = FALSE;
-        Run.doaction            = FALSE;
-        Run.httpdsig            = TRUE;
-        Run.dommonitcredentials = TRUE;
-        Run.mmonitcredentials   = NULL;
-        Run.credentials         = NULL;
-        Run.httpdssl            = FALSE;
-        Run.httpsslpem          = NULL;
-        Run.httpsslclientpem    = NULL;
-        Run.clientssl           = FALSE;
-        Run.allowselfcert       = FALSE;
-        Run.mailserver_timeout  = SMTP_TIMEOUT;
-        Run.bind_addr           = NULL;
-        Run.eventlist           = NULL;
-        Run.eventlist_dir       = NULL;
-        Run.eventlist_slots     = -1;
-        Run.system              = NULL;
-        Run.expectbuffer        = STRLEN;
-        Run.mmonits             = NULL;
-        Run.maillist            = NULL;
-        Run.mailservers         = NULL;
-        Run.MailFormat.from     = NULL;
-        Run.MailFormat.replyto  = NULL;
-        Run.MailFormat.subject  = NULL;
-        Run.MailFormat.message  = NULL;
-        depend_list             = NULL;
-        Run.handler_init        = TRUE;
+        Run.stopped                 = FALSE;
+        Run.dolog                   = FALSE;
+        Run.doaction                = FALSE;
+        Run.dommonitcredentials     = TRUE;
+        Run.mmonitcredentials       = NULL;
+        Run.httpd.flags             = Httpd_Disabled | Httpd_Signature;
+        Run.httpd.credentials             = NULL;
+        memset(&(Run.httpd.socket), 0, sizeof(Run.httpd.socket));
+        Run.mailserver_timeout      = SMTP_TIMEOUT;
+        Run.eventlist               = NULL;
+        Run.eventlist_dir           = NULL;
+        Run.eventlist_slots         = -1;
+        Run.system                  = NULL;
+        Run.expectbuffer            = STRLEN;
+        Run.mmonits                 = NULL;
+        Run.maillist                = NULL;
+        Run.mailservers             = NULL;
+        Run.MailFormat.from         = NULL;
+        Run.MailFormat.replyto      = NULL;
+        Run.MailFormat.subject      = NULL;
+        Run.MailFormat.message      = NULL;
+        depend_list                 = NULL;
+        Run.handler_init            = TRUE;
         #ifdef OPENSSL_FIPS
-        Run.fipsEnabled         = FALSE;
+        Run.fipsEnabled             = FALSE;
         #endif
         for (i = 0; i <= HANDLER_MAX; i++)
                 Run.handler_queue[i] = 0;
@@ -2359,10 +2371,10 @@ static void postparse() {
         }
 
         if (Run.mmonits) {
-                if (Run.dohttpd) {
+                if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
                         if (Run.dommonitcredentials) {
                                 Auth_T c;
-                                for (c = Run.credentials; c; c = c->next) {
+                                for (c = Run.httpd.credentials; c; c = c->next) {
                                         if (c->digesttype == DIGEST_CLEARTEXT && ! c->is_readonly) {
                                                 Run.mmonitcredentials = c;
                                                 break;
@@ -3605,15 +3617,14 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
 
 #ifdef HAVE_LIBPAM
 static void addpamauth(char* groupname, int readonly) {
-        Auth_T c = NULL;
         Auth_T prev = NULL;
 
         ASSERT(groupname);
 
-        if (Run.credentials == NULL)
-                NEW(Run.credentials);
+        if (! Run.httpd.credentials)
+                NEW(Run.httpd.credentials);
 
-        c = Run.credentials;
+        Auth_T c = Run.httpd.credentials;
         do {
                 if (c->groupname != NULL && IS(c->groupname, groupname)) {
                         yywarning2("PAM group %s was added already, entry ignored", groupname);
@@ -3650,9 +3661,9 @@ static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
         ASSERT(uname);
         ASSERT(passwd);
 
-        if (Run.credentials == NULL) {
-                NEW(Run.credentials);
-                c = Run.credentials;
+        if (! Run.httpd.credentials) {
+                NEW(Run.httpd.credentials);
+                c = Run.httpd.credentials;
         } else {
 
                 if (Util_getUserCredentials(uname) != NULL) {
@@ -3662,7 +3673,7 @@ static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
                         return FALSE;
                 }
 
-                c = Run.credentials;
+                c = Run.httpd.credentials;
 
                 while (c->next != NULL)
                         c = c->next;

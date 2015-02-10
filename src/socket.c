@@ -217,24 +217,49 @@ Socket_T socket_create_t(const char *host, int port, int type, Socket_Family fam
 }
 
 
-Socket_T socket_create_a(int socket, const char *remote_host, int port, void *sslserver) {
+Socket_T socket_create_u(const char *path, int type, int timeout) {
+        ASSERT(path);
+        ASSERT(timeout > 0);
+        timeout = timeout * 1000; // Internally milliseconds is used
+        int proto = type == SOCKET_UDP ? SOCK_DGRAM : SOCK_STREAM;
+        int s = create_unix_socket(path, proto, timeout);
+        if (s != -1) {
+                Socket_T S;
+                NEW(S);
+                S->socket = s;
+                S->type = proto;
+                S->family = Socket_Unix;
+                S->timeout = timeout;
+                S->connection_type = TYPE_LOCAL;
+                return S;
+        }
+        return NULL;
+}
+
+
+Socket_T socket_create_a(int socket, struct sockaddr *addr, void *sslserver) {
         ASSERT(socket >= 0);
-        ASSERT(remote_host);
+        ASSERT(addr);
         Socket_T S;
         NEW(S);
-        S->port = port;
         S->socket = socket;
-        S->type = SOCK_STREAM;
-        S->family = Socket_Ip4; //FIXME: we use this with IPv4 HTTP engine currently => we don't need to identify the socket family at this point and hardcoded to IPv4 - change to support IPv6 when HTTP GUI will support it
         S->timeout = NET_TIMEOUT; // milliseconds
-        S->host = Str_dup(remote_host);
         S->connection_type = TYPE_ACCEPT;
-        if (sslserver) {
-                S->sslserver = sslserver;
-                if (! (S->ssl = insert_accepted_ssl_socket(S->sslserver)) || ! embed_accepted_ssl_socket(S->ssl, S->socket)) {
-                        socket_free(&S);
-                        return NULL;
+        S->type = SOCK_STREAM;
+        if (addr->sa_family == AF_INET) {
+                struct sockaddr_in *a = (struct sockaddr_in *)addr;
+                S->family = Socket_Ip4;
+                S->port = ntohs(a->sin_port);
+                S->host = Str_dup(inet_ntoa(a->sin_addr));
+                if (sslserver) {
+                        S->sslserver = sslserver;
+                        if (! (S->ssl = insert_accepted_ssl_socket(S->sslserver)) || ! embed_accepted_ssl_socket(S->ssl, S->socket)) {
+                                socket_free(&S);
+                                return NULL;
+                        }
                 }
+        } else {
+                S->family = Socket_Unix;
         }
         return S;
 }

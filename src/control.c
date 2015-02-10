@@ -359,7 +359,11 @@ int control_service_daemon(const char *S, const char *action) {
                 return FALSE;
         }
         // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
-        Socket_T socket = socket_create_t(Run.bind_addr ? Run.bind_addr : "localhost", Run.httpdport, SOCKET_TCP, Socket_Ip4, (Ssl_T){.use_ssl = Run.httpdssl, .clientpemfile = Run.httpsslclientpem}, NET_TIMEOUT);
+        Socket_T socket;
+        if (Run.httpd.flags & Httpd_Net)
+                socket = socket_create_t(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, SOCKET_TCP, Socket_Ip4, (Ssl_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
+        else
+                socket = socket_create_u(Run.httpd.socket.unix.path, SOCKET_TCP, NET_TIMEOUT);
         if (! socket) {
                 LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
                 return FALSE;

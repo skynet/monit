@@ -165,13 +165,17 @@
 
 static char *_addressToString(const struct sockaddr *addr, socklen_t addrlen, char *buf, int buflen) {
         int oerrno = errno;
-        char ip[46], port[6];
-        int status = getnameinfo(addr, addrlen, ip, sizeof(ip), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
-        if (status) {
-                LogError("Cannot get address string -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                *buf = 0;
+        if (addr->sa_family == AF_UNIX) {
+                snprintf(buf, buflen, "%s", ((struct sockaddr_un *)addr)->sun_path);
         } else {
-                snprintf(buf, buflen, "[%s]:%s", ip, port);
+                char ip[46], port[6];
+                int status = getnameinfo(addr, addrlen, ip, sizeof(ip), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
+                if (status) {
+                        LogError("Cannot get address string -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                        *buf = 0;
+                } else {
+                        snprintf(buf, buflen, "[%s]:%s", ip, port);
+                }
         }
         errno = oerrno;
         return buf;
@@ -361,7 +365,7 @@ int create_unix_socket(const char *pathname, int type, int timeout) {
 
 
 //FIXME: we support IPv4 only currently
-int create_server_socket(int port, int backlog, const char *bindAddr) {
+int create_server_socket(const char *address, int port, int backlog) {
         int s = socket(AF_INET, SOCK_STREAM, 0);
         if (s < 0) {
                 LogError("Cannot create socket -- %s\n", STRERROR);
@@ -369,13 +373,13 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
         }
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(struct sockaddr_in));
-        if (bindAddr) {
+        if (address) {
                 struct addrinfo *result, hints = {
                         .ai_family = AF_INET
                 };
-                int status = getaddrinfo(bindAddr, NULL, &hints, &result);
+                int status = getaddrinfo(address, NULL, &hints, &result);
                 if (status) {
-                        LogError("Cannot translate '%s' to IP address -- %s\n", bindAddr, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                        LogError("Cannot translate '%s' to IP address -- %s\n", address, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                         goto error;
                 }
                 memcpy(&addr, result->ai_addr, result->ai_addrlen);
@@ -397,6 +401,38 @@ int create_server_socket(int port, int backlog, const char *bindAddr) {
                 goto error;
         }
         if (bind(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+                LogError("Cannot bind -- %s\n", STRERROR);
+                goto error;
+        }
+        if (listen(s, backlog) < 0) {
+                LogError("Cannot listen -- %s\n", STRERROR);
+                goto error;
+        }
+        return s;
+error:
+        if (close(s) < 0)
+                LogError("Socket %d close failed -- %s\n", s, STRERROR);
+        return -1;
+}
+
+
+int create_server_socket_unix(const char *path, int backlog) {
+        int s = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (s < 0) {
+                LogError("Cannot create socket -- %s\n", STRERROR);
+                return -1;
+        }
+        struct sockaddr_un addr = {
+                .sun_family = AF_UNIX
+        };
+        snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", path);
+        if (! Net_setNonBlocking(s))
+                goto error;
+        if (fcntl(s, F_SETFD, FD_CLOEXEC) == -1) {
+                LogError("Cannot set close on exec option -- %s\n", STRERROR);
+                goto error;
+        }
+        if (bind(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) < 0) {
                 LogError("Cannot bind -- %s\n", STRERROR);
                 goto error;
         }

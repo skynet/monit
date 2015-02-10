@@ -327,7 +327,7 @@ static void do_reinit() {
         Run.doreload = FALSE;
 
         /* Stop http interface */
-        if (Run.dohttpd)
+        if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix)
                 monit_http(STOP_HTTP);
 
         /* Save the current state (no changes are possible now since the http thread is stopped) */
@@ -490,11 +490,14 @@ static void do_default() {
                         exit(0);
 
                 Run.once = FALSE;
-                if (can_http())
-                        LogInfo("Starting Monit " VERSION " daemon with http interface at [%s:%d]\n",
-                                Run.bind_addr ? Run.bind_addr : "*", Run.httpdport);
-                else
-                        LogInfo("Starting Monit " VERSION " daemon\n");
+                if (can_http()) {
+                        if (Run.httpd.flags & Httpd_Net)
+                                LogInfo("Starting Monit %s daemon with http interface at [%s]:%d\n", VERSION, Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "*", Run.httpd.socket.net.port);
+                        else if (Run.httpd.flags & Httpd_Unix)
+                                LogInfo("Starting Monit %s daemon with http interface at %s\n", VERSION, Run.httpd.socket.unix.path);
+                } else {
+                        LogInfo("Starting Monit %s daemon\n", VERSION);
+                }
 
                 if (Run.startdelay)
                         LogInfo("Monit start delay set -- pause for %ds\n", Run.startdelay);

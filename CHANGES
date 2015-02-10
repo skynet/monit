@@ -4,6 +4,20 @@
 
 Version 5.12
 
+New: Support for testing IPv6 hosts with ping and TCP/UDP connections. Example:
+    check host myhost with address "2001:db8::1234"
+        if failed ping then alert
+        if failed port 80 then alert
+IPv6 is supported also for mailserver and M/Monit with IPv6-enabled.
+Monit HTTP interface listens still on IPv4 only.
+
+New: Support for Monit HTTP interface on unix socket for easier deployment on
+virtualisation platforms which share the IP address for containers, such as Docker.
+Note: Either unixsocket or TCP port can be used - not both at once. Example:
+    set httpd
+        unixsocket /var/run/monit.sock
+        allow myuser:mypassword
+
 New: Support for multiple existence tests (available in the process, file, directory
 and fifo check context):
     if does not exist then alert
@@ -12,13 +26,6 @@ and fifo check context):
 New: Support for multiple fsflag tests (available in the filesystem check context):
     if changed fsflags then alert
     if changed fsflags for 10 cycles then exec "/usr/bin/myscript.sh"
-
-New: Support for testing IPv6 hosts with ping and TCP/UDP connections. Example:
-    check host myhost with address "2001:db8::1234"
-        if failed ping then alert
-        if failed port 80 then alert
-IPv6 is supported also for mailserver and future M/Monit version when IPv6-enabled
-M/Monit is released. Monit HTTP interface listens still on IPv4 only.
 
 New: Space usage test now tests the free blocks without accounting for reserved
 blocks. Previously Monit computed the space usage by subtracting blocks free for

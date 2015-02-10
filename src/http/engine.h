@@ -29,11 +29,8 @@
 
 /**
  * Start the HTTPD server
- * @param port The Port number to start the server at
- * @param backlog The maximum length of the incomming connection queue
- * @param addr the local address the server will bind to
  */
-void Engine_start(int port, int backlog, char *addr);
+void Engine_start();
 
 
 /**

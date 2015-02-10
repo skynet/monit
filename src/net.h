@@ -95,18 +95,28 @@ int create_unix_socket(const char *pathname, int type, int timeout);
 
 
 /**
- * Create a blocking server socket and bind it to the specified local
+ * Create a non-blocking server socket and bind it to the specified local
  * port number, with the specified backlog. Set a socket option to
  * make the port reusable again. If a bind address is given the socket
  * will only accept connect requests to this addresses. If the bind
  * address is NULL it will accept connections on any/all local
  * addresses
+ * @param address the local address the server will bind to
  * @param port The localhost port number to open
  * @param backlog The maximum queue length for incomming connections
- * @param bindAddr the local address the server will bind to
  * @return The socket ready for accept, or -1 if an error occured.
  */
-int create_server_socket(int port, int backlog, const char *bindAddr);
+int create_server_socket(const char *address, int port, int backlog);
+
+
+/**
+ * Create a non-blocking server socket and bind it to the specified unix
+ * socket path, with the specified backlog.
+ * @param address the path to the unix socket
+ * @param backlog The maximum queue length for incomming connections
+ * @return The socket ready for accept, or -1 if an error occured.
+ */
+int create_server_socket_unix(const char *path, int backlog);
 
 
 /**
