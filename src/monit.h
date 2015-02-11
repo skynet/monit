@@ -338,7 +338,7 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #undef MIN
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
-#define IS(a,b)  ((a&&b) ? !strcasecmp(a, b) : 0)
+#define IS(a,b)  ((a && b) ? Str_isEqual(a, b) : false)
 #define DEBUG LogDebug
 #define FLAG(x, y) (x & y) == y
 #define NVLSTR(x) (x ? x : "")

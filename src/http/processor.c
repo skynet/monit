@@ -237,7 +237,7 @@ void set_header(HttpResponse res, const char *name, const char *value) {
         if (res->headers) {
                 HttpHeader n, p;
                 for (n = p = res->headers; p; n = p, p = p->next) {
-                        if (! strcasecmp(p->name, name)) {
+                        if (IS(p->name, name)) {
                                 FREE(p->value);
                                 p->value = Str_dup(value);
                                 destroy_entry(h);
@@ -281,7 +281,7 @@ void set_content_type(HttpResponse res, const char *mime) {
  */
 const char *get_header(HttpRequest req, const char *name) {
         for (HttpHeader p = req->headers; p; p = p->next)
-                if (! strcasecmp(p->name, name))
+                if (IS(p->name, name))
                         return (p->value);
         return NULL;
 }
@@ -295,7 +295,7 @@ const char *get_header(HttpRequest req, const char *name) {
  */
 const char *get_parameter(HttpRequest req, const char *name) {
         for (HttpParameter p = req->params; p; p = p->next)
-                if (! strcasecmp(p->name, name))
+                if (IS(p->name, name))
                         return (p->value);
         return NULL;
 }
@@ -562,7 +562,7 @@ static void create_headers(HttpRequest req) {
         while (true) {
                 if (! socket_readln(S, line, sizeof(line)))
                         break;
-                if (! strcasecmp(line, "\r\n") || ! strcasecmp(line, "\n"))
+                if (IS(line, "\r\n") || IS(line, "\n"))
                         break;
                 if (NULL != (value = strchr(line, ':'))) {
                         NEW(header);

@@ -70,7 +70,7 @@ char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
         }
         while ((mnt = getmntent(mntfd)) != NULL) {
                 /* Try to compare the the filesystem as is, if failed, try to use the symbolic link target */
-                if (IS(dev, mnt->mnt_fsname) || (realpath(mnt->mnt_fsname, buf) && ! strcasecmp(dev, buf))) {
+                if (IS(dev, mnt->mnt_fsname) || (realpath(mnt->mnt_fsname, buf) && IS(dev, buf))) {
                         snprintf(buf, buflen, "%s", mnt->mnt_dir);
                         endmntent(mntfd);
                         return buf;

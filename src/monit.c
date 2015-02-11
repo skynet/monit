@@ -404,7 +404,7 @@ static void do_action(char **args) {
 
                         if (Run.mygroup) {
                                 for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
-                                        if (! strcasecmp(Run.mygroup, sg->name)) {
+                                        if (IS(Run.mygroup, sg->name)) {
                                                 for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
                                                         if (! _control_service(sgm->name, action))
                                                                 errors++;

@@ -2526,7 +2526,7 @@ static void addservicegroup(char *name) {
 
         /* Check if service group with the same name is defined already */
         for (g = servicegrouplist; g; g = g->next)
-                if (! strcasecmp(g->name, name))
+                if (IS(g->name, name))
                         break;
 
         if (! g) {
@@ -3371,7 +3371,7 @@ static void addmmonit(URL_T url, int timeout, int sslversion, char *certmd5) {
 
         NEW(c);
         c->url = url;
-        if (! strcmp(c->url->protocol, "https")) {
+        if (IS(c->url->protocol, "https")) {
                 if (! have_ssl()) {
                         yyerror("SSL check cannot be activated. SSL is not supported");
                 } else {
@@ -3596,7 +3596,7 @@ static void addhtpasswdentry(char *filename, char *username, Digest_Type dtype) 
                 if (username == NULL) {
                         if (addcredentials(ht_username, ht_passwd, dtype, false))
                                 credentials_added++;
-                } else if (strcmp(username, ht_username) == 0)  {
+                } else if (Str_cmp(username, ht_username) == 0)  {
                         if (addcredentials(ht_username, ht_passwd, dtype, false))
                                 credentials_added++;
                 } else {

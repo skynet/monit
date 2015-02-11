@@ -678,7 +678,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                         return;
                 }
                 for (HttpParameter p = req->params; p; p = p->next) {
-                        if (! strcasecmp(p->name, "service")) {
+                        if (IS(p->name, "service")) {
                                 s  = Util_getService(p->value);
                                 if (! s) {
                                         send_error(res, SC_BAD_REQUEST, "There is no service named \"%s\"", p->value ? p->value : "");
@@ -764,7 +764,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer, "</td></tr>");
         for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next)
                 for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
-                        if (! strcasecmp(sgm->name, s->name))
+                        if (IS(sgm->name, s->name))
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Group</td><td class='blue-text'>%s</td></tr>", sg->name);
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Monitoring mode</td><td>%s</td></tr>", modenames[s->mode]);

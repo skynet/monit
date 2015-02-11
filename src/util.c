@@ -900,7 +900,7 @@ void Util_printService(Service_T s) {
 
         for (ServiceGroup_T o = servicegrouplist; o; o = o->next) {
                 for (ServiceGroupMember_T om = o->members; om; om = om->next) {
-                        if (! strcasecmp(om->name, s->name)) {
+                        if (IS(om->name, s->name)) {
                                 if (! sgheader) {
                                         printf(" %-20s = %s", "Group", o->name);
                                         sgheader = true;
@@ -1648,7 +1648,7 @@ boolean_t Util_checkCredentials(char *uname, char *outside) {
                         return false;
         }
 
-        if (strcmp(outside_crypt,c->passwd) == 0)
+        if (Str_cmp(outside_crypt, c->passwd) == 0)
                 return true;
         return false;
 }
