@@ -128,7 +128,7 @@ static void Event_queue_update(Event_T, const char *);
  * @param action Description of the event action
  * @param s Optional message describing the event
  */
-void Event_post(Service_T service, long id, short state, EventAction_T action, char *s, ...) {
+void Event_post(Service_T service, long id, State_Type state, EventAction_T action, char *s, ...) {
         ASSERT(service);
         ASSERT(action);
         ASSERT(s);
@@ -280,7 +280,7 @@ struct timeval *Event_get_collected(Event_T E) {
  * @param E An event object
  * @return The Event raw state
  */
-short Event_get_state(Event_T E) {
+State_Type Event_get_state(Event_T E) {
         ASSERT(E);
         return E->state;
 }
@@ -293,12 +293,12 @@ short Event_get_state(Event_T E) {
  * @param S Actual posted state
  * @return The event state
  */
-boolean_t Event_check_state(Event_T E, short S) {
-        int       count = 0;
-        short     state = (S == State_Succeeded || S == State_ChangedNot) ? 0 : 1; /* translate to 0/1 class */
-        Action_T  action;
-        Service_T service;
-        long long flag;
+boolean_t Event_check_state(Event_T E, State_Type S) {
+        int        count = 0;
+        State_Type state = (S == State_Succeeded || S == State_ChangedNot) ? State_Succeeded : State_Failed; /* translate to 0/1 class */
+        Action_T   action;
+        Service_T  service;
+        long long  flag;
 
         ASSERT(E);
 
@@ -394,7 +394,7 @@ const char *Event_get_description(Event_T E) {
  * @param E An event object
  * @return An action id
  */
-short Event_get_action(Event_T E) {
+Action_Type Event_get_action(Event_T E) {
         Action_T A = NULL;
 
         ASSERT(E);
@@ -469,7 +469,7 @@ void Event_queue_process() {
                 size_t         size;
                 int            handlers_passed = 0;
                 int           *version = NULL;
-                short         *action = NULL;
+                Action_Type   *action = NULL;
                 Event_T        e = NULL;
                 struct stat    st;
                 char           file_name[STRLEN];
@@ -521,7 +521,7 @@ void Event_queue_process() {
                         /* read event action */
                         if (! (action = file_readQueue(file, &size)))
                                 goto error6;
-                        if (size != sizeof(short))
+                        if (size != sizeof(Action_Type))
                                 goto error7;
                         a->id = *action;
                         if (e->state == State_Failed)
@@ -709,10 +709,10 @@ static void handle_action(Event_T E, Action_T A) {
  * @param E An event object
  */
 static void Event_queue_add(Event_T E) {
-        char         file_name[STRLEN];
-        int          version = EVENT_VERSION;
-        short        action = Event_get_action(E);
-        int          rv;
+        char        file_name[STRLEN];
+        int         version = EVENT_VERSION;
+        Action_Type action = Event_get_action(E);
+        boolean_t   rv;
 
         ASSERT(E);
         ASSERT(E->flag != Handler_Succeeded);
@@ -747,15 +747,15 @@ static void Event_queue_add(Event_T E) {
                 goto error;
 
         /* write source */
-        if (! (rv = file_writeQueue(file, E->source, E->source ? strlen(E->source)+1 : 0)))
+        if (! (rv = file_writeQueue(file, E->source, E->source ? strlen(E->source) + 1 : 0)))
                 goto error;
 
         /* write message */
-        if (! (rv = file_writeQueue(file, E->message, E->message ? strlen(E->message)+1 : 0)))
+        if (! (rv = file_writeQueue(file, E->message, E->message ? strlen(E->message) + 1 : 0)))
                 goto error;
 
         /* write event action */
-        if (! (rv = file_writeQueue(file, &action, sizeof(short))))
+        if (! (rv = file_writeQueue(file, &action, sizeof(Action_Type))))
                 goto error;
 
 error:
@@ -782,8 +782,8 @@ error:
  */
 static void Event_queue_update(Event_T E, const char *file_name) {
         int version = EVENT_VERSION;
-        short action = Event_get_action(E);
-        int rv;
+        Action_Type action = Event_get_action(E);
+        boolean_t rv;
 
         ASSERT(E);
         ASSERT(E->flag != Handler_Succeeded);
@@ -818,7 +818,7 @@ static void Event_queue_update(Event_T E, const char *file_name) {
                 goto error;
 
         /* write event action */
-        if (! (rv = file_writeQueue(file, &action, sizeof(short))))
+        if (! (rv = file_writeQueue(file, &action, sizeof(Action_Type))))
                 goto error;
 
 error:

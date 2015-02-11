@@ -404,7 +404,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
  * @param B StringBuffer object
  * @param L Status information level
  */
-static void status_servicegroup(ServiceGroup_T SG, StringBuffer_T B, short L) {
+static void status_servicegroup(ServiceGroup_T SG, StringBuffer_T B, Level_Type L) {
         StringBuffer_append(B, "<servicegroup name=\"%s\">", SG->name);
         for (ServiceGroupMember_T SGM = SG->members; SGM; SGM = SGM->next)
                 StringBuffer_append(B, "<service>%s</service>", SGM->name);

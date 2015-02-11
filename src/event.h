@@ -99,7 +99,7 @@ extern EventTable_T Event_Table[];
  * @param action Description of the event action
  * @param s Optional message describing the event
  */
-void Event_post(Service_T service, long id, short state, EventAction_T action, char *s, ...) __attribute__((format (printf, 5, 6)));
+void Event_post(Service_T service, long id, State_Type state, EventAction_T action, char *s, ...) __attribute__((format (printf, 5, 6)));
 
 
 /**
@@ -139,7 +139,7 @@ struct timeval *Event_get_collected(Event_T E);
  * @param E An event object
  * @return The Event raw state
  */
-short Event_get_state(Event_T E);
+State_Type Event_get_state(Event_T E);
 
 
 /**
@@ -149,7 +149,7 @@ short Event_get_state(Event_T E);
  * @param S Actual posted state
  * @return The Event state
  */
-boolean_t Event_check_state(Event_T E, short S);
+boolean_t Event_check_state(Event_T E, State_Type S);
 
 
 /**
@@ -186,7 +186,7 @@ const char *Event_get_description(Event_T E);
  * @param E An event object
  * @return An action id
  */
-short Event_get_action(Event_T E);
+Action_Type Event_get_action(Event_T E);
 
 
 /**
