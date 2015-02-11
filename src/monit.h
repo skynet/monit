@@ -979,7 +979,7 @@ struct myrun {
         char *logfile;                         /**< The file to write logdata into */
         char *pidfile;                                  /**< This programs pidfile */
         char *idfile;                           /**< The file with unique monit id */
-        char id[STRLEN];                                      /**< Unique monit id */
+        MD_T id;                                              /**< Unique monit id */
         char *statefile;                /**< The file with the saved runtime state */
         char *mygroup;                              /**< Group Name of the Service */
         short  debug;                                             /**< Debug level */

@@ -1326,7 +1326,7 @@ char *Util_monitId(char *idfile) {
                         LogError("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
                         return NULL;
                 }
-                if (fscanf(file, "%255s", Run.id) != 1) {
+                if (fscanf(file, "%64s", Run.id) != 1) {
                         LogError("Error reading id from file '%s'\n", idfile);
                         if (fclose(file))
                                 LogError("Error closing file '%s' -- %s\n", idfile, STRERROR);
