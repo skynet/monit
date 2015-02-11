@@ -310,9 +310,12 @@ int findprocess(int pid, ProcessTree_T *pt, int treesize) {
 
 
 time_t getProcessUptime(pid_t pid, ProcessTree_T *pt, int treesize) {
-        ASSERT(pt);
-        int leaf = findprocess(pid, pt, treesize);
-        return (time_t)((leaf >= 0 && leaf < treesize) ? time(NULL) - pt[leaf].starttime : -1);
+        if (pt) {
+                int leaf = findprocess(pid, pt, treesize);
+                return (time_t)((leaf >= 0 && leaf < treesize) ? time(NULL) - pt[leaf].starttime : -1);
+        } else {
+                return 0;
+        }
 }
 
 
