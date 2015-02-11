@@ -988,7 +988,7 @@ typedef struct myservice {
                 struct timeval    collected;                 /**< When the event occured */
                 char             *source;                 /**< Event source service name */
                 Monitor_Mode      mode;             /**< Monitoring mode for the service */
-                int               type;                      /**< Monitored service type */
+                Service_Type      type;                      /**< Monitored service type */
                 State_Type        state;                                 /**< Test state */
                 boolean_t         state_changed;              /**< true if state changed */
                 long long         state_map;           /**< Event bitmap for last cycles */
