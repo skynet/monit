@@ -341,16 +341,22 @@ void Engine_start() {
                                         http_processor(S);
                         }
                         Net_close(myServerSocket);
-                        unlink(Run.httpd.socket.unix.path);
                 } else {
                         LogError("HTTP server: not available -- could not create a server socket at %s -- %s\n", Run.httpd.socket.unix.path, STRERROR);
                 }
         }
+        Engine_cleanup();
 }
 
 
 void Engine_stop() {
         stopped = true;
+}
+
+
+void Engine_cleanup() {
+        if (Run.httpd.flags & Httpd_Unix)
+                unlink(Run.httpd.socket.unix.path);
 }
 
 

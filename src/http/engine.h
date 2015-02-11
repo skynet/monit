@@ -40,6 +40,12 @@ void Engine_stop();
 
 
 /**
+ * Cleanup the HTTPD server resources (remove unix socket).
+ */
+void Engine_cleanup();
+
+
+/**
  * Add hosts allowed to connect to this server.
  * @param pattern A hostname (A-Record) or IP address to be added to the hosts allow list
  * @return false if the given host does not resolve, otherwise true

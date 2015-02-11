@@ -65,6 +65,7 @@
 #endif
 
 #include "monit.h"
+#include "engine.h"
 
 /**
  *  Utilities for managing files used by monit.
@@ -105,10 +106,13 @@ void file_init() {
                 Run.statefile = Str_dup(buf);
         }
 
+        /* Cleanup the http engine resources on start (unix socket may be left if Monit died or received SIGKILL) */
+        Engine_cleanup();
 }
 
 
 void file_finalize() {
+        Engine_cleanup();
         unlink(Run.pidfile);
 }
 
