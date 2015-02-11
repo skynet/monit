@@ -147,10 +147,10 @@ static void update_v0(int services) {
                 if ((service = Util_getService(state.name))) {
                         service->nstart = state.nstart;
                         service->ncycle = state.ncycle;
-                        if (state.monitor == MONITOR_NOT)
+                        if (state.monitor == Monitor_Not)
                                 service->monitor = state.monitor;
-                        else if (service->monitor == MONITOR_NOT)
-                                service->monitor = MONITOR_INIT;
+                        else if (service->monitor == Monitor_Not)
+                                service->monitor = Monitor_Init;
                 }
         }
 }
@@ -163,11 +163,11 @@ static void update_v1() {
                 if ((service = Util_getService(state.name)) && service->type == state.type) {
                         service->nstart = state.nstart;
                         service->ncycle = state.ncycle;
-                        if (state.monitor == MONITOR_NOT)
+                        if (state.monitor == Monitor_Not)
                                 service->monitor = state.monitor;
-                        else if (service->monitor == MONITOR_NOT)
-                                service->monitor = MONITOR_INIT;
-                        if (service->type == TYPE_FILE) {
+                        else if (service->monitor == Monitor_Not)
+                                service->monitor = Monitor_Init;
+                        if (service->type == Service_File) {
                                 service->inf->priv.file.st_ino = state.priv.file.st_ino;
                                 service->inf->priv.file.readpos = state.priv.file.readpos;
                         }
@@ -219,10 +219,10 @@ void State_save() {
                         memset(&state, 0, sizeof(state));
                         snprintf(state.name, sizeof(state.name), "%s", service->name);
                         state.type = service->type;
-                        state.monitor = service->monitor & ~MONITOR_WAITING;
+                        state.monitor = service->monitor & ~Monitor_Waiting;
                         state.nstart = service->nstart;
                         state.ncycle = service->ncycle;
-                        if (service->type == TYPE_FILE) {
+                        if (service->type == Service_File) {
                                 state.priv.file.st_ino = service->inf->priv.file.st_ino;
                                 state.priv.file.readpos = service->inf->priv.file.readpos;
                         }

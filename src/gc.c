@@ -219,7 +219,7 @@ static void _gc_service(Service_T *s) {
                 _gcperm(&(*s)->perm);
         if ((*s)->statuslist)
                 _gcstatus(&(*s)->statuslist);
-        if ((*s)->every.type == EVERY_CRON || (*s)->every.type == EVERY_NOTINCRON)
+        if ((*s)->every.type == Every_Cron || (*s)->every.type == Every_NotInCron)
                 FREE((*s)->every.spec.cron);
         if ((*s)->uid)
                 _gcuid(&(*s)->uid);
@@ -258,7 +258,7 @@ static void _gc_service(Service_T *s) {
         if ((*s)->eventlist)
                 gc_event(&(*s)->eventlist);
         if ((*s)->inf) {
-                if ((*s)->type == TYPE_NET)
+                if ((*s)->type == Service_Net)
                         Link_free(&((*s)->inf->priv.net.stats));
                 FREE((*s)->inf);
         }

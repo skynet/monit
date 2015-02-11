@@ -104,19 +104,20 @@ boolean_t can_http() {
 
 /**
  * Start and stop the monit http server
- * @param action START_HTTP or STOP_HTTP
+ * @param action Httpd_Action
  */
-void monit_http(int action) {
+void monit_http(Httpd_Action action) {
         switch (action) {
-                case STOP_HTTP:
-                        if (! running) break;
+                case Httpd_Stop:
+                        if (! running)
+                                break;
                         LogInfo("Shutting down Monit HTTP server\n");
                         Engine_stop();
                         Thread_join(thread);
                         LogInfo("Monit HTTP server stopped\n");
                         running = false;
                         break;
-                case START_HTTP:
+                case Httpd_Start:
                         if (Run.httpd.flags & Httpd_Net)
                                 LogInfo("Starting Monit HTTP server at [%s]:%d\n", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "*", Run.httpd.socket.net.port);
                         else if (Run.httpd.flags & Httpd_Unix)

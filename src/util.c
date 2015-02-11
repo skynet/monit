@@ -910,16 +910,16 @@ void Util_printService(Service_T s) {
         if (sgheader)
                 printf("\n");
 
-        if (s->type == TYPE_PROCESS) {
+        if (s->type == Service_Process) {
                 if (s->matchlist)
                         printf(" %-20s = %s\n", "Match", s->path);
                 else
                         printf(" %-20s = %s\n", "Pid file", s->path);
-        } else if (s->type == TYPE_HOST) {
+        } else if (s->type == Service_Host) {
                 printf(" %-20s = %s\n", "Address", s->path);
-        } else if (s->type == TYPE_NET) {
+        } else if (s->type == Service_Net) {
                 printf(" %-20s = %s\n", "Interface", s->path);
-        } else if (s->type != TYPE_SYSTEM) {
+        } else if (s->type != Service_System) {
                 printf(" %-20s = %s\n", "Path", s->path);
         }
         printf(" %-20s = %s\n", "Monitoring mode", modenames[s->mode]);
@@ -984,7 +984,7 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "Filesystem flags", StringBuffer_toString(Util_printRule(buf, o->action, "if changed")));
         }
 
-        if (s->type == TYPE_PROGRAM) {
+        if (s->type == Service_Program) {
                 printf(" %-20s = ", "Program timeout");
                 printf("terminate the program if not finished within %d seconds\n", s->program->timeout);
                 for (Status_T o = s->statuslist; o; o = o->next) {
@@ -1089,7 +1089,7 @@ void Util_printService(Service_T s) {
 
         for (Bandwidth_T o = s->uploadbyteslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                if (o->range == TIME_SECOND) {
+                if (o->range == Time_Second) {
                         printf(" %-20s = %s\n", "Upload bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s/s", operatornames[o->operator], Str_bytesToSize(o->limit, buffer))));
                 } else {
                         printf(" %-20s = %s\n", "Total upload bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s in last %d %s(s)", operatornames[o->operator], Str_bytesToSize(o->limit, buffer), o->rangecount, Util_timestr(o->range))));
@@ -1098,7 +1098,7 @@ void Util_printService(Service_T s) {
 
         for (Bandwidth_T o = s->uploadpacketslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                if (o->range == TIME_SECOND) {
+                if (o->range == Time_Second) {
                         printf(" %-20s = %s\n", "Upload packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets/s", operatornames[o->operator], o->limit)));
                 } else {
                         printf(" %-20s = %s\n", "Total upload packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets in last %d %s(s)", operatornames[o->operator], o->limit, o->rangecount, Util_timestr(o->range))));
@@ -1107,7 +1107,7 @@ void Util_printService(Service_T s) {
 
         for (Bandwidth_T o = s->downloadbyteslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                if (o->range == TIME_SECOND) {
+                if (o->range == Time_Second) {
                         printf(" %-20s = %s\n", "Download bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s/s", operatornames[o->operator], Str_bytesToSize(o->limit, buffer))));
                 } else {
                         printf(" %-20s = %s\n", "Total download bytes", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s in last %d %s(s)", operatornames[o->operator], Str_bytesToSize(o->limit, buffer), o->rangecount, Util_timestr(o->range))));
@@ -1116,7 +1116,7 @@ void Util_printService(Service_T s) {
 
         for (Bandwidth_T o = s->downloadpacketslist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                if (o->range == TIME_SECOND) {
+                if (o->range == Time_Second) {
                         printf(" %-20s = %s\n", "Download packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets/s", operatornames[o->operator], o->limit)));
                 } else {
                         printf(" %-20s = %s\n", "Total downl. packets", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld packets in last %d %s(s)", operatornames[o->operator], o->limit, o->rangecount, Util_timestr(o->range))));
@@ -1128,7 +1128,7 @@ void Util_printService(Service_T s) {
                 printf(" %-20s = %s\n", "Uptime", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %llu second(s)", operatornames[o->operator], o->uptime)));
         }
 
-        if (s->type != TYPE_PROCESS) {
+        if (s->type != Service_Process) {
                 for (Match_T o = s->matchignorelist; o; o = o->next) {
                         StringBuffer_clear(buf);
                         printf(" %-20s = %s\n", "Ignore pattern", StringBuffer_toString(Util_printRule(buf, o->action, "if%s match \"%s\"", o->not ? " not" : "", o->match_string)));
@@ -1255,11 +1255,11 @@ void Util_printService(Service_T s) {
                 printf("\n");
         }
 
-        if (s->every.type == EVERY_SKIPCYCLES)
+        if (s->every.type == Every_SkipCycles)
                 printf(" %-20s = Check service every %d cycles\n", "Every", s->every.spec.cycle.number);
-        else if (s->every.type == EVERY_CRON)
+        else if (s->every.type == Every_Cron)
                 printf(" %-20s = Check service every %s\n", "Every", s->every.spec.cron);
-        else if (s->every.type == EVERY_NOTINCRON)
+        else if (s->every.type == Every_NotInCron)
                 printf(" %-20s = Don't check service every %s\n", "Every", s->every.spec.cron);
 
         for (ActionRate_T o = s->actionratelist; o; o = o->next) {
@@ -1653,7 +1653,7 @@ void Util_resetInfo(Service_T s) {
         s->inf->st_gid = 0;
         s->inf->timestamp = 0;
         switch (s->type) {
-                case TYPE_FILESYSTEM:
+                case Service_Filesystem:
                         s->inf->priv.filesystem.f_bsize = 0LL;
                         s->inf->priv.filesystem.f_blocks = 0LL;
                         s->inf->priv.filesystem.f_blocksfree = 0LL;
@@ -1667,13 +1667,13 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.filesystem._flags = -1;
                         s->inf->priv.filesystem.flags = -1;
                         break;
-                case TYPE_FILE:
+                case Service_File:
                         // persistent: st_ino, readpos
                         s->inf->priv.file.st_size  = 0;
                         s->inf->priv.file.st_ino_prev = 0;
                         *s->inf->priv.file.cs_sum = 0;
                         break;
-                case TYPE_PROCESS:
+                case Service_Process:
                         s->inf->priv.process._pid = -1;
                         s->inf->priv.process._ppid = -1;
                         s->inf->priv.process.pid = -1;
@@ -1691,7 +1691,7 @@ void Util_resetInfo(Service_T s) {
                         s->inf->priv.process.total_cpu_percent = 0;
                         s->inf->priv.process.uptime = 0;
                         break;
-                case TYPE_NET:
+                case Service_Net:
                         if (s->inf->priv.net.stats)
                                 Link_reset(s->inf->priv.net.stats);
                         break;
@@ -1702,7 +1702,7 @@ void Util_resetInfo(Service_T s) {
 
 
 boolean_t Util_hasServiceStatus(Service_T s) {
-        return((s->monitor & MONITOR_YES) && ! (s->error & Event_Nonexist) && ! (s->error & Event_Data));
+        return((s->monitor & Monitor_Yes) && ! (s->error & Event_Nonexist) && ! (s->error & Event_Data));
 }
 
 
@@ -1771,8 +1771,8 @@ boolean_t Util_evalDoubleQExpression(Operator_Type operator, double left, double
 
 void Util_monitorSet(Service_T s) {
         ASSERT(s);
-        if (s->monitor == MONITOR_NOT) {
-                s->monitor = MONITOR_INIT;
+        if (s->monitor == Monitor_Not) {
+                s->monitor = Monitor_Init;
                 DEBUG("'%s' monitoring enabled\n", s->name);
                 State_save();
         }
@@ -1781,13 +1781,13 @@ void Util_monitorSet(Service_T s) {
 
 void Util_monitorUnset(Service_T s) {
         ASSERT(s);
-        if (s->monitor != MONITOR_NOT) {
-                s->monitor = MONITOR_NOT;
+        if (s->monitor != Monitor_Not) {
+                s->monitor = Monitor_Not;
                 DEBUG("'%s' monitoring disabled\n", s->name);
         }
         s->nstart = 0;
         s->ncycle = 0;
-        if (s->every.type == EVERY_SKIPCYCLES)
+        if (s->every.type == Every_SkipCycles)
                 s->every.spec.cycle.counter = 0;
         s->error = Event_Null;
         if (s->eventlist)
@@ -1798,7 +1798,7 @@ void Util_monitorUnset(Service_T s) {
 
 
 int Util_getAction(const char *action) {
-        int i = 1; /* the ACTION_IGNORE has index 0 => we will start on next item */
+        int i = 1; /* the Action_Ignored has index 0 => we will start on next item */
 
         ASSERT(action);
 
@@ -1808,13 +1808,13 @@ int Util_getAction(const char *action) {
                 i++;
         }
         /* the action was not found */
-        return ACTION_IGNORE;
+        return Action_Ignored;
 }
 
 
 StringBuffer_T Util_printAction(Action_T A, StringBuffer_T buf) {
         StringBuffer_append(buf, "%s", actionnames[A->id]);
-        if (A->id == ACTION_EXEC) {
+        if (A->id == Action_Exec) {
                 command_t C = A->exec;
                 for (int i = 0; C->arg[i]; i++)
                         StringBuffer_append(buf, "%s%s", i ? " " : " '", C->arg[i]);
@@ -1856,7 +1856,7 @@ StringBuffer_T Util_printRule(StringBuffer_T buf, EventAction_T action, const ch
         StringBuffer_append(buf, "then ");
         Util_printAction(action->failed, buf);
         // Print the success part only if it's non default action (alert is implicit => skipped for simpler output)
-        if (action->succeeded->id != ACTION_IGNORE && action->succeeded->id != ACTION_ALERT) {
+        if (action->succeeded->id != Action_Ignored && action->succeeded->id != Action_Alert) {
                 StringBuffer_append(buf, " else if succeeded ");
                 Util_printEventratio(action->succeeded, buf);
                 StringBuffer_append(buf, "then ");
@@ -1928,11 +1928,11 @@ const char *Util_timestr(int time) {
                 int id;
                 char *description;
         } tt[]= {
-                {TIME_SECOND, "second"},
-                {TIME_MINUTE, "minute"},
-                {TIME_HOUR,   "hour"},
-                {TIME_DAY,    "day"},
-                {TIME_MONTH,  "month"},
+                {Time_Second, "second"},
+                {Time_Minute, "minute"},
+                {Time_Hour,   "hour"},
+                {Time_Day,    "day"},
+                {Time_Month,  "month"},
                 {0}
         };
         do {

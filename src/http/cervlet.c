@@ -220,7 +220,7 @@ void init_service() {
 static void _printServiceStatus(StringBuffer_T sb, Service_T s) {
         ASSERT(sb);
         ASSERT(s);
-        StringBuffer_append(sb, "<span class='%s-text'>", (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT) ? "gray" : ((! s->error) ? "green" : "red"));
+        StringBuffer_append(sb, "<span class='%s-text'>", (s->monitor == Monitor_Not || s->monitor & Monitor_Init) ? "gray" : ((! s->error) ? "green" : "red"));
         char buf[STRLEN];
         get_service_status(s, buf, sizeof(buf));
         escapeHTML(sb, buf);
@@ -639,12 +639,12 @@ static void handle_action(HttpRequest req, HttpResponse res) {
                         send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
-                int doaction = Util_getAction(action);
-                if (doaction == ACTION_IGNORE) {
+                Action_Type doaction = Util_getAction(action);
+                if (doaction == Action_Ignored) {
                         send_error(res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
                         return;
                 }
-                if (s->doaction != ACTION_IGNORE) {
+                if (s->doaction != Action_Ignored) {
                         send_error(res, SC_SERVICE_UNAVAILABLE, "Other action already in progress -- please try again later");
                         return;
                 }
@@ -664,7 +664,7 @@ static void handle_action(HttpRequest req, HttpResponse res) {
 
 static void handle_do_action(HttpRequest req, HttpResponse res) {
         Service_T s;
-        int doaction = ACTION_IGNORE;
+        Action_Type doaction = Action_Ignored;
         const char *action = get_parameter(req, "action");
         const char *token = get_parameter(req, "token");
 
@@ -673,7 +673,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                         send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
-                if ((doaction = Util_getAction(action)) == ACTION_IGNORE) {
+                if ((doaction = Util_getAction(action)) == Action_Ignored) {
                         send_error(res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
                         return;
                 }
@@ -684,7 +684,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                                         send_error(res, SC_BAD_REQUEST, "There is no service named \"%s\"", p->value ? p->value : "");
                                         return;
                                 }
-                                if (s->doaction != ACTION_IGNORE) {
+                                if (s->doaction != Action_Ignored) {
                                         send_error(res, SC_SERVICE_UNAVAILABLE, "Other action already in progress -- please try again later");
                                         return;
                                 }
@@ -751,13 +751,13 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                             "</tr>",
                             servicetypes[s->type],
                             s->name);
-        if (s->type == TYPE_PROCESS)
+        if (s->type == Service_Process)
                 StringBuffer_append(res->outputbuffer, "<tr><td>%s</td><td>%s</td></tr>", s->matchlist ? "Match" : "Pid file", s->path);
-        else if (s->type == TYPE_HOST)
+        else if (s->type == Service_Host)
                 StringBuffer_append(res->outputbuffer, "<tr><td>Address</td><td>%s</td></tr>", s->path);
-        else if (s->type == TYPE_NET)
+        else if (s->type == Service_Net)
                 StringBuffer_append(res->outputbuffer, "<tr><td>Interface</td><td>%s</td></tr>", s->path);
-        else if (s->type != TYPE_SYSTEM)
+        else if (s->type != Service_System)
                 StringBuffer_append(res->outputbuffer, "<tr><td>Path</td><td>%s</td></tr>", s->path);
         StringBuffer_append(res->outputbuffer, "<tr><td>Status</td><td>");
         _printServiceStatus(res->outputbuffer, s);
@@ -824,19 +824,19 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, " timeout %d second(s)", s->restart->timeout);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
-        if (s->every.type != EVERY_CYCLE) {
+        if (s->every.type != Every_Cycle) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Check service</td><td>");
-                if (s->every.type == EVERY_SKIPCYCLES)
+                if (s->every.type == Every_SkipCycles)
                         StringBuffer_append(res->outputbuffer, "every %d cycle", s->every.spec.cycle.number);
-                else if (s->every.type == EVERY_CRON)
+                else if (s->every.type == Every_Cron)
                         StringBuffer_append(res->outputbuffer, "every <code>\"%s\"</code>", s->every.spec.cron);
-                else if (s->every.type == EVERY_NOTINCRON)
+                else if (s->every.type == Every_NotInCron)
                         StringBuffer_append(res->outputbuffer, "not every <code>\"%s\"</code>", s->every.spec.cron);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
         // Status
         switch (s->type) {
-                case TYPE_FILESYSTEM:
+                case Service_Filesystem:
                         print_service_status_perm(res, s);
                         print_service_status_uid(res, s);
                         print_service_status_gid(res, s);
@@ -848,13 +848,13 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                         print_service_status_filesystem_inodestotal(res, s);
                         print_service_status_filesystem_inodesfree(res, s);
                         break;
-                case TYPE_DIRECTORY:
+                case Service_Directory:
                         print_service_status_perm(res, s);
                         print_service_status_uid(res, s);
                         print_service_status_gid(res, s);
                         print_service_status_timestamp(res, s);
                         break;
-                case TYPE_FILE:
+                case Service_File:
                         print_service_status_perm(res, s);
                         print_service_status_uid(res, s);
                         print_service_status_gid(res, s);
@@ -863,7 +863,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                         print_service_status_timestamp(res, s);
                         print_service_status_checksum(res, s);
                         break;
-                case TYPE_PROCESS:
+                case Service_Process:
                         print_service_status_process_pid(res, s);
                         print_service_status_process_ppid(res, s);
                         print_service_status_process_uid(res, s);
@@ -878,28 +878,28 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                         print_service_status_port(res, s);
                         print_service_status_socket(res, s);
                         break;
-                case TYPE_HOST:
+                case Service_Host:
                         print_service_status_icmp(res, s);
                         print_service_status_port(res, s);
                         break;
-                case TYPE_SYSTEM:
+                case Service_System:
                         print_service_status_system_loadavg(res, s);
                         print_service_status_system_cpu(res, s);
                         print_service_status_system_memory(res, s);
                         print_service_status_system_swap(res, s);
                         break;
-                case TYPE_FIFO:
+                case Service_Fifo:
                         print_service_status_perm(res, s);
                         print_service_status_uid(res, s);
                         print_service_status_gid(res, s);
                         print_service_status_timestamp(res, s);
                         break;
-                case TYPE_PROGRAM:
+                case Service_Program:
                         print_service_status_program_started(res, s);
                         print_service_status_program_status(res, s);
                         print_service_status_program_output(res, s);
                         break;
-                case TYPE_NET:
+                case Service_Net:
                         print_service_status_link(res, s);
                         print_service_status_download(res, s);
                         print_service_status_upload(res, s);
@@ -1004,7 +1004,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_PROCESS)
+                if (s->type != Service_Process)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1067,7 +1067,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_PROGRAM)
+                if (s->type != Service_Program)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1126,7 +1126,7 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_NET)
+                if (s->type != Service_Net)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1170,7 +1170,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_FILESYSTEM)
+                if (s->type != Service_Filesystem)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1224,7 +1224,7 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_FILE)
+                if (s->type != Service_File)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1280,7 +1280,7 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_FIFO)
+                if (s->type != Service_Fifo)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1330,7 +1330,7 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_DIRECTORY)
+                if (s->type != Service_Directory)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1380,7 +1380,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
         boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
-                if (s->type != TYPE_HOST)
+                if (s->type != Service_Host)
                         continue;
                 if (header) {
                         StringBuffer_append(res->outputbuffer,
@@ -1729,7 +1729,7 @@ static void print_service_rules_linksaturation(HttpResponse res, Service_T s) {
 static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Bandwidth_T bl = s->uploadbyteslist; bl; bl = bl->next) {
-                if (bl->range == TIME_SECOND) {
+                if (bl->range == Time_Second) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Upload bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s/s", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
                 } else {
@@ -1743,7 +1743,7 @@ static void print_service_rules_uploadbytes(HttpResponse res, Service_T s) {
 
 static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->uploadpacketslist; bl; bl = bl->next) {
-                if (bl->range == TIME_SECOND) {
+                if (bl->range == Time_Second) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Upload packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets/s", operatornames[bl->operator], bl->limit);
                 } else {
@@ -1758,7 +1758,7 @@ static void print_service_rules_uploadpackets(HttpResponse res, Service_T s) {
 static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
         char buf[STRLEN];
         for (Bandwidth_T bl = s->downloadbyteslist; bl; bl = bl->next) {
-                if (bl->range == TIME_SECOND) {
+                if (bl->range == Time_Second) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Download bytes</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %s/s", operatornames[bl->operator], Str_bytesToSize(bl->limit, buf));
                 } else {
@@ -1772,7 +1772,7 @@ static void print_service_rules_downloadbytes(HttpResponse res, Service_T s) {
 
 static void print_service_rules_downloadpackets(HttpResponse res, Service_T s) {
         for (Bandwidth_T bl = s->downloadpacketslist; bl; bl = bl->next) {
-                if (bl->range == TIME_SECOND) {
+                if (bl->range == Time_Second) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Download packets</td><td>");
                         Util_printRule(res->outputbuffer, bl->action, "If %s %lld packets/s", operatornames[bl->operator], bl->limit);
                 } else {
@@ -1793,7 +1793,7 @@ static void print_service_rules_uptime(HttpResponse res, Service_T s) {
 }
 
 static void print_service_rules_match(HttpResponse res, Service_T s) {
-        if (s->type != TYPE_PROCESS) {
+        if (s->type != Service_Process) {
                 for (Match_T ml = s->matchignorelist; ml; ml = ml->next) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Ignore pattern</td><td>");
                         Util_printRule(res->outputbuffer, ml->action, "If %smatch \"%s\"", ml->not ? "not " : "", ml->match_string);
@@ -1839,7 +1839,7 @@ static void print_service_rules_ppid(HttpResponse res, Service_T s) {
 
 
 static void print_service_rules_program(HttpResponse res, Service_T s) {
-        if (s->type == TYPE_PROGRAM) {
+        if (s->type == Service_Program) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Program timeout</td><td>Terminate the program if not finished within %d seconds</td></tr>", s->program->timeout);
                 for (Status_T status = s->statuslist; status; status = status->next) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Test Exit value</td><td>");
@@ -2522,7 +2522,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                     "monitoring status", get_monitoring_status(s, buf, sizeof(buf)));
 
                 if (Util_hasServiceStatus(s)) {
-                        if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY || s->type == TYPE_FILESYSTEM) {
+                        if (s->type == Service_File || s->type == Service_Fifo || s->type == Service_Directory || s->type == Service_Filesystem) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %o\n"
                                                     "  %-33s %d\n"
@@ -2531,12 +2531,12 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                     "uid", (int)s->inf->st_uid,
                                                     "gid", (int)s->inf->st_gid);
                         }
-                        if (s->type == TYPE_FILE || s->type == TYPE_FIFO || s->type == TYPE_DIRECTORY) {
+                        if (s->type == Service_File || s->type == Service_Fifo || s->type == Service_Directory) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %s\n",
                                                     "timestamp", Time_string(s->inf->timestamp, buf));
                         }
-                        if (s->type == TYPE_FILE) {
+                        if (s->type == Service_File) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %s\n",
                                                     "size", Str_bytesToSize(s->inf->priv.file.st_size, buf));
@@ -2547,7 +2547,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                             checksumnames[s->checksum->type]);
                                 }
                         }
-                        if (s->type == TYPE_NET) {
+                        if (s->type == Service_Net) {
                                 if (Link_getState(s->inf->priv.net.stats)) {
                                         long long speed = Link_getSpeed(s->inf->priv.net.stats);
                                         if (speed > 0)
@@ -2576,7 +2576,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                         StringBuffer_append(res->outputbuffer, "\n");
                                 }
                         }
-                        if (s->type == TYPE_FILESYSTEM) {
+                        if (s->type == Service_Filesystem) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s 0x%x\n"
                                                     "  %-33s %s\n",
@@ -2610,7 +2610,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                             ((float)100*(float)s->inf->priv.filesystem.f_filesfree/ (float)s->inf->priv.filesystem.f_files));
                                 }
                         }
-                        if (s->type == TYPE_PROCESS) {
+                        if (s->type == Service_Process) {
                                 char *uptime = Util_getUptime(s->inf->priv.process.uptime, " ");
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %d\n"
@@ -2671,7 +2671,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                     "  %-33s %.3fs to %s type %s protocol %s\n",
                                                     "unix socket response time", p->is_available ? p->response : 0., p->pathname, Util_portTypeDescription(p), p->protocol->name);
                         }
-                        if (s->type == TYPE_SYSTEM && Run.doprocess) {
+                        if (s->type == Service_System && Run.doprocess) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s [%.2f] [%.2f] [%.2f]\n"
                                                     "  %-33s %.1f%%us %.1f%%sy"
@@ -2692,7 +2692,7 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
                                                     "  %-33s %s [%.1f%%]\n",
                                                     "swap usage", Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf), systeminfo.total_swap_percent/10.);
                         }
-                        if (s->type == TYPE_PROGRAM) {
+                        if (s->type == Service_Program) {
                                 if (s->program->started) {
                                         char t[32];
                                         StringBuffer_append(res->outputbuffer,
@@ -2714,13 +2714,13 @@ static void status_service_txt(Service_T s, HttpResponse res, short level) {
 static char *get_monitoring_status(Service_T s, char *buf, int buflen) {
         ASSERT(s);
         ASSERT(buf);
-        if (s->monitor == MONITOR_NOT)
+        if (s->monitor == Monitor_Not)
                 snprintf(buf, buflen, "Not monitored");
-        else if (s->monitor & MONITOR_WAITING)
+        else if (s->monitor & Monitor_Waiting)
                 snprintf(buf, buflen, "Waiting");
-        else if (s->monitor & MONITOR_INIT)
+        else if (s->monitor & Monitor_Init)
                 snprintf(buf, buflen, "Initializing");
-        else if (s->monitor & MONITOR_YES)
+        else if (s->monitor & Monitor_Yes)
                 snprintf(buf, buflen, "Monitored");
         return buf;
 }
@@ -2730,7 +2730,7 @@ static char *get_service_status(Service_T s, char *buf, int buflen) {
         EventTable_T *et = Event_Table;
         ASSERT(s);
         ASSERT(buf);
-        if (s->monitor == MONITOR_NOT || s->monitor & MONITOR_INIT) {
+        if (s->monitor == Monitor_Not || s->monitor & Monitor_Init) {
                 get_monitoring_status(s, buf, buflen);
         } else if (s->error == 0) {
                 snprintf(buf, buflen, "%s", statusnames[s->type]);

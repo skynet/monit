@@ -328,7 +328,7 @@ static void do_reinit() {
 
         /* Stop http interface */
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix)
-                monit_http(STOP_HTTP);
+                monit_http(Httpd_Stop);
 
         /* Save the current state (no changes are possible now since the http thread is stopped) */
         State_save();
@@ -370,7 +370,7 @@ static void do_reinit() {
 
         /* Start http interface */
         if (can_http())
-                monit_http(START_HTTP);
+                monit_http(Httpd_Start);
 
         /* send the monit startup notification */
         Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_RELOAD, "Monit reloaded");
@@ -461,7 +461,7 @@ static void do_exit() {
         Run.stopped = true;
         if (Run.isdaemon && ! Run.once) {
                 if (can_http())
-                        monit_http(STOP_HTTP);
+                        monit_http(Httpd_Stop);
 
                 if (Run.mmonits && heartbeatRunning) {
                         Sem_signal(heartbeatCond);
@@ -532,7 +532,7 @@ static void do_default() {
                 }
 
                 if (can_http())
-                        monit_http(START_HTTP);
+                        monit_http(Httpd_Start);
 
                 /* send the monit startup notification */
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_START, "Monit started");

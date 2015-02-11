@@ -130,18 +130,20 @@
 #define EXEC_TIMEOUT       30
 #define PROGRAM_TIMEOUT    300
 
-#define START_HTTP         1
-#define STOP_HTTP          2
 
-#define MONITOR_NOT        0x0
-#define MONITOR_YES        0x1
-#define MONITOR_INIT       0x2
-#define MONITOR_WAITING    0x4
+typedef enum {
+        Httpd_Start = 1,
+        Httpd_Stop
+} __attribute__((__packed__)) Httpd_Action;
 
-#define EVERY_CYCLE        0
-#define EVERY_SKIPCYCLES   1
-#define EVERY_CRON         2
-#define EVERY_NOTINCRON    3
+
+typedef enum {
+        Every_Cycle = 0,
+        Every_SkipCycles,
+        Every_Cron,
+        Every_NotInCron
+} __attribute__((__packed__)) Every_Type;
+
 
 typedef enum {
         State_Succeeded = 0,
@@ -151,9 +153,6 @@ typedef enum {
         State_Init
 } __attribute__((__packed__)) State_Type;
 
-#define MODE_ACTIVE        0
-#define MODE_PASSIVE       1
-#define MODE_MANUAL        2
 
 typedef enum {
         Operator_Greater = 0,
@@ -194,31 +193,55 @@ typedef enum {
 #endif
 
 
-#define TIME_SECOND        1
-#define TIME_MINUTE        60
-#define TIME_HOUR          3600
-#define TIME_DAY           86400
-#define TIME_MONTH         2678400
+typedef enum {
+        Time_Second = 1,
+        Time_Minute = 60,
+        Time_Hour   = 3600,
+        Time_Day    = 86400,
+        Time_Month  = 2678400
+} __attribute__((__packed__)) Time_Type;
 
-#define ACTION_IGNORE      0
-#define ACTION_ALERT       1
-#define ACTION_RESTART     2
-#define ACTION_STOP        3
-#define ACTION_EXEC        4
-#define ACTION_UNMONITOR   5
-#define ACTION_START       6
-#define ACTION_MONITOR     7
 
-#define TYPE_FILESYSTEM    0
-#define TYPE_DIRECTORY     1
-#define TYPE_FILE          2
-#define TYPE_PROCESS       3
-#define TYPE_HOST          4
-#define TYPE_SYSTEM        5
-#define TYPE_FIFO          6
-#define TYPE_PROGRAM       7
-#define TYPE_NET           8
+typedef enum {
+        Action_Ignored = 0,
+        Action_Alert,
+        Action_Restart,
+        Action_Stop,
+        Action_Exec,
+        Action_Unmonitor,
+        Action_Start,
+        Action_Monitor
+} __attribute__((__packed__)) Action_Type;
 
+
+typedef enum {
+        Monitor_Active = 0,
+        Monitor_Passive,
+        Monitor_Manual
+} __attribute__((__packed__)) Monitor_Mode;
+
+
+typedef enum {
+        Monitor_Not     = 0x0,
+        Monitor_Yes     = 0x1,
+        Monitor_Init    = 0x2,
+        Monitor_Waiting = 0x4
+} Monitor_State; // note: don't memory pack for statefile backward compatibility (or introduce new statefile format version for packed)
+
+
+typedef enum {
+        Service_Filesystem = 0,
+        Service_Directory,
+        Service_File,
+        Service_Process,
+        Service_Host,
+        Service_System,
+        Service_Fifo,
+        Service_Program,
+        Service_Net
+} Service_Type; // note: don't memory pack for statefile backward compatibility (or introduce new statefile format version for packed)
+
+//FIXME
 #define RESOURCE_ID_CPU_PERCENT       1
 #define RESOURCE_ID_MEM_PERCENT       2
 #define RESOURCE_ID_MEM_KBYTE         3
@@ -237,33 +260,40 @@ typedef enum {
 #define RESOURCE_ID_SWAP_PERCENT      16
 #define RESOURCE_ID_SWAP_KBYTE        17
 
+//FIXME
 #define DIGEST_CLEARTEXT   1
 #define DIGEST_CRYPT       2
 #define DIGEST_MD5         3
 #define DIGEST_PAM         4
 
+//FIXME
 #define UNIT_BYTE          1
 #define UNIT_KILOBYTE      1024
 #define UNIT_MEGABYTE      1048576
 #define UNIT_GIGABYTE      1073741824
 
+//FIXME
 #define HASH_UNKNOWN       0
 #define HASH_MD5           1
 #define HASH_SHA1          2
 #define DEFAULT_HASH       HASH_MD5
+
 /* Length of the longest message digest in bytes */
 #define MD_SIZE            65
 
+//FIXME
 #define PROTOCOL_NULL      0
 #define PROTOCOL_HTTP      1
 #define PROTOCOL_HTTPS     2
 
+//FIXME
 #define LEVEL_FULL         0
 #define LEVEL_SUMMARY      1
 
 #define LEVEL_NAME_FULL    "full"
 #define LEVEL_NAME_SUMMARY "summary"
 
+//FIXME
 #define HANDLER_SUCCEEDED  0x0
 #define HANDLER_ALERT      0x1
 #define HANDLER_MMONIT     0x2
@@ -336,7 +366,7 @@ typedef struct mycommand {
 
 /** Defines an event action object */
 typedef struct myaction {
-        int       id;                                     /**< Action to be done */
+        Action_Type id;                                   /**< Action to be done */
         command_t exec;                    /**< Optional command to be executed  */
         unsigned  count;           /**< Event count needed to trigger the action */
         unsigned  cycles;    /**< Cycles during which count limit can be reached */
@@ -624,7 +654,7 @@ typedef struct myactionrate {
 /** Defines when to run a check for a service. This type suports both the old
  cycle based every statement and the new cron-format version */
 typedef struct myevery {
-        int type; /**< 0 = not set, 1 = cycle, 2 = cron, 3 = negated cron */
+        Every_Type type; /**< 0 = not set, 1 = cycle, 2 = cron, 3 = negated cron */
         time_t last_run;
         union {
                 struct {
@@ -714,7 +744,7 @@ typedef struct mybandwidth {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long limit;                              /**< Data watermark */
         int rangecount;                            /**< Time range to watch: count */
-        int range;                                  /**< Time range to watch: unit */
+        Time_Type range;                                  /**< Time range to watch: unit */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -872,9 +902,9 @@ typedef struct myservice {
         /** Common parameters */
         char *name;                                  /**< Service descriptive name */
         boolean_t (*check)(struct myservice *); /**< Service verification function */
-        int  type;                                     /**< Monitored service type */
-        int  monitor;                                      /**< Monitor state flag */
-        int  mode;                            /**< Monitoring mode for the service */
+        Service_Type type;                             /**< Monitored service type */
+        Monitor_State monitor;                             /**< Monitor state flag */
+        Monitor_Mode mode;                    /**< Monitoring mode for the service */
         int  ncycle;                          /**< The number of the current cycle */
         int  nstart;           /**< The number of current starts with this service */
         int  visited;      /**< Service visited flag, set if dependencies are used */
@@ -935,7 +965,7 @@ typedef struct myservice {
         int                error_hint;   /**< Failed/Changed hint for error bitmap */
         Info_T             inf;                          /**< Service check result */
         struct timeval     collected;                /**< When were data collected */
-        int                doaction;          /**< Action scheduled by http thread */
+        Action_Type        doaction;          /**< Action scheduled by http thread */
         char              *token;                                /**< Action token */
 
         /** Events */
@@ -944,7 +974,7 @@ typedef struct myservice {
                 long              id;                      /**< The event identification */
                 struct timeval    collected;                 /**< When the event occured */
                 char             *source;                 /**< Event source service name */
-                int               mode;             /**< Monitoring mode for the service */
+                Monitor_Mode      mode;             /**< Monitoring mode for the service */
                 int               type;                      /**< Monitored service type */
                 State_Type        state;                                 /**< Test state */
                 boolean_t         state_changed;              /**< true if state changed */
@@ -1089,7 +1119,7 @@ extern char *sslnames[];
 /* FIXME: move remaining prototypes into seperate header-files */
 
 boolean_t parse(char *);
-boolean_t control_service(const char *, int);
+boolean_t control_service(const char *, Action_Type);
 boolean_t control_service_string(const char *, const char *);
 boolean_t control_service_daemon(const char *, const char *);
 void  setup_dependants();
@@ -1124,7 +1154,7 @@ int   exist_daemon();
 boolean_t sendmail(Mail_T);
 int   sock_msg(int, char *, ...) __attribute__((format (printf, 2, 3)));
 void  init_env();
-void  monit_http(int);
+void  monit_http(Httpd_Action);
 boolean_t can_http();
 char *format(const char *, va_list, long *);
 void  redirect_stdfd();

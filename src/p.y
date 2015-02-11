@@ -205,7 +205,7 @@ static int    digesttype = DIGEST_CLEARTEXT;
 static void  preparse();
 static void  postparse();
 static void  addmail(char *, Mail_T, Mail_T *);
-static Service_T createservice(int, char *, char *, boolean_t (*)(Service_T));
+static Service_T createservice(Service_Type, char *, char *, boolean_t (*)(Service_T));
 static void  addservice(Service_T);
 static void  adddependant(char *);
 static void  addservicegroup(char *);
@@ -240,13 +240,13 @@ static gid_t get_gid(char *, gid_t);
 static void  addchecksum(Checksum_T);
 static void  addperm(Perm_T);
 static void  addmatch(Match_T, int, int);
-static void  addmatchpath(Match_T, int);
+static void  addmatchpath(Match_T, Action_Type);
 static void  addstatus(Status_T);
 static Uid_T adduid(Uid_T);
 static Gid_T addgid(Gid_T);
 static void  addeuid(uid_t);
 static void  addegid(gid_t);
-static void  addeventaction(EventAction_T *, int, int);
+static void  addeventaction(EventAction_T *, Action_Type, Action_Type);
 static void  prepare_urlrequest(URL_T U);
 static void  seturlrequest(int, char *);
 static void  setlogfile(char *);
@@ -885,61 +885,61 @@ readonly        : /* EMPTY */ { $<number>$ = false; }
                 ;
 
 checkproc       : CHECKPROC SERVICENAME PIDFILE PATH {
-                    createservice(TYPE_PROCESS, $<string>2, $4, check_process);
+                    createservice(Service_Process, $<string>2, $4, check_process);
                   }
                 | CHECKPROC SERVICENAME PATHTOK PATH {
-                    createservice(TYPE_PROCESS, $<string>2, $4, check_process);
+                    createservice(Service_Process, $<string>2, $4, check_process);
                   }
                 | CHECKPROC SERVICENAME MATCH STRING {
-                    createservice(TYPE_PROCESS, $<string>2, $4, check_process);
+                    createservice(Service_Process, $<string>2, $4, check_process);
                     matchset.ignore = false;
                     matchset.match_path = NULL;
                     matchset.match_string = Str_dup($4);
-                    addmatch(&matchset, ACTION_IGNORE, 0);
+                    addmatch(&matchset, Action_Ignored, 0);
                   }
                 | CHECKPROC SERVICENAME MATCH PATH {
-                    createservice(TYPE_PROCESS, $<string>2, $4, check_process);
+                    createservice(Service_Process, $<string>2, $4, check_process);
                     matchset.ignore = false;
                     matchset.match_path = NULL;
                     matchset.match_string = Str_dup($4);
-                    addmatch(&matchset, ACTION_IGNORE, 0);
+                    addmatch(&matchset, Action_Ignored, 0);
                   }
                 ;
 
 checkfile       : CHECKFILE SERVICENAME PATHTOK PATH {
-                    createservice(TYPE_FILE, $<string>2, $4, check_file);
+                    createservice(Service_File, $<string>2, $4, check_file);
                   }
                 ;
 
 checkfilesys    : CHECKFILESYS SERVICENAME PATHTOK PATH {
-                    createservice(TYPE_FILESYSTEM, $<string>2, $4, check_filesystem);
+                    createservice(Service_Filesystem, $<string>2, $4, check_filesystem);
                   }
                 | CHECKFILESYS SERVICENAME PATHTOK STRING {
-                    createservice(TYPE_FILESYSTEM, $<string>2, $4, check_filesystem);
+                    createservice(Service_Filesystem, $<string>2, $4, check_filesystem);
                   }
                 ;
 
 checkdir        : CHECKDIR SERVICENAME PATHTOK PATH {
-                    createservice(TYPE_DIRECTORY, $<string>2, $4, check_directory);
+                    createservice(Service_Directory, $<string>2, $4, check_directory);
                   }
                 ;
 
 checkhost       : CHECKHOST SERVICENAME ADDRESS STRING {
                     check_hostname($4);
-                    createservice(TYPE_HOST, $<string>2, $4, check_remote_host);
+                    createservice(Service_Host, $<string>2, $4, check_remote_host);
                   }
                 ;
 
 checknet        : CHECKNET SERVICENAME ADDRESS STRING {
                     if (Link_isGetByAddressSupported()) {
-                        createservice(TYPE_NET, $<string>2, $4, check_net);
+                        createservice(Service_Net, $<string>2, $4, check_net);
                         current->inf->priv.net.stats = Link_createForAddress($4);
                     } else {
                         yyerror("Network monitoring by IP address is not supported on this platform, please use 'check network <foo> with interface <bar>' instead");
                     }
                   }
                 | CHECKNET SERVICENAME INTERFACE STRING {
-                    createservice(TYPE_NET, $<string>2, $4, check_net);
+                    createservice(Service_Net, $<string>2, $4, check_net);
                     current->inf->priv.net.stats = Link_createForInterface($4);
                   }
                 ;
@@ -952,26 +952,26 @@ checksystem     : CHECKSYSTEM SERVICENAME {
                     }
                     char *servicename = $<string>2;
                     Util_replaceString(&servicename, "$HOST", hostname);
-                    Run.system = createservice(TYPE_SYSTEM, servicename, Str_dup(""), check_system); // The name given in the 'check system' statement overrides system hostname
+                    Run.system = createservice(Service_System, servicename, Str_dup(""), check_system); // The name given in the 'check system' statement overrides system hostname
                   }
                 ;
 
 checkfifo       : CHECKFIFO SERVICENAME PATHTOK PATH {
-                    createservice(TYPE_FIFO, $<string>2, $4, check_fifo);
+                    createservice(Service_Fifo, $<string>2, $4, check_fifo);
                   }
                 ;
 
 checkprogram    : CHECKPROGRAM SERVICENAME PATHTOK argumentlist programtimeout {
                         command_t c = command; // Current command
                         check_exec(c->arg[0]);
-                        createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
+                        createservice(Service_Program, $<string>2, Str_dup(c->arg[0]), check_program);
                         current->program->timeout = $<number>5;
                         current->program->output = StringBuffer_create(64);
                  }
                 | CHECKPROGRAM SERVICENAME PATHTOK argumentlist useroptionlist programtimeout {
                         command_t c = command; // Current command
                         check_exec(c->arg[0]);
-                        createservice(TYPE_PROGRAM, $<string>2, Str_dup(c->arg[0]), check_program);
+                        createservice(Service_Program, $<string>2, Str_dup(c->arg[0]), check_program);
                         current->program->timeout = $<number>5;
                         current->program->output = StringBuffer_create(64);
                  }
@@ -1078,7 +1078,7 @@ icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action
                 ;
 
 host            : /* EMPTY */ {
-                        portset.hostname = Str_dup(current->type == TYPE_HOST ? current->path : LOCALHOST);
+                        portset.hostname = Str_dup(current->type == Service_Host ? current->path : LOCALHOST);
                   }
                 | HOST STRING {
                         check_hostname($2);
@@ -1405,13 +1405,13 @@ exist           : IF NOT EXIST rate1 THEN action1 recovery {
 
 
 pid             : IF CHANGED PID rate1 THEN action1 {
-                    addeventaction(&(pidset).action, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(pidset).action, $<number>6, Action_Ignored);
                     addpid(&pidset);
                   }
                 ;
 
 ppid            : IF CHANGED PPID rate1 THEN action1 {
-                    addeventaction(&(ppidset).action, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(ppidset).action, $<number>6, Action_Ignored);
                     addppid(&ppidset);
                   }
                 ;
@@ -1466,13 +1466,13 @@ retry           : /* EMPTY */ {
 actionrate      : IF NUMBER RESTART NUMBER CYCLE THEN action1 {
                    actionrateset.count = $2;
                    actionrateset.cycle = $4;
-                   addeventaction(&(actionrateset).action, $<number>7, ACTION_ALERT);
+                   addeventaction(&(actionrateset).action, $<number>7, Action_Alert);
                    addactionrate(&actionrateset);
                  }
                 | IF NUMBER RESTART NUMBER CYCLE THEN TIMEOUT {
                    actionrateset.count = $2;
                    actionrateset.cycle = $4;
-                   addeventaction(&(actionrateset).action, ACTION_UNMONITOR, ACTION_ALERT);
+                   addeventaction(&(actionrateset).action, Action_Unmonitor, Action_Alert);
                    addactionrate(&actionrateset);
                  }
                 ;
@@ -1560,28 +1560,28 @@ formatoption    : MAILFROM { mailset.from = $1; }
                 ;
 
 every           : EVERY NUMBER CYCLE {
-                   current->every.type = EVERY_SKIPCYCLES;
+                   current->every.type = Every_SkipCycles;
                    current->every.spec.cycle.number = $2;
                  }
                 | EVERY TIMESPEC {
-                   current->every.type = EVERY_CRON;
+                   current->every.type = Every_Cron;
                    current->every.spec.cron = $2;
                  }
                 | NOTEVERY TIMESPEC {
-                   current->every.type = EVERY_NOTINCRON;
+                   current->every.type = Every_NotInCron;
                    current->every.spec.cron = $2;
                  }
                 ;
 
 mode            : MODE ACTIVE  {
-                    current->mode = MODE_ACTIVE;
+                    current->mode = Monitor_Active;
                   }
                 | MODE PASSIVE {
-                    current->mode = MODE_PASSIVE;
+                    current->mode = Monitor_Passive;
                   }
                 | MODE MANUAL  {
-                    current->mode = MODE_MANUAL;
-                    current->monitor = MONITOR_NOT;
+                    current->mode = Monitor_Manual;
+                    current->monitor = Monitor_Not;
                   }
                 ;
 
@@ -1610,7 +1610,7 @@ statusvalue     : IF STATUS operator NUMBER rate1 THEN action1 recovery {
                         statusset.initialized = false;
                         statusset.operator = Operator_Changed;
                         statusset.return_value = 0;
-                        addeventaction(&(statusset).action, $<number>6, ACTION_IGNORE);
+                        addeventaction(&(statusset).action, $<number>6, Action_Ignored);
                         addstatus(&statusset);
                    }
                 ;
@@ -1736,7 +1736,7 @@ timestamp       : IF TIMESTAMP operator NUMBER time rate1 THEN action1 recovery 
                   }
                 | IF CHANGED TIMESTAMP rate1 THEN action1 {
                     timestampset.test_changes = true;
-                    addeventaction(&(timestampset).action, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(timestampset).action, $<number>6, Action_Ignored);
                     addtimestamp(&timestampset, true);
                   }
                 ;
@@ -1749,33 +1749,33 @@ operator        : /* EMPTY */ { $<number>$ = Operator_Equal; }
                 | CHANGED     { $<number>$ = Operator_Changed; }
                 ;
 
-time            : /* EMPTY */ { $<number>$ = TIME_SECOND; }
-                | SECOND      { $<number>$ = TIME_SECOND; }
-                | MINUTE      { $<number>$ = TIME_MINUTE; }
-                | HOUR        { $<number>$ = TIME_HOUR; }
-                | DAY         { $<number>$ = TIME_DAY; }
-                | MONTH       { $<number>$ = TIME_MONTH; }
+time            : /* EMPTY */ { $<number>$ = Time_Second; }
+                | SECOND      { $<number>$ = Time_Second; }
+                | MINUTE      { $<number>$ = Time_Minute; }
+                | HOUR        { $<number>$ = Time_Hour; }
+                | DAY         { $<number>$ = Time_Day; }
+                | MONTH       { $<number>$ = Time_Month; }
                 ;
 
-totaltime       : MINUTE      { $<number>$ = TIME_MINUTE; }
-                | HOUR        { $<number>$ = TIME_HOUR; }
-                | DAY         { $<number>$ = TIME_DAY; }
+totaltime       : MINUTE      { $<number>$ = Time_Minute; }
+                | HOUR        { $<number>$ = Time_Hour; }
+                | DAY         { $<number>$ = Time_Day; }
 
-currenttime     : /* EMPTY */ { $<number>$ = TIME_SECOND; }
-                | SECOND      { $<number>$ = TIME_SECOND; }
+currenttime     : /* EMPTY */ { $<number>$ = Time_Second; }
+                | SECOND      { $<number>$ = Time_Second; }
 
-action          : ALERT                            { $<number>$ = ACTION_ALERT; }
-                | EXEC argumentlist                { $<number>$ = ACTION_EXEC; }
-                | EXEC argumentlist useroptionlist { $<number>$ = ACTION_EXEC; }
-                | RESTART                          { $<number>$ = ACTION_RESTART; }
-                | START                            { $<number>$ = ACTION_START; }
-                | STOP                             { $<number>$ = ACTION_STOP; }
-                | UNMONITOR                        { $<number>$ = ACTION_UNMONITOR; }
+action          : ALERT                            { $<number>$ = Action_Alert; }
+                | EXEC argumentlist                { $<number>$ = Action_Exec; }
+                | EXEC argumentlist useroptionlist { $<number>$ = Action_Exec; }
+                | RESTART                          { $<number>$ = Action_Restart; }
+                | START                            { $<number>$ = Action_Start; }
+                | STOP                             { $<number>$ = Action_Stop; }
+                | UNMONITOR                        { $<number>$ = Action_Unmonitor; }
                 ;
 
 action1         : action {
                     $<number>$ = $<number>1;
-                    if ($<number>1 == ACTION_EXEC && command) {
+                    if ($<number>1 == Action_Exec && command) {
                       command1 = command;
                       command = NULL;
                     }
@@ -1784,7 +1784,7 @@ action1         : action {
 
 action2         : action {
                     $<number>$ = $<number>1;
-                    if ($<number>1 == ACTION_EXEC && command) {
+                    if ($<number>1 == Action_Exec && command) {
                       command2 = command;
                       command = NULL;
                     }
@@ -1826,7 +1826,7 @@ rate2           : /* EMPTY */
                 ;
 
 recovery        : /* EMPTY */ {
-                    $<number>$ = ACTION_ALERT;
+                    $<number>$ = Action_Alert;
                   }
                 | ELSE IF RECOVERED rate2 THEN action2 {
                     $<number>$ = $<number>6;
@@ -1852,7 +1852,7 @@ checksum        : IF FAILED hashtype CHECKSUM rate1 THEN action1 recovery {
                   }
                 | IF CHANGED hashtype CHECKSUM rate1 THEN action1 {
                     checksumset.test_changes = true;
-                    addeventaction(&(checksumset).action, $<number>7, ACTION_IGNORE);
+                    addeventaction(&(checksumset).action, $<number>7, Action_Ignored);
                     addchecksum(&checksumset);
                   }
                 ;
@@ -1896,7 +1896,7 @@ space           : IF SPACE operator value unit rate1 THEN action1 recovery {
                 ;
 
 fsflag          : IF CHANGED FSFLAG rate1 THEN action1 {
-                    addeventaction(&(fsflagset).action, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(fsflagset).action, $<number>6, Action_Ignored);
                     addfsflag(&fsflagset);
                   }
                 ;
@@ -1932,14 +1932,14 @@ match           : IF matchflagnot MATCH PATH rate1 THEN action1 {
                     matchset.ignore = true;
                     matchset.match_path = $4;
                     matchset.match_string = NULL;
-                    addmatchpath(&matchset, ACTION_IGNORE);
+                    addmatchpath(&matchset, Action_Ignored);
                     FREE($4);
                   }
                 | IGNORE matchflagnot MATCH STRING {
                     matchset.ignore = true;
                     matchset.match_path = NULL;
                     matchset.match_string = $4;
-                    addmatch(&matchset, ACTION_IGNORE, 0);
+                    addmatch(&matchset, Action_Ignored, 0);
                   }
                 ;
 
@@ -1960,7 +1960,7 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
                   }
                 | IF CHANGED SIZE rate1 THEN action1 {
                     sizeset.test_changes = true;
-                    addeventaction(&(sizeset).action, $<number>6, ACTION_IGNORE);
+                    addeventaction(&(sizeset).action, $<number>6, Action_Ignored);
                     addsize(&sizeset);
                   }
                 ;
@@ -2365,7 +2365,7 @@ static void postparse() {
                         LogError("'check system' not defined in control file, failed to add automatic configuration (service name %s is used already) -- please add 'check system <name>' manually\n", hostname);
                         cfg_errflag++;
                 } else {
-                        Run.system = createservice(TYPE_SYSTEM, Str_dup(hostname), Str_dup(""), check_system);
+                        Run.system = createservice(Service_System, Str_dup(hostname), Str_dup(""), check_system);
                         addservice(Run.system);
                 }
         }
@@ -2397,7 +2397,7 @@ static void postparse() {
  * Create a new service object and add any current objects to the
  * service list.
  */
-static Service_T createservice(int type, char *name, char *value, boolean_t (*check)(Service_T s)) {
+static Service_T createservice(Service_Type type, char *name, char *value, boolean_t (*check)(Service_T s)) {
         ASSERT(name);
         ASSERT(value);
 
@@ -2413,7 +2413,7 @@ static Service_T createservice(int type, char *name, char *value, boolean_t (*ch
         NEW(current->inf);
         Util_resetInfo(current);
 
-        if (type == TYPE_PROGRAM) {
+        if (type == Service_Program) {
                 NEW(current->program);
                 current->program->args = command;
                 command = NULL;
@@ -2421,22 +2421,22 @@ static Service_T createservice(int type, char *name, char *value, boolean_t (*ch
         }
 
         /* Set default values */
-        current->monitor = MONITOR_INIT;
-        current->mode    = MODE_ACTIVE;
+        current->monitor = Monitor_Init;
+        current->mode    = Monitor_Active;
         current->name    = name;
         current->check   = check;
         current->path    = value;
 
         /* Initialize general event handlers */
-        addeventaction(&(current)->action_DATA,     ACTION_ALERT,     ACTION_ALERT);
-        addeventaction(&(current)->action_EXEC,     ACTION_ALERT,     ACTION_ALERT);
-        addeventaction(&(current)->action_INVALID,  ACTION_RESTART,   ACTION_ALERT);
+        addeventaction(&(current)->action_DATA,     Action_Alert,     Action_Alert);
+        addeventaction(&(current)->action_EXEC,     Action_Alert,     Action_Alert);
+        addeventaction(&(current)->action_INVALID,  Action_Restart,   Action_Alert);
 
         /* Initialize internal event handlers */
-        addeventaction(&(current)->action_MONIT_START,  ACTION_START, ACTION_IGNORE);
-        addeventaction(&(current)->action_MONIT_STOP,   ACTION_STOP,  ACTION_IGNORE);
-        addeventaction(&(current)->action_MONIT_RELOAD, ACTION_START, ACTION_IGNORE);
-        addeventaction(&(current)->action_ACTION,       ACTION_ALERT, ACTION_IGNORE);
+        addeventaction(&(current)->action_MONIT_START,  Action_Start, Action_Ignored);
+        addeventaction(&(current)->action_MONIT_STOP,   Action_Stop,  Action_Ignored);
+        addeventaction(&(current)->action_MONIT_RELOAD, Action_Start, Action_Ignored);
+        addeventaction(&(current)->action_ACTION,       Action_Alert, Action_Ignored);
 
         gettimeofday(&current->collected, NULL);
 
@@ -2452,14 +2452,14 @@ static void addservice(Service_T s) {
 
         // Test sanity check
         switch (s->type) {
-                case TYPE_HOST:
+                case Service_Host:
                         // Verify that a remote service has a port or an icmp list
                         if (! s->portlist && ! s->icmplist) {
                                 LogError("'check host' statement is incomplete: Please specify a port number to test\n or an icmp test at the remote host: '%s'\n", s->name);
                                 cfg_errflag++;
                         }
                         break;
-                case TYPE_PROGRAM:
+                case Service_Program:
                         // Verify that a program test has a status test
                         if (! s->statuslist) {
                                 LogError("'check program %s' is incomplete: Please add an 'if status != n' test\n", s->name);
@@ -2475,27 +2475,27 @@ static void addservice(Service_T s) {
                         if (s->program->args->has_gid)
                                 Command_setGid(s->program->C, s->program->args->gid);
                         break;
-                case TYPE_NET:
+                case Service_Net:
                         if (! s->linkstatuslist) {
                                 // Add link status test if not defined
-                                addeventaction(&(linkstatusset).action, ACTION_ALERT, ACTION_ALERT);
+                                addeventaction(&(linkstatusset).action, Action_Alert, Action_Alert);
                                 addlinkstatus(s, &linkstatusset);
                         }
                         break;
-                case TYPE_FILESYSTEM:
+                case Service_Filesystem:
                         if (! s->fsflaglist) {
                                 // Add filesystem flags change test if not defined
-                                addeventaction(&(fsflagset).action, ACTION_ALERT, ACTION_IGNORE);
+                                addeventaction(&(fsflagset).action, Action_Alert, Action_Ignored);
                                 addfsflag(&fsflagset);
                         }
                         break;
-                case TYPE_DIRECTORY:
-                case TYPE_FIFO:
-                case TYPE_FILE:
-                case TYPE_PROCESS:
+                case Service_Directory:
+                case Service_Fifo:
+                case Service_File:
+                case Service_Process:
                         if (! s->nonexistlist) {
                                 // Add existence test if not defined
-                                addeventaction(&(nonexistset).action, ACTION_RESTART, ACTION_ALERT);
+                                addeventaction(&(nonexistset).action, Action_Restart, Action_Alert);
                                 addnonexist(&nonexistset);
                         }
                         break;
@@ -2962,19 +2962,19 @@ static void addbandwidth(Bandwidth_T *list, Bandwidth_T b) {
         ASSERT(list);
         ASSERT(b);
 
-        if (b->rangecount * b->range > 24 * TIME_HOUR) {
+        if (b->rangecount * b->range > 24 * Time_Hour) {
                 yyerror2("Maximum range for total test is 24 hours");
-        } else if (b->range == TIME_MINUTE && b->rangecount > 60) {
+        } else if (b->range == Time_Minute && b->rangecount > 60) {
                 yyerror2("Maximum value for [minute(s)] unit is 60");
-        } else if (b->range == TIME_HOUR && b->rangecount > 24) {
+        } else if (b->range == Time_Hour && b->rangecount > 24) {
                 yyerror2("Maximum value for [hour(s)] unit is 24");
-        } else if (b->range == TIME_DAY && b->rangecount > 1) {
+        } else if (b->range == Time_Day && b->rangecount > 1) {
                 yyerror2("Maximum value for [day(s)] unit is 1");
         } else {
-                if (b->range == TIME_DAY) {
+                if (b->range == Time_Day) {
                         // translate last day -> last 24 hours
                         b->rangecount = 24;
-                        b->range = TIME_HOUR;
+                        b->range = Time_Hour;
                 }
                 Bandwidth_T bandwidth;
                 NEW(bandwidth);
@@ -3024,7 +3024,7 @@ static void addmatch(Match_T ms, int actionnumber, int linenumber) {
         m->ignore       = ms->ignore;
         m->next         = NULL;
 
-        addeventaction(&(m->action), actionnumber, ACTION_IGNORE);
+        addeventaction(&(m->action), actionnumber, Action_Ignored);
 
 #ifdef HAVE_REGEX_H
         reg_return = regcomp(m->regex_comp, ms->match_string, REG_NOSUB|REG_EXTENDED);
@@ -3042,7 +3042,7 @@ static void addmatch(Match_T ms, int actionnumber, int linenumber) {
 }
 
 
-static void addmatchpath(Match_T ms, int actionnumber) {
+static void addmatchpath(Match_T ms, Action_Type actionnumber) {
 
         FILE *handle;
         command_t savecommand = NULL;
@@ -3078,7 +3078,7 @@ static void addmatchpath(Match_T ms, int actionnumber) {
                 /* The addeventaction() called from addmatch() will reset the
                  * command1 to NULL, but we need to duplicate the command for
                  * each line, thus need to save it here */
-                if (actionnumber == ACTION_EXEC) {
+                if (actionnumber == Action_Exec) {
                         if (command1 == NULL) {
                                 ASSERT(savecommand);
                                 command1 = savecommand;
@@ -3089,7 +3089,7 @@ static void addmatchpath(Match_T ms, int actionnumber) {
                 addmatch(ms, actionnumber, linenumber);
         }
         
-        if (actionnumber == ACTION_EXEC && savecommand)
+        if (actionnumber == Action_Exec && savecommand)
                 gccmd(&savecommand);
         
         fclose(handle);
@@ -3193,7 +3193,7 @@ static void addicmp(Icmp_T is) {
 /*
  * Set EventAction object
  */
-static void addeventaction(EventAction_T *_ea, int failed, int succeeded) {
+static void addeventaction(EventAction_T *_ea, Action_Type failed, Action_Type succeeded) {
         EventAction_T ea;
 
         ASSERT(_ea);
@@ -3205,7 +3205,7 @@ static void addeventaction(EventAction_T *_ea, int failed, int succeeded) {
         ea->failed->id     = failed;
         ea->failed->count  = rate1.count;
         ea->failed->cycles = rate1.cycles;
-        if (failed == ACTION_EXEC) {
+        if (failed == Action_Exec) {
                 ASSERT(command1);
                 ea->failed->exec = command1;
                 command1 = NULL;
@@ -3214,7 +3214,7 @@ static void addeventaction(EventAction_T *_ea, int failed, int succeeded) {
         ea->succeeded->id     = succeeded;
         ea->succeeded->count  = rate2.count;
         ea->succeeded->cycles = rate2.cycles;
-        if (succeeded == ACTION_EXEC) {
+        if (succeeded == Action_Exec) {
                 ASSERT(command2);
                 ea->succeeded->exec = command2;
                 command2 = NULL;

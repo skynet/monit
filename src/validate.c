@@ -275,7 +275,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
         switch (r->resource_id) {
 
                 case RESOURCE_ID_CPU_PERCENT:
-                        if (s->monitor & MONITOR_INIT || s->inf->priv.process.cpu_percent < 0) {
+                        if (s->monitor & Monitor_Init || s->inf->priv.process.cpu_percent < 0) {
                                 DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.cpu_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.cpu_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -285,7 +285,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_TOTAL_CPU_PERCENT:
-                        if (s->monitor & MONITOR_INIT || s->inf->priv.process.total_cpu_percent < 0) {
+                        if (s->monitor & Monitor_Init || s->inf->priv.process.total_cpu_percent < 0) {
                                 DEBUG("'%s' total cpu usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.total_cpu_percent, r->limit)) {
                                 snprintf(report, STRLEN, "total cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.total_cpu_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -295,7 +295,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_CPUUSER:
-                        if (s->monitor & MONITOR_INIT || systeminfo.total_cpu_user_percent < 0) {
+                        if (s->monitor & Monitor_Init || systeminfo.total_cpu_user_percent < 0) {
                                 DEBUG("'%s' cpu user usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_user_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu user usage of %.1f%% matches resource limit [cpu user usage%s%.1f%%]", systeminfo.total_cpu_user_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -305,7 +305,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_CPUSYSTEM:
-                        if (s->monitor & MONITOR_INIT || systeminfo.total_cpu_syst_percent < 0) {
+                        if (s->monitor & Monitor_Init || systeminfo.total_cpu_syst_percent < 0) {
                                 DEBUG("'%s' cpu system usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_syst_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu system usage of %.1f%% matches resource limit [cpu system usage%s%.1f%%]", systeminfo.total_cpu_syst_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -315,7 +315,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_CPUWAIT:
-                        if (s->monitor & MONITOR_INIT || systeminfo.total_cpu_wait_percent < 0) {
+                        if (s->monitor & Monitor_Init || systeminfo.total_cpu_wait_percent < 0) {
                                 DEBUG("'%s' cpu wait usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_wait_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu wait usage of %.1f%% matches resource limit [cpu wait usage%s%.1f%%]", systeminfo.total_cpu_wait_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -325,7 +325,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_MEM_PERCENT:
-                        if (s->type == TYPE_SYSTEM) {
+                        if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_percent, r->limit)) {
                                         snprintf(report, STRLEN, "mem usage of %.1f%% matches resource limit [mem usage%s%.1f%%]", systeminfo.total_mem_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                         okay = false;
@@ -341,7 +341,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_MEM_KBYTE:
-                        if (s->type == TYPE_SYSTEM) {
+                        if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_kbyte, r->limit)) {
                                         snprintf(report, STRLEN, "mem amount of %s matches resource limit [mem amount%s%s]", Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf1), operatorshortnames[r->operator], Str_bytesToSize(r->limit * 1024., buf2));
                                         okay = false;
@@ -357,7 +357,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_SWAP_PERCENT:
-                        if (s->type == TYPE_SYSTEM) {
+                        if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_percent, r->limit)) {
                                         snprintf(report, STRLEN, "swap usage of %.1f%% matches resource limit [swap usage%s%.1f%%]", systeminfo.total_swap_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                         okay = false;
@@ -367,7 +367,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case RESOURCE_ID_SWAP_KBYTE:
-                        if (s->type == TYPE_SYSTEM) {
+                        if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_kbyte, r->limit)) {
                                         snprintf(report, STRLEN, "swap amount of %s matches resource limit [swap amount%s%s]", Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf1), operatorshortnames[r->operator], Str_bytesToSize(r->limit * 1024., buf2));
                                         okay = false;
@@ -509,7 +509,7 @@ static void check_perm(Service_T s) {
 static void check_uid(Service_T s) {
         ASSERT(s && s->uid);
 
-        if (s->type == TYPE_PROCESS) {
+        if (s->type == Service_Process) {
                 if (s->inf->priv.process.uid != s->uid->uid)
                         Event_post(s, Event_Uid, State_Failed, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, s->inf->priv.process.uid);
                 else
@@ -542,7 +542,7 @@ static void check_euid(Service_T s) {
 static void check_gid(Service_T s) {
         ASSERT(s && s->gid);
 
-        if (s->type == TYPE_PROCESS) {
+        if (s->type == Service_Process) {
                 if (s->inf->priv.process.gid != s->gid->gid )
                         Event_post(s, Event_Gid, State_Failed, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, s->inf->priv.process.gid);
                 else
@@ -907,24 +907,24 @@ static boolean_t check_skip(Service_T s) {
                 return true;
         }
         time_t now = Time_now();
-        if (s->every.type == EVERY_SKIPCYCLES) {
+        if (s->every.type == Every_SkipCycles) {
                 s->every.spec.cycle.counter++;
                 if (s->every.spec.cycle.counter < s->every.spec.cycle.number) {
-                        s->monitor |= MONITOR_WAITING;
+                        s->monitor |= Monitor_Waiting;
                         DEBUG("'%s' test skipped as current cycle (%d) < every cycle (%d) \n", s->name, s->every.spec.cycle.counter, s->every.spec.cycle.number);
                         return true;
                 }
                 s->every.spec.cycle.counter = 0;
-        } else if (s->every.type == EVERY_CRON && ! _incron(s, now)) {
-                s->monitor |= MONITOR_WAITING;
+        } else if (s->every.type == Every_Cron && ! _incron(s, now)) {
+                s->monitor |= Monitor_Waiting;
                 DEBUG("'%s' test skipped as current time (%lld) does not match every's cron spec \"%s\"\n", s->name, (long long)now, s->every.spec.cron);
                 return true;
-        } else if (s->every.type == EVERY_NOTINCRON && Time_incron(s->every.spec.cron, now)) {
-                s->monitor |= MONITOR_WAITING;
+        } else if (s->every.type == Every_NotInCron && Time_incron(s->every.spec.cron, now)) {
+                s->monitor |= Monitor_Waiting;
                 DEBUG("'%s' test skipped as current time (%lld) matches every's cron spec \"not %s\"\n", s->name, (long long)now, s->every.spec.cron);
                 return true;
         }
-        s->monitor &= ~MONITOR_WAITING;
+        s->monitor &= ~Monitor_Waiting;
         return false;
 }
 
@@ -934,11 +934,11 @@ static boolean_t check_skip(Service_T s) {
  */
 static boolean_t do_scheduled_action(Service_T s) {
         int rv = false;
-        if (s->doaction != ACTION_IGNORE) {
+        if (s->doaction != Action_Ignored) {
                 // FIXME: let the event engine do the action directly? (just replace s->action_ACTION with s->doaction and drop control_service call)
                 rv = control_service(s->name, s->doaction);
                 Event_post(s, Event_Action, State_Changed, s->action_ACTION, "%s action done", actionnames[s->doaction]);
-                s->doaction = ACTION_IGNORE;
+                s->doaction = Action_Ignored;
                 FREE(s->token);
         }
         return rv;
@@ -981,9 +981,9 @@ int validate() {
                                 if (! s->check(s))
                                         errors++;
                                 /* The monitoring may be disabled by some matching rule in s->check
-                                 * so we have to check again before setting to MONITOR_YES */
-                                if (s->monitor != MONITOR_NOT)
-                                        s->monitor = MONITOR_YES;
+                                 * so we have to check again before setting to Monitor_Yes */
+                                if (s->monitor != Monitor_Not)
+                                        s->monitor = Monitor_Yes;
                         }
                         gettimeofday(&s->collected, NULL);
                 }
@@ -1458,10 +1458,10 @@ boolean_t check_net(Service_T s) {
         for (Bandwidth_T upload = s->uploadbyteslist; upload; upload = upload->next) {
                 long long obytes;
                 switch (upload->range) {
-                        case TIME_MINUTE:
+                        case Time_Minute:
                                 obytes = Link_getBytesOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
                                 break;
-                        case TIME_HOUR:
+                        case Time_Hour:
                                 if (upload->rangecount == 1) // Use precise minutes range for "last hour"
                                         obytes = Link_getBytesOutPerMinute(s->inf->priv.net.stats, 60);
                                 else
@@ -1472,17 +1472,17 @@ boolean_t check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, obytes, upload->limit))
-                        Event_post(s, Event_ByteOut, State_Failed, upload->action, "%supload %s matches limit [upload rate %s %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToSize(obytes, buf1), operatorshortnames[upload->operator], Str_bytesToSize(upload->limit, buf2), upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_ByteOut, State_Failed, upload->action, "%supload %s matches limit [upload rate %s %s in last %d %s]", upload->range != Time_Second ? "total " : "", Str_bytesToSize(obytes, buf1), operatorshortnames[upload->operator], Str_bytesToSize(upload->limit, buf2), upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_ByteOut, State_Succeeded, upload->action, "%supload check succeeded [current upload rate %s in last %d %s]", upload->range != TIME_SECOND ? "total " : "", Str_bytesToSize(obytes, buf1), upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_ByteOut, State_Succeeded, upload->action, "%supload check succeeded [current upload rate %s in last %d %s]", upload->range != Time_Second ? "total " : "", Str_bytesToSize(obytes, buf1), upload->rangecount, Util_timestr(upload->range));
         }
         for (Bandwidth_T upload = s->uploadpacketslist; upload; upload = upload->next) {
                 long long opackets;
                 switch (upload->range) {
-                        case TIME_MINUTE:
+                        case Time_Minute:
                                 opackets = Link_getPacketsOutPerMinute(s->inf->priv.net.stats, upload->rangecount);
                                 break;
-                        case TIME_HOUR:
+                        case Time_Hour:
                                 if (upload->rangecount == 1) // Use precise minutes range for "last hour"
                                         opackets = Link_getPacketsOutPerMinute(s->inf->priv.net.stats, 60);
                                 else
@@ -1493,18 +1493,18 @@ boolean_t check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(upload->operator, opackets, upload->limit))
-                        Event_post(s, Event_PacketOut, State_Failed, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_PacketOut, State_Failed, upload->action, "%supload packets %lld matches limit [upload packets %s %lld in last %d %s]", upload->range != Time_Second ? "total " : "", opackets, operatorshortnames[upload->operator], upload->limit, upload->rangecount, Util_timestr(upload->range));
                 else
-                        Event_post(s, Event_PacketOut, State_Succeeded, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != TIME_SECOND ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
+                        Event_post(s, Event_PacketOut, State_Succeeded, upload->action, "%supload packets check succeeded [current upload packets %lld in last %d %s]", upload->range != Time_Second ? "total " : "", opackets, upload->rangecount, Util_timestr(upload->range));
         }
         // Download
         for (Bandwidth_T download = s->downloadbyteslist; download; download = download->next) {
                 long long ibytes;
                 switch (download->range) {
-                        case TIME_MINUTE:
+                        case Time_Minute:
                                 ibytes = Link_getBytesInPerMinute(s->inf->priv.net.stats, download->rangecount);
                                 break;
-                        case TIME_HOUR:
+                        case Time_Hour:
                                 if (download->rangecount == 1) // Use precise minutes range for "last hour"
                                         ibytes = Link_getBytesInPerMinute(s->inf->priv.net.stats, 60);
                                 else
@@ -1515,17 +1515,17 @@ boolean_t check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ibytes, download->limit))
-                        Event_post(s, Event_ByteIn, State_Failed, download->action, "%sdownload %s matches limit [download rate %s %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToSize(ibytes, buf1), operatorshortnames[download->operator], Str_bytesToSize(download->limit, buf2), download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_ByteIn, State_Failed, download->action, "%sdownload %s matches limit [download rate %s %s in last %d %s]", download->range != Time_Second ? "total " : "", Str_bytesToSize(ibytes, buf1), operatorshortnames[download->operator], Str_bytesToSize(download->limit, buf2), download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_ByteIn, State_Succeeded, download->action, "%sdownload check succeeded [current download rate %s in last %d %s]", download->range != TIME_SECOND ? "total " : "", Str_bytesToSize(ibytes, buf1), download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_ByteIn, State_Succeeded, download->action, "%sdownload check succeeded [current download rate %s in last %d %s]", download->range != Time_Second ? "total " : "", Str_bytesToSize(ibytes, buf1), download->rangecount, Util_timestr(download->range));
         }
         for (Bandwidth_T download = s->downloadpacketslist; download; download = download->next) {
                 long long ipackets;
                 switch (download->range) {
-                        case TIME_MINUTE:
+                        case Time_Minute:
                                 ipackets = Link_getPacketsInPerMinute(s->inf->priv.net.stats, download->rangecount);
                                 break;
-                        case TIME_HOUR:
+                        case Time_Hour:
                                 if (download->rangecount == 1) // Use precise minutes range for "last hour"
                                         ipackets = Link_getPacketsInPerMinute(s->inf->priv.net.stats, 60);
                                 else
@@ -1536,9 +1536,9 @@ boolean_t check_net(Service_T s) {
                                 break;
                 }
                 if (Util_evalQExpression(download->operator, ipackets, download->limit))
-                        Event_post(s, Event_PacketIn, State_Failed, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_PacketIn, State_Failed, download->action, "%sdownload packets %lld matches limit [download packets %s %lld in last %d %s]", download->range != Time_Second ? "total " : "", ipackets, operatorshortnames[download->operator], download->limit, download->rangecount, Util_timestr(download->range));
                 else
-                        Event_post(s, Event_PacketIn, State_Succeeded, download->action, "%sdownload packets check succeeded [current download packets %lld in last %d %s]", download->range != TIME_SECOND ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
+                        Event_post(s, Event_PacketIn, State_Succeeded, download->action, "%sdownload packets check succeeded [current download packets %lld in last %d %s]", download->range != Time_Second ? "total " : "", ipackets, download->rangecount, Util_timestr(download->range));
         }
         return true;
 }

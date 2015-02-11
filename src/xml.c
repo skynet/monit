@@ -174,7 +174,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                             S->monitor,
                             S->mode,
                             S->doaction);
-        if (S->every.type != EVERY_CYCLE) {
+        if (S->every.type != Every_Cycle) {
                 StringBuffer_append(B, "<every><type>%d</type>", S->every.type);
                 if (S->every.type == 1)
                         StringBuffer_append(B, "<counter>%d</counter><number>%d</number>", S->every.spec.cycle.counter, S->every.spec.cycle.number);
@@ -185,16 +185,16 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
 
         if (L == LEVEL_FULL) {
                 if (Util_hasServiceStatus(S)) {
-                        if (S->type == TYPE_FILE || S->type == TYPE_DIRECTORY || S->type == TYPE_FIFO || S->type == TYPE_FILESYSTEM)
+                        if (S->type == Service_File || S->type == Service_Directory || S->type == Service_Fifo || S->type == Service_Filesystem)
                                 StringBuffer_append(B, "<mode>%o</mode><uid>%d</uid><gid>%d</gid>", S->inf->st_mode & 07777, (int)S->inf->st_uid, (int)S->inf->st_gid);
-                        if (S->type == TYPE_FILE || S->type == TYPE_FIFO || S->type == TYPE_DIRECTORY)
+                        if (S->type == Service_File || S->type == Service_Fifo || S->type == Service_Directory)
                                 StringBuffer_append(B, "<timestamp>%lld</timestamp>", (long long)S->inf->timestamp);
-                        if (S->type == TYPE_FILE) {
+                        if (S->type == Service_File) {
                                 StringBuffer_append(B, "<size>%llu</size>", (unsigned long long) S->inf->priv.file.st_size);
                                 if (S->checksum)
                                         StringBuffer_append(B, "<checksum type=\"%s\">%s</checksum>", checksumnames[S->checksum->type], S->inf->priv.file.cs_sum);
                         }
-                        if (S->type == TYPE_NET) {
+                        if (S->type == Service_Net) {
                                 StringBuffer_append(B,
                                                     "<link>"
                                                     "<state>%d</state>"
@@ -245,7 +245,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                     Link_getErrorsOutPerSecond(S->inf->priv.net.stats),
                                                     Link_getErrorsOutTotal(S->inf->priv.net.stats));
                         }
-                        if (S->type == TYPE_FILESYSTEM) {
+                        if (S->type == Service_Filesystem) {
                                 StringBuffer_append(B,
                                                     "<flags>%d</flags>"
                                                     "<block>"
@@ -269,7 +269,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                             S->inf->priv.filesystem.f_files);
                                 }
                         }
-                        if (S->type == TYPE_PROCESS) {
+                        if (S->type == Service_Process) {
                                 StringBuffer_append(B,
                                                     "<pid>%d</pid>"
                                                     "<ppid>%d</ppid>"
@@ -342,7 +342,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                     p->protocol->name ? p->protocol->name : "",
                                                     p->is_available ? p->response : -1.);
                         }
-                        if (S->type == TYPE_SYSTEM && Run.doprocess) {
+                        if (S->type == Service_System && Run.doprocess) {
                                 StringBuffer_append(B,
                                                     "<system>"
                                                     "<load>"
@@ -379,7 +379,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                                                     systeminfo.total_swap_percent/10.,
                                                     systeminfo.total_swap_kbyte);
                         }
-                        if (S->type == TYPE_PROGRAM && S->program->started) {
+                        if (S->type == Service_Program && S->program->started) {
                                 StringBuffer_append(B,
                                                     "<program>"
                                                     "<started>%lld</started>"

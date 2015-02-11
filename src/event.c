@@ -414,12 +414,12 @@ short Event_get_action(Event_T E) {
         }
 
         if (! A)
-                return ACTION_IGNORE;
+                return Action_Ignored;
 
         /* In the case of passive mode we replace the description of start, stop
          * or restart action for alert action, because these actions are passive in
          * this mode */
-        return (E->mode == MODE_PASSIVE && ((A->id == ACTION_START) || (A->id == ACTION_STOP) || (A->id == ACTION_RESTART))) ? ACTION_ALERT : A->id;
+        return (E->mode == Monitor_Passive && ((A->id == Action_Start) || (A->id == Action_Stop) || (A->id == Action_Restart))) ? Action_Alert : A->id;
 }
 
 
@@ -662,7 +662,7 @@ static void handle_action(Event_T E, Action_T A) {
 
         E->flag = HANDLER_SUCCEEDED;
 
-        if (A->id == ACTION_IGNORE)
+        if (A->id == Action_Ignored)
                 return;
 
         /* Alert and mmonit event notification are common actions */
@@ -686,17 +686,17 @@ static void handle_action(Event_T E, Action_T A) {
         /* Action event is handled already. For Instance events
          * we don't want actions like stop to be executed
          * to prevent the disabling of system service monitoring */
-        if (A->id == ACTION_ALERT || E->id == Event_Instance) {
+        if (A->id == Action_Alert || E->id == Event_Instance) {
                 return;
-        } else if (A->id == ACTION_EXEC) {
+        } else if (A->id == Action_Exec) {
                 LogInfo("'%s' exec: %s\n", s->name, A->exec->arg[0]);
                 spawn(s, A->exec, E);
                 return;
         } else {
-                if (s->actionratelist && (A->id == ACTION_START || A->id == ACTION_RESTART))
+                if (s->actionratelist && (A->id == Action_Start || A->id == Action_Restart))
                         s->nstart++;
 
-                if (s->mode == MODE_PASSIVE && (A->id == ACTION_START || A->id == ACTION_STOP  || A->id == ACTION_RESTART))
+                if (s->mode == Monitor_Passive && (A->id == Action_Start || A->id == Action_Stop  || A->id == Action_Restart))
                         return;
 
                 control_service(s->name, A->id);
