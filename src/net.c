@@ -295,8 +295,7 @@ int create_socket(const char *hostname, int port, int type, Socket_Family family
 #ifdef AI_ADDRCONFIG
                 .ai_flags = AI_ADDRCONFIG,
 #endif
-                .ai_socktype = type,
-                .ai_protocol = IPPROTO_TCP
+                .ai_protocol = type == SOCK_DGRAM ? IPPROTO_UDP : IPPROTO_TCP
         };
         switch (family) {
                 case Socket_Ip:
@@ -323,7 +322,7 @@ int create_socket(const char *hostname, int port, int type, Socket_Family family
         }
         int s = -1;
         for (r = result; r; r = r->ai_next) {
-                if ((s = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) >= 0) {
+                if ((s = socket(r->ai_family, type, r->ai_protocol)) >= 0) {
                         if (s >= 0) {
                                 if (Net_setNonBlocking(s)) {
                                         if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
