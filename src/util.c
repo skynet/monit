@@ -134,7 +134,7 @@
 struct ad_user {
         const char *login;
         const char *passwd;
-} __attribute__((__packed__));
+};
 
 
 /* Unsafe URL characters: <>\"#%{}|\\^[] ` */

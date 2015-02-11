@@ -72,7 +72,7 @@ typedef struct myeventtable {
   char *description_succeeded;
   char *description_changed;
   char *description_changednot;
-} __attribute__((__packed__)) EventTable_T;
+} EventTable_T;
 
 extern EventTable_T Event_Table[];
 

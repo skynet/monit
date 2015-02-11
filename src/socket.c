@@ -105,7 +105,7 @@ struct Socket_T {
         int length;
         int offset;
         unsigned char buffer[RBUFFER_SIZE + 1];
-} __attribute__((__packed__));
+};
 
 
 /* --------------------------------------------------------------- Private */

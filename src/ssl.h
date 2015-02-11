@@ -52,7 +52,7 @@ typedef struct myssl {
         int   version;                  /**< The SSL version to use for connection */
         char *certmd5;       /**< The expected md5 sum of the server's certificate */
         char *clientpemfile;                      /**< Optional client certificate */
-} __attribute__((__packed__)) Ssl_T;
+} Ssl_T;
 
 
 #ifdef HAVE_OPENSSL
@@ -75,7 +75,7 @@ typedef struct my_ssl_connection {
 
         struct my_ssl_connection *prev;
         struct my_ssl_connection *next;
-} __attribute__((__packed__)) ssl_connection;
+} ssl_connection;
 
 
 typedef struct my_ssl_server_connection {
@@ -85,7 +85,7 @@ typedef struct my_ssl_server_connection {
         char             *pemfile;
         char             *clientpemfile;
         ssl_connection   *ssl_conn_list;
-} __attribute__((__packed__)) ssl_server_connection;
+} ssl_server_connection;
 
 
 #define                have_ssl() 1

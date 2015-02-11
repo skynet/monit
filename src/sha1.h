@@ -33,7 +33,7 @@ typedef struct {
     unsigned int state[5];
     unsigned int count[2];
     unsigned char buffer[64];
-} __attribute__((__packed__)) sha1_context_t;
+} sha1_context_t;
 
 void sha1_init(sha1_context_t *context);
 void sha1_append(sha1_context_t *context, const unsigned char *data, const size_t len);

@@ -102,7 +102,7 @@
 typedef enum {
         StateVersion0 = 0,
         StateVersion1
-} __attribute__((__packed__)) State_Version;
+} State_Version;
 
 
 /* Format version 0 (Monit <= 5.3) */
@@ -113,7 +113,7 @@ typedef struct mystate0 {
         int                ncycle;
         int                monitor;
         unsigned long long error;               // obsolete since Monit 5.0
-} State0_T; /* Keep position, don't memory pack! */
+} State0_T;
 
 
 /* Extended format version 1 */
@@ -129,7 +129,7 @@ typedef struct mystate1 {
                         unsigned long long readpos;
                 } file;
         } priv;
-} State1_T; /* Keep position, don't memory pack! */
+} State1_T;
 
 
 static int file = -1;
