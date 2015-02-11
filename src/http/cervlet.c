@@ -187,7 +187,7 @@ static void print_service_status_link(HttpResponse, Service_T);
 static void print_service_status_download(HttpResponse, Service_T);
 static void print_service_status_upload(HttpResponse, Service_T);
 static void print_status(HttpRequest, HttpResponse, int);
-static void status_service_txt(Service_T, HttpResponse, short);
+static void status_service_txt(Service_T, HttpResponse, Level_Type);
 static char *get_monitoring_status(Service_T s, char *, int);
 static char *get_service_status(Service_T, char *, int);
 
@@ -1662,14 +1662,14 @@ static void print_service_rules_fsflags(HttpResponse res, Service_T s) {
 
 static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
         for (Filesystem_T dl = s->filesystemlist; dl; dl = dl->next) {
-                if (dl->resource == RESOURCE_ID_INODE) {
+                if (dl->resource == Resource_Inode) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Inodes usage limit</td><td>");
                         if (dl->limit_absolute > -1)
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %lld", operatornames[dl->operator], dl->limit_absolute);
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
-                } else if (dl->resource == RESOURCE_ID_SPACE) {
+                } else if (dl->resource == Resource_Space) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Space usage limit</td><td>");
                         if (dl->limit_absolute > -1) {
                                 if (s->inf->priv.filesystem.f_bsize > 0) {
@@ -1858,93 +1858,97 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
         for (Resource_T q = s->resourcelist; q; q = q->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>");
                 switch (q->resource_id) {
-                        case RESOURCE_ID_CPU_PERCENT:
+                        case Resource_CpuPercent:
                                 StringBuffer_append(res->outputbuffer, "CPU usage limit");
                                 break;
 
-                        case RESOURCE_ID_TOTAL_CPU_PERCENT:
+                        case Resource_CpuPercentTotal:
                                 StringBuffer_append(res->outputbuffer, "CPU usage limit (incl. children)");
                                 break;
 
-                        case RESOURCE_ID_CPUUSER:
+                        case Resource_CpuUser:
                                 StringBuffer_append(res->outputbuffer, "CPU user limit");
                                 break;
 
-                        case RESOURCE_ID_CPUSYSTEM:
+                        case Resource_CpuSystem:
                                 StringBuffer_append(res->outputbuffer, "CPU system limit");
                                 break;
 
-                        case RESOURCE_ID_CPUWAIT:
+                        case Resource_CpuWait:
                                 StringBuffer_append(res->outputbuffer, "CPU wait limit");
                                 break;
 
-                        case RESOURCE_ID_MEM_PERCENT:
+                        case Resource_MemoryPercent:
                                 StringBuffer_append(res->outputbuffer, "Memory usage limit");
                                 break;
 
-                        case RESOURCE_ID_MEM_KBYTE:
+                        case Resource_MemoryKbyte:
                                 StringBuffer_append(res->outputbuffer, "Memory amount limit");
                                 break;
 
-                        case RESOURCE_ID_SWAP_PERCENT:
+                        case Resource_SwapPercent:
                                 StringBuffer_append(res->outputbuffer, "Swap usage limit");
                                 break;
 
-                        case RESOURCE_ID_SWAP_KBYTE:
+                        case Resource_SwapKbyte:
                                 StringBuffer_append(res->outputbuffer, "Swap amount limit");
                                 break;
 
-                        case RESOURCE_ID_LOAD1:
+                        case Resource_LoadAverage1m:
                                 StringBuffer_append(res->outputbuffer, "Load average (1min)");
                                 break;
 
-                        case RESOURCE_ID_LOAD5:
+                        case Resource_LoadAverage5m:
                                 StringBuffer_append(res->outputbuffer, "Load average (5min)");
                                 break;
 
-                        case RESOURCE_ID_LOAD15:
+                        case Resource_LoadAverage15m:
                                 StringBuffer_append(res->outputbuffer, "Load average (15min)");
                                 break;
 
-                        case RESOURCE_ID_CHILDREN:
+                        case Resource_Children:
                                 StringBuffer_append(res->outputbuffer, "Children");
                                 break;
 
-                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                        case Resource_MemoryKbyteTotal:
                                 StringBuffer_append(res->outputbuffer, "Memory amount limit (incl. children)");
                                 break;
 
-                        case RESOURCE_ID_TOTAL_MEM_PERCENT:
+                        case Resource_MemoryPercentTotal:
                                 StringBuffer_append(res->outputbuffer, "Memory usage limit (incl. children)");
+                                break;
+                        default:
                                 break;
                 }
                 StringBuffer_append(res->outputbuffer, "</td><td>");
                 switch (q->resource_id) {
-                        case RESOURCE_ID_CPU_PERCENT:
-                        case RESOURCE_ID_TOTAL_CPU_PERCENT:
-                        case RESOURCE_ID_TOTAL_MEM_PERCENT:
-                        case RESOURCE_ID_CPUUSER:
-                        case RESOURCE_ID_CPUSYSTEM:
-                        case RESOURCE_ID_CPUWAIT:
-                        case RESOURCE_ID_MEM_PERCENT:
-                        case RESOURCE_ID_SWAP_PERCENT:
+                        case Resource_CpuPercent:
+                        case Resource_CpuPercentTotal:
+                        case Resource_MemoryPercentTotal:
+                        case Resource_CpuUser:
+                        case Resource_CpuSystem:
+                        case Resource_CpuWait:
+                        case Resource_MemoryPercent:
+                        case Resource_SwapPercent:
                                 Util_printRule(res->outputbuffer, q->action, "If %s %.1f%%", operatornames[q->operator], q->limit / 10.);
                                 break;
 
-                        case RESOURCE_ID_MEM_KBYTE:
-                        case RESOURCE_ID_SWAP_KBYTE:
-                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                        case Resource_MemoryKbyte:
+                        case Resource_SwapKbyte:
+                        case Resource_MemoryKbyteTotal:
                                 Util_printRule(res->outputbuffer, q->action, "If %s %s", operatornames[q->operator], Str_bytesToSize(q->limit * 1024., buf));
                                 break;
 
-                        case RESOURCE_ID_LOAD1:
-                        case RESOURCE_ID_LOAD5:
-                        case RESOURCE_ID_LOAD15:
+                        case Resource_LoadAverage1m:
+                        case Resource_LoadAverage5m:
+                        case Resource_LoadAverage15m:
                                 Util_printRule(res->outputbuffer, q->action, "If %s %.1f", operatornames[q->operator], q->limit / 10.);
                                 break;
 
-                        case RESOURCE_ID_CHILDREN:
+                        case Resource_Children:
                                 Util_printRule(res->outputbuffer, q->action, "If %s %ld", operatornames[q->operator], q->limit);
+                                break;
+                        default:
                                 break;
                 }
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
@@ -2479,12 +2483,12 @@ static boolean_t is_readonly(HttpRequest req) {
 
 /* Print status in the given format. Text status is default. */
 static void print_status(HttpRequest req, HttpResponse res, int version) {
-        short level = LEVEL_FULL;
+        Level_Type level = Level_Full;
         const char *stringFormat = get_parameter(req, "format");
         const char *stringLevel = get_parameter(req, "level");
 
         if (stringLevel && Str_startsWith(stringLevel, LEVEL_NAME_SUMMARY))
-                level = LEVEL_SUMMARY;
+                level = Level_Summary;
 
         if (stringFormat && Str_startsWith(stringFormat, "xml")) {
                 char buf[STRLEN];
@@ -2505,9 +2509,9 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
 }
 
 
-static void status_service_txt(Service_T s, HttpResponse res, short level) {
+static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) {
         char buf[STRLEN];
-        if (level == LEVEL_SUMMARY) {
+        if (level == Level_Summary) {
                 char prefix[STRLEN];
                 snprintf(prefix, STRLEN, "%s '%s'", servicetypes[s->type], s->name);
                 StringBuffer_append(res->outputbuffer, "%-35s %s\n", prefix, get_service_status(s, buf, sizeof(buf)));

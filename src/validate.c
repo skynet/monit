@@ -274,7 +274,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
 
         switch (r->resource_id) {
 
-                case RESOURCE_ID_CPU_PERCENT:
+                case Resource_CpuPercent:
                         if (s->monitor & Monitor_Init || s->inf->priv.process.cpu_percent < 0) {
                                 DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.cpu_percent, r->limit)) {
@@ -284,7 +284,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.cpu_percent/10.0);
                         break;
 
-                case RESOURCE_ID_TOTAL_CPU_PERCENT:
+                case Resource_CpuPercentTotal:
                         if (s->monitor & Monitor_Init || s->inf->priv.process.total_cpu_percent < 0) {
                                 DEBUG("'%s' total cpu usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.total_cpu_percent, r->limit)) {
@@ -294,7 +294,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "total cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.total_cpu_percent/10.0);
                         break;
 
-                case RESOURCE_ID_CPUUSER:
+                case Resource_CpuUser:
                         if (s->monitor & Monitor_Init || systeminfo.total_cpu_user_percent < 0) {
                                 DEBUG("'%s' cpu user usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_user_percent, r->limit)) {
@@ -304,7 +304,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu user usage check succeeded [current cpu user usage=%.1f%%]", systeminfo.total_cpu_user_percent/10.0);
                         break;
 
-                case RESOURCE_ID_CPUSYSTEM:
+                case Resource_CpuSystem:
                         if (s->monitor & Monitor_Init || systeminfo.total_cpu_syst_percent < 0) {
                                 DEBUG("'%s' cpu system usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_syst_percent, r->limit)) {
@@ -314,7 +314,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu system usage check succeeded [current cpu system usage=%.1f%%]", systeminfo.total_cpu_syst_percent/10.0);
                         break;
 
-                case RESOURCE_ID_CPUWAIT:
+                case Resource_CpuWait:
                         if (s->monitor & Monitor_Init || systeminfo.total_cpu_wait_percent < 0) {
                                 DEBUG("'%s' cpu wait usage check skipped (initializing)\n", s->name);
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_wait_percent, r->limit)) {
@@ -324,7 +324,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu wait usage check succeeded [current cpu wait usage=%.1f%%]", systeminfo.total_cpu_wait_percent/10.0);
                         break;
 
-                case RESOURCE_ID_MEM_PERCENT:
+                case Resource_MemoryPercent:
                         if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_percent, r->limit)) {
                                         snprintf(report, STRLEN, "mem usage of %.1f%% matches resource limit [mem usage%s%.1f%%]", systeminfo.total_mem_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -340,7 +340,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         }
                         break;
 
-                case RESOURCE_ID_MEM_KBYTE:
+                case Resource_MemoryKbyte:
                         if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_kbyte, r->limit)) {
                                         snprintf(report, STRLEN, "mem amount of %s matches resource limit [mem amount%s%s]", Str_bytesToSize(systeminfo.total_mem_kbyte * 1024., buf1), operatorshortnames[r->operator], Str_bytesToSize(r->limit * 1024., buf2));
@@ -356,7 +356,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         }
                         break;
 
-                case RESOURCE_ID_SWAP_PERCENT:
+                case Resource_SwapPercent:
                         if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_percent, r->limit)) {
                                         snprintf(report, STRLEN, "swap usage of %.1f%% matches resource limit [swap usage%s%.1f%%]", systeminfo.total_swap_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
@@ -366,7 +366,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         }
                         break;
 
-                case RESOURCE_ID_SWAP_KBYTE:
+                case Resource_SwapKbyte:
                         if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_kbyte, r->limit)) {
                                         snprintf(report, STRLEN, "swap amount of %s matches resource limit [swap amount%s%s]", Str_bytesToSize(systeminfo.total_swap_kbyte * 1024., buf1), operatorshortnames[r->operator], Str_bytesToSize(r->limit * 1024., buf2));
@@ -376,7 +376,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         }
                         break;
 
-                case RESOURCE_ID_LOAD1:
+                case Resource_LoadAverage1m:
                         if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[0]*10.0), r->limit)) {
                                 snprintf(report, STRLEN, "loadavg(1min) of %.1f matches resource limit [loadavg(1min)%s%.1f]", systeminfo.loadavg[0], operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -384,7 +384,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "loadavg(1min) check succeeded [current loadavg(1min)=%.1f]", systeminfo.loadavg[0]);
                         break;
 
-                case RESOURCE_ID_LOAD5:
+                case Resource_LoadAverage5m:
                         if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[1]*10.0), r->limit)) {
                                 snprintf(report, STRLEN, "loadavg(5min) of %.1f matches resource limit [loadavg(5min)%s%.1f]", systeminfo.loadavg[1], operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -392,7 +392,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "loadavg(5min) check succeeded [current loadavg(5min)=%.1f]", systeminfo.loadavg[1]);
                         break;
 
-                case RESOURCE_ID_LOAD15:
+                case Resource_LoadAverage15m:
                         if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[2]*10.0), r->limit)) {
                                 snprintf(report, STRLEN, "loadavg(15min) of %.1f matches resource limit [loadavg(15min)%s%.1f]", systeminfo.loadavg[2], operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -400,7 +400,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "loadavg(15min) check succeeded [current loadavg(15min)=%.1f]", systeminfo.loadavg[2]);
                         break;
 
-                case RESOURCE_ID_CHILDREN:
+                case Resource_Children:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.children, r->limit)) {
                                 snprintf(report, STRLEN, "children of %i matches resource limit [children%s%ld]", s->inf->priv.process.children, operatorshortnames[r->operator], r->limit);
                                 okay = false;
@@ -408,7 +408,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "children check succeeded [current children=%i]", s->inf->priv.process.children);
                         break;
 
-                case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                case Resource_MemoryKbyteTotal:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_kbyte, r->limit)) {
                                 snprintf(report, STRLEN, "total mem amount of %s matches resource limit [total mem amount%s%s]", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf1), operatorshortnames[r->operator], Str_bytesToSize(r->limit * 1024., buf2));
                                 okay = false;
@@ -416,7 +416,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount=%s]", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf1));
                         break;
 
-                case RESOURCE_ID_TOTAL_MEM_PERCENT:
+                case Resource_MemoryPercentTotal:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_percent, r->limit)) {
                                 snprintf(report, STRLEN, "total mem amount of %.1f%% matches resource limit [total mem amount%s%.1f%%]", (float)s->inf->priv.process.total_mem_percent/10.0, operatorshortnames[r->operator], (float)r->limit/10.0);
                                 okay = false;
@@ -453,10 +453,10 @@ static void check_checksum(Service_T s) {
                 }
 
                 switch (cs->type) {
-                        case HASH_MD5:
+                        case Hash_Md5:
                                 changed = strncmp(cs->hash, s->inf->priv.file.cs_sum, 32);
                                 break;
-                        case HASH_SHA1:
+                        case Hash_Sha1:
                                 changed = strncmp(cs->hash, s->inf->priv.file.cs_sum, 40);
                                 break;
                         default:
@@ -807,7 +807,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
 
         switch (td->resource) {
 
-                case RESOURCE_ID_INODE:
+                case Resource_Inode:
                         if (s->inf->priv.filesystem.f_files <= 0) {
                                 DEBUG("'%s' filesystem doesn't support inodes\n", s->name);
                                 return;
@@ -827,7 +827,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                         Event_post(s, Event_Resource, State_Succeeded, td->action, "inode usage test succeeded [current inode usage=%.1f%%]", s->inf->priv.filesystem.inode_percent/10.);
                         return;
 
-                case RESOURCE_ID_SPACE:
+                case Resource_Space:
                         if (td->limit_percent >= 0) {
                                 if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.space_percent, td->limit_percent)) {
                                         Event_post(s, Event_Resource, State_Failed, td->action, "space usage %.1f%% matches resource limit [space usage%s%.1f%%]", s->inf->priv.filesystem.space_percent/10., operatorshortnames[td->operator], td->limit_percent/10.);
@@ -957,7 +957,7 @@ int validate() {
         int errors = 0;
         Service_T s;
 
-        Run.handler_flag = HANDLER_SUCCEEDED;
+        Run.handler_flag = Handler_Succeeded;
         Event_queue_process();
 
         update_system_load();

@@ -61,9 +61,9 @@
 /**
  * Notify registred users about the event
  * @param E An Event object
- * @return If failed, return HANDLER_ALERT flag or HANDLER_SUCCEEDED flag if succeeded
+ * @return If failed, return Handler_Alert flag or Handler_Succeeded flag if succeeded
  */
-int handle_alert(Event_T E);
+Handler_Type handle_alert(Event_T E);
 
 
 #endif

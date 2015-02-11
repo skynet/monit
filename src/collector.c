@@ -118,13 +118,13 @@ static boolean_t data_check(Socket_T socket, Mmonit_T C) {
 /**
  * Post event or status data message to mmonit
  * @param E An event object or NULL for status data
- * @return If failed, return HANDLER_MMONIT flag or HANDLER_SUCCEEDED flag if succeeded
+ * @return If failed, return Handler_Mmonit flag or Handler_Succeeded flag if succeeded
  */
-int handle_mmonit(Event_T E) {
-        int rv = HANDLER_MMONIT;
+Handler_Type handle_mmonit(Event_T E) {
+        Handler_Type rv = Handler_Mmonit;
         /* The event is sent to mmonit just once - only in the case that the state changed */
         if (! Run.mmonits || (E && ! E->state_changed))
-                return HANDLER_SUCCEEDED;
+                return Handler_Succeeded;
         StringBuffer_T sb = StringBuffer_create(256);
         for (Mmonit_T C = Run.mmonits; C; C = C->next) {
                 Socket_T  socket = socket_create_t(C->url->hostname, C->url->port, SOCKET_TCP, Socket_Ip, C->ssl, C->timeout);
@@ -136,7 +136,7 @@ int handle_mmonit(Event_T E) {
                         LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
                 }
                 char buf[STRLEN];
-                status_xml(sb, E, E ? LEVEL_SUMMARY : LEVEL_FULL, 2, socket_get_local_host(socket, buf, sizeof(buf)));
+                status_xml(sb, E, E ? Level_Summary : Level_Full, 2, socket_get_local_host(socket, buf, sizeof(buf)));
                 if (! data_send(socket, C, StringBuffer_toString(sb))) {
                         LogError("M/Monit: cannot send %s message to %s\n", E ? "event" : "status", C->url->url);
                         goto error;
@@ -146,7 +146,7 @@ int handle_mmonit(Event_T E) {
                         LogError("M/Monit: %s message to %s failed\n", E ? "event" : "status", C->url->url);
                         goto error;
                 }
-                rv = HANDLER_SUCCEEDED; // Return success if at least one M/Monit succeeded
+                rv = Handler_Succeeded; // Return success if at least one M/Monit succeeded
                 DEBUG("M/Monit: %s message sent to %s\n", E ? "event" : "status", C->url->url);
         error:
                 if (socket)

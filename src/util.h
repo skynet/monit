@@ -104,12 +104,12 @@ void Util_printHash(char *file);
 /**
  * Store the checksum of given file in supplied buffer
  * @param file The file for which to compute the checksum
- * @param hashtype The hash type (HASH_MD5 or HASH_SHA1)
+ * @param hashtype The hash type (Hash_Md5 or Hash_Sha1)
  * @param buf The buffer where the result will be stored
  * @param bufsize The size of the buffer
  * @return false if failed, otherwise true
  */
-boolean_t Util_getChecksum(char *file, int hashtype, char *buf, int bufsize);
+boolean_t Util_getChecksum(char *file, Hash_Type hashtype, char *buf, int bufsize);
 
 
 /**

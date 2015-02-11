@@ -450,7 +450,7 @@ void Event_queue_process() {
         Action_T       a = NULL;
 
         /* return in the case that the eventqueue is not enabled or empty */
-        if (! Run.eventlist_dir || (! Run.handler_init && ! Run.handler_queue[HANDLER_ALERT] && ! Run.handler_queue[HANDLER_MMONIT]))
+        if (! Run.eventlist_dir || (! Run.handler_init && ! Run.handler_queue[Handler_Alert] && ! Run.handler_queue[Handler_Mmonit]))
                 return;
 
         if (! (dir = opendir(Run.eventlist_dir)) ) {
@@ -477,7 +477,7 @@ void Event_queue_process() {
                 /* In the case that all handlers failed, skip the further processing in
                  * this cycle. Alert handler is currently defined anytime (either
                  * explicitly or localhost by default) */
-                if ( (Run.mmonits && FLAG(Run.handler_flag, HANDLER_MMONIT) && FLAG(Run.handler_flag, HANDLER_ALERT)) || FLAG(Run.handler_flag, HANDLER_ALERT))
+                if ( (Run.mmonits && FLAG(Run.handler_flag, Handler_Mmonit) && FLAG(Run.handler_flag, Handler_Alert)) || FLAG(Run.handler_flag, Handler_Alert))
                         break;
 
                 snprintf(file_name, STRLEN, "%s/%s", Run.eventlist_dir, de->d_name);
@@ -533,39 +533,39 @@ void Event_queue_process() {
                         /* Retry all remaining handlers */
 
                         /* alert */
-                        if (e->flag & HANDLER_ALERT) {
+                        if (e->flag & Handler_Alert) {
                                 if (Run.handler_init)
-                                        Run.handler_queue[HANDLER_ALERT]++;
-                                if ((Run.handler_flag & HANDLER_ALERT) != HANDLER_ALERT) {
-                                        if ( handle_alert(e) != HANDLER_ALERT ) {
-                                                e->flag &= ~HANDLER_ALERT;
-                                                Run.handler_queue[HANDLER_ALERT]--;
+                                        Run.handler_queue[Handler_Alert]++;
+                                if ((Run.handler_flag & Handler_Alert) != Handler_Alert) {
+                                        if ( handle_alert(e) != Handler_Alert ) {
+                                                e->flag &= ~Handler_Alert;
+                                                Run.handler_queue[Handler_Alert]--;
                                                 handlers_passed++;
                                         } else {
                                                 LogError("Alert handler failed, retry scheduled for next cycle\n");
-                                                Run.handler_flag |= HANDLER_ALERT;
+                                                Run.handler_flag |= Handler_Alert;
                                         }
                                 }
                         }
 
                         /* mmonit */
-                        if (e->flag & HANDLER_MMONIT) {
+                        if (e->flag & Handler_Mmonit) {
                                 if (Run.handler_init)
-                                        Run.handler_queue[HANDLER_MMONIT]++;
-                                if ((Run.handler_flag & HANDLER_MMONIT) != HANDLER_MMONIT) {
-                                        if ( handle_mmonit(e) != HANDLER_MMONIT ) {
-                                                e->flag &= ~HANDLER_MMONIT;
-                                                Run.handler_queue[HANDLER_MMONIT]--;
+                                        Run.handler_queue[Handler_Mmonit]++;
+                                if ((Run.handler_flag & Handler_Mmonit) != Handler_Mmonit) {
+                                        if ( handle_mmonit(e) != Handler_Mmonit ) {
+                                                e->flag &= ~Handler_Mmonit;
+                                                Run.handler_queue[Handler_Mmonit]--;
                                                 handlers_passed++;
                                         } else {
                                                 LogError("M/Monit handler failed, retry scheduled for next cycle\n");
-                                                Run.handler_flag |= HANDLER_MMONIT;
+                                                Run.handler_flag |= Handler_Mmonit;
                                         }
                                 }
                         }
 
                         /* If no error persists, remove it from the queue */
-                        if (e->flag == HANDLER_SUCCEEDED) {
+                        if (e->flag == Handler_Succeeded) {
                                 DEBUG("Removing queued event %s\n", file_name);
                                 if (unlink(file_name) < 0)
                                         LogError("Failed to remove queued event file '%s' -- %s\n", file_name, STRERROR);
@@ -660,7 +660,7 @@ static void handle_action(Event_T E, Action_T A) {
         ASSERT(E);
         ASSERT(A);
 
-        E->flag = HANDLER_SUCCEEDED;
+        E->flag = Handler_Succeeded;
 
         if (A->id == Action_Ignored)
                 return;
@@ -671,7 +671,7 @@ static void handle_action(Event_T E, Action_T A) {
 
         /* In the case that some subhandler failed, enqueue the event for
          * partial reprocessing */
-        if (E->flag != HANDLER_SUCCEEDED) {
+        if (E->flag != Handler_Succeeded) {
                 if (Run.eventlist_dir)
                         Event_queue_add(E);
                 else
@@ -715,7 +715,7 @@ static void Event_queue_add(Event_T E) {
         int          rv;
 
         ASSERT(E);
-        ASSERT(E->flag != HANDLER_SUCCEEDED);
+        ASSERT(E->flag != Handler_Succeeded);
 
         if (! file_checkQueueDirectory(Run.eventlist_dir)) {
                 LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);
@@ -765,10 +765,10 @@ error:
                 if (unlink(file_name) < 0)
                         LogError("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);
         } else {
-                if (! Run.handler_init && E->flag & HANDLER_ALERT)
-                        Run.handler_queue[HANDLER_ALERT]++;
-                if (! Run.handler_init && E->flag & HANDLER_MMONIT)
-                        Run.handler_queue[HANDLER_MMONIT]++;
+                if (! Run.handler_init && E->flag & Handler_Alert)
+                        Run.handler_queue[Handler_Alert]++;
+                if (! Run.handler_init && E->flag & Handler_Mmonit)
+                        Run.handler_queue[Handler_Mmonit]++;
         }
 
         return;
@@ -786,7 +786,7 @@ static void Event_queue_update(Event_T E, const char *file_name) {
         int rv;
 
         ASSERT(E);
-        ASSERT(E->flag != HANDLER_SUCCEEDED);
+        ASSERT(E->flag != Handler_Succeeded);
 
         if (! file_checkQueueDirectory(Run.eventlist_dir)) {
                 LogError("Aborting event - cannot access the directory %s\n", Run.eventlist_dir);

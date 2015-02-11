@@ -661,7 +661,7 @@ void Util_printHash(char *file) {
 }
 
 
-boolean_t Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
+boolean_t Util_getChecksum(char *file, Hash_Type hashtype, char *buf, int bufsize) {
         int hashlength = 16;
 
         ASSERT(file);
@@ -669,10 +669,10 @@ boolean_t Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
         ASSERT(bufsize >= sizeof(MD_T));
 
         switch (hashtype) {
-                case HASH_MD5:
+                case Hash_Md5:
                         hashlength = 16;
                         break;
-                case HASH_SHA1:
+                case Hash_Sha1:
                         hashlength = 20;
                         break;
                 default:
@@ -687,11 +687,13 @@ boolean_t Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
                         MD_T sum;
 
                         switch (hashtype) {
-                                case HASH_MD5:
+                                case Hash_Md5:
                                         fresult = Util_getStreamDigests(f, NULL, sum);
                                         break;
-                                case HASH_SHA1:
+                                case Hash_Sha1:
                                         fresult = Util_getStreamDigests(f, sum, NULL);
+                                        break;
+                                default:
                                         break;
                         }
 
@@ -1141,7 +1143,7 @@ void Util_printService(Service_T s) {
 
         for (Filesystem_T o = s->filesystemlist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                if (o->resource == RESOURCE_ID_INODE) {
+                if (o->resource == Resource_Inode) {
                         printf(" %-20s = %s\n", "Inodes usage limit",
                                o->limit_absolute > -1
                                ?
@@ -1149,7 +1151,7 @@ void Util_printService(Service_T s) {
                                :
                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                                );
-                } else if (o->resource == RESOURCE_ID_SPACE) {
+                } else if (o->resource == Resource_Space) {
                         if (o->limit_absolute > -1) {
                                if (s->inf->priv.filesystem.f_bsize > 0)
                                        printf(" %-20s = %s\n", "Space usage limit", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s", operatornames[o->operator], Str_bytesToSize(o->limit_absolute * s->inf->priv.filesystem.f_bsize, buffer))));
@@ -1164,92 +1166,97 @@ void Util_printService(Service_T s) {
         for (Resource_T o = s->resourcelist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 switch (o->resource_id) {
-                        case RESOURCE_ID_CPU_PERCENT:
+                        case Resource_CpuPercent:
                                 printf(" %-20s = ", "CPU usage limit");
                                 break;
 
-                        case RESOURCE_ID_TOTAL_CPU_PERCENT:
+                        case Resource_CpuPercentTotal:
                                 printf(" %-20s = ", "CPU usage limit (incl. children)");
                                 break;
 
-                        case RESOURCE_ID_CPUUSER:
+                        case Resource_CpuUser:
                                 printf(" %-20s = ", "CPU user limit");
                                 break;
 
-                        case RESOURCE_ID_CPUSYSTEM:
+                        case Resource_CpuSystem:
                                 printf(" %-20s = ", "CPU system limit");
                                 break;
 
-                        case RESOURCE_ID_CPUWAIT:
+                        case Resource_CpuWait:
                                 printf(" %-20s = ", "CPU wait limit");
                                 break;
 
-                        case RESOURCE_ID_MEM_PERCENT:
+                        case Resource_MemoryPercent:
                                 printf(" %-20s = ", "Memory usage limit");
                                 break;
 
-                        case RESOURCE_ID_MEM_KBYTE:
+                        case Resource_MemoryKbyte:
                                 printf(" %-20s = ", "Memory amount limit");
                                 break;
 
-                        case RESOURCE_ID_SWAP_PERCENT:
+                        case Resource_SwapPercent:
                                 printf(" %-20s = ", "Swap usage limit");
                                 break;
 
-                        case RESOURCE_ID_SWAP_KBYTE:
+                        case Resource_SwapKbyte:
                                 printf(" %-20s = ", "Swap amount limit");
                                 break;
 
-                        case RESOURCE_ID_LOAD1:
+                        case Resource_LoadAverage1m:
                                 printf(" %-20s = ", "Load avg. (1min)");
                                 break;
 
-                        case RESOURCE_ID_LOAD5:
+                        case Resource_LoadAverage5m:
                                 printf(" %-20s = ", "Load avg. (5min)");
                                 break;
 
-                        case RESOURCE_ID_LOAD15:
+                        case Resource_LoadAverage15m:
                                 printf(" %-20s = ", "Load avg. (15min)");
                                 break;
 
-                        case RESOURCE_ID_CHILDREN:
+                        case Resource_Children:
                                 printf(" %-20s = ", "Children");
                                 break;
 
-                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                        case Resource_MemoryKbyteTotal:
                                 printf(" %-20s = ", "Memory amount limit (incl. children)");
                                 break;
 
-                        case RESOURCE_ID_TOTAL_MEM_PERCENT:
+                        case Resource_MemoryPercentTotal:
                                 printf(" %-20s = ", "Memory usage limit (incl. children)");
+                                break;
+                        default:
                                 break;
                 }
                 switch (o->resource_id) {
-                        case RESOURCE_ID_CPU_PERCENT:
-                        case RESOURCE_ID_TOTAL_CPU_PERCENT:
-                        case RESOURCE_ID_TOTAL_MEM_PERCENT:
-                        case RESOURCE_ID_CPUUSER:
-                        case RESOURCE_ID_CPUSYSTEM:
-                        case RESOURCE_ID_CPUWAIT:
-                        case RESOURCE_ID_MEM_PERCENT:
-                        case RESOURCE_ID_SWAP_PERCENT:
+                        case Resource_CpuPercent:
+                        case Resource_CpuPercentTotal:
+                        case Resource_MemoryPercentTotal:
+                        case Resource_CpuUser:
+                        case Resource_CpuSystem:
+                        case Resource_CpuWait:
+                        case Resource_MemoryPercent:
+                        case Resource_SwapPercent:
                                 printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit / 10.0)));
                                 break;
 
-                        case RESOURCE_ID_MEM_KBYTE:
-                        case RESOURCE_ID_SWAP_KBYTE:
-                        case RESOURCE_ID_TOTAL_MEM_KBYTE:
+                        case Resource_MemoryKbyte:
+                        case Resource_SwapKbyte:
+                        case Resource_MemoryKbyteTotal:
                                 printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s", operatornames[o->operator], Str_bytesToSize(o->limit * 1024., buffer))));
                                 break;
 
-                        case RESOURCE_ID_LOAD1:
-                        case RESOURCE_ID_LOAD5:
-                        case RESOURCE_ID_LOAD15:
+                        case Resource_LoadAverage1m:
+                        case Resource_LoadAverage5m:
+                        case Resource_LoadAverage15m:
                                 printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f", operatornames[o->operator], o->limit / 10.0)));
                                 break;
 
-                        case RESOURCE_ID_CHILDREN:
+                        case Resource_Children:
                                 printf("%s", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %ld", operatornames[o->operator], o->limit)));
+                                break;
+
+                        default:
                                 break;
                 }
                 printf("\n");
@@ -1513,7 +1520,7 @@ char *Util_getBasicAuthHeaderMonit() {
 
         /* We find the first cleartext credential for authorization */
         while (c != NULL) {
-                if (c->digesttype == DIGEST_CLEARTEXT && ! c->is_readonly)
+                if (c->digesttype == Digest_Cleartext && ! c->is_readonly)
                         break;
                 c = c->next;
         }
@@ -1587,11 +1594,11 @@ boolean_t Util_checkCredentials(char *uname, char *outside) {
         if (c == NULL)
                 return false;
         switch (c->digesttype) {
-                case DIGEST_CLEARTEXT:
+                case Digest_Cleartext:
                         outside_crypt[sizeof(outside_crypt) - 1] = 0;
                         strncpy(outside_crypt, outside, sizeof(outside_crypt) - 1);
                         break;
-                case DIGEST_MD5:
+                case Digest_Md5:
                 {
                         char id[STRLEN];
                         char salt[STRLEN];
@@ -1621,7 +1628,7 @@ boolean_t Util_checkCredentials(char *uname, char *outside) {
                         }
                         break;
                 }
-                case DIGEST_CRYPT:
+                case Digest_Crypt:
                 {
                         char salt[3];
                         char *temp;
@@ -1632,7 +1639,7 @@ boolean_t Util_checkCredentials(char *uname, char *outside) {
                         break;
                 }
 #ifdef HAVE_LIBPAM
-                case DIGEST_PAM:
+                case Digest_Pam:
                         return PAMcheckPasswd(uname, outside);
                         break;
 #endif

@@ -195,7 +195,7 @@ static struct IHavePrecedence ihp = {false, false, false};
 static struct myrate rate1 = {1, 1};
 static struct myrate rate2 = {1, 1};
 static char * htpasswd_file = NULL;
-static int    digesttype = DIGEST_CLEARTEXT;
+static Digest_Type digesttype = Digest_Cleartext;
 
 #define BITMAP_MAX (sizeof(long long) * 8)
 
@@ -230,11 +230,11 @@ static void  addcommand(int, unsigned);
 static void  addargument(char *);
 static void  addmmonit(URL_T, int, int, char *);
 static void  addmailserver(MailServer_T);
-static boolean_t addcredentials(char *, char *, int, boolean_t);
+static boolean_t addcredentials(char *, char *, Digest_Type, boolean_t);
 #ifdef HAVE_LIBPAM
 static void  addpamauth(char *, int);
 #endif
-static void  addhtpasswdentry(char *, char *, int);
+static void  addhtpasswdentry(char *, char *, Digest_Type);
 static uid_t get_uid(char *, uid_t);
 static gid_t get_gid(char *, gid_t);
 static void  addchecksum(Checksum_T);
@@ -809,7 +809,7 @@ allowselfcert   : ALLOWSELFCERTIFICATION {
                 ;
 
 allow           : ALLOW STRING':'STRING readonly {
-                        addcredentials($2,$4, DIGEST_CLEARTEXT, $<number>5);
+                        addcredentials($2, $4, Digest_Cleartext, $<number>5);
                   }
                 | ALLOW '@'STRING readonly {
 #ifdef HAVE_LIBPAM
@@ -820,45 +820,45 @@ allow           : ALLOW STRING':'STRING readonly {
 #endif
                   }
                 | ALLOW PATH {
-                        addhtpasswdentry($2, NULL, DIGEST_CLEARTEXT);
+                        addhtpasswdentry($2, NULL, Digest_Cleartext);
                         FREE($2);
                   }
                 | ALLOW CLEARTEXT PATH {
-                        addhtpasswdentry($3, NULL, DIGEST_CLEARTEXT);
+                        addhtpasswdentry($3, NULL, Digest_Cleartext);
                         FREE($3);
                   }
                 | ALLOW MD5HASH PATH {
-                        addhtpasswdentry($3, NULL, DIGEST_MD5);
+                        addhtpasswdentry($3, NULL, Digest_Md5);
                         FREE($3);
                   }
                 | ALLOW CRYPT PATH {
-                        addhtpasswdentry($3, NULL, DIGEST_CRYPT);
+                        addhtpasswdentry($3, NULL, Digest_Crypt);
                         FREE($3);
                   }
                 | ALLOW PATH {
                         htpasswd_file = $2;
-                        digesttype = CLEARTEXT;
+                        digesttype = Digest_Cleartext;
                   }
                   allowuserlist {
                         FREE(htpasswd_file);
                   }
                 | ALLOW CLEARTEXT PATH {
                         htpasswd_file = $3;
-                        digesttype = DIGEST_CLEARTEXT;
+                        digesttype = Digest_Cleartext;
                   }
                   allowuserlist {
                         FREE(htpasswd_file);
                   }
                 | ALLOW MD5HASH PATH {
                         htpasswd_file = $3;
-                        digesttype = DIGEST_MD5;
+                        digesttype = Digest_Md5;
                   }
                   allowuserlist {
                         FREE(htpasswd_file);
                   }
                 | ALLOW CRYPT PATH {
                         htpasswd_file = $3;
-                        digesttype = DIGEST_CRYPT;
+                        digesttype = Digest_Crypt;
                   }
                   allowuserlist {
                         FREE(htpasswd_file);
@@ -1648,12 +1648,12 @@ resourcesystemopt  : resourceload
                    ;
 
 resourcecpuproc : CPU operator NUMBER PERCENT {
-                    resourceset.resource_id = RESOURCE_ID_CPU_PERCENT;
+                    resourceset.resource_id = Resource_CpuPercent;
                     resourceset.operator = $<number>2;
                     resourceset.limit = ($3 * 10);
                   }
                 | TOTALCPU operator NUMBER PERCENT {
-                    resourceset.resource_id = RESOURCE_ID_TOTAL_CPU_PERCENT;
+                    resourceset.resource_id = Resource_CpuPercentTotal;
                     resourceset.operator = $<number>2;
                     resourceset.limit = ($3 * 10);
                   }
@@ -1666,47 +1666,47 @@ resourcecpu     : resourcecpuid operator NUMBER PERCENT {
                   }
                 ;
 
-resourcecpuid   : CPUUSER   { $<number>$ = RESOURCE_ID_CPUUSER; }
-                | CPUSYSTEM { $<number>$ = RESOURCE_ID_CPUSYSTEM; }
-                | CPUWAIT   { $<number>$ = RESOURCE_ID_CPUWAIT; }
+resourcecpuid   : CPUUSER   { $<number>$ = Resource_CpuUser; }
+                | CPUSYSTEM { $<number>$ = Resource_CpuSystem; }
+                | CPUWAIT   { $<number>$ = Resource_CpuWait; }
                 ;
 
 resourcemem     : MEMORY operator value unit {
-                    resourceset.resource_id = RESOURCE_ID_MEM_KBYTE;
+                    resourceset.resource_id = Resource_MemoryKbyte;
                     resourceset.operator = $<number>2;
                     resourceset.limit = (int) ($<real>3 * ($<number>4 / 1024.0));
                   }
                 | MEMORY operator NUMBER PERCENT {
-                    resourceset.resource_id = RESOURCE_ID_MEM_PERCENT;
+                    resourceset.resource_id = Resource_MemoryPercent;
                     resourceset.operator = $<number>2;
                     resourceset.limit = ($3 * 10);
                   }
                 | TOTALMEMORY operator value unit {
-                    resourceset.resource_id = RESOURCE_ID_TOTAL_MEM_KBYTE;
+                    resourceset.resource_id = Resource_MemoryKbyteTotal;
                     resourceset.operator = $<number>2;
                     resourceset.limit = (int) ($<real>3 * ($<number>4 / 1024.0));
                   }
                 | TOTALMEMORY operator NUMBER PERCENT  {
-                    resourceset.resource_id = RESOURCE_ID_TOTAL_MEM_PERCENT;
+                    resourceset.resource_id = Resource_MemoryPercentTotal;
                     resourceset.operator = $<number>2;
                     resourceset.limit = ($3 * 10);
                   }
                 ;
 
 resourceswap    : SWAP operator value unit {
-                    resourceset.resource_id = RESOURCE_ID_SWAP_KBYTE;
+                    resourceset.resource_id = Resource_SwapKbyte;
                     resourceset.operator = $<number>2;
                     resourceset.limit = (int) ($<real>3 * ($<number>4 / 1024.0));
                   }
                 | SWAP operator NUMBER PERCENT {
-                    resourceset.resource_id = RESOURCE_ID_SWAP_PERCENT;
+                    resourceset.resource_id = Resource_SwapPercent;
                     resourceset.operator = $<number>2;
                     resourceset.limit = ($3 * 10);
                   }
                 ;
 
 resourcechild   : CHILDREN operator NUMBER {
-                    resourceset.resource_id = RESOURCE_ID_CHILDREN;
+                    resourceset.resource_id = Resource_Children;
                     resourceset.operator = $<number>2;
                     resourceset.limit = (int) $3;
                   }
@@ -1719,9 +1719,9 @@ resourceload    : resourceloadavg operator value {
                   }
                 ;
 
-resourceloadavg : LOADAVG1  { $<number>$ = RESOURCE_ID_LOAD1; }
-                | LOADAVG5  { $<number>$ = RESOURCE_ID_LOAD5; }
-                | LOADAVG15 { $<number>$ = RESOURCE_ID_LOAD15; }
+resourceloadavg : LOADAVG1  { $<number>$ = Resource_LoadAverage1m; }
+                | LOADAVG5  { $<number>$ = Resource_LoadAverage5m; }
+                | LOADAVG15 { $<number>$ = Resource_LoadAverage15m; }
                 ;
 
 value           : REAL { $<real>$ = $1; }
@@ -1856,20 +1856,20 @@ checksum        : IF FAILED hashtype CHECKSUM rate1 THEN action1 recovery {
                     addchecksum(&checksumset);
                   }
                 ;
-hashtype        : /* EMPTY */ { checksumset.type = HASH_UNKNOWN; }
-                | MD5HASH     { checksumset.type = HASH_MD5; }
-                | SHA1HASH    { checksumset.type = HASH_SHA1; }
+hashtype        : /* EMPTY */ { checksumset.type = Hash_Unknown; }
+                | MD5HASH     { checksumset.type = Hash_Md5; }
+                | SHA1HASH    { checksumset.type = Hash_Sha1; }
                 ;
 
 inode           : IF INODE operator NUMBER rate1 THEN action1 recovery {
-                    filesystemset.resource = RESOURCE_ID_INODE;
+                    filesystemset.resource = Resource_Inode;
                     filesystemset.operator = $<number>3;
                     filesystemset.limit_absolute = $4;
                     addeventaction(&(filesystemset).action, $<number>7, $<number>8);
                     addfilesystem(&filesystemset);
                   }
                 | IF INODE operator NUMBER PERCENT rate1 THEN action1 recovery {
-                    filesystemset.resource = RESOURCE_ID_INODE;
+                    filesystemset.resource = Resource_Inode;
                     filesystemset.operator = $<number>3;
                     filesystemset.limit_percent = (int)($4 * 10);
                     addeventaction(&(filesystemset).action, $<number>8, $<number>9);
@@ -1880,14 +1880,14 @@ inode           : IF INODE operator NUMBER rate1 THEN action1 recovery {
 space           : IF SPACE operator value unit rate1 THEN action1 recovery {
                     if (! filesystem_usage(current))
                       yyerror2("Cannot read usage of filesystem %s", current->path);
-                    filesystemset.resource = RESOURCE_ID_SPACE;
+                    filesystemset.resource = Resource_Space;
                     filesystemset.operator = $<number>3;
                     filesystemset.limit_absolute = (long long)((double)$<real>4 / (double)current->inf->priv.filesystem.f_bsize * (double)$<number>5);
                     addeventaction(&(filesystemset).action, $<number>8, $<number>9);
                     addfilesystem(&filesystemset);
                   }
                 | IF SPACE operator NUMBER PERCENT rate1 THEN action1 recovery {
-                    filesystemset.resource = RESOURCE_ID_SPACE;
+                    filesystemset.resource = Resource_Space;
                     filesystemset.operator = $<number>3;
                     filesystemset.limit_percent = (int)($4 * 10);
                     addeventaction(&(filesystemset).action, $<number>8, $<number>9);
@@ -1901,11 +1901,11 @@ fsflag          : IF CHANGED FSFLAG rate1 THEN action1 {
                   }
                 ;
 
-unit            : /* empty */  { $<number>$ = UNIT_BYTE; }
-                | BYTE         { $<number>$ = UNIT_BYTE; }
-                | KILOBYTE     { $<number>$ = UNIT_KILOBYTE; }
-                | MEGABYTE     { $<number>$ = UNIT_MEGABYTE; }
-                | GIGABYTE     { $<number>$ = UNIT_GIGABYTE; }
+unit            : /* empty */  { $<number>$ = Unit_Byte; }
+                | BYTE         { $<number>$ = Unit_Byte; }
+                | KILOBYTE     { $<number>$ = Unit_Kilobyte; }
+                | MEGABYTE     { $<number>$ = Unit_Megabyte; }
+                | GIGABYTE     { $<number>$ = Unit_Gigabyte; }
                 ;
 
 permission      : IF FAILED PERMISSION NUMBER rate1 THEN action1 recovery {
@@ -2307,7 +2307,7 @@ static void preparse() {
         #ifdef OPENSSL_FIPS
         Run.fipsEnabled             = false;
         #endif
-        for (i = 0; i <= HANDLER_MAX; i++)
+        for (i = 0; i <= Handler_Max; i++)
                 Run.handler_queue[i] = 0;
         /*
          * Initialize objects
@@ -2375,7 +2375,7 @@ static void postparse() {
                         if (Run.dommonitcredentials) {
                                 Auth_T c;
                                 for (c = Run.httpd.credentials; c; c = c->next) {
-                                        if (c->digesttype == DIGEST_CLEARTEXT && ! c->is_readonly) {
+                                        if (c->digesttype == Digest_Cleartext && ! c->is_readonly) {
                                                 Run.mmonitcredentials = c;
                                                 break;
                                         }
@@ -2619,9 +2619,9 @@ static void addport(Port_T *list, Port_T port) {
         if (p->request_checksum) {
                 cleanup_hash_string(p->request_checksum);
                 if (strlen(p->request_checksum) == 32)
-                        p->request_hashtype = HASH_MD5;
+                        p->request_hashtype = Hash_Md5;
                 else if (strlen(p->request_checksum) == 40)
-                        p->request_hashtype = HASH_SHA1;
+                        p->request_hashtype = Hash_Sha1;
                 else
                         yyerror2("invalid checksum [%s]", p->request_checksum);
         } else {
@@ -2851,11 +2851,11 @@ static void addchecksum(Checksum_T cs) {
         cs->initialized = true;
 
         if (! *cs->hash) {
-                if (cs->type == HASH_UNKNOWN)
-                        cs->type = DEFAULT_HASH;
+                if (cs->type == Hash_Unknown)
+                        cs->type = Hash_Default;
                 if (! (Util_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
                         /* If the file doesn't exist, set dummy value */
-                        snprintf(cs->hash, sizeof(cs->hash), cs->type == HASH_MD5 ? "00000000000000000000000000000000" : "0000000000000000000000000000000000000000");
+                        snprintf(cs->hash, sizeof(cs->hash), cs->type == Hash_Md5 ? "00000000000000000000000000000000" : "0000000000000000000000000000000000000000");
                         cs->initialized = false;
                         yywarning2("Cannot compute a checksum for file %s", current->path);
                 }
@@ -2863,17 +2863,17 @@ static void addchecksum(Checksum_T cs) {
 
         int len = cleanup_hash_string(cs->hash);
 
-        if (cs->type == HASH_UNKNOWN) {
+        if (cs->type == Hash_Unknown) {
                 if (len == 32) {
-                        cs->type = HASH_MD5;
+                        cs->type = Hash_Md5;
                 } else if (len == 40) {
-                        cs->type = HASH_SHA1;
+                        cs->type = Hash_Sha1;
                 } else {
                         yyerror2("Unknown checksum type [%s] for file %s", cs->hash, current->path);
                         reset_checksumset();
                         return;
                 }
-        } else if ((cs->type == HASH_MD5 && len != 32) || (cs->type == HASH_SHA1 && len != 40)) {
+        } else if ((cs->type == Hash_Md5 && len != 32) || (cs->type == Hash_Sha1 && len != 40)) {
                 yyerror2("Invalid checksum [%s] for file %s", cs->hash, current->path);
                 reset_checksumset();
                 return;
@@ -3550,7 +3550,7 @@ static void setpidfile(char *pidfile) {
 /*
  * Read a apache htpasswd file and add credentials found for username
  */
-static void addhtpasswdentry(char *filename, char *username, int dtype) {
+static void addhtpasswdentry(char *filename, char *username, Digest_Type dtype) {
         char *ht_username = NULL;
         char *ht_passwd = NULL;
         char buf[STRLEN];
@@ -3588,7 +3588,7 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
                  *  want to remove ":.*$" and Crypt and MD5 hashed dont have a colon
                  */
 
-                if ( (NULL != (colonindex = strchr(ht_passwd, ':'))) && ( dtype != DIGEST_CLEARTEXT) )
+                if ( (NULL != (colonindex = strchr(ht_passwd, ':'))) && ( dtype != Digest_Cleartext) )
                 *colonindex = '\0';
 
                 ht_username = Str_dup(buf);
@@ -3642,7 +3642,7 @@ static void addpamauth(char* groupname, int readonly) {
         c->uname       = NULL;
         c->passwd      = NULL;
         c->groupname   = groupname;
-        c->digesttype  = DIGEST_PAM;
+        c->digesttype  = Digest_Pam;
         c->is_readonly = readonly;
 
         DEBUG("Adding PAM group '%s'\n", groupname);
@@ -3655,7 +3655,7 @@ static void addpamauth(char* groupname, int readonly) {
 /*
  * Add Basic Authentication credentials
  */
-static boolean_t addcredentials(char *uname, char *passwd, int dtype, boolean_t readonly) {
+static boolean_t addcredentials(char *uname, char *passwd, Digest_Type dtype, boolean_t readonly) {
         Auth_T c;
 
         ASSERT(uname);
@@ -3890,7 +3890,7 @@ static void reset_nonexistset() {
  * Reset the Checksum set to default values
  */
 static void reset_checksumset() {
-        checksumset.type         = HASH_UNKNOWN;
+        checksumset.type         = Hash_Unknown;
         checksumset.test_changes = false;
         checksumset.action       = NULL;
         *checksumset.hash        = 0;

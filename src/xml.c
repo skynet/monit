@@ -154,7 +154,7 @@ static void document_foot(StringBuffer_T B) {
  * @param L Status information level
  * @param V Format version
  */
-static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
+static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
         if (V == 2)
                 StringBuffer_append(B, "<service name=\"%s\"><type>%d</type>", S->name ? S->name : "", S->type);
         else
@@ -183,7 +183,7 @@ static void status_service(Service_T S, StringBuffer_T B, short L, int V) {
                 StringBuffer_append(B, "</every>");
         }
 
-        if (L == LEVEL_FULL) {
+        if (L == Level_Full) {
                 if (Util_hasServiceStatus(S)) {
                         if (S->type == Service_File || S->type == Service_Directory || S->type == Service_Fifo || S->type == Service_Filesystem)
                                 StringBuffer_append(B, "<mode>%o</mode><uid>%d</uid><gid>%d</gid>", S->inf->st_mode & 07777, (int)S->inf->st_uid, (int)S->inf->st_gid);
@@ -456,7 +456,7 @@ static void status_event(Event_T E, StringBuffer_T B) {
  * @param V Format version
  * @param myip The client-side IP address
  */
-void status_xml(StringBuffer_T B, Event_T E, short L, int V, const char *myip) {
+void status_xml(StringBuffer_T B, Event_T E, Level_Type L, int V, const char *myip) {
         Service_T S;
         ServiceGroup_T SG;
 

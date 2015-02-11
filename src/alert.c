@@ -79,10 +79,10 @@ static void substitute(Mail_T, Event_T);
 /**
  * Notify registred users about the event
  * @param E An Event object
- * @return If failed, return HANDLER_ALERT flag or HANDLER_SUCCEEDED if succeeded
+ * @return If failed, return Handler_Alert flag or Handler_Succeeded if succeeded
  */
-int handle_alert(Event_T E) {
-        int rv = HANDLER_SUCCEEDED;
+Handler_Type handle_alert(Event_T E) {
+        Handler_Type rv = Handler_Succeeded;
 
         ASSERT(E);
 
@@ -159,7 +159,7 @@ int handle_alert(Event_T E) {
                 }
                 if (list) {
                         if (sendmail(list))
-                                rv = HANDLER_ALERT;
+                                rv = Handler_Alert;
                         gc_mail_list(&list);
                 }
         }

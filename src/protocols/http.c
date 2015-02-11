@@ -147,7 +147,7 @@ error:
 }
 
 
-static boolean_t check_request_checksum(Socket_T socket, int content_length, char *checksum, int hashtype) {
+static boolean_t check_request_checksum(Socket_T socket, int content_length, char *checksum, Hash_Type hashtype) {
         int n, keylength = 0;
         MD_T result, hash;
         md5_context_t ctx_md5;
@@ -160,7 +160,7 @@ static boolean_t check_request_checksum(Socket_T socket, int content_length, cha
         }
 
         switch (hashtype) {
-                case HASH_MD5:
+                case Hash_Md5:
                         md5_init(&ctx_md5);
                         while (content_length > 0) {
                                 if ((n = socket_read(socket, buf, content_length > sizeof(buf) ? sizeof(buf) : content_length)) < 0)
@@ -171,7 +171,7 @@ static boolean_t check_request_checksum(Socket_T socket, int content_length, cha
                         md5_finish(&ctx_md5, (md5_byte_t *)hash);
                         keylength = 16; /* Raw key bytes not string chars! */
                         break;
-                case HASH_SHA1:
+                case Hash_Sha1:
                         sha1_init(&ctx_sha1);
                         while (content_length > 0) {
                                 if ((n = socket_read(socket, buf, content_length > sizeof(buf) ? sizeof(buf) : content_length)) < 0)

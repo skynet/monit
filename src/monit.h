@@ -241,67 +241,79 @@ typedef enum {
         Service_Net
 } Service_Type; // note: don't memory pack for statefile backward compatibility (or introduce new statefile format version for packed)
 
-//FIXME
-#define RESOURCE_ID_CPU_PERCENT       1
-#define RESOURCE_ID_MEM_PERCENT       2
-#define RESOURCE_ID_MEM_KBYTE         3
-#define RESOURCE_ID_LOAD1             4
-#define RESOURCE_ID_LOAD5             5
-#define RESOURCE_ID_LOAD15            6
-#define RESOURCE_ID_CHILDREN          7
-#define RESOURCE_ID_TOTAL_MEM_KBYTE   8
-#define RESOURCE_ID_TOTAL_MEM_PERCENT 9
-#define RESOURCE_ID_INODE             10
-#define RESOURCE_ID_SPACE             11
-#define RESOURCE_ID_CPUUSER           12
-#define RESOURCE_ID_CPUSYSTEM         13
-#define RESOURCE_ID_CPUWAIT           14
-#define RESOURCE_ID_TOTAL_CPU_PERCENT 15
-#define RESOURCE_ID_SWAP_PERCENT      16
-#define RESOURCE_ID_SWAP_KBYTE        17
 
-//FIXME
-#define DIGEST_CLEARTEXT   1
-#define DIGEST_CRYPT       2
-#define DIGEST_MD5         3
-#define DIGEST_PAM         4
+typedef enum {
+        Resource_CpuPercent = 1,
+        Resource_MemoryPercent,
+        Resource_MemoryKbyte,
+        Resource_LoadAverage1m,
+        Resource_LoadAverage5m,
+        Resource_LoadAverage15m,
+        Resource_Children,
+        Resource_MemoryKbyteTotal,
+        Resource_MemoryPercentTotal,
+        Resource_Inode,
+        Resource_Space,
+        Resource_CpuUser,
+        Resource_CpuSystem,
+        Resource_CpuWait,
+        Resource_CpuPercentTotal,
+        Resource_SwapPercent,
+        Resource_SwapKbyte
+} __attribute__((__packed__)) Resource_Type;
 
-//FIXME
-#define UNIT_BYTE          1
-#define UNIT_KILOBYTE      1024
-#define UNIT_MEGABYTE      1048576
-#define UNIT_GIGABYTE      1073741824
 
-//FIXME
-#define HASH_UNKNOWN       0
-#define HASH_MD5           1
-#define HASH_SHA1          2
-#define DEFAULT_HASH       HASH_MD5
+
+typedef enum {
+        Digest_Cleartext = 1,
+        Digest_Crypt,
+        Digest_Md5,
+        Digest_Pam
+} __attribute__((__packed__)) Digest_Type;
+
+
+typedef enum {
+        Unit_Byte     = 1,
+        Unit_Kilobyte = 1024,
+        Unit_Megabyte = 1048576,
+        Unit_Gigabyte = 1073741824
+} __attribute__((__packed__)) Unit_Type;
+
+
+typedef enum {
+        Hash_Unknown = 0,
+        Hash_Md5,
+        Hash_Sha1,
+        Hash_Default = Hash_Md5
+} __attribute__((__packed__)) Hash_Type;
+
+
+typedef enum {
+        Level_Full = 0,
+        Level_Summary
+} __attribute__((__packed__)) Level_Type;
+
+
+typedef enum {
+        Handler_Succeeded = 0x0,
+        Handler_Alert     = 0x1,
+        Handler_Mmonit    = 0x2,
+        Handler_Max       = Handler_Mmonit
+} __attribute__((__packed__)) Handler_Type;
+
 
 /* Length of the longest message digest in bytes */
-#define MD_SIZE            65
+#define MD_SIZE 65
 
-//FIXME
-#define PROTOCOL_NULL      0
-#define PROTOCOL_HTTP      1
-#define PROTOCOL_HTTPS     2
-
-//FIXME
-#define LEVEL_FULL         0
-#define LEVEL_SUMMARY      1
-
-#define LEVEL_NAME_FULL    "full"
-#define LEVEL_NAME_SUMMARY "summary"
-
-//FIXME
-#define HANDLER_SUCCEEDED  0x0
-#define HANDLER_ALERT      0x1
-#define HANDLER_MMONIT     0x2
-#define HANDLER_MAX        HANDLER_MMONIT
 
 #define ICMP_ATTEMPT_COUNT 3
 
-#define EXPECT_BUFFER_MAX (UNIT_KILOBYTE * 100 + 1)
+
+#define EXPECT_BUFFER_MAX (Unit_Kilobyte * 100 + 1)
+
+
+#define LEVEL_NAME_FULL    "full"
+#define LEVEL_NAME_SUMMARY "summary"
 
 
 #include "socket.h"
@@ -448,7 +460,7 @@ typedef struct myauthentication {
         char *uname;                  /**< User allowed to connect to monit httpd */
         char *passwd;                                /**< The users password data */
         char *groupname;                                      /**< PAM group name */
-        int   digesttype;                      /**< How did we store the password */
+        Digest_Type digesttype;                /**< How did we store the password */
         boolean_t is_readonly; /**< true if this is a read-only authenticated user*/
         struct myauthentication *next;       /**< Next credential or NULL if last */
 } __attribute__((__packed__)) *Auth_T;
@@ -533,7 +545,7 @@ typedef struct myport {
         int type;                   /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
         int port;                                                  /**< Portnumber */
-        int request_hashtype;   /**< The optional type of hash for a req. document */
+        Hash_Type request_hashtype; /**< The optional type of hash for a req. document */
         int maxforward;            /**< Optional max forward for protocol checking */
         int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
@@ -617,7 +629,7 @@ typedef struct mydependant {
 
 /** Defines resource data */
 typedef struct myresource {
-        int  resource_id;                              /**< Which value is checked */
+        Resource_Type  resource_id;                    /**< Which value is checked */
         long limit;                                     /**< Limit of the resource */
         Operator_Type operator;                           /**< Comparison operator */
         EventAction_T action;  /**< Description of the action upon event occurence */
@@ -755,7 +767,7 @@ typedef struct mybandwidth {
 /** Defines checksum object */
 typedef struct mychecksum {
         MD_T  hash;                     /**< A checksum hash computed for the path */
-        int   type;                       /**< The type of hash (e.g. md5 or sha1) */
+        Hash_Type type;                   /**< The type of hash (e.g. md5 or sha1) */
         int   length;                                      /**< Length of the hash */
         boolean_t test_changes;       /**< true if we only should test for changes */
         boolean_t initialized;               /**< true if checksum was initialized */
@@ -980,7 +992,7 @@ typedef struct myservice {
                 boolean_t         state_changed;              /**< true if state changed */
                 long long         state_map;           /**< Event bitmap for last cycles */
                 unsigned int      count;                             /**< The event rate */
-                unsigned int      flag;                     /**< The handlers state flag */
+                Handler_Type      flag;                     /**< The handlers state flag */
                 char             *message;    /**< Optional message describing the event */
                 EventAction_T     action;           /**< Description of the event action */
                 /** For internal use */
@@ -1027,8 +1039,8 @@ struct myrun {
         boolean_t doaction;        /**< true if some service(s) has action pending */
         time_t incarnation;              /**< Unique ID for running monit instance */
         boolean_t handler_init;             /**< The handlers queue initialization */
-        int  handler_flag;                            /**< The handlers state flag */
-        int  handler_queue[HANDLER_MAX+1];         /**< The handlers queue counter */
+        Handler_Type handler_flag;                    /**< The handlers state flag */
+        int  handler_queue[Handler_Max + 1];       /**< The handlers queue counter */
         Service_T system;                          /**< The general system service */
         char *eventlist_dir;                   /**< The event queue base directory */
         int  eventlist_slots;          /**< The event queue size - number of slots */
@@ -1176,8 +1188,8 @@ int  sha_md5_stream (FILE *, void *, void *);
 void reset_procinfo(Service_T);
 int  check_service_status(Service_T);
 void printhash(char *);
-void status_xml(StringBuffer_T, Event_T, short, int, const char *);
-int  handle_mmonit(Event_T);
+void status_xml(StringBuffer_T, Event_T, Level_Type, int, const char *);
+Handler_Type handle_mmonit(Event_T);
 boolean_t  do_wakeupcall();
 
 #endif
