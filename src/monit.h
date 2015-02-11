@@ -88,6 +88,19 @@
 #include <uvm/uvm_param.h>
 #endif
 
+
+//FIXME: we can export this type in libmonit
+#ifndef HAVE_BOOLEAN_T
+typedef enum {
+        false = 0,
+        true
+} __attribute__((__packed__)) boolean_t;
+#else
+#define false 0
+#define true  1
+#endif
+
+
 #include "ssl.h"
 
 // libmonit
@@ -179,18 +192,6 @@ typedef enum {
         Httpd_Signature                   = 0x8,  // Server Signature enabled
         Httpd_AllowSelfSignedCertificates = 0x10  // Server Signature enabled
 } __attribute__((__packed__)) Httpd_Flags;
-
-
-//FIXME: we can export this type in libmonit
-#ifndef HAVE_BOOLEAN_T
-typedef enum {
-        false = 0,
-        true
-} __attribute__((__packed__)) boolean_t;
-#else
-#define false 0
-#define true  1
-#endif
 
 
 typedef enum {
