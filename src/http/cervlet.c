@@ -93,7 +93,7 @@
 #define FAVICON     "/favicon.ico"
 
 /* Private prototypes */
-static int is_readonly(HttpRequest);
+static boolean_t is_readonly(HttpRequest);
 static void printFavicon(HttpResponse);
 static void doGet(HttpRequest, HttpResponse);
 static void doPost(HttpRequest, HttpResponse);
@@ -297,7 +297,7 @@ static void printFavicon(HttpResponse res) {
                 l = decode_base64(favicon, FAVICON_ICO);
         }
         if (l) {
-                res->is_committed = TRUE;
+                res->is_committed = true;
                 socket_print(S, "HTTP/1.0 200 OK\r\n");
                 socket_print(S, "Content-length: %lu\r\n", (unsigned long)l);
                 socket_print(S, "Content-Type: image/x-icon\r\n");
@@ -559,7 +559,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr><td>Allow self certified certificates "
-                                    "</td><td>%s</td></tr>", Run.httpd.socket.net.ssl.allowselfcert ? "True" : "False");
+                                    "</td><td>%s</td></tr>", Run.httpd.flags & Httpd_AllowSelfSignedCertificates ? "True" : "False");
         }
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>httpd auth. style</td><td>%s</td></tr>",
@@ -655,7 +655,7 @@ static void handle_action(HttpRequest req, HttpResponse res) {
                         s->token = Str_dup(token);
                 }
                 LogInfo("'%s' %s on user request\n", s->name, action);
-                Run.doaction = TRUE; /* set the global flag */
+                Run.doaction = true; /* set the global flag */
                 do_wakeupcall();
         }
         do_service(req, res, s);
@@ -703,7 +703,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                                 q->token = Str_dup(token);
                         }
                 }
-                Run.doaction = TRUE;
+                Run.doaction = true;
                 do_wakeupcall();
         }
 }
@@ -999,9 +999,9 @@ static void do_home_system(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_process(HttpRequest req, HttpResponse res) {
-        char           buf[STRLEN];
-        int            on = TRUE;
-        int            header = TRUE;
+        char      buf[STRLEN];
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_PROCESS)
@@ -1019,7 +1019,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                                                     "<th align='right'>Memory Total</th>");
                         }
                         StringBuffer_append(res->outputbuffer, "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1063,8 +1063,8 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_program(HttpRequest req, HttpResponse res) {
-        int on = TRUE;
-        int header = TRUE;
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_PROGRAM)
@@ -1079,7 +1079,7 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                                             "<th align='right'>Last started</th>"
                                             "<th align='right'>Exit value</th>"
                                             "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1122,8 +1122,8 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
 
 static void do_home_net(HttpRequest req, HttpResponse res) {
         char buf[STRLEN];
-        int on = TRUE;
-        int header = TRUE;
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_NET)
@@ -1137,7 +1137,7 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
                                             "<th align='right'>Upload</th>"
                                             "<th align='right'>Download</th>"
                                             "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1165,9 +1165,9 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_filesystem(HttpRequest req, HttpResponse res) {
-        char          buf[STRLEN];
-        int           on = TRUE;
-        int           header = TRUE;
+        char buf[STRLEN];
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_FILESYSTEM)
@@ -1181,7 +1181,7 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
                                             "<th align='right'>Space usage</th>"
                                             "<th align='right'>Inodes usage</th>"
                                             "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1220,8 +1220,8 @@ static void do_home_filesystem(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_file(HttpRequest req, HttpResponse res) {
-        int on = TRUE;
-        int header = TRUE;
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_FILE)
@@ -1238,7 +1238,7 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
                                             "<th align='right'>GID</th>"
                                             "</tr>");
 
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1276,8 +1276,8 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_fifo(HttpRequest req, HttpResponse res) {
-        int on = TRUE;
-        int header = TRUE;
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_FIFO)
@@ -1292,7 +1292,7 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
                                             "<th align='right'>UID</th>"
                                             "<th align='right'>GID</th>"
                                             "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1326,8 +1326,8 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_directory(HttpRequest req, HttpResponse res) {
-        int on = TRUE;
-        int header = TRUE;
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_DIRECTORY)
@@ -1342,7 +1342,7 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
                                             "<th align='right'>UID</th>"
                                             "<th align='right'>GID</th>"
                                             "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -1376,8 +1376,8 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
 
 
 static void do_home_host(HttpRequest req, HttpResponse res) {
-        int on = TRUE;
-        int header = TRUE;
+        boolean_t on = true;
+        boolean_t header = true;
 
         for (Service_T s = servicelist_conf; s; s = s->next_conf) {
                 if (s->type != TYPE_HOST)
@@ -1390,7 +1390,7 @@ static void do_home_host(HttpRequest req, HttpResponse res) {
                                             "<th align='left'>Status</th>"
                                             "<th align='right'>Protocol(s)</th>"
                                             "</tr>");
-                        header = FALSE;
+                        header = false;
                 }
                 StringBuffer_append(res->outputbuffer,
                                     "<tr %s>"
@@ -2465,12 +2465,12 @@ static void print_service_status_program_output(HttpResponse res, Service_T s) {
 }
 
 
-static int is_readonly(HttpRequest req) {
+static boolean_t is_readonly(HttpRequest req) {
         if (req->remote_user) {
                 Auth_T user_creds = Util_getUserCredentials(req->remote_user);
-                return (user_creds ? user_creds->is_readonly : TRUE);
+                return (user_creds ? user_creds->is_readonly : true);
         }
-        return FALSE;
+        return false;
 }
 
 

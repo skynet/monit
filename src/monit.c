@@ -128,7 +128,7 @@ SystemInfo_T systeminfo;                              /**< System infomation */
 Thread_T heartbeatThread;
 Sem_T    heartbeatCond;
 Mutex_T  heartbeatMutex;
-static volatile int heartbeatRunning = FALSE;
+static volatile boolean_t heartbeatRunning = false;
 
 int ptreesize = 0;
 int oldptreesize = 0;
@@ -172,19 +172,19 @@ int main(int argc, char **argv) {
 
 /**
  * Wakeup a sleeping monit daemon.
- * Returns TRUE on success otherwise FALSE
+ * Returns true on success otherwise false
  */
-int do_wakeupcall() {
+boolean_t do_wakeupcall() {
         pid_t pid;
 
         if ((pid = exist_daemon()) > 0) {
                 kill(pid, SIGUSR1);
                 LogInfo("Monit daemon with PID %d awakened\n", pid);
 
-                return TRUE;
+                return true;
         }
 
-        return FALSE;
+        return false;
 }
 
 
@@ -321,10 +321,10 @@ static void do_reinit() {
         if (Run.mmonits && heartbeatRunning) {
                 Sem_signal(heartbeatCond);
                 Thread_join(heartbeatThread);
-                heartbeatRunning = FALSE;
+                heartbeatRunning = false;
         }
 
-        Run.doreload = FALSE;
+        Run.doreload = false;
 
         /* Stop http interface */
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix)
@@ -373,11 +373,11 @@ static void do_reinit() {
                 monit_http(START_HTTP);
 
         /* send the monit startup notification */
-        Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_RELOAD, "Monit reloaded");
+        Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_RELOAD, "Monit reloaded");
 
         if (Run.mmonits) {
                 Thread_create(heartbeatThread, heartbeat, NULL);
-                heartbeatRunning = TRUE;
+                heartbeatRunning = true;
         }
 }
 
@@ -389,7 +389,7 @@ static void do_action(char **args) {
         char *action = args[optind];
         char *service = args[++optind];
 
-        Run.once = TRUE;
+        Run.once = true;
 
         if (! action) {
                 do_default();
@@ -400,7 +400,7 @@ static void do_action(char **args) {
                    IS(action, "restart")) {
                 if (Run.mygroup || service) {
                         int errors = 0;
-                        int (*_control_service)(const char *, const char *) = exist_daemon() ? control_service_daemon : control_service_string;
+                        boolean_t (*_control_service)(const char *, const char *) = exist_daemon() ? control_service_daemon : control_service_string;
 
                         if (Run.mygroup) {
                                 for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
@@ -458,7 +458,7 @@ static void do_action(char **args) {
 static void do_exit() {
         sigset_t ns;
         set_signal_block(&ns, NULL);
-        Run.stopped = TRUE;
+        Run.stopped = true;
         if (Run.isdaemon && ! Run.once) {
                 if (can_http())
                         monit_http(STOP_HTTP);
@@ -466,13 +466,13 @@ static void do_exit() {
                 if (Run.mmonits && heartbeatRunning) {
                         Sem_signal(heartbeatCond);
                         Thread_join(heartbeatThread);
-                        heartbeatRunning = FALSE;
+                        heartbeatRunning = false;
                 }
 
                 LogInfo("Monit daemon with pid [%d] stopped\n", (int)getpid());
 
                 /* send the monit stop notification */
-                Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_STOP, "Monit stopped");
+                Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_STOP, "Monit stopped");
         }
         gc();
         exit(0);
@@ -489,7 +489,7 @@ static void do_default() {
                 if (do_wakeupcall())
                         exit(0);
 
-                Run.once = FALSE;
+                Run.once = false;
                 if (can_http()) {
                         if (Run.httpd.flags & Httpd_Net)
                                 LogInfo("Starting Monit %s daemon with http interface at [%s]:%d\n", VERSION, Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "*", Run.httpd.socket.net.port);
@@ -502,7 +502,7 @@ static void do_default() {
                 if (Run.startdelay)
                         LogInfo("Monit start delay set -- pause for %ds\n", Run.startdelay);
 
-                if (Run.init != TRUE)
+                if (! Run.init)
                         daemonize();
                 else if (! Run.debug)
                         Util_redirectStdFds();
@@ -535,14 +535,14 @@ static void do_default() {
                         monit_http(START_HTTP);
 
                 /* send the monit startup notification */
-                Event_post(Run.system, Event_Instance, STATE_CHANGED, Run.system->action_MONIT_START, "Monit started");
+                Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_START, "Monit started");
 
                 if (Run.mmonits) {
                         Thread_create(heartbeatThread, heartbeat, NULL);
-                        heartbeatRunning = TRUE;
+                        heartbeatRunning = true;
                 }
 
-                while (TRUE) {
+                while (true) {
                         validate();
                         State_save();
 
@@ -551,7 +551,7 @@ static void do_default() {
                                 sleep(Run.polltime);
 
                         if (Run.dowakeup) {
-                                Run.dowakeup = FALSE;
+                                Run.dowakeup = false;
                                 LogInfo("Awakened by User defined signal 1\n");
                         }
 
@@ -617,7 +617,7 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 case 'd':
                                 {
-                                        Run.isdaemon = TRUE;
+                                        Run.isdaemon = true;
                                         sscanf(optarg, "%d", &Run.polltime);
                                         if (Run.polltime < 1) {
                                                 LogError("Option -%c requires a natural number\n", opt);
@@ -634,8 +634,8 @@ static void handle_options(int argc, char **argv) {
                                 {
                                         Run.logfile = Str_dup(optarg);
                                         if (IS(Run.logfile, "syslog"))
-                                                Run.use_syslog = TRUE;
-                                        Run.dolog = TRUE;
+                                                Run.use_syslog = true;
+                                        Run.dolog = true;
                                         break;
                                 }
                                 case 'p':
@@ -650,7 +650,7 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 case 'I':
                                 {
-                                        Run.init = TRUE;
+                                        Run.init = true;
                                         break;
                                 }
                                 case 'i':
@@ -835,7 +835,7 @@ static void *heartbeat(void *args) {
  * Signalhandler for a daemon reload call
  */
 static RETSIGTYPE do_reload(int sig) {
-        Run.doreload = TRUE;
+        Run.doreload = true;
 }
 
 
@@ -843,7 +843,7 @@ static RETSIGTYPE do_reload(int sig) {
  * Signalhandler for monit finalization
  */
 static RETSIGTYPE do_destroy(int sig) {
-        Run.stopped = TRUE;
+        Run.stopped = true;
 }
 
 
@@ -851,7 +851,7 @@ static RETSIGTYPE do_destroy(int sig) {
  * Signalhandler for a daemon wakeup call
  */
 static RETSIGTYPE do_wakeup(int sig) {
-        Run.dowakeup = TRUE;
+        Run.dowakeup = true;
 }
 
 

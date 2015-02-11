@@ -247,7 +247,7 @@ static unsigned short checksum_ip(unsigned char *_addr, int count) {
 /* ------------------------------------------------------------------ Public */
 
 
-int check_host(const char *hostname) {
+boolean_t check_host(const char *hostname) {
         ASSERT(hostname);
         struct addrinfo hints = {
 #ifdef AI_ADDRCONFIG
@@ -256,18 +256,18 @@ int check_host(const char *hostname) {
         };
         struct addrinfo *res;
         if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
-                return FALSE;
+                return false;
         freeaddrinfo(res);
-        return TRUE;
+        return true;
 }
 
 
-int check_socket(int socket) {
+boolean_t check_socket(int socket) {
         return (Net_canRead(socket, 500) || Net_canWrite(socket, 500)); // wait ms
 }
 
 
-int check_udp_socket(int socket) {
+boolean_t check_udp_socket(int socket) {
         char token[1] = {};
         /* We have to send something and if the UDP server is down/unreachable
          *  the remote host should send an ICMP error. We then need to call read
@@ -279,12 +279,12 @@ int check_udp_socket(int socket) {
         if (Net_read(socket, token, 1, 1200) < 0) {
                 switch (errno) {
                         case ECONNREFUSED:
-                                return FALSE;
+                                return false;
                         default:
                                 break;
                 }
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -448,12 +448,12 @@ error:
 }
 
 
-int can_read(int socket, int timeout) {
+boolean_t can_read(int socket, int timeout) {
         return Net_canRead(socket, timeout);
 }
 
 
-int can_write(int socket, int timeout) {
+boolean_t can_write(int socket, int timeout) {
         return Net_canWrite(socket, timeout);
 }
 
@@ -619,25 +619,25 @@ readnext:
                                 LogError("Ping response for %s %d/%d failed -- received %ld bytes, expected at least %d bytes\n", hostname, i + 1, count, n, in_len);
                                 continue;
                         }
-                        int in_addrmatch = FALSE, in_typematch = FALSE;
+                        boolean_t in_addrmatch = false, in_typematch = false;
                         struct timeval in_time, out_time = {.tv_sec = 0, .tv_usec = 0};
                         gettimeofday(&in_time, NULL);
                         /* read from raw socket via recvfrom() provides messages regardless of origin, we have to check the IP and skip responses belonging to other conversations */
                         switch (addr.ss_family) {
                                 case AF_INET:
-                                        in_addrmatch = memcmp(&((struct sockaddr_in *)&addr)->sin_addr, &((struct sockaddr_in *)(r->ai_addr))->sin_addr, sizeof(struct in_addr)) ? FALSE : TRUE;
+                                        in_addrmatch = memcmp(&((struct sockaddr_in *)&addr)->sin_addr, &((struct sockaddr_in *)(r->ai_addr))->sin_addr, sizeof(struct in_addr)) ? false : true;
                                         in_iphdr4 = (struct ip *)buf;
                                         in_icmp4 = (struct icmp *)(buf + in_iphdr4->ip_hl * 4);
-                                        in_typematch = in_icmp4->icmp_type == ICMP_ECHOREPLY ? TRUE : FALSE;
+                                        in_typematch = in_icmp4->icmp_type == ICMP_ECHOREPLY ? true : false;
                                         in_id = ntohs(in_icmp4->icmp_id);
                                         in_seq = ntohs(in_icmp4->icmp_seq);
                                         data = (unsigned char *)in_icmp4->icmp_data;
                                         break;
 #ifdef IPV6
                                 case AF_INET6:
-                                        in_addrmatch = memcmp(&((struct sockaddr_in6 *)&addr)->sin6_addr, &((struct sockaddr_in6 *)(r->ai_addr))->sin6_addr, sizeof(struct in6_addr)) ? FALSE : TRUE;
+                                        in_addrmatch = memcmp(&((struct sockaddr_in6 *)&addr)->sin6_addr, &((struct sockaddr_in6 *)(r->ai_addr))->sin6_addr, sizeof(struct in6_addr)) ? false : true;
                                         in_icmp6 = (struct icmp6_hdr *)buf;
-                                        in_typematch = in_icmp6->icmp6_type == ICMP6_ECHO_REPLY ? TRUE : FALSE;
+                                        in_typematch = in_icmp6->icmp6_type == ICMP6_ECHO_REPLY ? true : false;
                                         in_id = ntohs(in_icmp6->icmp6_id);
                                         in_seq = ntohs(in_icmp6->icmp6_seq);
                                         data = (unsigned char *)(in_icmp6 + 1);

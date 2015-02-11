@@ -132,19 +132,19 @@ static unsigned long long cpu_wait_old  = 0ULL;
 struct procentry64 *procs = NULL;
 
 
-int init_process_info_sysdep(void) {
+boolean_t init_process_info_sysdep(void) {
         perfstat_memory_total_t mem;
 
         if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
                 LogError("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
 
         page_size                = getpagesize();
         systeminfo.mem_kbyte_max = (unsigned long)(mem.real_total * (page_size / 1024));
         systeminfo.cpus          = sysconf(_SC_NPROCESSORS_ONLN);
 
-        return TRUE;
+        return true;
 }
 
 
@@ -174,7 +174,7 @@ int getloadavg_sysdep (double *loadv, int nelem) {
                         loadv[0] = (double)cpu.loadavg[0] / (double)(1 << SBITS);
         }
 
-        return TRUE;
+        return 0;
 }
 
 
@@ -193,7 +193,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
         if ((treesize = getprocs64(NULL, 0, NULL, 0, &firstproc, PID_MAX)) < 0) {
                 LogError("system statistic error -- getprocs64 failed: %s\n", STRERROR);
-                return FALSE;
+                return 0;
         }
 
         procs = CALLOC(sizeof(struct procentry64), treesize);
@@ -202,7 +202,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         if ((treesize = getprocs64(procs, sizeof(struct procentry64), NULL, 0, &firstproc, treesize)) < 0) {
                 FREE(procs);
                 LogError("system statistic error -- getprocs64 failed: %s\n", STRERROR);
-                return FALSE;
+                return 0;
         }
 
         pt = CALLOC(sizeof(ProcessTree_T), treesize);
@@ -235,7 +235,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                         DEBUG("Cannot read proc file %s -- %s\n", filename, STRERROR);
                         if (close(fd) < 0)
                                 LogError("Socket close failed -- %s\n", STRERROR);
-                        return FALSE;
+                        return 0;
                 }
                 if (close(fd) < 0)
                         LogError("Socket close failed -- %s\n", STRERROR);
@@ -254,15 +254,15 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
 /**
  * This routine returns kbyte of real memory in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_memory_sysdep(SystemInfo_T *si) {
+boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         perfstat_memory_total_t  mem;
 
         /* Memory */
         if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
                 LogError("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
         si->total_mem_kbyte = (unsigned long)((mem.real_total - mem.real_free - mem.numperm) * (page_size / 1024));
 
@@ -270,15 +270,15 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap_kbyte_max   = (unsigned long)(mem.pgsp_total * 4);                   /* 4kB blocks */
         si->total_swap_kbyte = (unsigned long)((mem.pgsp_total - mem.pgsp_free) * 4); /* 4kB blocks */
 
-        return TRUE;
+        return true;
 }
 
 
 /**
  * This routine returns system/user CPU time in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_cpu_sysdep(SystemInfo_T *si) {
+boolean_t used_system_cpu_sysdep(SystemInfo_T *si) {
         perfstat_cpu_total_t cpu;
         unsigned long long cpu_total;
         unsigned long long cpu_total_new = 0ULL;
@@ -316,6 +316,6 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
 
         cpu_initialized = 1;
 
-        return TRUE;
+        return true;
 }
 

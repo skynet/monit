@@ -52,10 +52,10 @@
 #include <unistd.h>
 #endif
 
+#include "monit.h"
 #include "ssl.h"
 #include "net.h"
 #include "socket.h"
-#include "monit.h"
 #include "process.h"
 #include "device.h"
 
@@ -73,11 +73,11 @@
 /**
  * Show all services in the service list.
  */
-int status(char *level) {
+boolean_t status(char *level) {
 
 #define LINE 1024
 
-        int status = FALSE;
+        boolean_t status = false;
         char buf[LINE];
         char *auth = NULL;
 
@@ -107,7 +107,7 @@ int status(char *level) {
                 if (*buf == '\n' || *buf == '\r')
                         break;
                 if (Str_startsWith(buf, "HTTP/1.0 200"))
-                        status = TRUE;
+                        status = true;
         }
 
         if (! status) {

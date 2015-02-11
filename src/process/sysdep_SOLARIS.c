@@ -125,7 +125,7 @@ static long   old_total = 0;
 #define LOG1024         10
 #endif
 
-int init_process_info_sysdep(void) {
+boolean_t init_process_info_sysdep(void) {
         register int pagesize;
 
         systeminfo.cpus = sysconf( _SC_NPROCESSORS_ONLN);
@@ -143,7 +143,7 @@ int init_process_info_sysdep(void) {
         systeminfo.mem_kbyte_max = pagetok(sysconf(_SC_PHYS_PAGES));
         page_size = getpagesize();
 
-        return (TRUE);
+        return true;
 }
 
 double timestruc_to_tseconds(timestruc_t t) {
@@ -251,9 +251,9 @@ int getloadavg_sysdep (double *loadv, int nelem) {
 
 /**
  * This routine returns kbyte of real memory in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_memory_sysdep(SystemInfo_T *si) {
+boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         int                 n, num;
         kstat_ctl_t        *kctl;
         kstat_named_t      *knamed;
@@ -273,7 +273,7 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
                         if (kstat_read(kctl, kstat, NULL) == -1) {
                                 LogError("system statistic error -- memory_cap usage gathering failed\n");
                                 kstat_close(kctl);
-                                return FALSE;
+                                return false;
                         }
                         kstat_named_t *rss = kstat_data_lookup(kstat, "rss");
                         if (rss)
@@ -285,7 +285,7 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
                         if (getvmusage(VMUSAGE_ZONE, Run.polltime, &result, &nres) != 0) {
                                 LogError("system statistic error -- getvmusage failed\n");
                                 kstat_close(kctl);
-                                return FALSE;
+                                return false;
                         }
                         si->total_mem_kbyte = result.vmu_rss_all / 1024;
                 }
@@ -294,7 +294,7 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
                 if (kstat_read(kctl, kstat, 0) == -1) {
                         LogError("system statistic error -- memory usage gathering failed\n");
                         kstat_close(kctl);
-                        return FALSE;
+                        return false;
                 }
                 knamed = kstat_data_lookup(kstat, "freemem");
                 if (knamed)
@@ -306,12 +306,12 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
 again:
         if ((num = swapctl(SC_GETNSWP, 0)) == -1) {
                 LogError("system statistic error -- swap usage gathering failed: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
         if (num == 0) {
                 DEBUG("system statistic -- no swap configured\n");
                 si->swap_kbyte_max = 0;
-                return TRUE;
+                return true;
         }
         s = (swaptbl_t *)ALLOC(num * sizeof(swapent_t) + sizeof(struct swaptable));
         strtab = (char *)ALLOC((num + 1) * MAXSTRSIZE);
@@ -323,7 +323,7 @@ again:
                 si->swap_kbyte_max = 0;
                 FREE(s);
                 FREE(strtab);
-                return FALSE;
+                return false;
         }
         if (n > num) {
                 DEBUG("system statistic -- new swap added: deferring swap usage statistics to next cycle\n");
@@ -342,15 +342,15 @@ again:
         si->swap_kbyte_max   = (unsigned long)(double)(total * page_size) / 1024.;
         si->total_swap_kbyte = (unsigned long)(double)(used  * page_size) / 1024.;
 
-        return TRUE;
+        return true;
 }
 
 
 /**
  * This routine returns system/user CPU time in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_cpu_sysdep(SystemInfo_T *si) {
+boolean_t used_system_cpu_sysdep(SystemInfo_T *si) {
         int             ncpu = 0, ncpus;
         long            cpu_user = 0, cpu_syst = 0, cpu_wait = 0, total = 0, diff_total;
         kstat_ctl_t    *kctl;
@@ -422,7 +422,7 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
         FREE(cpu_ks);
         FREE(cpu_stat);
         kstat_close(kctl);
-        return TRUE;
+        return true;
 
 error2:
         old_total = 0;
@@ -431,6 +431,6 @@ error2:
 
 error:
         kstat_close(kctl);
-        return FALSE;
+        return false;
 }
 

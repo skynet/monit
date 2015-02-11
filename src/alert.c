@@ -126,10 +126,10 @@ int handle_alert(Event_T E) {
                  * overrides the same recipient events which are registered globaly.
                  */
                 for (Mail_T m = Run.maillist; m; m = m->next) {
-                        int skip = FALSE;
+                        boolean_t skip = false;
                         for (Mail_T n = s->maillist; n; n = n->next) {
                                 if (IS(m->to, n->to)) {
-                                        skip = TRUE;
+                                        skip = true;
                                         break;
                                 }
                         }

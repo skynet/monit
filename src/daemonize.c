@@ -114,36 +114,36 @@ void daemonize() {
 /**
  * Send signal to a daemon process
  * @param sig Signal to send daemon to
- * @return TRUE if signal was send, otherwise FALSE
+ * @return true if signal was send, otherwise false
  */
-int kill_daemon(int sig) {
+boolean_t kill_daemon(int sig) {
         pid_t pid;
         if ((pid = exist_daemon()) > 0) {
                 if (kill(pid, sig) < 0) {
                         LogError("Cannot send signal to daemon process -- %s\n", STRERROR);
-                        return FALSE;
+                        return false;
                 }
         } else {
                 LogInfo("No daemon process found\n");
-                return TRUE;
+                return true;
         }
         if (sig == SIGTERM) {
                 fprintf(stdout, "Monit daemon with pid [%d] killed\n", (int)pid);
                 fflush(stdout);
         }
-        return TRUE;
+        return true;
 }
 
 
 /**
- * @return TRUE (i.e. the daemons pid) if a daemon process is running,
- * otherwise FALSE
+ * @return true (i.e. the daemons pid) if a daemon process is running,
+ * otherwise false
  */
 int exist_daemon() {
         errno = 0;
         pid_t pid;
         if ((pid = Util_getPid(Run.pidfile)) && (getpgid(pid) > -1 || errno == EPERM))
                 return (int)pid;
-        return FALSE;
+        return 0;
 }
 

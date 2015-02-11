@@ -32,11 +32,11 @@
 
 /**
  *  Send PING and check for PONG.
- *  If alive return TRUE, else, return FALSE.
+ *  If alive return true, else, return false.
  *
  *  @file
  */
-int check_clamav(Socket_T socket) {
+boolean_t check_clamav(Socket_T socket) {
 
         char buf[STRLEN];
         const char *ok = "PONG";
@@ -45,22 +45,22 @@ int check_clamav(Socket_T socket) {
 
         if (socket_print(socket, "PING\r\n") < 0) {
                 socket_setError(socket, "CLAMAV: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "CLAMAV: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         Str_chomp(buf);
 
         if (strncasecmp(buf, ok, strlen(ok)) != 0) {
                 socket_setError(socket, "CLAMAV error: %s", buf);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }
 

@@ -113,7 +113,7 @@ static void set_monit_environment(Service_T S, command_t C, Event_T E, const cha
         setenv("MONIT_EVENT", E ? Event_get_description(E) : C == S->start ? "Started" : C == S->stop ? "Stopped" : "No Event", 1);
         setenv("MONIT_DESCRIPTION", E ? Event_get_message(E) : C == S->start ? "Started" : C == S->stop ? "Stopped" : "No Event", 1);
         if (S->type == TYPE_PROCESS) {
-                putenv(Str_cat("MONIT_PROCESS_PID=%d", Util_isProcessRunning(S, FALSE)));
+                putenv(Str_cat("MONIT_PROCESS_PID=%d", Util_isProcessRunning(S, false)));
                 putenv(Str_cat("MONIT_PROCESS_MEMORY=%ld", S->inf->priv.process.mem_kbyte));
                 putenv(Str_cat("MONIT_PROCESS_CHILDREN=%d", S->inf->priv.process.children));
                 putenv(Str_cat("MONIT_PROCESS_CPU_PERCENT=%d", S->inf->priv.process.cpu_percent));

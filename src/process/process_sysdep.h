@@ -25,20 +25,20 @@
 #ifndef MONIT_PROCESS_SYSDEP_H
 #define MONIT_PROCESS_SYSDEP_H
 
-int init_process_info_sysdep(void);
+boolean_t init_process_info_sysdep(void);
 int init_proc_info_sysdep(void);
 
-int read_proc_file(char *, int, char *, int, int *);
+boolean_t read_proc_file(char *, int, char *, int, int *);
 int getloadavg_sysdep (double *, int);
-int used_system_memory_sysdep(SystemInfo_T *);
-int used_system_cpu_sysdep(SystemInfo_T *);
+boolean_t used_system_memory_sysdep(SystemInfo_T *);
+boolean_t used_system_cpu_sysdep(SystemInfo_T *);
 
 double get_float_time(void);
 
 int    initprocesstree_sysdep(ProcessTree_T **);
 void   fillprocesstree(ProcessTree_T *, int);
 
-int    connectchild(ProcessTree_T *, int, int);
+boolean_t connectchild(ProcessTree_T *, int, int);
 
 
 #endif

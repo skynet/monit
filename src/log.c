@@ -117,7 +117,7 @@ static struct mylogpriority {
 /* -------------------------------------------------------------- Prototypes */
 
 
-static int  open_log();
+static boolean_t open_log();
 static char *timefmt(char *t, int size);
 static const char *logPriorityDescription(int p);
 static void log_log(int priority, const char *s, va_list ap);
@@ -129,24 +129,16 @@ static void log_backtrace();
 
 /**
  * Initialize the log system and 'log' function
- * @return TRUE if the log system was successfully initialized
+ * @return true if the log system was successfully initialized
  */
-int log_init() {
-
-        if (! Run.dolog) {
-                return TRUE;
-        }
-
-        if (! open_log()) {
-                return FALSE;
-        }
-
-        /* Register log_close to be
-         called at program termination */
+boolean_t log_init() {
+        if (! Run.dolog)
+                return true;
+        if (! open_log())
+                return false;
+        /* Register log_close to be called at program termination */
         atexit(log_close);
-
-        return TRUE;
-
+        return true;
 }
 
 
@@ -339,7 +331,7 @@ void vsyslog (int facility_priority, const char *format, va_list arglist) {
 /**
  * Open a log file or syslog
  */
-static int open_log() {
+static boolean_t open_log() {
 
         if (Run.use_syslog) {
                 openlog(prog, LOG_PID, Run.facility);
@@ -347,13 +339,13 @@ static int open_log() {
                 LOG = fopen(Run.logfile, "a+");
                 if (! LOG) {
                         LogError("Error opening the log file '%s' for writing -- %s\n", Run.logfile, STRERROR);
-                        return(FALSE);
+                        return false;
                 }
                 /* Set logger in unbuffered mode */
                 setvbuf(LOG, NULL, _IONBF, 0);
         }
 
-        return TRUE;
+        return true;
 
 }
 

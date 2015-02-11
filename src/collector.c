@@ -60,9 +60,9 @@
  * Send message to the server
  * @param C An mmonit object
  * @param D Data to send
- * @return TRUE if the message sending succeeded otherwise FALSE
+ * @return true if the message sending succeeded otherwise false
  */
-static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
+static boolean_t data_send(Socket_T socket, Mmonit_T C, const char *D) {
         char *auth = Util_getBasicAuthHeader(C->url->user, C->url->password);
         int rv = socket_print(socket,
                               "POST %s HTTP/1.1\r\n"
@@ -84,31 +84,31 @@ static int data_send(Socket_T socket, Mmonit_T C, const char *D) {
         FREE(auth);
         if (rv <0) {
                 LogError("M/Monit: error sending data to %s -- %s\n", C->url->url, STRERROR);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 
 /**
  * Check that the server returns a valid HTTP response
  * @param C An mmonit object
- * @return TRUE if the response is valid otherwise FALSE
+ * @return true if the response is valid otherwise false
  */
-static int data_check(Socket_T socket, Mmonit_T C) {
+static boolean_t data_check(Socket_T socket, Mmonit_T C) {
         int  status;
         char buf[STRLEN];
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 LogError("M/Monit: error receiving data from %s -- %s\n", C->url->url, STRERROR);
-                return FALSE;
+                return false;
         }
         Str_chomp(buf);
         int n = sscanf(buf, "%*s %d", &status);
         if (n != 1 || (status >= 400)) {
                 LogError("M/Monit: message sending failed to %s -- %s\n", C->url->url, buf);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 

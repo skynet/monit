@@ -132,7 +132,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
         ASSERT(service);
         ASSERT(action);
         ASSERT(s);
-        ASSERT(state == STATE_FAILED || state == STATE_SUCCEEDED || state == STATE_CHANGED || state == STATE_CHANGEDNOT);
+        ASSERT(state == State_Failed || state == State_Succeeded || state == State_Changed || state == State_ChangedNot);
 
         va_list ap;
         va_start(ap, s);
@@ -142,7 +142,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
         Event_T e = service->eventlist;
         if (! e) {
                 /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
-                if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
+                if (state == State_Succeeded || state == State_ChangedNot) {
                         DEBUG("'%s' %s\n", service->name, message);
                         FREE(message);
                         return;
@@ -158,7 +158,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
                 e->source = Str_dup(service->name);
                 e->mode = service->mode;
                 e->type = service->type;
-                e->state = STATE_INIT;
+                e->state = State_Init;
                 e->state_map = 1;
                 e->action = action;
                 e->message = message;
@@ -171,7 +171,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
 
                                 /* Shift the existing event flags to the left and set the first bit based on actual state */
                                 e->state_map <<= 1;
-                                e->state_map |= ((state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) ? 0 : 1);
+                                e->state_map |= ((state == State_Succeeded || state == State_ChangedNot) ? 0 : 1);
 
                                 /* Update the message */
                                 FREE(e->message);
@@ -183,7 +183,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
 
                 if (! e) {
                         /* Only first failed/changed event can initialize the queue for given event type, thus succeeded events are ignored until first error. */
-                        if (state == STATE_SUCCEEDED || state == STATE_CHANGEDNOT) {
+                        if (state == State_Succeeded || state == State_ChangedNot) {
                                 DEBUG("'%s' %s\n", service->name, message);
                                 FREE(message);
                                 return;
@@ -200,7 +200,7 @@ void Event_post(Service_T service, long id, short state, EventAction_T action, c
                         e->source = Str_dup(service->name);
                         e->mode = service->mode;
                         e->type = service->type;
-                        e->state = STATE_INIT;
+                        e->state = State_Init;
                         e->state_map = 1;
                         e->action = action;
                         e->message = message;
@@ -291,11 +291,11 @@ short Event_get_state(Event_T E) {
  * and event ratio needed to trigger the state change
  * @param E An event object
  * @param S Actual posted state
- * @return The Event raw state
+ * @return The event state
  */
-short Event_check_state(Event_T E, short S) {
+boolean_t Event_check_state(Event_T E, short S) {
         int       count = 0;
-        short     state = (S == STATE_SUCCEEDED || S == STATE_CHANGEDNOT) ? 0 : 1; /* translate to 0/1 class */
+        short     state = (S == State_Succeeded || S == State_ChangedNot) ? 0 : 1; /* translate to 0/1 class */
         Action_T  action;
         Service_T service;
         long long flag;
@@ -303,11 +303,11 @@ short Event_check_state(Event_T E, short S) {
         ASSERT(E);
 
         if (! (service = Event_get_source(E)))
-                return TRUE;
+                return true;
 
         /* Only true failed/changed state condition can change the initial state */
-        if (! state && E->state == STATE_INIT && ! (service->error & E->id))
-                return FALSE;
+        if (! state && E->state == State_Init && ! (service->error & E->id))
+                return false;
 
         action = ! state ? E->action->succeeded : E->action->failed;
 
@@ -322,12 +322,12 @@ short Event_check_state(Event_T E, short S) {
         }
 
         /* the internal instance and action events are handled as changed any time since we need to deliver alert whenever it occurs */
-        if (E->id == Event_Instance || E->id == Event_Action || (count >= action->count && (S != E->state || S == STATE_CHANGED))) {
+        if (E->id == Event_Instance || E->id == Event_Action || (count >= action->count && (S != E->state || S == State_Changed))) {
                 memset(&(E->state_map), state, sizeof(E->state_map)); // Restart state map on state change, so we'll not flicker on multiple-failures condition (next state change requires full number of cycles to pass)
-                return TRUE;
+                return true;
         }
 
-        return FALSE;
+        return false;
 }
 
 
@@ -368,15 +368,15 @@ const char *Event_get_description(Event_T E) {
         while ((*et).id) {
                 if (E->id == (*et).id) {
                         switch (E->state) {
-                                case STATE_SUCCEEDED:
+                                case State_Succeeded:
                                         return (*et).description_succeeded;
-                                case STATE_FAILED:
+                                case State_Failed:
                                         return (*et).description_failed;
-                                case STATE_INIT:
+                                case State_Init:
                                         return (*et).description_failed;
-                                case STATE_CHANGED:
+                                case State_Changed:
                                         return (*et).description_changed;
-                                case STATE_CHANGEDNOT:
+                                case State_ChangedNot:
                                         return (*et).description_changednot;
                                 default:
                                         break;
@@ -400,13 +400,13 @@ short Event_get_action(Event_T E) {
         ASSERT(E);
 
         switch (E->state) {
-                case STATE_SUCCEEDED:
-                case STATE_CHANGEDNOT:
+                case State_Succeeded:
+                case State_ChangedNot:
                         A = E->action->succeeded;
                         break;
-                case STATE_FAILED:
-                case STATE_CHANGED:
-                case STATE_INIT:
+                case State_Failed:
+                case State_Changed:
+                case State_Init:
                         A = E->action->failed;
                         break;
                 default:
@@ -524,7 +524,7 @@ void Event_queue_process() {
                         if (size != sizeof(short))
                                 goto error7;
                         a->id = *action;
-                        if (e->state == STATE_FAILED)
+                        if (e->state == State_Failed)
                                 ea->failed = a;
                         else
                                 ea->succeeded = a;
@@ -590,7 +590,7 @@ void Event_queue_process() {
         error1:
                 de = readdir(dir);
         }
-        Run.handler_init = FALSE;
+        Run.handler_init = false;
         closedir(dir);
         FREE(a);
         FREE(ea);
@@ -614,7 +614,7 @@ static void handle_event(Service_T S, Event_T E) {
         /* We will handle only first succeeded event, recurrent succeeded events
          * or insufficient succeeded events during failed service state are
          * ignored. Failed events are handled each time. */
-        if (! E->state_changed && (E->state == STATE_SUCCEEDED || E->state == STATE_CHANGEDNOT || ((E->state_map & 0x1) ^ 0x1))) {
+        if (! E->state_changed && (E->state == State_Succeeded || E->state == State_ChangedNot || ((E->state_map & 0x1) ^ 0x1))) {
                 DEBUG("'%s' %s\n", S->name, E->message);
                 return;
         }
@@ -624,21 +624,21 @@ static void handle_event(Service_T S, Event_T E) {
                  * occured, log it and exit. Succeeded events in init state are not
                  * logged. Instance and action events are logged always with priority
                  * info. */
-                if (E->state != STATE_INIT || E->state_map & 0x1) {
-                        if (E->state == STATE_SUCCEEDED || E->state == STATE_CHANGEDNOT || E->id == Event_Instance || E->id == Event_Action)
+                if (E->state != State_Init || E->state_map & 0x1) {
+                        if (E->state == State_Succeeded || E->state == State_ChangedNot || E->id == Event_Instance || E->id == Event_Action)
                                 LogInfo("'%s' %s\n", S->name, E->message);
                         else
                                 LogError("'%s' %s\n", S->name, E->message);
                 }
-                if (E->state == STATE_INIT)
+                if (E->state == State_Init)
                         return;
         }
 
-        if (E->state == STATE_FAILED || E->state == STATE_CHANGED) {
+        if (E->state == State_Failed || E->state == State_Changed) {
                 if (E->id != Event_Instance && E->id != Event_Action) { // We are not interested in setting error flag for instance and action events
                         S->error |= E->id;
                         /* The error hint provides second dimension for error bitmap and differentiates between failed/changed event states (failed=0, chaged=1) */
-                        if (E->state == STATE_CHANGED)
+                        if (E->state == State_Changed)
                                 S->error_hint |= E->id;
                         else
                                 S->error_hint &= ~E->id;
@@ -650,7 +650,7 @@ static void handle_event(Service_T S, Event_T E) {
         }
 
         /* Possible event state change was handled so we will reset the flag. */
-        E->state_changed = FALSE;
+        E->state_changed = false;
 }
 
 
@@ -712,7 +712,7 @@ static void Event_queue_add(Event_T E) {
         char         file_name[STRLEN];
         int          version = EVENT_VERSION;
         short        action = Event_get_action(E);
-        int          rv = FALSE;
+        int          rv;
 
         ASSERT(E);
         ASSERT(E->flag != HANDLER_SUCCEEDED);
@@ -781,9 +781,9 @@ error:
  * @param file_name File name
  */
 static void Event_queue_update(Event_T E, const char *file_name) {
-        int          version = EVENT_VERSION;
-        short        action = Event_get_action(E);
-        int          rv = FALSE;
+        int version = EVENT_VERSION;
+        short action = Event_get_action(E);
+        int rv;
 
         ASSERT(E);
         ASSERT(E->flag != HANDLER_SUCCEEDED);

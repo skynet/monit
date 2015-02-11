@@ -64,7 +64,7 @@
 #include "device_sysdep.h"
 
 
-int filesystem_usage(Service_T s) {
+boolean_t filesystem_usage(Service_T s) {
         ASSERT(s);
 
         struct stat sb;
@@ -74,19 +74,19 @@ int filesystem_usage(Service_T s) {
                         // Symbolic link: dereference so we'll be able to find it in mnttab + get permissions of the target
                         if (! realpath(s->path, buf)) {
                                 LogError("filesystem link error -- %s\n", STRERROR);
-                                return FALSE;
+                                return false;
                         }
                         // Get link target mode + permissions
                         if (stat(buf, &sb) != 0) {
                                 LogError("filesystem %s doesn't exist\n", buf);
-                                return FALSE;
+                                return false;
                         }
                         // If the target is device, get its mountpoint
                         if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
                                 char dev[PATH_MAX+1];
                                 snprintf(dev, sizeof(dev), "%s", buf);
                                 if (! device_mountpoint_sysdep(dev, buf, sizeof(buf)))
-                                        return FALSE;
+                                        return false;
                         }
                 } else if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode)) {
                         // File or directory: we have mountpoint or filesystem subdirectory already (no need to map)
@@ -94,17 +94,17 @@ int filesystem_usage(Service_T s) {
                 } else if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
                         // Block or character device: look for mountpoint
                         if (! device_mountpoint_sysdep(s->path, buf, sizeof(buf)))
-                                return FALSE;
+                                return false;
                 } else {
                         LogError("Cannot get filesystem for '%s' -- not file, directory nor device\n", s->path);
                 }
         } else {
                 // Generic device string (such as sshfs connection info): look for mountpoint
                 if (! device_mountpoint_sysdep(s->path, buf, sizeof(buf)))
-                        return FALSE;
+                        return false;
                 if (stat(buf, &sb) != 0) {
                         LogError("filesystem %s doesn't exist\n", buf);
-                        return FALSE;
+                        return false;
                 }
         }
         if (filesystem_usage_sysdep(buf, s->inf)) {
@@ -115,8 +115,8 @@ int filesystem_usage(Service_T s) {
                 s->inf->priv.filesystem.space_percent = s->inf->priv.filesystem.f_blocks > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfreetotal)) / (float)s->inf->priv.filesystem.f_blocks) : 0;
                 s->inf->priv.filesystem.inode_total = s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree;
                 s->inf->priv.filesystem.space_total = s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfreetotal;
-                return TRUE;
+                return true;
         }
-        return FALSE;
+        return false;
 }
 

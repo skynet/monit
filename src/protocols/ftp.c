@@ -32,11 +32,11 @@
 
 /**
  *  Check the server for greeting code 220 and then send a QUIT and
- *  check for code 221. If alive return TRUE, else, return FALSE.
+ *  check for code 221. If alive return true, else, return false.
  *
  *  @file
  */
-int check_ftp(Socket_T socket) {
+boolean_t check_ftp(Socket_T socket) {
         int status;
         char buf[STRLEN];
 
@@ -45,30 +45,30 @@ int check_ftp(Socket_T socket) {
         do {
                 if (! socket_readln(socket, buf, STRLEN)) {
                         socket_setError(socket, "FTP: error receiving data -- %s", STRERROR);
-                        return FALSE;
+                        return false;
                 }
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
         if (sscanf(buf, "%d", &status) != 1 || status != 220) {
                 socket_setError(socket, "FTP greeting error: %s", buf);
-                return FALSE;
+                return false;
         }
 
         if (socket_print(socket, "QUIT\r\n") < 0) {
                 socket_setError(socket, "FTP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! socket_readln(socket, buf, STRLEN)) {
                 socket_setError(socket, "FTP: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         Str_chomp(buf);
         if (sscanf(buf, "%d", &status) != 1 || status != 221) {
                 socket_setError(socket, "FTP quit error: %s", buf);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 }
 

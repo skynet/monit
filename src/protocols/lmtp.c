@@ -34,30 +34,30 @@
 /* --------------------------------------------------------------- Private */
 
 
-static int say(Socket_T socket, char *msg) {
+static boolean_t say(Socket_T socket, char *msg) {
         if (socket_write(socket, msg, strlen(msg)) < 0) {
                 socket_setError(socket, "LMTP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 
-static int expect(Socket_T socket, int expect) {
+static boolean_t expect(Socket_T socket, int expect) {
         int status;
         char buf[STRLEN];
         do {
                 if (! socket_readln(socket, buf, STRLEN)) {
                         socket_setError(socket, "LMTP: error receiving data -- %s", STRERROR);
-                        return FALSE;
+                        return false;
                 }
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
         if (sscanf(buf, "%d", &status) != 1 || status != expect) {
                 socket_setError(socket, "LMTP error: %s", buf);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -66,21 +66,21 @@ static int expect(Socket_T socket, int expect) {
 
 /**
  * Check the server for greeting code 220, send LHLO, test for return code 250
- * and finally send QUIT and check for return code 221. If alive return TRUE
- * else return FALSE.
+ * and finally send QUIT and check for return code 221. If alive return true
+ * else return false.
  *
  * @see RFC2033
  *
  * @file
  */
-int check_lmtp(Socket_T socket) {
+boolean_t check_lmtp(Socket_T socket) {
         ASSERT(socket);
         if (expect(socket, 220)
             && (say(socket, "LHLO localhost\r\n") && expect(socket, 250))
             && (say(socket, "QUIT\r\n") && expect(socket, 221)))
-                return TRUE;
+                return true;
 
-        return FALSE;
+        return false;
 }
 
 

@@ -37,33 +37,33 @@
  *     2. expect a PONG response
  *     3. send a QUIT command
  *
- * If passed return TRUE else return FALSE.
+ * If passed return true else return false.
  *
  * @see http://redis.io/topics/protocol
  *
  * @file
  */
-int check_redis(Socket_T socket) {
+boolean_t check_redis(Socket_T socket) {
         ASSERT(socket);
         char buf[STRLEN];
 
         if (socket_print(socket, "*1\r\n$4\r\nPING\r\n") < 0) {
                 socket_setError(socket, "REDIS: PING command error -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "REDIS: PING response error -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         Str_chomp(buf);
         if (! Str_isEqual(buf, "+PONG") && ! Str_startsWith(buf, "-NOAUTH")) { // We accept authentication error (-NOAUTH Authentication required): redis responded to request, but requires authentication => we assume it works
                 socket_setError(socket, "REDIS: PING error -- %s", buf);
-                return FALSE;
+                return false;
         }
         if (socket_print(socket, "*1\r\n$4\r\nQUIT\r\n") < 0) {
                 socket_setError(socket, "REDIS: QUIT command error -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 

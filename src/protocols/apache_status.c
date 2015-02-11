@@ -42,7 +42,7 @@
 /* ----------------------------------------------------------------- Private */
 
 
-static int parse_scoreboard(Socket_T socket, char *scoreboard) {
+static boolean_t parse_scoreboard(Socket_T socket, char *scoreboard) {
         int logging = 0, close = 0, dns = 0, keepalive = 0, reply = 0, request = 0, start = 0, wait = 0, graceful = 0, cleanup = 0, open = 0;
         for (char *state = scoreboard; *state; state++) {
                 switch (*state) {
@@ -84,7 +84,7 @@ static int parse_scoreboard(Socket_T socket, char *scoreboard) {
 
         int total = logging + close + dns + keepalive + reply + request + start + wait + graceful + cleanup + open;
         if (! total)
-                return TRUE; // Idle server
+                return true; // Idle server
 
         int errors = 0;
         Port_T p = socket_get_Port(socket);
@@ -139,7 +139,7 @@ static int parse_scoreboard(Socket_T socket, char *scoreboard) {
 /* ------------------------------------------------------------------ Public */
 
 
-int check_apache_status(Socket_T socket) {
+boolean_t check_apache_status(Socket_T socket) {
         ASSERT(socket);
         char host[STRLEN];
         if (socket_print(socket,
@@ -151,7 +151,7 @@ int check_apache_status(Socket_T socket) {
                          Util_getHTTPHostHeader(socket, host, STRLEN), VERSION) < 0)
         {
                 socket_setError(socket, "HTTP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         char buffer[4096] = {0};
         while (socket_readln(socket, buffer, sizeof(buffer))) {
@@ -161,6 +161,6 @@ int check_apache_status(Socket_T socket) {
                 }
         }
         socket_setError(socket, "APACHE-STATUS: error -- no scoreboard found");
-        return FALSE;
+        return false;
 }
 

@@ -80,7 +80,7 @@ char *device_mountpoint_sysdep(char *dev, char *buf, int buflen) {
 }
 
 
-int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
+boolean_t filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
         int size;
         struct statvfs usage;
 
@@ -88,7 +88,7 @@ int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
 
         if (statvfs(mntpoint, &usage) != 0) {
                 LogError("Error getting usage statistics for filesystem '%s' -- %s\n", mntpoint, STRERROR);
-                return FALSE;
+                return false;
         }
         size =                                   usage.f_frsize ? (usage.f_bsize / usage.f_frsize) : 1;
         inf->priv.filesystem.f_bsize =           usage.f_bsize;
@@ -99,6 +99,6 @@ int filesystem_usage_sysdep(char *mntpoint, Info_T inf) {
         inf->priv.filesystem.f_filesfree =       usage.f_ffree;
         inf->priv.filesystem._flags =            inf->priv.filesystem.flags;
         inf->priv.filesystem.flags =             usage.f_flag;
-        return TRUE;
+        return true;
 }
 

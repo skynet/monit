@@ -78,13 +78,13 @@
  * @param name name of proc service
  * @param pid number of the process / or <0 if main directory
  * @param bytes_read number of bytes read to buffer
- * @return TRUE if succeeded otherwise FALSE.
+ * @return true if succeeded otherwise false.
  */
-int read_proc_file(char *buf, int buf_size, char *name, int pid, int *bytes_read) {
+boolean_t read_proc_file(char *buf, int buf_size, char *name, int pid, int *bytes_read) {
         int fd;
         char filename[STRLEN];
         int bytes;
-        int rv = FALSE;
+        boolean_t rv = false;
 
         ASSERT(buf);
         ASSERT(name);
@@ -108,7 +108,7 @@ int read_proc_file(char *buf, int buf_size, char *name, int pid, int *bytes_read
 
         /* In case it is a string we have to 0 terminate it our self */
         buf[bytes]='\0';
-        rv = TRUE;
+        rv = true;
 
 error:
         if (close(fd) < 0)
@@ -134,19 +134,19 @@ double get_float_time(void) {
  * @param pt process tree
  * @param parent index
  * @param child index
- * @return TRUE if succeeded otherwise FALSE.
+ * @return true if succeeded otherwise false.
  */
-int connectchild(ProcessTree_T *pt, int parent, int child) {
+boolean_t connectchild(ProcessTree_T *pt, int parent, int child) {
 
         ASSERT(pt);
 
         if (pt[parent].pid == pt[child].pid)
-                return FALSE;
+                return false;
         RESIZE(pt[parent].children, sizeof(ProcessTree_T *) * (pt[parent].children_num + 1));
         pt[parent].children[pt[parent].children_num] = child;
         pt[parent].children_num++;
 
-        return TRUE;
+        return true;
 }
 
 
@@ -154,7 +154,6 @@ int connectchild(ProcessTree_T *pt, int parent, int child) {
  * Fill data in the process tree by recusively walking through it
  * @param pt process tree
  * @param i process index
- * @return TRUE if succeeded otherwise FALSE.
  */
 void fillprocesstree(ProcessTree_T *pt, int index) {
         ProcessTree_T *parent_pt;

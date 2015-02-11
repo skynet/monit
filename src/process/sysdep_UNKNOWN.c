@@ -38,7 +38,7 @@
 
 int init_process_info_sysdep(void) {
         systeminfo.mem_kbyte_max = 0;
-        return FALSE;
+        return false;
 }
 
 
@@ -74,18 +74,18 @@ int getloadavg_sysdep (double *loadv, int nelem) {
 
 /**
  * This routine returns kbyte of real memory in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_memory_sysdep(SystemInfo_T *si) {
-        return FALSE;
+boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
+        return false;
 }
 
 
 /**
  * This routine returns system/user CPU time in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_cpu_sysdep(SystemInfo_T *si) {
-        return FALSE;
+boolean_t used_system_cpu_sysdep(SystemInfo_T *si) {
+        return false;
 }
 

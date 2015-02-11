@@ -65,7 +65,7 @@ static char *_escapeZeroInExpectBuffer(char *s, int n) {
  *
  *  @file
  */
-int check_generic(Socket_T socket) {
+boolean_t check_generic(Socket_T socket) {
         Generic_T g = NULL;
         char *buf;
 #ifdef HAVE_REGEX_H
@@ -92,7 +92,7 @@ int check_generic(Socket_T socket) {
                                 socket_setError(socket, "GENERIC: error sending data -- %s", STRERROR);
                                 FREE(X);
                                 FREE(buf);
-                                return FALSE;
+                                return false;
                         } else
                                 DEBUG("GENERIC: successfully sent: '%s'\n", g->send);
 
@@ -107,7 +107,7 @@ int check_generic(Socket_T socket) {
                         if (*buf < 0) {
                                 socket_setError(socket, "GENERIC: error receiving data -- %s", STRERROR);
                                 FREE(buf);
-                                return FALSE;
+                                return false;
                         }
                         int timeout = socket_getTimeout(socket);
                         socket_setTimeout(socket, 200);
@@ -123,7 +123,7 @@ int check_generic(Socket_T socket) {
                                 regerror(regex_return, g->expect, e, STRLEN);
                                 socket_setError(socket, "GENERIC: receiving unexpected data [%s] -- %s", Str_trunc(buf, STRLEN - 4), e);
                                 FREE(buf);
-                                return FALSE;
+                                return false;
                         } else
                                 DEBUG("GENERIC: successfully received: '%s'\n", Str_trunc(buf, STRLEN - 4));
 
@@ -133,7 +133,7 @@ int check_generic(Socket_T socket) {
                         if (strncmp(buf, g->expect, strlen(g->expect)) != 0) {
                                 socket_setError(socket, "GENERIC: receiving unexpected data [%s]", Str_trunc(buf, STRLEN - 4));
                                 FREE(buf);
-                                return FALSE;
+                                return false;
                         } else
                                 DEBUG("GENERIC: successfully received: '%s'\n", Str_trunc(buf, STRLEN - 4));
 
@@ -143,13 +143,13 @@ int check_generic(Socket_T socket) {
                         /* This should not happen */
                         socket_setError(socket, "GENERIC: unexpected strangeness");
                         FREE(buf);
-                        return FALSE;
+                        return false;
                 }
                 g = g->next;
         }
 
         FREE(buf);
-        return TRUE;
+        return true;
 
 }
 

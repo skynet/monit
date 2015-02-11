@@ -54,7 +54,7 @@
 /* ------------------------------------------------------------------ Public */
 
 
-int check_ntp3(Socket_T socket)
+boolean_t check_ntp3(Socket_T socket)
 {
         int  br;
         char ntpRequest[NTPLEN];
@@ -81,19 +81,19 @@ int check_ntp3(Socket_T socket)
         /* Send request to NTP server */
         if (socket_write(socket, ntpRequest, NTPLEN) <= 0 ) {
                 socket_setError(socket, "NTP: error sending NTP request -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /* Receive and validate response */
         if ( (br = socket_read(socket, ntpResponse, NTPLEN)) <= 0) {
                 socket_setError(socket, "NTP: did not receive answer from server -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if ( br != NTPLEN ) {
                 socket_setError(socket, "NTP: Received %d bytes from server, expected %d bytes",
                                 br, NTPLEN);
-                return FALSE;
+                return false;
         }
 
         /*
@@ -105,19 +105,19 @@ int check_ntp3(Socket_T socket)
         if ( (ntpResponse[0] & 0x07) != NTP_MODE_SERVER )
         {
                 socket_setError(socket, "NTP: Server mode error");
-                return FALSE;
+                return false;
         }
         if ( (ntpResponse[0] & 0x38) != NTP_VERSION << 3 )
         {
                 socket_setError(socket, "NTP: Server protocol version error");
-                return FALSE;
+                return false;
         }
         if ( (ntpResponse[0] & 0xc0) == NTP_LEAP_NOTSYNC << 6 )
         {
                 socket_setError(socket, "NTP: Server not synchronized");
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 }
 

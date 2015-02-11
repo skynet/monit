@@ -85,7 +85,7 @@
 typedef struct {
         Socket_T socket;
         StringBuffer_T status_message;
-        int quit;
+        boolean_t quit;
         const char *server;
         int port;
         const char *username;
@@ -139,7 +139,7 @@ static void open_server(SendMail_T *S) {
         do {
                 /* wait with ssl-connect if SSL_VERSION_TLSV1 is set (rfc2487) */
                 if (! S->ssl.use_ssl || S->ssl.version == SSL_VERSION_TLSV1 || S->ssl.version == SSL_VERSION_TLSV11 || S->ssl.version == SSL_VERSION_TLSV12)
-                        S->socket = socket_new(S->server, S->port, SOCKET_TCP, Socket_Ip, FALSE, Run.mailserver_timeout);
+                        S->socket = socket_new(S->server, S->port, SOCKET_TCP, Socket_Ip, false, Run.mailserver_timeout);
                 else
                         S->socket = socket_create_t(S->server, S->port, SOCKET_TCP, Socket_Ip, S->ssl, Run.mailserver_timeout);
                 if (S->socket)
@@ -156,8 +156,8 @@ static void open_server(SendMail_T *S) {
                 } else {
                         THROW(IOException, "No mail servers are available");
                 }
-        } while (TRUE);
-        S->quit = TRUE;
+        } while (true);
+        S->quit = true;
 }
 
 
@@ -165,7 +165,7 @@ static void close_server(SendMail_T *S) {
         TRY
         {
                 if (S->quit) {
-                        S->quit = FALSE;
+                        S->quit = false;
                         do_send(S, "QUIT\r\n");
                         do_status(S);
                 }
@@ -189,11 +189,11 @@ static void close_server(SendMail_T *S) {
 /**
  * Send mail messages via SMTP
  * @param mail A Mail object
- * @return FALSE if failed, TRUE if succeeded
+ * @return false if failed, true if succeeded
  */
-int sendmail(Mail_T mail) {
+boolean_t sendmail(Mail_T mail) {
         SendMail_T S;
-        int failed = FALSE;
+        boolean_t failed = false;
         char now[STRLEN];
 
         ASSERT(mail);
@@ -214,7 +214,7 @@ int sendmail(Mail_T mail) {
                         do_send(&S, "STARTTLS\r\n");
                         do_status(&S);
                         if (! socket_switch2ssl(S.socket, S.ssl)) {
-                                S.quit = FALSE;
+                                S.quit = false;
                                 THROW(IOException, "Cannot switch to SSL");
                         }
                         /* After starttls, send ehlo again: RFC 3207: 4.2 Result of the STARTTLS Command */
@@ -295,7 +295,7 @@ int sendmail(Mail_T mail) {
         }
         ELSE
         {
-                failed = TRUE;
+                failed = true;
                 LogError("Sendmail: %s\n", Exception_frame.message);
         }
         FINALLY

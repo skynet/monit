@@ -70,14 +70,14 @@
 
 /**
  * Initialize the proc information code
- * @return TRUE if succeeded otherwise FALSE.
+ * @return true if succeeded otherwise false.
  */
-int init_process_info(void) {
+boolean_t init_process_info(void) {
         memset(&systeminfo, 0, sizeof(SystemInfo_T));
         gettimeofday(&systeminfo.collected, NULL);
         if (uname(&systeminfo.uname) < 0) {
                 LogError("'%s' resource monitoring initialization error -- uname failed: %s\n", Run.system->name, STRERROR);
-                return FALSE;
+                return false;
         }
 
         systeminfo.total_cpu_user_percent = -10;
@@ -93,9 +93,9 @@ int init_process_info(void) {
  * status), enduser version.
  * @param p A Service object
  * @param pid The process id
- * @return TRUE if succeeded otherwise FALSE.
+ * @return true if succeeded otherwise false.
  */
-int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid) {
+boolean_t update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid) {
         ASSERT(s);
         ASSERT(systeminfo.mem_kbyte_max > 0);
 
@@ -139,20 +139,20 @@ int update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_t pid)
                 s->inf->priv.process.cpu_percent       = 0;
                 s->inf->priv.process.total_cpu_percent = 0;
         }
-        return TRUE;
+        return true;
 }
 
 
 /**
  * Updates the system wide statistic
- * @return TRUE if successful, otherwise FALSE
+ * @return true if successful, otherwise false
  */
-int update_system_load() {
+boolean_t update_system_load() {
         if (Run.doprocess) {
                 ASSERT(systeminfo.mem_kbyte_max > 0);
 
                 /** Get load average triplet */
-                if (-1 == getloadavg_sysdep(systeminfo.loadavg, 3)) {
+                if (getloadavg_sysdep(systeminfo.loadavg, 3) == -1) {
                         LogError("'%s' statistic error -- load average gathering failed\n", Run.system->name);
                         goto error1;
                 }
@@ -171,7 +171,7 @@ int update_system_load() {
                         goto error3;
                 }
 
-                return TRUE;
+                return true;
         }
 
 error1:
@@ -186,7 +186,7 @@ error3:
         systeminfo.total_cpu_syst_percent = 0;
         systeminfo.total_cpu_wait_percent = 0;
 
-        return FALSE;
+        return false;
 }
 
 
@@ -211,13 +211,13 @@ int initprocesstree(ProcessTree_T **pt_r, int *size_r, ProcessTree_T **oldpt_r, 
 
         if ((*size_r = initprocesstree_sysdep(pt_r)) <= 0 || ! *pt_r) {
                 DEBUG("System statistic error -- cannot initialize the process tree -- process resource monitoring disabled\n");
-                Run.doprocess = FALSE;
+                Run.doprocess = false;
                 if (*oldpt_r)
                         delprocesstree(oldpt_r, oldsize_r);
                 return -1;
-        } else if (Run.doprocess == FALSE) {
+        } else if (! Run.doprocess) {
                 DEBUG("System statistic -- initialization of the process tree succeeded -- process resource monitoring enabled\n");
-                Run.doprocess = TRUE;
+                Run.doprocess = true;
         }
 
         int oldentry;
@@ -354,12 +354,12 @@ void process_testmatch(char *pattern) {
                 printf("List of processes matching pattern \"%s\":\n", pattern);
                 printf("------------------------------------------\n");
                 for (int i = 0; i < ptreesize; i++) {
-                        int match = FALSE;
+                        boolean_t match = false;
                         if (ptree[i].cmdline && ! strstr(ptree[i].cmdline, "procmatch")) {
 #ifdef HAVE_REGEX_H
-                                match = regexec(regex_comp, ptree[i].cmdline, 0, NULL, 0) ? FALSE : TRUE;
+                                match = regexec(regex_comp, ptree[i].cmdline, 0, NULL, 0) ? false : true;
 #else
-                                match = strstr(ptree[i].cmdline, pattern) ? TRUE : FALSE;
+                                match = strstr(ptree[i].cmdline, pattern) ? true : false;
 #endif
                                 if (match) {
                                         printf("\t%s\n", ptree[i].cmdline);

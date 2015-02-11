@@ -76,11 +76,11 @@ static unsigned int B3(unsigned char *b) {
 }
 
 
-static int _response(Socket_T socket, mysql_packet_t *pkt) {
+static boolean_t _response(Socket_T socket, mysql_packet_t *pkt) {
         memset(pkt, 0, sizeof *pkt);
         if (socket_read(socket, pkt->buf, 4) < 4) {
                 socket_setError(socket, "Error receiving server response -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         pkt->len = B3(pkt->buf);
         pkt->len = pkt->len > STRLEN ? STRLEN : pkt->len; // Adjust packet length for this buffer
@@ -88,15 +88,15 @@ static int _response(Socket_T socket, mysql_packet_t *pkt) {
         pkt->msg = pkt->buf + 4;
         if (socket_read(socket, pkt->msg, pkt->len) != pkt->len) {
                 socket_setError(socket, "Error receiving server response -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         if (*pkt->msg == MYSQL_ERROR) {
                 unsigned short code = B2(pkt->msg + 1);
                 unsigned char *err = pkt->msg + 9;
                 socket_setError(socket, "Server returned error code %d -- %s", code, err);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -110,7 +110,7 @@ static int _response(Socket_T socket, mysql_packet_t *pkt) {
  *
  *  @see http://dev.mysql.com/doc/internals/en/client-server-protocol.html
  */
-int check_mysql(Socket_T socket) {
+boolean_t check_mysql(Socket_T socket) {
         ASSERT(socket);
         mysql_packet_t pkt;
         if (_response(socket, &pkt)) {
@@ -124,9 +124,9 @@ int check_mysql(Socket_T socket) {
                         socket_setError(socket, "Invalid packet sequence id %d", pkt.seq);
                 else {
                         DEBUG("MySQL: Protocol: %d, Server Version: %s\n", protocol_version, server_version);
-                        return TRUE;
+                        return true;
                 }
         }
-        return FALSE;
+        return false;
 }
 

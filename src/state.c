@@ -179,14 +179,14 @@ static void update_v1() {
 /* ------------------------------------------------------------------ Public */
 
 
-int State_open() {
+boolean_t State_open() {
         State_close();
         if ((file = open(Run.statefile, O_RDWR | O_CREAT, 0600)) == -1) {
                 LogError("Cannot open for write -- %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
         atexit(State_close);
-        return TRUE;
+        return true;
 }
 
 

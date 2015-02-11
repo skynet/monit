@@ -32,11 +32,11 @@
 
 /**
  *  Check the server for greeting code '* OK' and then send LOGOUT and
- *  check for code '* BYE'. If alive return TRUE, else, return FALSE.
+ *  check for code '* BYE'. If alive return true, else, return false.
  *
  *  @file
  */
-int check_imap(Socket_T socket) {
+boolean_t check_imap(Socket_T socket) {
         char buf[STRLEN];
         const char *ok = "* OK";
         const char *bye = "* BYE";
@@ -46,29 +46,29 @@ int check_imap(Socket_T socket) {
         // Read and check IMAP greeting
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "IMAP: greeting read error -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         Str_chomp(buf);
         if (strncasecmp(buf, ok, strlen(ok)) != 0) {
                 socket_setError(socket, "IMAP: invalid greeting -- %s", buf);
-                return FALSE;
+                return false;
         }
 
         // Logout and check response
         if (socket_print(socket, "001 LOGOUT\r\n") < 0) {
                 socket_setError(socket, "IMAP: logout command error -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "IMAP: logout response read error -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
         Str_chomp(buf);
         if (strncasecmp(buf, bye, strlen(bye)) != 0) {
                 socket_setError(socket, "IMAP: invalid logout response: %s", buf);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 }
 

@@ -54,7 +54,7 @@
  *  The test sends an OPTIONS request and check the server's status code.
  *
  *  The status code must be between 200 and 300
- *  Return TRUE if the status code is OK, otherwise FALSE
+ *  Return true if the status code is OK, otherwise false
  *
  *  In this current version, redirection is not supported. This code is
  * a rewrite of a patch we recieved from Pierrick Grasland and Bret McDanel
@@ -66,7 +66,7 @@
 
 /* -------------------------------------------------------------- Public*/
 
-int check_sip(Socket_T socket) {
+boolean_t check_sip(Socket_T socket) {
         ASSERT(socket);
 
         Port_T P = socket_get_Port(socket);
@@ -93,7 +93,7 @@ int check_sip(Socket_T socket) {
                 default:
                 {
                         socket_setError(socket, "Unsupported socket type, only TCP and UDP are supported");
-                        return TRUE;
+                        return true;
                 }
         }
 
@@ -132,12 +132,12 @@ int check_sip(Socket_T socket) {
                          VERSION           // user agent
                          ) < 0) {
                 socket_setError(socket, "SIP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "SIP: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         Str_chomp(buf);
@@ -147,24 +147,24 @@ int check_sip(Socket_T socket) {
         int status;
         if (! sscanf(buf, "%*s %d", &status)) {
                 socket_setError(socket, "SIP error: cannot parse SIP status in response: %s", buf);
-                return FALSE;
+                return false;
         }
 
         if (status >= 400) {
                 socket_setError(socket, "SIP error: Server returned status %d", status);
-                return FALSE;
+                return false;
         }
 
         if (status >= 300 && status < 400) {
                 socket_setError(socket, "SIP info: Server redirection. Returned status %d", status);
-                return FALSE;
+                return false;
         }
 
         if (status > 100 && status < 200) {
                 socket_setError(socket, "SIP error: Provisional response . Returned status %d", status);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }

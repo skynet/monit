@@ -353,7 +353,7 @@ static int PAMquery(int num_msg, const struct pam_message **msg, struct pam_resp
 /**
  * Validate login/passwd via PAM service "monit"
  */
-static int PAMcheckPasswd(const char *login, const char *passwd) {
+static boolean_t PAMcheckPasswd(const char *login, const char *passwd) {
         int rv;
         pam_handle_t *pamh = NULL;
         struct ad_user user_info = {
@@ -367,7 +367,7 @@ static int PAMcheckPasswd(const char *login, const char *passwd) {
 
         if ((rv = pam_start("monit", login, &conv, &pamh) != PAM_SUCCESS)) {
                 DEBUG("PAM authentication start failed -- %d\n", rv);
-                return FALSE;
+                return false;
         }
 
         rv = pam_authenticate(pamh, PAM_SILENT);
@@ -375,7 +375,7 @@ static int PAMcheckPasswd(const char *login, const char *passwd) {
         if (pam_end(pamh, rv) != PAM_SUCCESS)
                 pamh = NULL;
 
-        return(rv == PAM_SUCCESS ? TRUE : FALSE);
+        return rv == PAM_SUCCESS ? true : false;
 }
 
 
@@ -586,7 +586,7 @@ char *Util_digest2Bytes(unsigned char *digest, int mdlen, MD_T result) {
 }
 
 
-int Util_getStreamDigests(FILE *stream, void *sha1_resblock, void *md5_resblock) {
+boolean_t Util_getStreamDigests(FILE *stream, void *sha1_resblock, void *md5_resblock) {
 #define HASHBLOCKSIZE 4096
         md5_context_t ctx_md5;
         sha1_context_t ctx_sha1;
@@ -614,7 +614,7 @@ int Util_getStreamDigests(FILE *stream, void *sha1_resblock, void *md5_resblock)
                         if (n == 0) {
                                 /* Check for the error flag IFF N == 0, so that we don't exit the loop after a partial read due to e.g., EAGAIN or EWOULDBLOCK */
                                 if (ferror(stream))
-                                        return FALSE;
+                                        return false;
                                 goto process_partial_block;
                         }
 
@@ -643,7 +643,7 @@ process_partial_block:
                 md5_finish(&ctx_md5, md5_resblock);
         if (sha1_resblock)
                 sha1_finish(&ctx_sha1, sha1_resblock);
-        return TRUE;
+        return true;
 }
 
 
@@ -661,7 +661,7 @@ void Util_printHash(char *file) {
 }
 
 
-int Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
+boolean_t Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
         int hashlength = 16;
 
         ASSERT(file);
@@ -677,13 +677,13 @@ int Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
                         break;
                 default:
                         LogError("checksum: invalid hash type: 0x%x\n", hashtype);
-                        return FALSE;
+                        return false;
         }
 
         if (file_isFile(file)) {
                 FILE *f = fopen(file, "r");
                 if (f) {
-                        int fresult = FALSE;
+                        boolean_t fresult = false;
                         MD_T sum;
 
                         switch (hashtype) {
@@ -700,17 +700,17 @@ int Util_getChecksum(char *file, int hashtype, char *buf, int bufsize) {
 
                         if (! fresult) {
                                 LogError("checksum: file %s stream error (0x%x)\n", file, fresult);
-                                return FALSE;
+                                return false;
                         }
 
                         Util_digest2Bytes((unsigned char *)sum, hashlength, buf);
-                        return TRUE;
+                        return true;
 
                 } else
                         LogError("checksum: failed to open file %s -- %s\n", file, STRERROR);
         } else
                 LogError("checksum: file %s is not regular file\n", file);
-        return FALSE;
+        return false;
 }
 
 
@@ -776,9 +776,9 @@ int Util_getNumberOfServices() {
 }
 
 
-int Util_existService(const char *name) {
+boolean_t Util_existService(const char *name) {
         ASSERT(name);
-        return Util_getService(name) ? TRUE : FALSE;
+        return Util_getService(name) ? true : false;
 }
 
 
@@ -865,7 +865,7 @@ void Util_printRunList() {
                         printf(" %-18s = %s\n", "PEM key/cert file", Run.httpd.socket.net.ssl.pem);
                         if (Run.httpd.socket.net.ssl.clientpem)
                                 printf(" %-18s = %s\n", "Client cert file", Run.httpd.socket.net.ssl.clientpem);
-                        printf(" %-18s = %s\n", "Allow self certs", Run.httpd.socket.net.ssl.allowselfcert ? "True" : "False");
+                        printf(" %-18s = %s\n", "Allow self certs", (Run.httpd.flags & Httpd_AllowSelfSignedCertificates) ? "True" : "False");
                 }
 
                 printf(" %-18s = %s\n", "httpd auth. style",
@@ -890,7 +890,7 @@ void Util_printRunList() {
 void Util_printService(Service_T s) {
         ASSERT(s);
 
-        int sgheader = FALSE;
+        boolean_t sgheader = false;
         char buffer[STRLEN];
         StringBuffer_T buf = StringBuffer_create(STRLEN);
 
@@ -901,7 +901,7 @@ void Util_printService(Service_T s) {
                         if (! strcasecmp(om->name, s->name)) {
                                 if (! sgheader) {
                                         printf(" %-20s = %s", "Group", o->name);
-                                        sgheader = TRUE;
+                                        sgheader = true;
                                 } else
                                         printf(", %s", o->name);
                         }
@@ -1348,34 +1348,34 @@ pid_t Util_getPid(char *pidfile) {
 
         if (! file_exist(pidfile)) {
                 DEBUG("pidfile '%s' does not exist\n", pidfile);
-                return FALSE;
+                return 0;
         }
         if (! file_isFile(pidfile)) {
                 LogError("pidfile '%s' is not a regular file\n", pidfile);
-                return FALSE;
+                return 0;
         }
         if ((file = fopen(pidfile,"r")) == (FILE *)NULL) {
                 LogError("Error opening the pidfile '%s' -- %s\n", pidfile, STRERROR);
-                return FALSE;
+                return 0;
         }
         if (fscanf(file, "%d", &pid) != 1) {
                 LogError("Error reading pid from file '%s'\n", pidfile);
                 if (fclose(file))
                         LogError("Error closing file '%s' -- %s\n", pidfile, STRERROR);
-                return FALSE;
+                return 0;
         }
         if (fclose(file))
                 LogError("Error closing file '%s' -- %s\n", pidfile, STRERROR);
 
         if (pid < 0)
-                return(FALSE);
+                return(0);
 
         return (pid_t)pid;
 
 }
 
 
-int Util_isProcessRunning(Service_T s, int refresh) {
+int Util_isProcessRunning(Service_T s, boolean_t refresh) {
         pid_t pid = -1;
         ASSERT(s);
         errno = 0;
@@ -1387,12 +1387,12 @@ int Util_isProcessRunning(Service_T s, int refresh) {
                  * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
                 if (Run.doprocess) {
                         for (int i = 0; i < ptreesize; i++) {
-                                int found = FALSE;
+                                boolean_t found = false;
                                 if (ptree[i].cmdline) {
 #ifdef HAVE_REGEX_H
-                                        found = regexec(s->matchlist->regex_comp, ptree[i].cmdline, 0, NULL, 0) ? FALSE : TRUE;
+                                        found = regexec(s->matchlist->regex_comp, ptree[i].cmdline, 0, NULL, 0) ? false : true;
 #else
-                                        found = strstr(ptree[i].cmdline, s->matchlist->match_string) ? TRUE : FALSE;
+                                        found = strstr(ptree[i].cmdline, s->matchlist->match_string) ? true : false;
 #endif
                                 }
                                 if (found) {
@@ -1446,12 +1446,12 @@ char *Util_getUptime(time_t delta, char *sep) {
 }
 
 
-int Util_isurlsafe(const char *url) {
+boolean_t Util_isurlsafe(const char *url) {
         ASSERT(url && *url);
         for (int i = 0; url[i]; i++)
                 if (urlunsafe[(unsigned char)url[i]])
-                        return FALSE;
-        return TRUE;
+                        return false;
+        return true;
 }
 
 
@@ -1581,11 +1581,11 @@ Auth_T Util_getUserCredentials(char *uname) {
 }
 
 
-int Util_checkCredentials(char *uname, char *outside) {
+boolean_t Util_checkCredentials(char *uname, char *outside) {
         Auth_T c = Util_getUserCredentials(uname);
         char outside_crypt[STRLEN];
         if (c == NULL)
-                return FALSE;
+                return false;
         switch (c->digesttype) {
                 case DIGEST_CLEARTEXT:
                         outside_crypt[sizeof(outside_crypt) - 1] = 0;
@@ -1604,7 +1604,7 @@ int Util_checkCredentials(char *uname, char *outside) {
                         strncpy(id, c->passwd, sizeof(id) - 1);
                         if (! (temp = strchr(id + 1, '$'))) {
                                 LogError("Password not in MD5 format.\n");
-                                return FALSE;
+                                return false;
                         }
                         temp += 1;
                         *temp = '\0';
@@ -1612,12 +1612,12 @@ int Util_checkCredentials(char *uname, char *outside) {
                         strncpy(salt, c->passwd + strlen(id), sizeof(salt) - 1);
                         if (! (temp = strchr(salt, '$'))) {
                                 LogError("Password not in MD5 format.\n");
-                                return FALSE;
+                                return false;
                         }
                         *temp = '\0';
                         if (md5_crypt(outside, id, salt, outside_crypt, sizeof(outside_crypt)) == NULL) {
                                 LogError("Cannot generate MD5 digest error.\n");
-                                return FALSE;
+                                return false;
                         }
                         break;
                 }
@@ -1638,12 +1638,12 @@ int Util_checkCredentials(char *uname, char *outside) {
 #endif
                 default:
                         LogError("Unknown password digestion method.\n");
-                        return FALSE;
+                        return false;
         }
 
         if (strcmp(outside_crypt,c->passwd) == 0)
-                return TRUE;
-        return FALSE;
+                return true;
+        return false;
 }
 
 
@@ -1701,7 +1701,7 @@ void Util_resetInfo(Service_T s) {
 }
 
 
-int Util_hasServiceStatus(Service_T s) {
+boolean_t Util_hasServiceStatus(Service_T s) {
         return((s->monitor & MONITOR_YES) && ! (s->error & Event_Nonexist) && ! (s->error & Event_Data));
 }
 
@@ -1715,57 +1715,57 @@ char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
 }
 
 
-int Util_evalQExpression(Operator_Type operator, long long left, long long right) {
+boolean_t Util_evalQExpression(Operator_Type operator, long long left, long long right) {
         switch (operator) {
                 case Operator_Greater:
                         if (left > right)
-                                return TRUE;
+                                return true;
                         break;
                 case Operator_Less:
                         if (left < right)
-                                return TRUE;
+                                return true;
                         break;
                 case Operator_Equal:
                         if (left == right)
-                                return TRUE;
+                                return true;
                         break;
                 case Operator_NotEqual:
                 case Operator_Changed:
                         if (left != right)
-                                return TRUE;
+                                return true;
                         break;
                 default:
                         LogError("Unknown comparison operator\n");
-                        return FALSE;
+                        return false;
         }
-        return FALSE;
+        return false;
 }
 
 
-int Util_evalDoubleQExpression(Operator_Type operator, double left, double right) {
+boolean_t Util_evalDoubleQExpression(Operator_Type operator, double left, double right) {
         switch (operator) {
                 case Operator_Greater:
                         if (left > right)
-                                return TRUE;
+                                return true;
                         break;
                 case Operator_Less:
                         if (left < right)
-                                return TRUE;
+                                return true;
                         break;
                 case Operator_Equal:
                         if (left == right)
-                                return TRUE;
+                                return true;
                         break;
                 case Operator_NotEqual:
                 case Operator_Changed:
                         if (left != right)
-                                return TRUE;
+                                return true;
                         break;
                 default:
                         LogError("Unknown comparison operator\n");
-                        return FALSE;
+                        return false;
         }
-        return FALSE;
+        return false;
 }
 
 

@@ -142,7 +142,7 @@ static time_t get_starttime() {
 /* ------------------------------------------------------------------ Public */
 
 
-int init_process_info_sysdep(void) {
+boolean_t init_process_info_sysdep(void) {
         char *ptr;
         char  buf[1024];
         long  page_size;
@@ -150,20 +150,20 @@ int init_process_info_sysdep(void) {
 
         if (! read_proc_file(buf, sizeof(buf), "meminfo", -1, NULL)) {
                 DEBUG("system statistic error -- cannot read /proc/meminfo\n");
-                return FALSE;
+                return false;
         }
         if (! (ptr = strstr(buf, MEMTOTAL))) {
                 DEBUG("system statistic error -- cannot get real memory amount\n");
-                return FALSE;
+                return false;
         }
         if (sscanf(ptr+strlen(MEMTOTAL), "%ld", &systeminfo.mem_kbyte_max) != 1) {
                 DEBUG("system statistic error -- cannot get real memory amount\n");
-                return FALSE;
+                return false;
         }
 
         if ((systeminfo.cpus = sysconf(_SC_NPROCESSORS_CONF)) < 0) {
                 DEBUG("system statistic error -- cannot get cpu count: %s\n", STRERROR);
-                return FALSE;
+                return false;
         } else if (systeminfo.cpus == 0) {
                 DEBUG("system reports cpu count 0, setting dummy cpu count 1\n");
                 systeminfo.cpus = 1;
@@ -171,14 +171,14 @@ int init_process_info_sysdep(void) {
 
         if ((page_size = sysconf(_SC_PAGESIZE)) <= 0) {
                 DEBUG("system statistic error -- cannot get page size: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
 
         for (page_shift = 0; page_size != 1; page_size >>= 1, page_shift++)
                 ;
         page_shift_to_kb = page_shift - 10;
 
-        return TRUE;
+        return true;
 }
 
 
@@ -215,7 +215,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         /* Find all processes in the /proc directory */
         if ((rv = glob("/proc/[0-9]*", GLOB_ONLYDIR, NULL, &globbuf))) {
                 LogError("system statistic error -- glob failed: %d (%s)\n", rv, STRERROR);
-                return FALSE;
+                return 0;
         }
 
         treesize = globbuf.gl_pathc;
@@ -340,9 +340,9 @@ int getloadavg_sysdep(double *loadv, int nelem) {
 
 /**
  * This routine returns kbyte of real memory in use.
- * @return: TRUE if successful, FALSE if failed
+ * @return: true if successful, false if failed
  */
-int used_system_memory_sysdep(SystemInfo_T *si) {
+boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         char          *ptr;
         char           buf[1024];
         unsigned long  mem_free = 0UL;
@@ -382,21 +382,21 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap_kbyte_max   = swap_total;
         si->total_swap_kbyte = swap_total - swap_free;
 
-        return TRUE;
+        return true;
 
 error:
         si->total_mem_kbyte = 0;
         si->swap_kbyte_max = 0;
-        return FALSE;
+        return false;
 }
 
 
 /**
  * This routine returns system/user CPU time in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_cpu_sysdep(SystemInfo_T *si) {
-        int                rv;
+boolean_t used_system_cpu_sysdep(SystemInfo_T *si) {
+        boolean_t rv;
         unsigned long long cpu_total;
         unsigned long long cpu_user;
         unsigned long long cpu_nice;
@@ -449,13 +449,13 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
         old_cpu_syst  = cpu_syst;
         old_cpu_wait  = cpu_wait;
         old_cpu_total = cpu_total;
-        return TRUE;
+        return true;
 
 error:
         si->total_cpu_user_percent = 0;
         si->total_cpu_syst_percent = 0;
         si->total_cpu_wait_percent = 0;
-        return FALSE;
+        return false;
 }
 
 

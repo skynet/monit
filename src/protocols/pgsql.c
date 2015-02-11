@@ -35,7 +35,7 @@
  *
  *  @file
  */
-int check_pgsql(Socket_T socket) {
+boolean_t check_pgsql(Socket_T socket) {
 
         unsigned char buf[STRLEN];
 
@@ -104,34 +104,34 @@ int check_pgsql(Socket_T socket) {
 
         if (socket_write(socket, (unsigned char *)requestLogin, sizeof(requestLogin)) <= 0) {
                 socket_setError(socket, "PGSQL: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /** Nine-byte is enough to hold Auth-Ok */
         if (socket_read(socket, buf, 9) <= 0) {
                 socket_setError(socket, "PGSQL: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /** If server insists on auth error it is working anyway */
         if (*buf == 'E') {
-                return TRUE;
+                return true;
         }
 
         /** Successful connection */
         if (! memcmp((unsigned char *)buf, (unsigned char *)responseAuthOk, 9)) {
                 /** This is where suspicious people can do SELECT query that I dont */
                 socket_write(socket, (unsigned char *)requestTerm, sizeof(requestTerm));
-                return TRUE;
+                return true;
         }
 
         /** The last possibility must be that server is demanding password */
         if (*buf == 'R') {
-                return TRUE;
+                return true;
         }
 
         socket_setError(socket, "PGSQL: unknown error");
 
-        return FALSE;
+        return false;
 }
 

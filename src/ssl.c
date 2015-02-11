@@ -106,18 +106,18 @@
 
 static unsigned long ssl_thread_id();
 static void ssl_mutex_lock(int, int n, const char *, int );
-static int verify_init(ssl_server_connection *);
+static boolean_t verify_init(ssl_server_connection *);
 static int verify_callback(int, X509_STORE_CTX *);
-static int check_preverify(X509_STORE_CTX *);
+static boolean_t check_preverify(X509_STORE_CTX *);
 static void cleanup_ssl_socket(ssl_connection *);
 static void cleanup_ssl_server_socket(ssl_server_connection *);
-static int handle_error(int, ssl_connection *);
-static int update_ssl_cert_data(ssl_connection *);
+static boolean_t handle_error(int, ssl_connection *);
+static boolean_t update_ssl_cert_data(ssl_connection *);
 static ssl_server_connection *new_ssl_server_connection(char *, char *);
-static int start_ssl();
+static boolean_t start_ssl();
 
-static int      ssl_initialized          = FALSE;
-static Mutex_T  ssl_mutex = PTHREAD_MUTEX_INITIALIZER;
+static boolean_t ssl_initialized = false;
+static Mutex_T ssl_mutex = PTHREAD_MUTEX_INITIALIZER;
 static Mutex_T *ssl_mutex_table;
 
 
@@ -161,14 +161,14 @@ static Mutex_T *ssl_mutex_table;
 /**
  * Embeds a socket in a ssl connection.
  * @param socket the socket to be used.
- * @return The ssl connection or NULL if an error occured.
+ * @return false if an error occured.
  */
-int embed_ssl_socket(ssl_connection *ssl, int socket) {
+boolean_t embed_ssl_socket(ssl_connection *ssl, int socket) {
         int ssl_error;
         time_t ssl_time;
 
         if (! ssl)
-                return FALSE;
+                return false;
 
         if (! ssl_initialized)
                 start_ssl();
@@ -220,11 +220,11 @@ int embed_ssl_socket(ssl_connection *ssl, int socket) {
                 goto sslerror;
         }
 
-        return TRUE;
+        return true;
 
 sslerror:
         cleanup_ssl_socket(ssl);
-        return FALSE;
+        return false;
 }
 
 
@@ -232,9 +232,9 @@ sslerror:
  * Compare certificate with given md5 sum
  * @param ssl reference to ssl connection
  * @param md5sum string of the md5sum to test against
- * @return TRUE, if sums do not match FALSE
+ * @return true, if sums do not match false
  */
-int check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
+boolean_t check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
         unsigned int i = 0;
 
         ASSERT(md5sum);
@@ -242,23 +242,23 @@ int check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
         while ((i < ssl->cert_md5_len) && (md5sum[2*i] != '\0') && (md5sum[2*i+1] != '\0')) {
                 unsigned char c = (md5sum[2*i] > 57 ? md5sum[2*i] - 87 : md5sum[2*i] - 48) * 0x10+ (md5sum[2*i+1] > 57 ? md5sum[2*i+1] - 87 : md5sum[2*i+1] - 48);
                 if (c != ssl->cert_md5[i])
-                        return FALSE;
+                        return false;
                 i++;
         }
-        return TRUE;
+        return true;
 }
 
 
 /**
  * Closes a ssl connection (ssl socket + net socket)
  * @param ssl ssl connection
- * @return TRUE, or FALSE if an error has occured.
+ * @return true, or false if an error has occured.
  */
-int close_ssl_socket(ssl_connection *ssl) {
+boolean_t close_ssl_socket(ssl_connection *ssl) {
         int rv;
 
         if (! ssl)
-                return FALSE;
+                return false;
 
         if (! (rv = SSL_shutdown(ssl->handler))) {
                 shutdown(ssl->socket, 1);
@@ -268,7 +268,7 @@ int close_ssl_socket(ssl_connection *ssl) {
         Net_close(ssl->socket);
         cleanup_ssl_socket(ssl);
 
-        return (rv > 0) ? TRUE : FALSE;
+        return (rv > 0) ? true : false;
 }
 
 
@@ -376,7 +376,7 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
                 start_ssl();
 
         NEW(ssl);
-        ssl->accepted = TRUE;
+        ssl->accepted = true;
         if (ssl_server->clientpemfile)
                 ssl->clientpemfile = Str_dup(ssl_server->clientpemfile);
         LOCK(ssl_mutex)
@@ -419,9 +419,9 @@ void close_accepted_ssl_socket(ssl_server_connection *ssl_server, ssl_connection
  * Embeds an accepted server socket in an existing ssl connection.
  * @param ssl ssl connection
  * @param socket the socket to be used.
- * @return TRUE, or FALSE if an error has occured.
+ * @return true, or false if an error has occured.
  */
-int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
+boolean_t embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
         int ssl_error;
         time_t ssl_time;
 
@@ -434,19 +434,19 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
 
         if (! (ssl->handler = SSL_new(ssl->ctx))) {
                 LogError("Cannot initialize the SSL handler -- %s\n", SSLERROR);
-                return FALSE;
+                return false;
         }
 
         if (socket < 0) {
                 LogError("SSL socket error\n");
-                return FALSE;
+                return false;
         }
 
         Net_setNonBlocking(ssl->socket);
 
         if (! (ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE))) {
                 LogError("Cannot create IO buffer -- %s\n", SSLERROR);
-                return FALSE;
+                return false;
         }
 
         SSL_set_bio(ssl->handler, ssl->socket_bio, ssl->socket_bio);
@@ -457,14 +457,14 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
 
                 if ((time(NULL) - ssl_time) > SSL_TIMEOUT) {
                         LogError("SSL service timeout\n");
-                        return FALSE;
+                        return false;
                 }
 
                 if (! handle_error(ssl_error, ssl))
-                        return FALSE;
+                        return false;
 
                 if (! BIO_should_retry(ssl->socket_bio))
-                        return FALSE;
+                        return false;
 
         }
 
@@ -472,15 +472,15 @@ int embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
 
         if (! update_ssl_cert_data(ssl) && ssl->clientpemfile) {
                 LogError("The client did not supply a required client certificate\n");
-                return FALSE;
+                return false;
         }
 
         if (SSL_get_verify_result(ssl->handler) > 0) {
                 LogError("Verification of the certificate has failed\n");
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 }
 
 
@@ -528,11 +528,10 @@ int recv_ssl_socket(ssl_connection *ssl, void *buffer, int len, int timeout) {
 
 /**
  * Stop SSL support library
- * @return TRUE, or FALSE if an error has occured.
  */
 void stop_ssl() {
         if (ssl_initialized) {
-                ssl_initialized = FALSE;
+                ssl_initialized = false;
                 ERR_free_strings();
                 CRYPTO_set_id_callback(NULL);
                 CRYPTO_set_locking_callback(NULL);
@@ -648,24 +647,24 @@ sslerror:
 /**
  * Init verification of transmitted client certs
  */
-static int verify_init(ssl_server_connection *ssl_server) {
+static boolean_t verify_init(ssl_server_connection *ssl_server) {
         struct stat stat_buf;
 
         if (! ssl_server->clientpemfile) {
                 SSL_CTX_set_verify(ssl_server->ctx, SSL_VERIFY_NONE, NULL);
-                return TRUE;
+                return true;
         }
 
         if (stat(ssl_server->clientpemfile, &stat_buf) == -1) {
                 LogError("Cannot stat the SSL pem path '%s' -- %s\n", Run.httpd.socket.net.ssl.clientpem, STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (S_ISDIR(stat_buf.st_mode)) {
 
                 if (! SSL_CTX_load_verify_locations(ssl_server->ctx, NULL , ssl_server->clientpemfile)) {
                         LogError("Error setting verify directory to %s -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
-                        return FALSE;
+                        return false;
                 }
 
                 LogInfo("Loaded SSL client pem directory '%s'\n", ssl_server->clientpemfile);
@@ -674,7 +673,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
                 if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
                         LogError("Error loading verify certificates from %s -- %s\n", ssl_server->pemfile, SSLERROR);
-                        return FALSE;
+                        return false;
                 }
 
                 LogInfo("Loaded monit's SSL pem server file '%s'\n", ssl_server->pemfile);
@@ -683,7 +682,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
                 if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->clientpemfile, NULL)) {
                         LogError("Error loading verify certificates from %s -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
-                        return FALSE;
+                        return false;
                 }
 
                 LogInfo("Loaded SSL pem client file '%s'\n", ssl_server->clientpemfile);
@@ -692,7 +691,7 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
                 if (! SSL_CTX_load_verify_locations(ssl_server->ctx, ssl_server->pemfile, NULL)) {
                         LogError("Error loading verify certificates from %s -- %s\n", ssl_server->pemfile, SSLERROR);
-                        return FALSE;
+                        return false;
                 }
 
                 LogInfo("Loaded monit's SSL pem server file '%s'\n", ssl_server->pemfile);
@@ -701,12 +700,12 @@ static int verify_init(ssl_server_connection *ssl_server) {
 
         } else {
                 LogError("SSL client pem path is no file or directory %s\n", ssl_server->clientpemfile);
-                return FALSE;
+                return false;
         }
 
         SSL_CTX_set_verify(ssl_server->ctx, SSL_VERIFY_PEER, verify_callback);
 
-        return TRUE;
+        return true;
 }
 
 
@@ -733,26 +732,26 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx) {
 
 /**
  * Analyse errors found before actual verification
- * @return TRUE if successful
+ * @return true if successful
  */
-static int check_preverify(X509_STORE_CTX *ctx) {
+static boolean_t check_preverify(X509_STORE_CTX *ctx) {
         if ((ctx->error != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) && (ctx->error != X509_V_ERR_INVALID_PURPOSE)) {
                 /* Remote site specified a certificate, but it's not correct */
                 LogError("SSL connection rejected because certificate verification has failed -- error %i\n", ctx->error);
                 /* Reject connection */
-                return FALSE;
+                return false;
         }
 
-        if (Run.httpd.socket.net.ssl.allowselfcert && (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
+        if ((Run.httpd.flags & Httpd_AllowSelfSignedCertificates) && (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
                 /* Let's accept self signed certs for the moment! */
                 LogInfo("SSL connection accepted with self signed certificate\n");
                 ctx->error = 0;
-                return TRUE;
+                return true;
         }
 
         /* Reject connection */
         LogError("SSL connection rejected because certificate verification has failed -- error %i\n", ctx->error);
-        return FALSE;
+        return false;
 }
 
 
@@ -778,25 +777,25 @@ static void ssl_mutex_lock(int mode, int n, const char *file, int line) {
 
 /**
  * Handle errors during read, write, connect and accept
- * @return TRUE if non fatal, FALSE if non fatal and retry
+ * @return true if non fatal, false if non fatal and retry
  */
-static int handle_error(int code, ssl_connection *ssl) {
+static boolean_t handle_error(int code, ssl_connection *ssl) {
         int ssl_error = SSL_get_error(ssl->handler, code);
 
         switch (ssl_error) {
 
                 case SSL_ERROR_NONE:
-                        return TRUE;
+                        return true;
 
                 case SSL_ERROR_WANT_READ:
                         if (can_read(ssl->socket, SSL_TIMEOUT))
-                                return TRUE;
+                                return true;
                         LogError("SSL read timeout error\n");
                         break;
 
                 case SSL_ERROR_WANT_WRITE:
                         if (can_write(ssl->socket, SSL_TIMEOUT))
-                                return TRUE;
+                                return true;
                         LogError("SSL write timeout error\n");
                         break;
 
@@ -814,7 +813,7 @@ static int handle_error(int code, ssl_connection *ssl) {
 
         }
 
-        return FALSE;
+        return false;
 }
 
 
@@ -870,15 +869,15 @@ static void cleanup_ssl_server_socket(ssl_server_connection *ssl_server) {
 /**
  * Updates some data in the ssl connection
  * @param ssl reference to ssl connection
- * @return TRUE, if not successful FALSE
+ * @return true, if not successful false
  */
-static int update_ssl_cert_data(ssl_connection *ssl) {
+static boolean_t update_ssl_cert_data(ssl_connection *ssl) {
         unsigned char md5[EVP_MAX_MD_SIZE];
 
         ASSERT(ssl);
 
         if (! (ssl->cert = SSL_get_peer_certificate(ssl->handler)))
-                return FALSE;
+                return false;
 
 #ifdef OPENSSL_FIPS
         if (! FIPS_mode()) {
@@ -891,7 +890,7 @@ static int update_ssl_cert_data(ssl_connection *ssl) {
 #ifdef OPENSSL_FIPS
         }
 #endif
-        return TRUE;
+        return true;
 }
 
 
@@ -930,9 +929,9 @@ void enable_fips_mode() {
 /**
  * Start SSL support library. It has to be run before the SSL support
  * can be used.
- * @return TRUE, or FALSE if an error has occured.
+ * @return true, or false if an error has occured.
  */
-static int start_ssl() {
+static boolean_t start_ssl() {
         if (! ssl_initialized) {
                 int locks = CRYPTO_num_locks();
 
@@ -941,7 +940,7 @@ static int start_ssl() {
                         enable_fips_mode();
 #endif
 
-                ssl_initialized = TRUE;
+                ssl_initialized = true;
                 ERR_load_crypto_strings();
                 ssl_mutex_table = CALLOC(locks, sizeof(Mutex_T));
                 for (int i = 0; i < locks; i++)
@@ -955,10 +954,10 @@ static int start_ssl() {
                         DEBUG("Gathering entropy from the random device\n");
                         return(RAND_load_file(RANDOM_DEVICE, RANDOM_BYTES) == RANDOM_BYTES);
                 }
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 }
 
 

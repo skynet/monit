@@ -147,9 +147,9 @@ short Event_get_state(Event_T E);
  * and event ratio needed to trigger the state change
  * @param E An event object
  * @param S Actual posted state
- * @return The Event raw state
+ * @return The Event state
  */
-short Event_check_state(Event_T E, short S);
+boolean_t Event_check_state(Event_T E, short S);
 
 
 /**

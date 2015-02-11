@@ -46,7 +46,7 @@
  *
  *  @file
  */
-int check_postfix_policy(Socket_T socket) {
+boolean_t check_postfix_policy(Socket_T socket) {
 
         char buf[STRLEN];
 
@@ -62,22 +62,22 @@ int check_postfix_policy(Socket_T socket) {
                          "client_name=mx.foo.tld\n"
                          "\n") < 0) {
                 socket_setError(socket, "POSTFIX-POLICY: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "POSTFIX-POLICY: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         Str_chomp(buf);
 
         if ( (strlen(buf) <= 7) || strncasecmp(buf, "action=", 7) ) {
                 socket_setError(socket, "POSTFIX-POLICY error: %s", *buf ? buf : "no action returned");
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }
 

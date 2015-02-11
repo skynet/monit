@@ -48,7 +48,7 @@
  *
  *
  */
-int check_radius(Socket_T socket) {
+boolean_t check_radius(Socket_T socket) {
         int i, length, left;
         int secret_len;
         Port_T P;
@@ -115,7 +115,7 @@ int check_radius(Socket_T socket) {
 
         if (socket_get_type(socket) != SOCK_DGRAM) {
                 socket_setError(socket, "RADIUS: unsupported socket type -- protocol test skipped");
-                return TRUE;
+                return true;
         }
 
         P = socket_get_Port(socket);
@@ -133,37 +133,37 @@ int check_radius(Socket_T socket) {
 
         if (socket_write(socket, (unsigned char *)request, sizeof(request)) < 0) {
                 socket_setError(socket, "RADIUS: error sending query -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /* the response should have at least 20 bytes */
         if ((length = socket_read(socket, (unsigned char *)response, sizeof(response))) < 20) {
                 socket_setError(socket, "RADIUS: error receiving response -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /* compare the response code (should be Access-Accept or Accounting-Response) */
         if ((response[0] != 2) && (response[0] != 5)) {
                 socket_setError(socket, "RADIUS: Invalid reply code -- error occured");
-                return FALSE;
+                return false;
         }
 
         /* compare the packet ID (it should be the same as in our request) */
         if (response[1] != 0x00) {
                 socket_setError(socket, "RADIUS: ID mismatch");
-                return FALSE;
+                return false;
         }
 
         /* check the length */
         if (response[2] != 0) {
                 socket_setError(socket, "RADIUS: message is too long");
-                return FALSE;
+                return false;
         }
 
         /* check length against packet data */
         if (response[3] != length) {
                 socket_setError(socket, "RADIUS: message has invalid length");
-                return FALSE;
+                return false;
         }
 
         /* validate that it is a well-formed packet */
@@ -172,17 +172,17 @@ int check_radius(Socket_T socket) {
         while (left > 0) {
                 if (left < 2) {
                         socket_setError(socket, "RADIUS: message is malformed");
-                        return FALSE;
+                        return false;
                 }
 
                 if (attr[1] < 2) {
                         socket_setError(socket, "RADIUS: message has invalid attribute length");
-                        return FALSE;
+                        return false;
                 }
 
                 if (attr[1] > left) {
                         socket_setError(socket, "RADIUS: message has attribute that is too long");
-                        return FALSE;
+                        return false;
                 }
 
                 /* validate Message-Authenticator, if found */
@@ -204,6 +204,6 @@ int check_radius(Socket_T socket) {
         if (memcmp(digest, response + 4, 16) != 0)
                 socket_setError(socket, "RADIUS: message fails authentication");
 
-        return TRUE;
+        return true;
 }
 

@@ -126,6 +126,7 @@ AC_CHECK_HEADERS([ \
 	limits.h \
 	loadavg.h \
 	locale.h \
+        mach/boolean.h \
         mach/host_info.h \
         mach/mach.h \
         mach/mach_host.h \
@@ -185,6 +186,7 @@ AC_CHECK_HEADERS([ \
 	unistd.h \
         uvm/uvm.h \
         uvm/uvm_extern.h \
+        uvm/uvm_param.h \
         vm/vm.h \
 	])
 
@@ -336,7 +338,24 @@ AC_CHECK_HEADERS([ \
          #endif
         ])
 
-# Check for types.
+
+# ------------------------------------------------------------------------
+# Types
+# ------------------------------------------------------------------------
+
+AC_CHECK_TYPES([boolean_t], [], [],
+        [
+         #ifdef HAVE_SYS_TYPES_H
+         #include <sys/types.h>
+         #endif
+         #ifdef HAVE_MACH_BOOLEAN_H
+         #include <mach/boolean.h>
+         #endif
+         #ifdef HAVE_UVM_UVM_PARAM_H
+         #include <uvm/uvm_param.h>
+         #endif
+        ])
+
 AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T

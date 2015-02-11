@@ -38,11 +38,11 @@
  *  and check the server's status code.
  *
  *  If the status code is >= 400, an error has occurred.
- *  Return TRUE if the status code is 200, otherwise FALSE.
+ *  Return true if the status code is 200, otherwise false.
  *
  *  @file
  */
-int check_dwp(Socket_T socket) {
+boolean_t check_dwp(Socket_T socket) {
 
 #define REQ_LENGTH  1024
 
@@ -56,12 +56,12 @@ int check_dwp(Socket_T socket) {
         if (socket_print(socket, "HEAD / HTTP/1.1\r\n"
                          "Connection: close\r\n\r\n") < 0) {
                 socket_setError(socket, "DWP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "DWP: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         Str_chomp(buf);
@@ -69,10 +69,10 @@ int check_dwp(Socket_T socket) {
         n = sscanf(buf, "%255s %d", proto, &status);
         if (n != 2 || (status >= 400)) {
                 socket_setError(socket, "DWP error: %s", buf);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }
 

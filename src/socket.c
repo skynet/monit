@@ -116,7 +116,7 @@ struct Socket_T {
  * operation timed out -1 is returned.
  * @param S A Socket object
  * @param timeout The number of milliseconds to wait for data to be read
- * @return TRUE (the length of data read) or -1 if an error occured
+ * @return the length of data read or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
         int n;
@@ -142,7 +142,7 @@ static int fill(Socket_T S, int timeout) {
 /* ------------------------------------------------------------------ Public */
 
 
-Socket_T socket_new(const char *host, int port, int type, Socket_Family family, int use_ssl, int timeout) {
+Socket_T socket_new(const char *host, int port, int type, Socket_Family family, boolean_t use_ssl, int timeout) {
         Ssl_T ssl = {.use_ssl = use_ssl, .version = SSL_VERSION_AUTO};
         return socket_create_t(host, port, type, family, ssl, timeout);
 }
@@ -303,7 +303,7 @@ int socket_getTimeout(Socket_T S) {
 }
 
 
-int socket_is_ready(Socket_T S) {
+boolean_t socket_is_ready(Socket_T S) {
         ASSERT(S);
         switch (S->type) {
                 case SOCK_STREAM:
@@ -313,17 +313,17 @@ int socket_is_ready(Socket_T S) {
                 default:
                         break;
         }
-        return FALSE;
+        return false;
 }
 
 
-int socket_is_secure(Socket_T S) {
+boolean_t socket_is_secure(Socket_T S) {
         ASSERT(S);
         return (S->ssl != NULL);
 }
 
 
-int socket_is_udp(Socket_T S) {
+boolean_t socket_is_udp(Socket_T S) {
         ASSERT(S);
         return (S->type == SOCK_DGRAM);
 }
@@ -412,17 +412,17 @@ const char *socket_getError(Socket_T S) {
 /* ---------------------------------------------------------------- Public */
 
 
-int socket_switch2ssl(Socket_T S, Ssl_T ssl)  {
+boolean_t socket_switch2ssl(Socket_T S, Ssl_T ssl)  {
         assert(S);
         if (! (S->ssl = new_ssl_connection(ssl.clientpemfile, ssl.version)))
-                return FALSE;
+                return false;
         if (! embed_ssl_socket(S->ssl, S->socket))
-                return FALSE;
+                return false;
         if (ssl.certmd5 && ! check_ssl_md5sum(S->ssl, ssl.certmd5)) {
                 LogError("md5sum of certificate does not match!\n");
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -512,13 +512,13 @@ void socket_reset(Socket_T S) {
 }
 
 
-int socket_shutdown_write(Socket_T S) {
+boolean_t socket_shutdown_write(Socket_T S) {
         ASSERT(S);
         return (shutdown(S->socket, 1) == 0);
 }
 
 
-int socket_set_tcp_nodelay(Socket_T S) {
+boolean_t socket_set_tcp_nodelay(Socket_T S) {
         int on = 1;
         return (setsockopt(S->socket, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) == 0);
 }

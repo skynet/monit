@@ -45,18 +45,18 @@ typedef struct Socket_T *Socket_T;
  * Create a new Socket opened against host:port. The returned Socket
  * is a connected socket. This method can be used to create either TCP
  * or UDP sockets and the type parameter is used to select the socket
- * type. If the use_ssl parameter is TRUE the socket is created using
+ * type. If the use_ssl parameter is true the socket is created using
  * SSL. Only TCP sockets may use SSL.
  * @param host The remote host to open the Socket against. The host
  * may be a hostname found in the DNS or an IP address string.
  * @param port The port number to connect to
  * @param type The socket type to use (SOCKET_TCP or SOCKET_UPD)
  * @param family The socket family to use (see Socket_Family type)
- * @param use_ssl if TRUE the socket is created supporting SSL
+ * @param use_ssl if true the socket is created supporting SSL
  * @param timeout The timeout value in milliseconds
  * @return The connected Socket or NULL if an error occurred
  */
-Socket_T socket_new(const char *host, int port, int type, Socket_Family family, int use_ssl, int timeout);
+Socket_T socket_new(const char *host, int port, int type, Socket_Family family, boolean_t use_ssl, int timeout);
 
 
 /**
@@ -133,27 +133,27 @@ int socket_getTimeout(Socket_T S);
 
 
 /**
- * Returns TRUE if the socket is ready for i|o
+ * Returns true if the socket is ready for i|o
  * @param S A Socket object
- * @return TRUE if the socket is ready otherwise FALSE
+ * @return true if the socket is ready otherwise false
  */
-int socket_is_ready(Socket_T S);
+boolean_t socket_is_ready(Socket_T S);
 
 
 /**
- * Return TRUE if the connection is encrypted with SSL
+ * Return true if the connection is encrypted with SSL
  * @param S A Socket object
- * @return TRUE if SSL is used otherwise FALSE
+ * @return true if SSL is used otherwise false
  */
-int socket_is_secure(Socket_T S);
+boolean_t socket_is_secure(Socket_T S);
 
 
 /**
- * Return TRUE if the connection is over UDP
+ * Return true if the connection is over UDP
  * @param S A Socket object
- * @return TRUE if UDP is used otherwise FALSE
+ * @return true if UDP is used otherwise false
  */
-int socket_is_udp(Socket_T S);
+boolean_t socket_is_udp(Socket_T S);
 
 
 /**
@@ -239,9 +239,9 @@ const char *socket_getError(Socket_T S);
  * Switches a connected socket to ssl.
  * @param S The already connected socket
  * @param ssl Options for ssl
- * @return TRUE if ssl is ready otherwise FALSE
+ * @return true if ssl is ready otherwise false
  */
-int socket_switch2ssl(Socket_T S, Ssl_T ssl);
+boolean_t socket_switch2ssl(Socket_T S, Ssl_T ssl);
 
 
 /**
@@ -307,9 +307,9 @@ void socket_reset(Socket_T S);
 /**
  * Shut down the writing side of the socket
  * @param S A Socket object
- * @return TRUE if the write side was shutdown otherwise FALSE
+ * @return true if the write side was shutdown otherwise false
  */
-int socket_shutdown_write(Socket_T S);
+boolean_t socket_shutdown_write(Socket_T S);
 
 
 /**
@@ -317,6 +317,6 @@ int socket_shutdown_write(Socket_T S);
  * @param S A Socket object
  * @return true upon successful completion, otherwise false
  */
-int socket_set_tcp_nodelay(Socket_T S);
+boolean_t socket_set_tcp_nodelay(Socket_T S);
 
 #endif

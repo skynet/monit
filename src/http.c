@@ -70,7 +70,7 @@ static void *thread_wrapper(void *arg);
 /* The HTTP Thread */
 static Thread_T thread;
 
-static volatile int running = FALSE;
+static volatile boolean_t running = false;
 
 
 /**
@@ -85,20 +85,20 @@ static volatile int running = FALSE;
 
 
 /**
- * @return TRUE if the monit http can start and is specified in the
- * controlfile to start, otherwise return FALSE. Print an error
+ * @return true if the monit http can start and is specified in the
+ * controlfile to start, otherwise return false. Print an error
  * message if monit httpd _should_ start but can't.
  */
-int can_http() {
+boolean_t can_http() {
         if ((Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) && Run.isdaemon) {
                 if (! Engine_hasHostsAllow() && ! Run.httpd.credentials) {
                         LogError("%s: monit httpd not started since no connect allowed\n", prog);
-                        return FALSE;
+                        return false;
 
                 }
-                return TRUE;
+                return true;
         }
-        return FALSE;
+        return false;
 }
 
 
@@ -114,7 +114,7 @@ void monit_http(int action) {
                         Engine_stop();
                         Thread_join(thread);
                         LogInfo("Monit HTTP server stopped\n");
-                        running = FALSE;
+                        running = false;
                         break;
                 case START_HTTP:
                         if (Run.httpd.flags & Httpd_Net)
@@ -123,7 +123,7 @@ void monit_http(int action) {
                                 LogInfo("Starting Monit HTTP server at %s\n", Run.httpd.socket.unix.path);
                         Thread_create(thread, thread_wrapper, NULL);
                         LogInfo("Monit HTTP server started\n");
-                        running = TRUE;
+                        running = true;
                         break;
                 default:
                         LogError("Monit: Unknown http server action\n");

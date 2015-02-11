@@ -48,7 +48,7 @@
 
 /** Defines an SSL object */
 typedef struct myssl {
-        int   use_ssl;                 /**< TRUE if SSL is required for connection */
+        boolean_t use_ssl;             /**< true if SSL is required for connection */
         int   version;                  /**< The SSL version to use for connection */
         char *certmd5;       /**< The expected md5 sum of the server's certificate */
         char *clientpemfile;                      /**< Optional client certificate */
@@ -60,7 +60,7 @@ typedef struct myssl {
 
 typedef struct my_ssl_connection {
         int               socket;
-        int               accepted;
+        boolean_t         accepted;
         SSL              *handler;
         SSL_CTX          *ctx;
         X509             *cert;
@@ -90,13 +90,13 @@ typedef struct my_ssl_server_connection {
 
 #define                have_ssl() 1
 void                   stop_ssl();
-int                    embed_ssl_socket(ssl_connection *, int);
-int                    embed_accepted_ssl_socket(ssl_connection *, int);
-int                    close_ssl_socket(ssl_connection *);
+boolean_t              embed_ssl_socket(ssl_connection *, int);
+boolean_t              embed_accepted_ssl_socket(ssl_connection *, int);
+boolean_t              close_ssl_socket(ssl_connection *);
 void                   close_accepted_ssl_socket(ssl_server_connection *, ssl_connection *);
 void                   delete_ssl_socket(ssl_connection *);
 void                   delete_ssl_server_socket(ssl_server_connection *);
-int                    check_ssl_md5sum(ssl_connection *, char *);
+boolean_t              check_ssl_md5sum(ssl_connection *, char *);
 int                    send_ssl_socket(ssl_connection *, void *, size_t, int);
 int                    recv_ssl_socket(ssl_connection *, void *, int, int);
 ssl_connection        *new_ssl_connection(char *, int);

@@ -31,11 +31,11 @@
  *
  *  @file
  */
-int check_default(Socket_T socket) {
+boolean_t check_default(Socket_T socket) {
 
         ASSERT(socket);
 
-        return TRUE;
+        return true;
 
 }
 

@@ -81,6 +81,13 @@
 #include <netdb.h>
 #endif
 
+#ifdef HAVE_MACH_BOOLEAN_H
+#include <mach/boolean.h>
+#endif
+#ifdef HAVE_UVM_UVM_PARAM_H
+#include <uvm/uvm_param.h>
+#endif
+
 #include "ssl.h"
 
 // libmonit
@@ -126,9 +133,6 @@
 #define START_HTTP         1
 #define STOP_HTTP          2
 
-#define TRUE               1
-#define FALSE              0
-
 #define MONITOR_NOT        0x0
 #define MONITOR_YES        0x1
 #define MONITOR_INIT       0x2
@@ -139,11 +143,13 @@
 #define EVERY_CRON         2
 #define EVERY_NOTINCRON    3
 
-#define STATE_SUCCEEDED    0
-#define STATE_FAILED       1
-#define STATE_CHANGED      2
-#define STATE_CHANGEDNOT   3
-#define STATE_INIT         4
+typedef enum {
+        State_Succeeded = 0,
+        State_Failed,
+        State_Changed,
+        State_ChangedNot,
+        State_Init
+} __attribute__((__packed__)) State_Type;
 
 #define MODE_ACTIVE        0
 #define MODE_PASSIVE       1
@@ -167,12 +173,25 @@ typedef enum {
 
 
 typedef enum {
-        Httpd_Disabled  = 0x0,
-        Httpd_Net       = 0x1, // IP
-        Httpd_Unix      = 0x2, // Unix socket
-        Httpd_Ssl       = 0x4, // SSL enabled
-        Httpd_Signature = 0x8  // Server Signature enabled
+        Httpd_Disabled                    = 0x0,
+        Httpd_Net                         = 0x1,  // IP
+        Httpd_Unix                        = 0x2,  // Unix socket
+        Httpd_Ssl                         = 0x4,  // SSL enabled
+        Httpd_Signature                   = 0x8,  // Server Signature enabled
+        Httpd_AllowSelfSignedCertificates = 0x10  // Server Signature enabled
 } __attribute__((__packed__)) Httpd_Flags;
+
+
+//FIXME: we can export this type in libmonit
+#ifndef HAVE_BOOLEAN_T
+typedef enum {
+        false = 0,
+        true
+} __attribute__((__packed__)) boolean_t;
+#else
+#define false 0
+#define true  1
+#endif
 
 
 #define TIME_SECOND        1
@@ -307,9 +326,9 @@ typedef char MD_T[MD_SIZE];
 typedef struct mycommand {
         char *arg[ARGMAX];                             /**< Program with arguments */
         int   length;                       /**< The length of the arguments array */
-        int   has_uid;          /**< TRUE if a new uid is defined for this Command */
+        boolean_t has_uid;      /**< true if a new uid is defined for this Command */
         uid_t uid;         /**< The user id to switch to when running this Command */
-        int   has_gid;          /**< TRUE if a new gid is defined for this Command */
+        boolean_t has_gid;      /**< true if a new gid is defined for this Command */
         gid_t gid;        /**< The group id to switch to when running this Command */
         unsigned timeout;     /**< Max seconds which we wait for method to execute */
 } __attribute__((__packed__)) *command_t;
@@ -400,7 +419,7 @@ typedef struct myauthentication {
         char *passwd;                                /**< The users password data */
         char *groupname;                                      /**< PAM group name */
         int   digesttype;                      /**< How did we store the password */
-        int   is_readonly;     /**< TRUE if this is a read-only authenticated user*/
+        boolean_t is_readonly; /**< true if this is a read-only authenticated user*/
         struct myauthentication *next;       /**< Next credential or NULL if last */
 } __attribute__((__packed__)) *Auth_T;
 
@@ -455,7 +474,7 @@ typedef struct mysysteminfo {
 /** Defines a protocol object with protocol functions */
 typedef struct Protocol_T {
         const char *name;                                       /**< Protocol name */
-        int(*check)(Socket_T);                 /**< Protocol verification function */
+        boolean_t (*check)(Socket_T);          /**< Protocol verification function */
 } __attribute__((__packed__)) *Protocol_T;
 
 
@@ -488,7 +507,7 @@ typedef struct myport {
         int maxforward;            /**< Optional max forward for protocol checking */
         int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
-        int is_available;                /**< TRUE if the server/port is available */
+        boolean_t is_available;          /**< true if the server/port is available */
         int version;                                         /**< Protocol version */
         Operator_Type operator;                           /**< Comparison operator */
         int status;                                           /**< Protocol status */
@@ -532,7 +551,7 @@ typedef struct myicmp {
         int type;                                              /**< ICMP type used */
         int count;                                   /**< ICMP echo requests count */
         int timeout;         /**< The timeout in milliseconds to wait for response */
-        int is_available;                     /**< TRUE if the server is available */
+        boolean_t is_available;               /**< true if the server is available */
         double response;                              /**< ICMP ECHO response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
@@ -582,7 +601,7 @@ typedef struct myresource {
 typedef struct mytimestamp {
         Operator_Type operator;                           /**< Comparison operator */
         int  time;                                        /**< Timestamp watermark */
-        int  test_changes;            /**< TRUE if we only should test for changes */
+        boolean_t test_changes;       /**< true if we only should test for changes */
         time_t timestamp; /**< The original last modified timestamp for this object*/
         EventAction_T action;  /**< Description of the action upon event occurence */
 
@@ -618,7 +637,7 @@ typedef struct myevery {
 
 
 typedef struct mystatus {
-        int  initialized;                      /**< TRUE if status was initialized */
+        boolean_t initialized;                 /**< true if status was initialized */
         int return_value;                /**< Return value of the program to check */
         Operator_Type operator;                           /**< Comparison operator */
         EventAction_T action;  /**< Description of the action upon event occurence */
@@ -643,8 +662,8 @@ typedef struct myprogram {
 typedef struct mysize {
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long size;                               /**< Size watermark */
-        int  test_changes;            /**< TRUE if we only should test for changes */
-        int  initialized;                        /**< TRUE if size was initialized */
+        boolean_t test_changes;       /**< true if we only should test for changes */
+        boolean_t initialized;                   /**< true if size was initialized */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -708,8 +727,8 @@ typedef struct mychecksum {
         MD_T  hash;                     /**< A checksum hash computed for the path */
         int   type;                       /**< The type of hash (e.g. md5 or sha1) */
         int   length;                                      /**< Length of the hash */
-        int   test_changes;           /**< TRUE if we only should test for changes */
-        int   initialized;                   /**< TRUE if checksum was initialized */
+        boolean_t test_changes;       /**< true if we only should test for changes */
+        boolean_t initialized;               /**< true if checksum was initialized */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } __attribute__((__packed__)) *Checksum_T;
 
@@ -722,8 +741,8 @@ typedef struct myperm {
 
 /** Defines match object */
 typedef struct mymatch {
-        int     ignore;                                          /**< Ignore match */
-        int     not;                                             /**< Invert match */
+        boolean_t ignore;                                        /**< Ignore match */
+        boolean_t not;                                           /**< Invert match */
         char    *match_string;                                   /**< Match string */
         char    *match_path;                         /**< File with matching rules */
 #ifdef HAVE_REGEX_H
@@ -852,7 +871,7 @@ typedef struct myservice {
 
         /** Common parameters */
         char *name;                                  /**< Service descriptive name */
-        int (*check)(struct myservice *);       /**< Service verification function */
+        boolean_t (*check)(struct myservice *); /**< Service verification function */
         int  type;                                     /**< Monitored service type */
         int  monitor;                                      /**< Monitor state flag */
         int  mode;                            /**< Monitoring mode for the service */
@@ -927,8 +946,8 @@ typedef struct myservice {
                 char             *source;                 /**< Event source service name */
                 int               mode;             /**< Monitoring mode for the service */
                 int               type;                      /**< Monitored service type */
-                short             state;         /**< TRUE if failed, FALSE if succeeded */
-                short             state_changed;              /**< TRUE if state changed */
+                State_Type        state;                                 /**< Test state */
+                boolean_t         state_changed;              /**< true if state changed */
                 long long         state_map;           /**< Event bitmap for last cycles */
                 unsigned int      count;                             /**< The event rate */
                 unsigned int      flag;                     /**< The handlers state flag */
@@ -955,7 +974,7 @@ typedef struct myevent *Event_T;
 
 /** Defines data for application runtime */
 struct myrun {
-        volatile int  stopped;/**< TRUE if monit was stopped. Flag used by threads */
+        volatile boolean_t stopped; /**< true if monit was stopped. Flag used by threads */
         char *controlfile;                /**< The file to read configuration from */
         char *logfile;                         /**< The file to write logdata into */
         char *pidfile;                                  /**< This programs pidfile */
@@ -963,21 +982,21 @@ struct myrun {
         char id[STRLEN];                                      /**< Unique monit id */
         char *statefile;                /**< The file with the saved runtime state */
         char *mygroup;                              /**< Group Name of the Service */
-        int  debug;                   /**< Write debug information - TRUE or FALSE */
-        int  use_syslog;                          /**< If TRUE write log to syslog */
-        int  dolog;       /**< TRUE if program should log actions, otherwise FALSE */
-        int  isdaemon;                 /**< TRUE if program should run as a daemon */
+        short  debug;                                             /**< Debug level */
+        boolean_t use_syslog;                     /**< If true write log to syslog */
+        boolean_t dolog;  /**< true if program should log actions, otherwise false */
+        boolean_t isdaemon;            /**< true if program should run as a daemon */
         int  polltime;        /**< In deamon mode, the sleeptime (sec) between run */
         int  startdelay;                    /**< the sleeptime (sec) after startup */
-        int  once;                                       /**< TRUE - run only once */
-        int  init;                   /**< TRUE - don't background to run from init */
+        boolean_t once;                                  /**< true - run only once */
+        boolean_t init;              /**< true - don't background to run from init */
         int  facility;              /** The facility to use when running openlog() */
-        int  doprocess;                 /**< TRUE if process status engine is used */
-        volatile int  doreload;    /**< TRUE if a monit daemon should reinitialize */
-        volatile int  dowakeup;  /**< TRUE if a monit daemon was wake up by signal */
-        int  doaction;             /**< TRUE if some service(s) has action pending */
+        boolean_t doprocess;            /**< true if process status engine is used */
+        volatile boolean_t doreload; /**< true if a monit daemon should reinitialize */
+        volatile boolean_t dowakeup; /**< true if a monit daemon was wake up by signal */
+        boolean_t doaction;        /**< true if some service(s) has action pending */
         time_t incarnation;              /**< Unique ID for running monit instance */
-        int  handler_init;                  /**< The handlers queue initialization */
+        boolean_t handler_init;             /**< The handlers queue initialization */
         int  handler_flag;                            /**< The handlers state flag */
         int  handler_queue[HANDLER_MAX+1];         /**< The handlers queue counter */
         Service_T system;                          /**< The general system service */
@@ -995,7 +1014,6 @@ struct myrun {
                                 struct {
                                         char *pem;
                                         char *clientpem;
-                                        int allowselfcert;
                                 } ssl;
                         } net;
                         struct {
@@ -1017,7 +1035,7 @@ struct myrun {
         Mail_T maillist;                /**< Global alert notification mailinglist */
         MailServer_T mailservers;    /**< List of MTAs used for alert notification */
         Mmonit_T mmonits;        /**< Event notification and status receivers list */
-        int dommonitcredentials;   /**< TRUE if M/Monit should receive credentials */
+        boolean_t dommonitcredentials; /**< true if M/Monit should receive credentials */
         Auth_T mmonitcredentials;     /**< Pointer to selected credentials or NULL */
         Event_T eventlist;              /** A list holding partialy handled events */
         /** User selected standard mail format */
@@ -1030,7 +1048,7 @@ struct myrun {
 
         Mutex_T mutex;            /**< Mutex used for service data synchronization */
 #ifdef OPENSSL_FIPS
-        int fipsEnabled;                /** TRUE if monit should use FIPS-140 mode */
+        boolean_t fipsEnabled;          /** true if monit should use FIPS-140 mode */
 #endif
 } __attribute__((__packed__));
 
@@ -1070,15 +1088,15 @@ extern char *sslnames[];
 
 /* FIXME: move remaining prototypes into seperate header-files */
 
-int   parse(char *);
-int   control_service(const char *, int);
-int   control_service_string(const char *, const char *);
-int   control_service_daemon(const char *, const char *);
+boolean_t parse(char *);
+boolean_t control_service(const char *, int);
+boolean_t control_service_string(const char *, const char *);
+boolean_t control_service_daemon(const char *, const char *);
 void  setup_dependants();
 void  reset_depend();
 void  spawn(Service_T, command_t, Event_T);
-int   status(char *);
-int   log_init();
+boolean_t status(char *);
+boolean_t log_init();
 void  LogEmergency(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogAlert(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogCritical(const char *, ...) __attribute__((format (printf, 1, 2)));
@@ -1101,28 +1119,28 @@ void  gc();
 void  gc_mail_list(Mail_T *);
 void  gccmd(command_t *);
 void  gc_event(Event_T *e);
-int   kill_daemon(int);
+boolean_t kill_daemon(int);
 int   exist_daemon();
-int   sendmail(Mail_T);
+boolean_t sendmail(Mail_T);
 int   sock_msg(int, char *, ...) __attribute__((format (printf, 2, 3)));
 void  init_env();
 void  monit_http(int);
-int   can_http();
+boolean_t can_http();
 char *format(const char *, va_list, long *);
 void  redirect_stdfd();
 void  fd_close();
 pid_t getpgid(pid_t);
 void unset_signal_block(sigset_t *);
 void set_signal_block(sigset_t *, sigset_t *);
-int  check_process(Service_T);
-int  check_filesystem(Service_T);
-int  check_file(Service_T);
-int  check_directory(Service_T);
-int  check_remote_host(Service_T);
-int  check_system(Service_T);
-int  check_fifo(Service_T);
-int  check_program(Service_T);
-int  check_net(Service_T);
+boolean_t check_process(Service_T);
+boolean_t check_filesystem(Service_T);
+boolean_t check_file(Service_T);
+boolean_t check_directory(Service_T);
+boolean_t check_remote_host(Service_T);
+boolean_t check_system(Service_T);
+boolean_t check_fifo(Service_T);
+boolean_t check_program(Service_T);
+boolean_t check_net(Service_T);
 int  check_URL(Service_T s);
 int  sha_md5_stream (FILE *, void *, void *);
 void reset_procinfo(Service_T);
@@ -1130,6 +1148,6 @@ int  check_service_status(Service_T);
 void printhash(char *);
 void status_xml(StringBuffer_T, Event_T, short, int, const char *);
 int  handle_mmonit(Event_T);
-int  do_wakeupcall();
+boolean_t  do_wakeupcall();
 
 #endif

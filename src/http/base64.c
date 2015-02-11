@@ -83,10 +83,10 @@ static unsigned char decode(char c) {
 
 
 /**
- * Return TRUE if 'c' is a valid base64 character, otherwise FALSE
+ * Return true if 'c' is a valid base64 character, otherwise false
  */
-static int is_base64(char c) {
-        return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '+') || (c == '/') || (c == '=')) ? TRUE : FALSE;
+static boolean_t is_base64(char c) {
+        return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '+') || (c == '/') || (c == '=')) ? true : false;
 }
 
 
@@ -139,8 +139,8 @@ char *encode_base64(size_t size, unsigned char *src) {
  * @param dest Pointer to memory for holding the decoded string.
  * Must be large enough to recieve the decoded string.
  * @param src A base64 encoded string.
- * @return TRUE (the length of the decoded string) if decode
- * succeeded otherwise FALSE.
+ * @return the length of the decoded string if decode
+ * succeeded otherwise 0.
  */
 size_t decode_base64(unsigned char *dest, const char *src) {
         if (src && *src) {
@@ -174,8 +174,8 @@ size_t decode_base64(unsigned char *dest, const char *src) {
                                 *p++ = (((b3 & 0x3) << 6) | b4);
                 }
                 FREE(buf);
-                return(p-dest);
+                return (p - dest);
         }
-        return FALSE;
+        return 0;
 }
 

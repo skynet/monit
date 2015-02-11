@@ -91,6 +91,7 @@
 #include <arpa/inet.h>
 #endif
 
+#include "monit.h"
 #include "engine.h"
 #include "net.h"
 #include "processor.h"
@@ -133,7 +134,7 @@ typedef struct HostsAllow_T {
 } __attribute__((__packed__)) *HostsAllow_T;
 
 
-static volatile int stopped = FALSE;
+static volatile boolean_t stopped = false;
 static int myServerSocket = 0;
 ssl_server_connection *mySSLServerConnection = NULL;
 static HostsAllow_T hostlist = NULL;
@@ -147,9 +148,9 @@ static Mutex_T mutex = PTHREAD_MUTEX_INITIALIZER;
  * Parse network string and return numeric IP and netmask
  * @param pattern A network identifier in IP/mask format to be parsed
  * @param net A structure holding IP and mask of the network
- * @return FALSE if parsing fails otherwise TRUE
+ * @return false if parsing fails otherwise true
  */
-static int _parseNetwork(char *pattern, HostsAllow_T net) {
+static boolean_t _parseNetwork(char *pattern, HostsAllow_T net) {
         ASSERT(pattern);
         ASSERT(net);
 
@@ -168,7 +169,7 @@ static int _parseNetwork(char *pattern, HostsAllow_T net) {
                         /* We have found a "/" -> we are preceeding to the netmask */
                         if ((slashcount == 1) || (dotcount != 3))
                                 /* We have already found a "/" or we haven't had enough dots before finding the slash -> Error! */
-                                return FALSE;
+                                return false;
                         *temp = 0;
                         longmask = *(temp + 1) ? temp + 1 : NULL;
                         count = 0;
@@ -179,7 +180,7 @@ static int _parseNetwork(char *pattern, HostsAllow_T net) {
                         dotcount++;
                 } else if (! isdigit((int)*temp)) {
                         /* No number, "." or "/" -> Error! */
-                        return FALSE;
+                        return false;
                 }
                 count++;
                 temp++;
@@ -195,17 +196,17 @@ static int _parseNetwork(char *pattern, HostsAllow_T net) {
                 }
         } else if (dotcount != 3) {
                 /* A long netmask requires three dots */
-                return FALSE;
+                return false;
         }
         /* Parse the network */
         struct in_addr inp;
         if (! inet_aton(buf, &inp))
-                return FALSE;
+                return false;
         net->network = inp.s_addr;
         /* Convert short netmasks to integer */
         if (longmask == NULL) {
                 if ((shortmask > 32) || (shortmask < 0)) {
-                        return FALSE;
+                        return false;
                 } else if ( shortmask == 32 ) {
                         net->mask = -1;
                 } else {
@@ -215,20 +216,20 @@ static int _parseNetwork(char *pattern, HostsAllow_T net) {
         } else {
                 /* Parse long netmasks */
                 if (! inet_aton(longmask, &inp))
-                        return FALSE;
+                        return false;
                 net->mask = inp.s_addr;
         }
         /* Remove bogus network components */
         net->network &= net->mask;
-        return TRUE;
+        return true;
 }
 
 
-static int _hasHostAllow(HostsAllow_T host) {
+static boolean_t _hasHostAllow(HostsAllow_T host) {
         for (HostsAllow_T p = hostlist; p; p = p->next)
                 if ((p->network == host->network) && ((p->mask == host->mask)))
-                        return TRUE;
-        return FALSE;
+                        return true;
+        return false;
 }
 
 
@@ -241,20 +242,20 @@ static void _destroyHostAllow(HostsAllow_T p) {
 
 
 /**
- * Returns TRUE if remote host is allowed to connect, otherwise return FALSE
+ * Returns true if remote host is allowed to connect, otherwise return false
  */
-static int _authenticateHost(struct sockaddr *addr) {
+static boolean_t _authenticateHost(struct sockaddr *addr) {
         if (addr->sa_family == AF_INET) { //FIXME: we support only IPv4 currently
-                int allow = FALSE;
+                boolean_t allow = false;
                 struct sockaddr_in *a = (struct sockaddr_in *)addr;
                 LOCK(mutex)
                 {
                         if (! hostlist) {
-                                allow = TRUE;
+                                allow = true;
                         } else  {
                                 for (HostsAllow_T p = hostlist; p; p = p->next) {
                                         if ((p->network & p->mask) == (a->sin_addr.s_addr & p->mask)) {
-                                                allow = TRUE;
+                                                allow = true;
                                                 break;
                                         }
                                 }
@@ -265,9 +266,9 @@ static int _authenticateHost(struct sockaddr *addr) {
                         LogError("Denied connection from non-authorized client [%s]\n", inet_ntoa(a->sin_addr));
                 return allow;
         } else if (addr->sa_family == AF_UNIX) {
-                return TRUE;
+                return true;
         } else {
-                return FALSE;
+                return false;
         }
 }
 
@@ -348,18 +349,18 @@ void Engine_start() {
 
 
 void Engine_stop() {
-        stopped = TRUE;
+        stopped = true;
 }
 
 
 //FIXME: don't store the translated hostname->IPaddress on Monit startup to support DHCP hosts ... resolve the hostname in _authenticateHost()
-int Engine_addHostAllow(char *pattern) {
+boolean_t Engine_addHostAllow(char *pattern) {
         ASSERT(pattern);
         struct addrinfo *res, hints = {
                 .ai_family = AF_INET /* we support just IPv4 currently */
         };
         if (getaddrinfo(pattern, NULL, &hints, &res) != 0)
-                return FALSE;
+                return false;
         int added = 0;
         for (struct addrinfo *_res = res; _res; _res = _res->ai_next) {
                 if (_res->ai_family == AF_INET) {
@@ -384,11 +385,11 @@ int Engine_addHostAllow(char *pattern) {
                 }
         }
         freeaddrinfo(res);
-        return added ? TRUE : FALSE;
+        return added ? true : false;
 }
 
 
-int Engine_addNetAllow(char *pattern) {
+boolean_t Engine_addNetAllow(char *pattern) {
         ASSERT(pattern);
 
         HostsAllow_T h;
@@ -408,18 +409,18 @@ int Engine_addNetAllow(char *pattern) {
                         }
                 }
                 END_LOCK;
-                return added ? TRUE : FALSE;
+                return added ? true : false;
         }
         FREE(h);
-        return FALSE;
+        return false;
 }
 
 
-int Engine_hasHostsAllow() {
+boolean_t Engine_hasHostsAllow() {
         int rv;
         LOCK(mutex)
         {
-                rv = hostlist ? TRUE : FALSE;
+                rv = hostlist ? true : false;
         }
         END_LOCK;
         return rv;

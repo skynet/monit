@@ -42,26 +42,26 @@ void Engine_stop();
 /**
  * Add hosts allowed to connect to this server.
  * @param pattern A hostname (A-Record) or IP address to be added to the hosts allow list
- * @return FALSE if the given host does not resolve, otherwise TRUE
+ * @return false if the given host does not resolve, otherwise true
  */
-int Engine_addHostAllow(char *pattern);
+boolean_t Engine_addHostAllow(char *pattern);
 
 
 /**
  * Add network allowed to connect to this server.
  * @param pattern A network identifier in IP/mask format to be added
  * to the hosts allow list
- * @return FALSE if no correct network identifier is provided,
- * otherwise TRUE
+ * @return false if no correct network identifier is provided,
+ * otherwise true
  */
-int Engine_addNetAllow(char *pattern);
+boolean_t Engine_addNetAllow(char *pattern);
 
 
 /**
  * Are any hosts present in the host allow list?
- * @return TRUE if the host allow list is non-empty, otherwise FALSE
+ * @return true if the host allow list is non-empty, otherwise false
  */
-int Engine_hasHostsAllow();
+boolean_t Engine_hasHostsAllow();
 
 
 /**

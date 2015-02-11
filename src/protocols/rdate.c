@@ -51,7 +51,7 @@
  *
  *  @file
  */
-int check_rdate(Socket_T socket) {
+boolean_t check_rdate(Socket_T socket) {
 
         /* Offset of 00:00:00 UTC, January 1, 1970 from 00:00:00 UTC, January 1, 1900 */
 #define  TIME_OFFSET    2208988800UL
@@ -65,7 +65,7 @@ int check_rdate(Socket_T socket) {
 
         if (socket_read(socket,(char*) &rdatet, sizeof(time_t)) <= 0) {
                 socket_setError(socket, "RDATE: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /* Get remote time and substract offset to allow unix time comparision */
@@ -73,7 +73,7 @@ int check_rdate(Socket_T socket) {
 
         if ((systemt = time(NULL)) == -1) {
                 socket_setError(socket, "RDATE error: cannot get system time -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (rdatet >= systemt)
@@ -83,10 +83,10 @@ int check_rdate(Socket_T socket) {
 
         if (delta > TIME_TOLERANCE) {
                 socket_setError(socket, "RDATE error: time does not match system time -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }
 

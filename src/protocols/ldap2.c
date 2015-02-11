@@ -45,7 +45,7 @@
  *
  *  @file
  */
-int check_ldap2(Socket_T socket) {
+boolean_t check_ldap2(Socket_T socket) {
 
         unsigned char buf[STRLEN];
 
@@ -116,27 +116,27 @@ int check_ldap2(Socket_T socket) {
 
         if (socket_write(socket, (unsigned char *)request, sizeof(request)) < 0) {
                 socket_setError(socket, "LDAP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (socket_read(socket, (unsigned char *)buf, sizeof(response)) <= 0) {
                 socket_setError(socket, "LDAP: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (memcmp((unsigned char *)buf,
                    (unsigned char *)response,
                    sizeof(response))) {
                 socket_setError(socket, "LDAP: anonymous bind failed");
-                return FALSE;
+                return false;
         }
 
         if (socket_write(socket, (unsigned char *)unbind, sizeof(unbind)) < 0) {
                 socket_setError(socket, "LDAP: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }
 

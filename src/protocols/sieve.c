@@ -37,39 +37,39 @@
 /**
  * Sieve protocol test. Expect "OK" when connected, send "LOGOUT" to quit.
  *
- * If passed return TRUE else return FALSE.
+ * If passed return true else return false.
  *
  * @see RFC 5804
  *
  * @file
  */
-int check_sieve(Socket_T socket) {
+boolean_t check_sieve(Socket_T socket) {
         ASSERT(socket);
 
         char buf[STRLEN];
         do {
                 if (! socket_readln(socket, buf, STRLEN)) {
                         socket_setError(socket, "SIEVE: error receiving server capabilities -- %s", STRERROR);
-                        return FALSE;
+                        return false;
                 }
                 Str_chomp(buf);
                 if (Str_startsWith(buf, "OK")) {
                         if (socket_print(socket, "LOGOUT\r\n") < 0) {
                                 socket_setError(socket, "SIEVE: error sending LOGOUT command  -- %s", STRERROR);
-                                return FALSE;
+                                return false;
                         }
                         if (! socket_readln(socket, buf, STRLEN)) {
                                 socket_setError(socket, "SIEVE: error receiving LOGOUT response -- %s", STRERROR);
-                                return FALSE;
+                                return false;
                         }
                         Str_chomp(buf);
                         if (! Str_startsWith(buf, "OK")) {
                                 socket_setError(socket, "SIEVE: invalid LOGOUT response -- %s", buf);
-                                return FALSE;
+                                return false;
                         }
-                        return TRUE;
+                        return true;
                 }
-        } while (TRUE); // Discard all server capabilities until we receive "OK"
-        return FALSE;
+        } while (true); // Discard all server capabilities until we receive "OK"
+        return false;
 }
 

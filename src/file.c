@@ -131,7 +131,7 @@ time_t file_getTimestamp(char *object, mode_t type) {
                 }
         }
 
-        return FALSE;
+        return 0;
 
 }
 
@@ -166,24 +166,24 @@ char *file_findControlFile() {
 }
 
 
-int file_createPidFile(char *pidfile) {
+boolean_t file_createPidFile(char *pidfile) {
         ASSERT(pidfile);
 
         unlink(pidfile);
         FILE *F = fopen(pidfile, "w");
         if (! F) {
                 LogError("Error opening pidfile '%s' for writing -- %s\n", pidfile, STRERROR);
-                return(FALSE);
+                return false;
         }
         fprintf(F, "%d\n", (int)getpid());
         fclose(F);
 
-        return TRUE;
+        return true;
 
 }
 
 
-int file_isFile(char *file) {
+boolean_t file_isFile(char *file) {
 
         struct stat buf;
 
@@ -194,7 +194,7 @@ int file_isFile(char *file) {
 }
 
 
-int file_isDirectory(char *dir) {
+boolean_t file_isDirectory(char *dir) {
 
         struct stat buf;
 
@@ -205,7 +205,7 @@ int file_isDirectory(char *dir) {
 }
 
 
-int file_isFifo(char *fifo) {
+boolean_t file_isFifo(char *fifo) {
 
         struct stat buf;
 
@@ -216,7 +216,7 @@ int file_isFifo(char *fifo) {
 }
 
 
-int file_exist(char *file) {
+boolean_t file_exist(char *file) {
 
         struct stat buf;
 
@@ -227,7 +227,7 @@ int file_exist(char *file) {
 }
 
 
-int file_checkStat(char *filename, char *description, int permmask) {
+boolean_t file_checkStat(char *filename, char *description, int permmask) {
         struct stat buf;
         errno = 0;
 
@@ -236,15 +236,15 @@ int file_checkStat(char *filename, char *description, int permmask) {
 
         if (stat(filename, &buf) < 0) {
                 LogError("Cannot stat the %s '%s' -- %s\n", description, filename, STRERROR);
-                return FALSE;
+                return false;
         }
         if (! S_ISREG(buf.st_mode)) {
                 LogError("The %s '%s' is not a regular file.\n", description,  filename);
-                return FALSE;
+                return false;
         }
         if (buf.st_uid != geteuid())  {
                 LogError("The %s '%s' must be owned by you.\n", description, filename);
-                return FALSE;
+                return false;
         }
         if ((buf.st_mode & 0777 ) & ~permmask) {
                 /*
@@ -278,46 +278,46 @@ int file_checkStat(char *filename, char *description, int permmask) {
                          buf.st_mode&S_IWOTH ? 'w' : '-',
                          buf.st_mode&S_IXOTH ? 'x' : '-',
                          buf.st_mode& 0777);
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 
 }
 
 
-int file_checkQueueDirectory(char *path) {
+boolean_t file_checkQueueDirectory(char *path) {
         struct stat st;
 
         if (stat(path, &st)) {
                 if (errno == ENOENT) {
                         if (mkdir(path, 0700)) {
                                 LogError("Cannot create the event queue directory %s -- %s\n", path, STRERROR);
-                                return FALSE;
+                                return false;
                         }
                 } else {
                         LogError("Cannot read the event queue directory %s -- %s\n", path, STRERROR);
-                        return FALSE;
+                        return false;
                 }
         } else if (! S_ISDIR(st.st_mode)) {
                 LogError("Event queue: the %s is not directory\n", path);
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 
-int file_checkQueueLimit(char *path, int limit) {
+boolean_t file_checkQueueLimit(char *path, int limit) {
         int            used = 0;
         DIR           *dir = NULL;
         struct dirent *de = NULL;
 
         if (limit < 0)
-                return TRUE;
+                return true;
 
         if (! (dir = opendir(path)) ) {
                 LogError("Cannot open the event queue directory %s -- %s\n", path, STRERROR);
-                return FALSE;
+                return false;
         }
         while ( (de = readdir(dir)) ) {
                 struct stat st;
@@ -325,15 +325,15 @@ int file_checkQueueLimit(char *path, int limit) {
                 if (! stat(de->d_name, &st) && S_ISREG(st.st_mode) && ++used > limit) {
                         LogError("Event queue is full\n");
                         closedir(dir);
-                        return FALSE;
+                        return false;
                 }
         }
         closedir(dir);
-        return TRUE;
+        return true;
 }
 
 
-int file_writeQueue(FILE *file, void *data, size_t size) {
+boolean_t file_writeQueue(FILE *file, void *data, size_t size) {
         size_t rv;
 
         ASSERT(file);
@@ -344,7 +344,7 @@ int file_writeQueue(FILE *file, void *data, size_t size) {
                         LogError("Queued event file: unable to write event size -- %s\n", feof(file) ? "end of file" : "stream error");
                 else
                         LogError("Queued event file: unable to write event size -- read returned %lu bytes\n", (unsigned long)rv);
-                return FALSE;
+                return false;
         }
 
         /* write data if any */
@@ -354,11 +354,11 @@ int file_writeQueue(FILE *file, void *data, size_t size) {
                                 LogError("Queued event file: unable to write event size -- %s\n", feof(file) ? "end of file" : "stream error");
                         else
                                 LogError("Queued event file: unable to write event size -- read returned %lu bytes\n", (unsigned long)rv);
-                        return FALSE;
+                        return false;
                 }
         }
 
-        return TRUE;
+        return true;
 }
 
 

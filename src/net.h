@@ -47,17 +47,17 @@
 /**
  * Check if the hostname resolves
  * @param hostname The host to check
- * @return TRUE if hostname resolves, otherwise FALSE
+ * @return true if hostname resolves, otherwise false
  */
-int check_host(const char *hostname);
+boolean_t check_host(const char *hostname);
 
 
 /**
  * Verify that the socket is ready for i|o
  * @param socket A socket
- * @return TRUE if the socket is ready, otherwise FALSE.
+ * @return true if the socket is ready, otherwise false.
  */
-int check_socket(int socket);
+boolean_t check_socket(int socket);
 
 
 /**
@@ -66,9 +66,9 @@ int check_socket(int socket);
  * The test is conducted by sending a datagram to the server and
  * check for a returned ICMP error when reading from the socket.
  * @param socket A socket
- * @return TRUE if the socket is ready, otherwise FALSE.
+ * @return true if the socket is ready, otherwise false.
  */
-int check_udp_socket(int socket);
+boolean_t check_udp_socket(int socket);
 
 
 /**
@@ -124,9 +124,9 @@ int create_server_socket_unix(const char *path, int backlog);
  * to be present.
  * @param socket A socket
  * @param timeout How long to wait before timeout (value in milliseconds)
- * @return Return TRUE if the event occured, otherwise FALSE.
+ * @return Return true if the event occured, otherwise false.
  */
-int can_read(int socket, int timeout);
+boolean_t can_read(int socket, int timeout);
 
 
 /**
@@ -134,9 +134,9 @@ int can_read(int socket, int timeout);
  * milliseconds for the socket to be ready.
  * @param socket A socket
  * @param timeout How long to wait before timeout (value in milliseconds)
- * @return Return TRUE if the event occured, otherwise FALSE.
+ * @return Return true if the event occured, otherwise false.
  */
-int can_write(int socket, int timeout);
+boolean_t can_write(int socket, int timeout);
 
 
 /**

@@ -44,9 +44,9 @@
 
 /**
  * Open the state file
- * @return TRUE if succeeded, otherwise FALSE
+ * @return true if succeeded, otherwise false
  */
-int State_open();
+boolean_t State_open();
 
 
 /**

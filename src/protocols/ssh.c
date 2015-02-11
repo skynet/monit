@@ -36,7 +36,7 @@
  *
  *  @file
  */
-int check_ssh(Socket_T socket) {
+boolean_t check_ssh(Socket_T socket) {
 
         char  buf[STRLEN];
 
@@ -44,23 +44,23 @@ int check_ssh(Socket_T socket) {
 
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "SSH: error receiving identification string -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! Str_startsWith(buf, "SSH-")) {
                 socket_setError(socket, "SSH: protocol error %s", buf);
-                return FALSE;
+                return false;
         }
 
         /* send identification string back to server */
         if (socket_write(socket, buf, strlen(buf)) <= 0) {
                 socket_setError(socket, "SSH: error sending identification string -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         /* Read one extra line to prevent the "Read from socket failed" warning */
         socket_readln(socket, buf, sizeof(buf));
 
-        return TRUE;
+        return true;
 
 }

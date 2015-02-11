@@ -118,17 +118,17 @@ static char *get_date(char *, int);
 static char *get_server(char *, int);
 static void create_headers(HttpRequest);
 static void send_response(HttpResponse);
-static int basic_authenticate(HttpRequest);
+static boolean_t basic_authenticate(HttpRequest);
 static void done(HttpRequest, HttpResponse);
 static void destroy_HttpRequest(HttpRequest);
 static void reset_response(HttpResponse res);
 static HttpParameter parse_parameters(char *);
-static int create_parameters(HttpRequest req);
+static boolean_t create_parameters(HttpRequest req);
 static void destroy_HttpResponse(HttpResponse);
 static HttpRequest create_HttpRequest(Socket_T);
 static void internal_error(Socket_T, int, char *);
 static HttpResponse create_HttpResponse(Socket_T);
-static int is_authenticated(HttpRequest, HttpResponse);
+static boolean_t is_authenticated(HttpRequest, HttpResponse);
 static int get_next_token(char *s, int *cursor, char **r);
 
 
@@ -471,7 +471,7 @@ static void send_response(HttpResponse res) {
                 char *headers = get_headers(res);
                 int length = StringBuffer_length(res->outputbuffer);
 
-                res->is_committed = TRUE;
+                res->is_committed = true;
                 get_date(date, STRLEN);
                 get_server(server, STRLEN);
                 socket_print(S, "%s %d %s\r\n", res->protocol, res->status,
@@ -542,7 +542,7 @@ static HttpResponse create_HttpResponse(Socket_T S) {
         res->S = S;
         res->status = SC_OK;
         res->outputbuffer = StringBuffer_create(256);
-        res->is_committed = FALSE;
+        res->is_committed = false;
         res->protocol = SERVER_PROTOCOL;
         res->status_msg = get_status_string(SC_OK);
         return res;
@@ -559,7 +559,7 @@ static void create_headers(HttpRequest req) {
         char line[REQ_STRLEN];
 
         S = req->S;
-        while (TRUE) {
+        while (true) {
                 if (! socket_readln(S, line, sizeof(line)))
                         break;
                 if (! strcasecmp(line, "\r\n") || ! strcasecmp(line, "\n"))
@@ -580,10 +580,10 @@ static void create_headers(HttpRequest req) {
 
 
 /**
- * Create parameters for the given request. Returns FALSE if an error
+ * Create parameters for the given request. Returns false if an error
  * occurs.
  */
-static int create_parameters(HttpRequest req) {
+static boolean_t create_parameters(HttpRequest req) {
         char query_string[REQ_STRLEN] = {0};
 
         if (IS(req->method, METHOD_POST) && get_header(req, "Content-Length")) {
@@ -592,13 +592,13 @@ static int create_parameters(HttpRequest req) {
                 Socket_T S = req->S;
                 const char *cl = get_header(req, "Content-Length");
                 if (! cl || sscanf(cl, "%d", &len) != 1)
-                        return FALSE;
+                        return false;
                 if (len < 0 || len >= REQ_STRLEN)
-                        return FALSE;
+                        return false;
                 if (len == 0)
-                        return TRUE;
+                        return true;
                 if (((n = socket_read(S, query_string, len)) <= 0) || (n != len))
-                        return FALSE;
+                        return false;
                 query_string[n] = 0;
         } else if (IS(req->method, METHOD_GET)) {
                 char *p;
@@ -616,7 +616,7 @@ static int create_parameters(HttpRequest req) {
                 }
                 req->params = parse_parameters(query_string);
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -696,15 +696,15 @@ static void destroy_entry(void *p) {
 /**
  * Do Basic Authentication if this auth. style is allowed.
  */
-static int is_authenticated(HttpRequest req, HttpResponse res) {
+static boolean_t is_authenticated(HttpRequest req, HttpResponse res) {
         if (Run.httpd.credentials) {
                 if (! basic_authenticate(req)) {
                         send_error(res, SC_UNAUTHORIZED, "You are not authorized to access monit. Either you supplied the wrong credentials (e.g. bad password), or your browser doesn't understand how to supply the credentials required");
                         set_header(res, "WWW-Authenticate", "Basic realm=\"monit\"");
-                        return FALSE;
+                        return false;
                 }
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -712,7 +712,7 @@ static int is_authenticated(HttpRequest req, HttpResponse res) {
  * Authenticate the basic-credentials (uname/password) submitted by
  * the user.
  */
-static int basic_authenticate(HttpRequest req) {
+static boolean_t basic_authenticate(HttpRequest req) {
         size_t n;
         char *password;
         char buf[STRLEN];
@@ -720,30 +720,30 @@ static int basic_authenticate(HttpRequest req) {
         const char *credentials = get_header(req, "Authorization");
 
         if (! (credentials && Str_startsWith(credentials, "Basic ")))
-                return FALSE;
+                return false;
         strncpy(buf, &credentials[6], sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = 0;
         if ((n = decode_base64((unsigned char*)uname, buf)) <= 0)
-                return FALSE;
+                return false;
         uname[n] = 0;
         password = strchr(uname, ':');
         if (password == NULL)
-                return FALSE;
+                return false;
         *password++ = 0;
         if (*uname == 0 || *password == 0)
-                return FALSE;
+                return false;
         /* Check if user exist */
         if (NULL == Util_getUserCredentials(uname)) {
                 LogError("Warning: Client '%s' supplied unknown user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
-                return FALSE;
+                return false;
         }
         /* Check if user has supplied the right password */
         if (! Util_checkCredentials(uname,  password)) {
                 LogError("Warning: Client '%s' supplied wrong password for user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
-                return FALSE;
+                return false;
         }
         req->remote_user = Str_dup(uname);
-        return TRUE;
+        return true;
 }
 
 
@@ -841,6 +841,6 @@ static int get_next_token(char *s, int *cursor, char **r) {
                 }
                 *cursor += 1;
         }
-        return FALSE;
+        return 0;
 }
 

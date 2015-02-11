@@ -119,23 +119,23 @@ struct pst_status *psall;
  * "SunOS to HP-UX 9.05 Porting Guide" at http://www.interex.org/tech/9000/Tech/sun_hpux_port/portguide.html
  */
 
-int init_process_info_sysdep(void) {
+boolean_t init_process_info_sysdep(void) {
         struct pst_dynamic psd;
         struct pst_static pst;
 
         if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) != -1)
                 systeminfo.cpus = psd.psd_proc_cnt;
         else
-                return FALSE;
+                return false;
 
         if (pstat_getstatic(&pst, sizeof(pst), (size_t) 1, 0) != -1) {
                 systeminfo.mem_kbyte_max = (unsigned long)(pst.physical_memory * (pst.page_size / 1024));
                 page_size = pst.page_size;
         } else {
-                return FALSE;
+                return false;
         }
 
-        return TRUE;
+        return true;
 }
 
 
@@ -161,10 +161,10 @@ int getloadavg_sysdep (double *a, int na) {
                                 a[0] = psd.psd_avg_1_min;
                 }
         } else {
-                return FALSE;
+                return -1;
         }
 
-        return TRUE;
+        return 0;
 }
 
 
@@ -219,9 +219,9 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
 /**
  * This routine returns kbyte of real memory in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_memory_sysdep(SystemInfo_T *si) {
+boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         int                 n, num;
         struct pst_static   pst;
         struct pst_dynamic  psd;
@@ -233,11 +233,11 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
         /* Memory */
         if (pstat_getstatic(&pst, sizeof(pst), (size_t)1, 0) == -1) {
                 LogError("system statistic error -- pstat_getstatic failed: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
         if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) == -1) {
                 LogError("system statistic error -- pstat_getdynamic failed: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
         si->total_mem_kbyte = (unsigned long)((pst.physical_memory - psd.psd_free) * (pst.page_size/1024));
 
@@ -245,12 +245,12 @@ int used_system_memory_sysdep(SystemInfo_T *si) {
 again:
         if ((num = swapctl(SC_GETNSWP, 0)) == -1) {
                 LogError("system statistic error -- swap usage gathering failed: %s\n", STRERROR);
-                return FALSE;
+                return false;
         }
         if (num == 0) {
                 DEBUG("system statistic -- no swap configured\n");
                 si->swap_kbyte_max = 0;
-                return TRUE;
+                return true;
         }
         s = (struct swaptable *)ALLOC(num * sizeof(struct swapent) + sizeof(struct swaptable));
         strtab = (char *)ALLOC((num + 1) * MAXSTRSIZE);
@@ -262,7 +262,7 @@ again:
                 si->swap_kbyte_max = 0;
                 FREE(s);
                 FREE(strtab);
-                return FALSE;
+                return false;
         }
         if (n > num) {
                 DEBUG("system statistic -- new swap added: deferring swap usage statistics to next cycle\n");
@@ -281,15 +281,15 @@ again:
         si->swap_kbyte_max   = (unsigned long)(double)(total * page_size) / 1024.;
         si->total_swap_kbyte = (unsigned long)(double)(used  * page_size) / 1024.;
 
-        return TRUE;
+        return true;
 }
 
 
 /**
  * This routine returns system/user CPU time in use.
- * @return: TRUE if successful, FALSE if failed (or not available)
+ * @return: true if successful, false if failed (or not available)
  */
-int used_system_cpu_sysdep(SystemInfo_T *si) {
+boolean_t used_system_cpu_sysdep(SystemInfo_T *si) {
         long               cpu_total;
         long               cpu_total_new = 0;
         long               cpu_user = 0;
@@ -315,6 +315,6 @@ int used_system_cpu_sysdep(SystemInfo_T *si) {
         cpu_syst_old = cpu_syst;
         cpu_wait_old = cpu_wait;
 
-        return TRUE;
+        return true;
 }
 

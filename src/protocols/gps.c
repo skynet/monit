@@ -36,7 +36,7 @@
  *
  *  @file
  */
-int check_gps(Socket_T socket) {
+boolean_t check_gps(Socket_T socket) {
         char buf[STRLEN];
         const char *ok_gps_device = "GPSD,G=GPS";
         const char *ok_rtcm104_device = "GPSD,G=RTCM104";
@@ -46,12 +46,12 @@ int check_gps(Socket_T socket) {
 
         if (socket_print(socket, "G\r\n") < 0) {
                 socket_setError(socket, "GPS: error sending data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         if (! socket_readln(socket, buf, sizeof(buf))) {
                 socket_setError(socket, "GPS: error receiving data -- %s", STRERROR);
-                return FALSE;
+                return false;
         }
 
         Str_chomp(buf);
@@ -59,11 +59,11 @@ int check_gps(Socket_T socket) {
                 if (strncasecmp(buf, ok_rtcm104v2_device, strlen(ok_rtcm104v2_device)) != 0) {
                         if (strncasecmp(buf, ok_rtcm104_device, strlen(ok_rtcm104_device)) != 0) {
                                 socket_setError(socket, "GPS error (no device): %s", buf);
-                                return FALSE;
+                                return false;
                         }
                 }
         }
         
-        return TRUE;
+        return true;
 }
 

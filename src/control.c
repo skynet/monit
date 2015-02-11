@@ -115,7 +115,7 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen, long
                 Command_setEnv(C, "MONIT_EVENT", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
                 Command_setEnv(C, "MONIT_DESCRIPTION", c == S->start ? "Started" : c == S->stop ? "Stopped" : "Restarted");
                 if (S->type == TYPE_PROCESS) {
-                        Command_vSetEnv(C, "MONIT_PROCESS_PID", "%d", Util_isProcessRunning(S, FALSE));
+                        Command_vSetEnv(C, "MONIT_PROCESS_PID", "%d", Util_isProcessRunning(S, false));
                         Command_vSetEnv(C, "MONIT_PROCESS_MEMORY", "%ld", S->inf->priv.process.mem_kbyte);
                         Command_vSetEnv(C, "MONIT_PROCESS_CHILDREN", "%d", S->inf->priv.process.children);
                         Command_vSetEnv(C, "MONIT_PROCESS_CPU_PERCENT", "%d", S->inf->priv.process.cpu_percent);
@@ -153,7 +153,7 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen, long
 static Process_Status _waitStart(Service_T s, long *timeout) {
         long wait = 50000;
         do {
-                if (Util_isProcessRunning(s, TRUE))
+                if (Util_isProcessRunning(s, true))
                         return Process_Started;
                 Time_usleep(wait);
                 *timeout -= wait;
@@ -183,7 +183,7 @@ static void _doStart(Service_T s) {
         ASSERT(s);
         if (s->visited)
                 return;
-        s->visited = TRUE;
+        s->visited = true;
         if (s->dependantlist) {
                 for (Dependant_T d = s->dependantlist; d; d = d->next ) {
                         Service_T parent = Util_getService(d->dependant);
@@ -192,15 +192,15 @@ static void _doStart(Service_T s) {
                 }
         }
         if (s->start) {
-                if (s->type != TYPE_PROCESS || ! Util_isProcessRunning(s, FALSE)) {
+                if (s->type != TYPE_PROCESS || ! Util_isProcessRunning(s, false)) {
                         LogInfo("'%s' start: %s\n", s->name, s->start->arg[0]);
                         char msg[STRLEN];
                         long timeout = s->start->timeout * USEC_PER_SEC;
                         int status = _commandExecute(s, s->start, msg, sizeof(msg), &timeout);
                         if ((s->type == TYPE_PROCESS && _waitStart(s, &timeout) != Process_Started) || status < 0)
-                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to start (exit status %d) -- %s", status, *msg ? msg : "no output");
+                                Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to start (exit status %d) -- %s", status, *msg ? msg : "no output");
                         else
-                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "started");
+                                Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "started");
                 }
         } else {
                 LogDebug("'%s' start skipped -- method not defined\n", s->name);
@@ -212,27 +212,27 @@ static void _doStart(Service_T s) {
 /*
  * This function simply stops the service p.
  * @param s A Service_T object
- * @param flag TRUE if the monitoring should be disabled or FALSE if monitoring should continue (when stop is part of restart)
- * @return TRUE if the service was stopped otherwise FALSE
+ * @param flag true if the monitoring should be disabled or false if monitoring should continue (when stop is part of restart)
+ * @return true if the service was stopped otherwise false
  */
-static int _doStop(Service_T s, int flag) {
-        int rv = TRUE;
+static boolean_t _doStop(Service_T s, boolean_t flag) {
+        boolean_t rv = true;
         ASSERT(s);
         if (s->depend_visited)
                 return rv;
-        s->depend_visited = TRUE;
+        s->depend_visited = true;
         if (s->stop) {
-                if (s->type != TYPE_PROCESS || Util_isProcessRunning(s, FALSE)) {
+                if (s->type != TYPE_PROCESS || Util_isProcessRunning(s, false)) {
                         LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
                         char msg[STRLEN];
                         long timeout = s->stop->timeout * USEC_PER_SEC;
-                        int pid = Util_isProcessRunning(s, TRUE);
+                        int pid = Util_isProcessRunning(s, true);
                         int status = _commandExecute(s, s->stop, msg, sizeof(msg), &timeout);
                         if ((s->type == TYPE_PROCESS && _waitStop(pid, &timeout) != Process_Stopped) || status < 0) {
-                                rv = FALSE;
-                                Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
+                                rv = false;
+                                Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
                         } else {
-                                Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "stopped");
+                                Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "stopped");
                         }
                 }
         } else {
@@ -259,9 +259,9 @@ static void _doRestart(Service_T s) {
                 long timeout = s->restart->timeout * USEC_PER_SEC;
                 int status = _commandExecute(s, s->restart, msg, sizeof(msg), &timeout);
                 if ((s->type == TYPE_PROCESS && _waitStart(s, &timeout) != Process_Started) || status < 0)
-                        Event_post(s, Event_Exec, STATE_FAILED, s->action_EXEC, "failed to restart (exit status %d) -- %s", status, msg);
+                        Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to restart (exit status %d) -- %s", status, msg);
                 else
-                        Event_post(s, Event_Exec, STATE_SUCCEEDED, s->action_EXEC, "restarted");
+                        Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "restarted");
         } else {
                 LogDebug("'%s' restart skipped -- method not defined\n", s->name);
         }
@@ -275,11 +275,11 @@ static void _doRestart(Service_T s) {
  * @param s A Service_T object
  * @param flag A Custom flag
  */
-static void _doMonitor(Service_T s, int flag) {
+static void _doMonitor(Service_T s, boolean_t flag) {
         ASSERT(s);
         if (s->visited)
                 return;
-        s->visited = TRUE;
+        s->visited = true;
         if (s->dependantlist) {
                 for (Dependant_T d = s->dependantlist; d; d = d->next ) {
                         Service_T parent = Util_getService(d->dependant);
@@ -296,11 +296,11 @@ static void _doMonitor(Service_T s, int flag) {
  * @param s A Service_T object
  * @param flag A Custom flag
  */
-static void _doUnmonitor(Service_T s, int flag) {
+static void _doUnmonitor(Service_T s, boolean_t flag) {
         ASSERT(s);
         if (s->depend_visited)
                 return;
-        s->depend_visited = TRUE;
+        s->depend_visited = true;
         Util_monitorUnset(s);
 }
 
@@ -315,7 +315,7 @@ static void _doUnmonitor(Service_T s, int flag) {
  * @param action An action to do on the dependant services
  * @param flag A Custom flag
  */
-static void _doDepend(Service_T s, int action, int flag) {
+static void _doDepend(Service_T s, int action, boolean_t flag) {
         ASSERT(s);
         for (Service_T child = servicelist; child; child = child->next) {
                 if (child->dependantlist) {
@@ -348,15 +348,15 @@ static void _doDepend(Service_T s, int action, int flag) {
  * Pass on to methods in http/cervlet.c to start/stop services
  * @param S A service name as stated in the config file
  * @param action A string describing the action to execute
- * @return FALSE for error, otherwise TRUE
+ * @return false for error, otherwise true
  */
-int control_service_daemon(const char *S, const char *action) {
+boolean_t control_service_daemon(const char *S, const char *action) {
         ASSERT(S);
         ASSERT(action);
-        int rv = FALSE;
+        boolean_t rv = false;
         if (Util_getAction(action) == ACTION_IGNORE) {
                 LogError("Cannot %s service '%s' -- invalid action %s\n", action, S, action);
-                return FALSE;
+                return false;
         }
         // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
         Socket_T socket;
@@ -366,7 +366,7 @@ int control_service_daemon(const char *S, const char *action) {
                 socket = socket_create_u(Run.httpd.socket.unix.path, SOCKET_TCP, NET_TIMEOUT);
         if (! socket) {
                 LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
-                return FALSE;
+                return false;
         }
 
         /* Send request */
@@ -426,7 +426,7 @@ int control_service_daemon(const char *S, const char *action) {
                 LogError("Action failed -- %s\n", message ? message : "unable to parse response");
                 FREE(message);
         } else
-                rv = TRUE;
+                rv = true;
 err1:
         FREE(auth);
         socket_free(&socket);
@@ -438,15 +438,15 @@ err1:
  * Check to see if we should try to start/stop service
  * @param S A service name as stated in the config file
  * @param A A string describing the action to execute
- * @return FALSE for error, otherwise TRUE
+ * @return false for error, otherwise true
  */
-int control_service_string(const char *S, const char *A) {
+boolean_t control_service_string(const char *S, const char *A) {
         int a;
         ASSERT(S);
         ASSERT(A);
         if ((a = Util_getAction(A)) == ACTION_IGNORE) {
                 LogError("Service '%s' -- invalid action %s\n", S, A);
-                return FALSE;
+                return false;
         }
         return control_service(S, a);
 }
@@ -456,38 +456,38 @@ int control_service_string(const char *S, const char *A) {
  * Check to see if we should try to start/stop service
  * @param S A service name as stated in the config file
  * @param A An action id describing the action to execute
- * @return FALSE for error, otherwise TRUE
+ * @return false for error, otherwise true
  */
-int control_service(const char *S, int A) {
+boolean_t control_service(const char *S, int A) {
         Service_T s = NULL;
         ASSERT(S);
         if (! (s = Util_getService(S))) {
                 LogError("Service '%s' -- doesn't exist\n", S);
-                return FALSE;
+                return false;
         }
         switch (A) {
                 case ACTION_START:
-                        _doDepend(s, ACTION_STOP, FALSE);
+                        _doDepend(s, ACTION_STOP, false);
                         _doStart(s);
-                        _doDepend(s, ACTION_START, 0);
+                        _doDepend(s, ACTION_START, false);
                         break;
 
                 case ACTION_STOP:
-                        _doDepend(s, ACTION_STOP, TRUE);
-                        _doStop(s, TRUE);
+                        _doDepend(s, ACTION_STOP, true);
+                        _doStop(s, true);
                         break;
 
                 case ACTION_RESTART:
                         LogInfo("'%s' trying to restart\n", s->name);
-                        _doDepend(s, ACTION_STOP, FALSE);
+                        _doDepend(s, ACTION_STOP, false);
                         if (s->restart) {
                                 _doRestart(s);
-                                _doDepend(s, ACTION_START, 0);
+                                _doDepend(s, ACTION_START, false);
                         } else {
-                                if (_doStop(s, FALSE)) {
+                                if (_doStop(s, false)) {
                                         /* Only start if stop succeeded */
                                         _doStart(s);
-                                        _doDepend(s, ACTION_START, 0);
+                                        _doDepend(s, ACTION_START, false);
                                 } else {
                                         /* enable monitoring of this service again to allow the restart retry in the next cycle up to timeout limit */
                                         Util_monitorSet(s);
@@ -497,20 +497,20 @@ int control_service(const char *S, int A) {
 
                 case ACTION_MONITOR:
                         /* We only enable monitoring of this service and all prerequisite services. Chain of services which depends on this service keep its state */
-                        _doMonitor(s, 0);
+                        _doMonitor(s, false);
                         break;
 
                 case ACTION_UNMONITOR:
                         /* We disable monitoring of this service and all services which depends on it */
-                        _doDepend(s, ACTION_UNMONITOR, 0);
-                        _doUnmonitor(s, 0);
+                        _doDepend(s, ACTION_UNMONITOR, false);
+                        _doUnmonitor(s, false);
                         break;
 
                 default:
                         LogError("Service '%s' -- invalid action %d\n", S, A);
-                        return FALSE;
+                        return false;
         }
-        return TRUE;
+        return true;
 }
 
 
@@ -519,7 +519,7 @@ int control_service(const char *S, int A) {
  */
 void reset_depend() {
         for (Service_T s = servicelist; s; s = s->next) {
-                s->visited = FALSE;
-                s->depend_visited = FALSE;
+                s->visited = false;
+                s->depend_visited = false;
         }
 }

@@ -55,46 +55,49 @@
 /* Request timeout in seconds */
 #define REQUEST_TIMEOUT    30
 
-#define TRUE               1
-#define FALSE              0
-
 struct entry {
-  char *name;
-  char *value;
-  /* For internal use */
-  struct entry *next;
+        char *name;
+        char *value;
+        /* For internal use */
+        struct entry *next;
 } __attribute__((__packed__));
+
+
 typedef struct entry *HttpHeader;
+
 typedef struct entry *HttpParameter;
 
+
 typedef struct request {
-  char *url;
-  Socket_T S;
-  char *method;
-  char *protocol;
-  char *pathinfo;
-  char *remote_user;
-  HttpHeader headers;
-  ssl_connection *ssl;
-  HttpParameter params;
+        char *url;
+        Socket_T S;
+        char *method;
+        char *protocol;
+        char *pathinfo;
+        char *remote_user;
+        HttpHeader headers;
+        ssl_connection *ssl;
+        HttpParameter params;
 } __attribute__((__packed__)) *HttpRequest;
 
+
 typedef struct response {
-  int status;
-  Socket_T S;
-  const char *protocol;
-  int is_committed;
-  HttpHeader headers;
-  ssl_connection *ssl;
-  const char *status_msg;
-  StringBuffer_T outputbuffer;
+        int status;
+        Socket_T S;
+        const char *protocol;
+        boolean_t is_committed;
+        HttpHeader headers;
+        ssl_connection *ssl;
+        const char *status_msg;
+        StringBuffer_T outputbuffer;
 } __attribute__((__packed__)) *HttpResponse;
 
 
 struct  ServiceImpl {
-  void(*doGet)(HttpRequest, HttpResponse);
-  void(*doPost)(HttpRequest, HttpResponse);
+        void(*doGet)(HttpRequest, HttpResponse);
+        void(*doPost)(HttpRequest, HttpResponse);
 } __attribute__((__packed__));
+
 
 /*
  * An object for implementors of the service functions; doGet and

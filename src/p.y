@@ -131,9 +131,9 @@
 /* ------------------------------------------------------------- Definitions */
 
 struct IHavePrecedence {
-        int daemon;
-        int logfile;
-        int pidfile;
+        boolean_t daemon;
+        boolean_t logfile;
+        boolean_t pidfile;
 };
 
 struct myrate {
@@ -159,7 +159,7 @@ extern char *argcurrentfile;
 extern int buffer_stack_ptr;
 
 /* Local variables */
-static int cfg_errflag = FALSE;
+static int cfg_errflag = 0;
 static Service_T tail = NULL;
 static Service_T current = NULL;
 static Request_T urlrequest = NULL;
@@ -191,7 +191,7 @@ static struct myresource resourceset;
 static struct mychecksum checksumset;
 static struct mytimestamp timestampset;
 static struct myactionrate actionrateset;
-static struct IHavePrecedence ihp = {FALSE, FALSE, FALSE};
+static struct IHavePrecedence ihp = {false, false, false};
 static struct myrate rate1 = {1, 1};
 static struct myrate rate2 = {1, 1};
 static char * htpasswd_file = NULL;
@@ -205,13 +205,13 @@ static int    digesttype = DIGEST_CLEARTEXT;
 static void  preparse();
 static void  postparse();
 static void  addmail(char *, Mail_T, Mail_T *);
-static Service_T createservice(int, char *, char *, int (*)(Service_T));
+static Service_T createservice(int, char *, char *, boolean_t (*)(Service_T));
 static void  addservice(Service_T);
 static void  adddependant(char *);
 static void  addservicegroup(char *);
 static void  addport(Port_T *, Port_T);
 static void  addresource(Resource_T);
-static void  addtimestamp(Timestamp_T, int);
+static void  addtimestamp(Timestamp_T, boolean_t);
 static void  addactionrate(ActionRate_T);
 static void  addsize(Size_T);
 static void  adduptime(Uptime_T);
@@ -230,7 +230,7 @@ static void  addcommand(int, unsigned);
 static void  addargument(char *);
 static void  addmmonit(URL_T, int, int, char *);
 static void  addmailserver(MailServer_T);
-static int   addcredentials(char *, char *, int, int);
+static boolean_t addcredentials(char *, char *, int, boolean_t);
 #ifdef HAVE_LIBPAM
 static void  addpamauth(char *, int);
 #endif
@@ -557,8 +557,8 @@ setalert        : SET alertmail formatlist reminder {
 
 setdaemon       : SET DAEMON NUMBER startdelay {
                     if (! Run.isdaemon || ihp.daemon) {
-                      ihp.daemon     = TRUE;
-                      Run.isdaemon   = TRUE;
+                      ihp.daemon     = true;
+                      Run.isdaemon   = true;
                       Run.polltime   = $3;
                       Run.startdelay = $<number>4;
                     }
@@ -577,23 +577,23 @@ setexpectbuffer : SET EXPECTBUFFER NUMBER unit {
                 ;
 
 setinit         : SET INIT {
-                    Run.init = TRUE;
+                    Run.init = true;
                   }
                 ;
 
 setfips         : SET FIPS {
                   #ifdef OPENSSL_FIPS
-                    Run.fipsEnabled = TRUE;
+                    Run.fipsEnabled = true;
                   #endif
                   }
                 ;
 
 setlog          : SET LOGFILE PATH   {
                    if (! Run.logfile || ihp.logfile) {
-                     ihp.logfile = TRUE;
+                     ihp.logfile = true;
                      setlogfile($3);
-                     Run.use_syslog = FALSE;
-                     Run.dolog =TRUE;
+                     Run.use_syslog = false;
+                     Run.dolog = true;
                    }
                   }
                 | SET LOGFILE SYSLOG {
@@ -629,7 +629,7 @@ setstatefile    : SET STATEFILE PATH {
 
 setpid          : SET PIDFILE PATH {
                    if (! Run.pidfile || ihp.pidfile) {
-                     ihp.pidfile = TRUE;
+                     ihp.pidfile = true;
                      setpidfile($3);
                    }
                  }
@@ -650,7 +650,7 @@ mmonit          : URLOBJECT nettimeout sslversion certmd5 {
 
 credentials     : /* EMPTY */
                 | REGISTER CREDENTIALS {
-                    Run.dommonitcredentials = FALSE;
+                    Run.dommonitcredentials = false;
                   }
                 ;
 
@@ -685,7 +685,7 @@ mailserver      : STRING username password sslversion certmd5 {
                     mailserverset.password = $<string>3;
                     mailserverset.ssl.version = $<number>4;
                     if (mailserverset.ssl.version != SSL_VERSION_NONE) {
-                      mailserverset.ssl.use_ssl = TRUE;
+                      mailserverset.ssl.use_ssl = true;
                       if (mailserverset.ssl.version == SSL_VERSION_SSLV2 || mailserverset.ssl.version == SSL_VERSION_SSLV3)
                          mailserverset.port = PORT_SMTPS;
                       mailserverset.ssl.certmd5 = $<string>5;
@@ -704,7 +704,7 @@ mailserver      : STRING username password sslversion certmd5 {
                     mailserverset.password = $<string>5;
                     mailserverset.ssl.version = $<number>6;
                     if (mailserverset.ssl.version != SSL_VERSION_NONE) {
-                      mailserverset.ssl.use_ssl = TRUE;
+                      mailserverset.ssl.use_ssl = true;
                       mailserverset.ssl.certmd5 = $<string>7;
                     }
                     addmailserver(&mailserverset);
@@ -804,7 +804,7 @@ clientpemfile   : CLIENTPEMFILE PATH {
                 ;
 
 allowselfcert   : ALLOWSELFCERTIFICATION {
-                        Run.httpd.socket.net.ssl.allowselfcert = TRUE;
+                        Run.httpd.flags |= Httpd_AllowSelfSignedCertificates;
                   }
                 ;
 
@@ -880,8 +880,8 @@ allowuser       : STRING {
                   }
                 ;
 
-readonly        : /* EMPTY */ { $<number>$ = FALSE; }
-                | READONLY { $<number>$ = TRUE; }
+readonly        : /* EMPTY */ { $<number>$ = false; }
+                | READONLY { $<number>$ = true; }
                 ;
 
 checkproc       : CHECKPROC SERVICENAME PIDFILE PATH {
@@ -892,14 +892,14 @@ checkproc       : CHECKPROC SERVICENAME PIDFILE PATH {
                   }
                 | CHECKPROC SERVICENAME MATCH STRING {
                     createservice(TYPE_PROCESS, $<string>2, $4, check_process);
-                    matchset.ignore = FALSE;
+                    matchset.ignore = false;
                     matchset.match_path = NULL;
                     matchset.match_string = Str_dup($4);
                     addmatch(&matchset, ACTION_IGNORE, 0);
                   }
                 | CHECKPROC SERVICENAME MATCH PATH {
                     createservice(TYPE_PROCESS, $<string>2, $4, check_process);
-                    matchset.ignore = FALSE;
+                    matchset.ignore = false;
                     matchset.match_path = NULL;
                     matchset.match_string = Str_dup($4);
                     addmatch(&matchset, ACTION_IGNORE, 0);
@@ -1106,7 +1106,7 @@ type            : /* EMPTY */ {
                   }
                 | TYPE TCPSSL sslversion certmd5  {
                     portset.type = SOCK_STREAM;
-                    portset.SSL.use_ssl = TRUE;
+                    portset.SSL.use_ssl = true;
                     portset.SSL.version = $<number>3;
                     if (portset.SSL.version == SSL_VERSION_NONE)
                       portset.SSL.version = SSL_VERSION_AUTO;
@@ -1165,7 +1165,7 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL HTTPS httplist {
                         portset.type = SOCK_STREAM;
-                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.use_ssl = true;
                         portset.SSL.version = SSL_VERSION_AUTO;
                         portset.protocol = Protocol_get(Protocol_HTTP);
                  }
@@ -1174,7 +1174,7 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL IMAPS {
                         portset.type = SOCK_STREAM;
-                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.use_ssl = true;
                         portset.SSL.version = SSL_VERSION_AUTO;
                         portset.protocol = Protocol_get(Protocol_IMAP);
                   }
@@ -1217,7 +1217,7 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL SMTPS {
                         portset.type = SOCK_STREAM;
-                        portset.SSL.use_ssl = TRUE;
+                        portset.SSL.use_ssl = true;
                         portset.SSL.version = SSL_VERSION_AUTO;
                         portset.protocol = Protocol_get(Protocol_SMTP);
                  }
@@ -1600,14 +1600,14 @@ dependant       : SERVICENAME { adddependant($<string>1); }
                 ;
 
 statusvalue     : IF STATUS operator NUMBER rate1 THEN action1 recovery {
-                        statusset.initialized = TRUE;
+                        statusset.initialized = true;
                         statusset.operator = $<number>3;
                         statusset.return_value = $<number>4;
                         addeventaction(&(statusset).action, $<number>7, $<number>8);
                         addstatus(&statusset);
                    }
                 | IF CHANGED STATUS rate1 THEN action1 {
-                        statusset.initialized = FALSE;
+                        statusset.initialized = false;
                         statusset.operator = Operator_Changed;
                         statusset.return_value = 0;
                         addeventaction(&(statusset).action, $<number>6, ACTION_IGNORE);
@@ -1732,12 +1732,12 @@ timestamp       : IF TIMESTAMP operator NUMBER time rate1 THEN action1 recovery 
                     timestampset.operator = $<number>3;
                     timestampset.time = ($4 * $<number>5);
                     addeventaction(&(timestampset).action, $<number>8, $<number>9);
-                    addtimestamp(&timestampset, FALSE);
+                    addtimestamp(&timestampset, false);
                   }
                 | IF CHANGED TIMESTAMP rate1 THEN action1 {
-                    timestampset.test_changes = TRUE;
+                    timestampset.test_changes = true;
                     addeventaction(&(timestampset).action, $<number>6, ACTION_IGNORE);
-                    addtimestamp(&timestampset, TRUE);
+                    addtimestamp(&timestampset, true);
                   }
                 ;
 
@@ -1851,7 +1851,7 @@ checksum        : IF FAILED hashtype CHECKSUM rate1 THEN action1 recovery {
                     addchecksum(&checksumset);
                   }
                 | IF CHANGED hashtype CHECKSUM rate1 THEN action1 {
-                    checksumset.test_changes = TRUE;
+                    checksumset.test_changes = true;
                     addeventaction(&(checksumset).action, $<number>7, ACTION_IGNORE);
                     addchecksum(&checksumset);
                   }
@@ -1916,27 +1916,27 @@ permission      : IF FAILED PERMISSION NUMBER rate1 THEN action1 recovery {
                 ;
 
 match           : IF matchflagnot MATCH PATH rate1 THEN action1 {
-                    matchset.ignore = FALSE;
+                    matchset.ignore = false;
                     matchset.match_path = $4;
                     matchset.match_string = NULL;
                     addmatchpath(&matchset, $<number>7);
                     FREE($4);
                   }
                 | IF matchflagnot MATCH STRING rate1 THEN action1 {
-                    matchset.ignore = FALSE;
+                    matchset.ignore = false;
                     matchset.match_path = NULL;
                     matchset.match_string = $4;
                     addmatch(&matchset, $<number>7, 0);
                   }
                 | IGNORE matchflagnot MATCH PATH {
-                    matchset.ignore = TRUE;
+                    matchset.ignore = true;
                     matchset.match_path = $4;
                     matchset.match_string = NULL;
                     addmatchpath(&matchset, ACTION_IGNORE);
                     FREE($4);
                   }
                 | IGNORE matchflagnot MATCH STRING {
-                    matchset.ignore = TRUE;
+                    matchset.ignore = true;
                     matchset.match_path = NULL;
                     matchset.match_string = $4;
                     addmatch(&matchset, ACTION_IGNORE, 0);
@@ -1944,10 +1944,10 @@ match           : IF matchflagnot MATCH PATH rate1 THEN action1 {
                 ;
 
 matchflagnot    : /* EMPTY */ {
-                    matchset.not = FALSE;
+                    matchset.not = false;
                   }
                 | NOT {
-                    matchset.not = TRUE;
+                    matchset.not = true;
                   }
                 ;
 
@@ -1959,7 +1959,7 @@ size            : IF SIZE operator NUMBER unit rate1 THEN action1 recovery {
                     addsize(&sizeset);
                   }
                 | IF CHANGED SIZE rate1 THEN action1 {
-                    sizeset.test_changes = TRUE;
+                    sizeset.test_changes = true;
                     addeventaction(&(sizeset).action, $<number>6, ACTION_IGNORE);
                     addsize(&sizeset);
                   }
@@ -2219,9 +2219,9 @@ void yywarning2(const char *s, ...) {
 
 /*
  * The Parser hook - start parsing the control file
- * Returns TRUE if parsing succeeded, otherwise FALSE
+ * Returns true if parsing succeeded, otherwise false
  */
-int parse(char *controlfile) {
+boolean_t parse(char *controlfile) {
 
         ASSERT(controlfile);
 
@@ -2229,7 +2229,7 @@ int parse(char *controlfile) {
 
         if ((yyin = fopen(controlfile,"r")) == (FILE *)NULL) {
                 LogError("Cannot open the control file '%s' -- %s\n", controlfile, STRERROR);
-                return FALSE;
+                return false;
         }
 
         currentfile = Str_dup(controlfile);
@@ -2257,9 +2257,9 @@ int parse(char *controlfile) {
          * no greater than 700 and it must not be a symbolic link.
          */
         if (! file_checkStat(controlfile, "control file", S_IRUSR|S_IWUSR|S_IXUSR))
-                return FALSE;
+                return false;
 
-        return(cfg_errflag == 0);
+        return cfg_errflag == 0;
 }
 
 
@@ -2281,13 +2281,13 @@ static void preparse() {
         argcurrentfile              = NULL;
         argyytext                   = NULL;
         /* Reset parser */
-        Run.stopped                 = FALSE;
-        Run.dolog                   = FALSE;
-        Run.doaction                = FALSE;
-        Run.dommonitcredentials     = TRUE;
+        Run.stopped                 = false;
+        Run.dolog                   = false;
+        Run.doaction                = false;
+        Run.dommonitcredentials     = true;
         Run.mmonitcredentials       = NULL;
         Run.httpd.flags             = Httpd_Disabled | Httpd_Signature;
-        Run.httpd.credentials             = NULL;
+        Run.httpd.credentials       = NULL;
         memset(&(Run.httpd.socket), 0, sizeof(Run.httpd.socket));
         Run.mailserver_timeout      = SMTP_TIMEOUT;
         Run.eventlist               = NULL;
@@ -2303,9 +2303,9 @@ static void preparse() {
         Run.MailFormat.subject      = NULL;
         Run.MailFormat.message      = NULL;
         depend_list                 = NULL;
-        Run.handler_init            = TRUE;
+        Run.handler_init            = true;
         #ifdef OPENSSL_FIPS
-        Run.fipsEnabled             = FALSE;
+        Run.fipsEnabled             = false;
         #endif
         for (i = 0; i <= HANDLER_MAX; i++)
                 Run.handler_queue[i] = 0;
@@ -2352,7 +2352,7 @@ static void postparse() {
         }
 
         if (Run.logfile)
-                Run.dolog = TRUE;
+                Run.dolog = true;
 
         /* Add the default general system service if not specified explicitly: service name default to hostname */
         if (! Run.system) {
@@ -2397,7 +2397,7 @@ static void postparse() {
  * Create a new service object and add any current objects to the
  * service list.
  */
-static Service_T createservice(int type, char *name, char *value, int (*check)(Service_T s)) {
+static Service_T createservice(int type, char *name, char *value, boolean_t (*check)(Service_T s)) {
         ASSERT(name);
         ASSERT(value);
 
@@ -2628,7 +2628,7 @@ static void addport(Port_T *list, Port_T port) {
                 p->request_hashtype = 0;
         }
 
-        if (port->SSL.use_ssl == TRUE) {
+        if (port->SSL.use_ssl == true) {
                 if (! have_ssl()) {
                         yyerror("ssl check cannot be activated. SSL is not supported");
                 } else {
@@ -2636,7 +2636,7 @@ static void addport(Port_T *list, Port_T port) {
                                 p->SSL.certmd5 = port->SSL.certmd5;
                                 cleanup_hash_string(p->SSL.certmd5);
                         }
-                        p->SSL.use_ssl = TRUE;
+                        p->SSL.use_ssl = true;
                         p->SSL.version = port->SSL.version;
                 }
         }
@@ -2674,7 +2674,7 @@ static void addresource(Resource_T rr) {
 /*
  * Add a new file object to the current service timestamp list
  */
-static void addtimestamp(Timestamp_T ts, int notime) {
+static void addtimestamp(Timestamp_T ts, boolean_t notime) {
         Timestamp_T t;
 
         ASSERT(ts);
@@ -2848,7 +2848,7 @@ static void addnonexist(Nonexist_T ff) {
 static void addchecksum(Checksum_T cs) {
         ASSERT(cs);
 
-        cs->initialized = TRUE;
+        cs->initialized = true;
 
         if (! *cs->hash) {
                 if (cs->type == HASH_UNKNOWN)
@@ -2856,7 +2856,7 @@ static void addchecksum(Checksum_T cs) {
                 if (! (Util_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
                         /* If the file doesn't exist, set dummy value */
                         snprintf(cs->hash, sizeof(cs->hash), cs->type == HASH_MD5 ? "00000000000000000000000000000000" : "0000000000000000000000000000000000000000");
-                        cs->initialized = FALSE;
+                        cs->initialized = false;
                         yywarning2("Cannot compute a checksum for file %s", current->path);
                 }
         }
@@ -3180,7 +3180,7 @@ static void addicmp(Icmp_T is) {
         icmp->count        = is->count;
         icmp->timeout      = is->timeout;
         icmp->action       = is->action;
-        icmp->is_available = FALSE;
+        icmp->is_available = false;
         icmp->response     = -1;
 
         icmp->next         = current->icmplist;
@@ -3328,7 +3328,7 @@ static void prepare_urlrequest(URL_T U) {
          the future */
         portset.protocol = Protocol_get(Protocol_HTTP);
         if (IS(U->protocol, "https"))
-                portset.SSL.use_ssl = TRUE;
+                portset.SSL.use_ssl = true;
 
 }
 
@@ -3375,7 +3375,7 @@ static void addmmonit(URL_T url, int timeout, int sslversion, char *certmd5) {
                 if (! have_ssl()) {
                         yyerror("SSL check cannot be activated. SSL is not supported");
                 } else {
-                        c->ssl.use_ssl = TRUE;
+                        c->ssl.use_ssl = true;
                         c->ssl.version = (sslversion == SSL_VERSION_NONE) ? SSL_VERSION_AUTO : sslversion;
                         if (certmd5) {
                                 c->ssl.certmd5 = certmd5;
@@ -3494,7 +3494,7 @@ static gid_t get_gid(char *group, gid_t gid) {
  */
 static void addeuid(uid_t uid) {
         if (! getuid()) {
-                command->has_uid = TRUE;
+                command->has_uid = true;
                 command->uid = uid;
         } else {
                 yyerror("UID statement requires root privileges");
@@ -3507,7 +3507,7 @@ static void addeuid(uid_t uid) {
  */
 static void addegid(gid_t gid) {
         if (! getuid()) {
-                command->has_gid = TRUE;
+                command->has_gid = true;
                 command->gid = gid;
         } else {
                 yyerror("GID statement requires root privileges");
@@ -3594,10 +3594,10 @@ static void addhtpasswdentry(char *filename, char *username, int dtype) {
                 ht_username = Str_dup(buf);
 
                 if (username == NULL) {
-                        if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
+                        if (addcredentials(ht_username, ht_passwd, dtype, false))
                                 credentials_added++;
                 } else if (strcmp(username, ht_username) == 0)  {
-                        if (addcredentials(ht_username, ht_passwd, dtype, FALSE))
+                        if (addcredentials(ht_username, ht_passwd, dtype, false))
                                 credentials_added++;
                 } else {
                         FREE(ht_passwd);
@@ -3655,7 +3655,7 @@ static void addpamauth(char* groupname, int readonly) {
 /*
  * Add Basic Authentication credentials
  */
-static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
+static boolean_t addcredentials(char *uname, char *passwd, int dtype, boolean_t readonly) {
         Auth_T c;
 
         ASSERT(uname);
@@ -3670,7 +3670,7 @@ static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
                         yywarning2("Credentials for user %s were already added, entry ignored", uname);
                         FREE(uname);
                         FREE(passwd);
-                        return FALSE;
+                        return false;
                 }
 
                 c = Run.httpd.credentials;
@@ -3692,7 +3692,7 @@ static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
 
         DEBUG("Adding credentials for user '%s'\n", uname);
 
-        return TRUE;
+        return true;
 
 }
 
@@ -3703,10 +3703,10 @@ static int addcredentials(char *uname, char *passwd, int dtype, int readonly) {
 static void setsyslog(char *facility) {
 
         if (! Run.logfile || ihp.logfile) {
-                ihp.logfile = TRUE;
+                ihp.logfile = true;
                 setlogfile(Str_dup("syslog"));
-                Run.use_syslog = TRUE;
-                Run.dolog = TRUE;
+                Run.use_syslog = true;
+                Run.dolog = true;
         }
 
         if (facility) {
@@ -3751,7 +3751,7 @@ static void reset_mailset() {
 static void reset_mailserverset() {
         memset(&mailserverset, 0, sizeof(struct mymailserver));
         mailserverset.port = PORT_SMTP;
-        mailserverset.ssl.use_ssl = FALSE;
+        mailserverset.ssl.use_ssl = false;
         mailserverset.ssl.version = SSL_VERSION_AUTO;
 }
 
@@ -3791,7 +3791,7 @@ static void reset_resourceset() {
 static void reset_timestampset() {
         timestampset.operator = Operator_Equal;
         timestampset.time = 0;
-        timestampset.test_changes = FALSE;
+        timestampset.test_changes = false;
         timestampset.action = NULL;
 }
 
@@ -3812,7 +3812,7 @@ static void reset_actionrateset() {
 static void reset_sizeset() {
         sizeset.operator = Operator_Equal;
         sizeset.size = 0;
-        sizeset.test_changes = FALSE;
+        sizeset.test_changes = false;
         sizeset.action = NULL;
 }
 
@@ -3891,7 +3891,7 @@ static void reset_nonexistset() {
  */
 static void reset_checksumset() {
         checksumset.type         = HASH_UNKNOWN;
-        checksumset.test_changes = FALSE;
+        checksumset.test_changes = false;
         checksumset.action       = NULL;
         *checksumset.hash        = 0;
 }
@@ -3910,7 +3910,7 @@ static void reset_permset() {
  * Reset the Status set to default values
  */
 static void reset_statusset() {
-        statusset.initialized = FALSE;
+        statusset.initialized = false;
         statusset.return_value = 0;
         statusset.operator = Operator_Equal;
         statusset.action = NULL;
@@ -4025,18 +4025,18 @@ static void check_depend() {
         Service_T s;
         Service_T depends_on = NULL;
         Service_T* dlt = &depend_list; /* the current tail of it                                 */
-        int done;                      /* no unvisited nodes left?                               */
-        int found_some;                /* last iteration found anything new ?                    */
+        boolean_t done;                /* no unvisited nodes left?                               */
+        boolean_t found_some;          /* last iteration found anything new ?                    */
         depend_list = NULL;            /* depend_list will be the topological sorted servicelist */
 
         do {
-                done = TRUE;
-                found_some = FALSE;
+                done = true;
+                found_some = false;
                 for (s = servicelist; s; s = s->next) {
                         Dependant_T d;
                         if (s->visited)
                                 continue;
-                        done = FALSE; // still unvisited nodes
+                        done = false; // still unvisited nodes
                         depends_on = NULL;
                         for (d = s->dependantlist; d; d = d->next) {
                                 Service_T dp = Util_getService(d->dependant);
@@ -4050,8 +4050,8 @@ static void check_depend() {
                         }
 
                         if (! depends_on) {
-                                s->visited = TRUE;
-                                found_some = TRUE;
+                                s->visited = true;
+                                found_some = true;
                                 *dlt = s;
                                 dlt = &s->next_depend;
                         }
