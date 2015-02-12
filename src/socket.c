@@ -177,12 +177,12 @@ Socket_T socket_create(void *port) {
                 S->host = Str_dup(p->family == Socket_Unix ? LOCALHOST : p->hostname);
                 if (p->SSL.use_ssl && ! socket_switch2ssl(S, p->SSL)) {
                         socket_free(&S);
+                        LogError("socket_create: Could not switch socket to SSL\n");
                         return NULL;
                 }
                 S->Port = port;
                 return S;
         }
-        LogError("socket_create: Could not create socket -- %s\n", STRERROR);
         return NULL;
 }
 

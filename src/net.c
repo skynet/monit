@@ -363,8 +363,13 @@ int create_unix_socket(const char *pathname, int type, int timeout) {
                         char error[STRLEN];
                         if (do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout, error, sizeof(error)))
                                 return s;
+                        LogError("%s", error);
+                } else {
+                        LogError("Cannot set nonblocking unix socket %s -- %s\n", pathname, STRERROR);
                 }
                 Net_close(s);
+        } else {
+                LogError("Cannot create unix socket %s -- %s", pathname, STRERROR);
         }
         return -1;
 }
