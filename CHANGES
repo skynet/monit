@@ -79,7 +79,7 @@ Fixed: Show integer number when presenting byte-values with [B] unit (drop ".0" 
 Fixed: Support paths up to PATH_MAX in the event queue.
 
 Fixed: Action was reported as "Ignored" for the State_Changed event type if the delivery failed, event
-was stored to the queue and delivery retried later.
+was stored to the queue and the delivery was retried later.
 
 
 Version 5.11

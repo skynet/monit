@@ -370,8 +370,8 @@ typedef struct mycommand {
         char *arg[ARGMAX];                             /**< Program with arguments */
         int   length;                       /**< The length of the arguments array */
         boolean_t has_uid;      /**< true if a new uid is defined for this Command */
-        uid_t uid;         /**< The user id to switch to when running this Command */
         boolean_t has_gid;      /**< true if a new gid is defined for this Command */
+        uid_t uid;         /**< The user id to switch to when running this Command */
         gid_t gid;        /**< The group id to switch to when running this Command */
         unsigned timeout;     /**< Max seconds which we wait for method to execute */
 } *command_t;
@@ -469,14 +469,15 @@ typedef struct myauthentication {
 
 /** Defines process tree - data storage backend*/
 typedef struct myprocesstree {
-        int           pid;
-        int           ppid;
+        boolean_t     visited;
+        pid_t         pid;
+        pid_t         ppid;
+        int           parent;
         int           status_flag;
-        int           visited;
         int           children_num;
         int           children_sum;
-        int           cpu_percent;
-        int           cpu_percent_sum;
+        short         cpu_percent;
+        short         cpu_percent_sum;
         uid_t         uid;
         uid_t         euid;
         gid_t         gid;
@@ -491,26 +492,25 @@ typedef struct myprocesstree {
         long          cputime;                                   /**< 1/10 seconds */
         long          cputime_prev;                              /**< 1/10 seconds */
 
-        int           parent;
         int          *children;
 } ProcessTree_T;
 
 
 /** Defines data for systemwide statistic */
 typedef struct mysysteminfo {
-        struct timeval collected;                    /**< When were data collected */
-        int cpus;                                              /**< Number of CPUs */
-        double loadavg[3];                                /**< Load average triple */
+        short cpus;                                            /**< Number of CPUs */
+        short total_mem_percent;       /**< Total real memory in use in the system */
+        short total_swap_percent;             /**< Total swap in use in the system */
+        short total_cpu_user_percent;    /**< Total CPU in use in user space (pct.)*/
+        short total_cpu_syst_percent;  /**< Total CPU in use in kernel space (pct.)*/
+        short total_cpu_wait_percent;       /**< Total CPU in use in waiting (pct.)*/
         unsigned long mem_kbyte_max;               /**< Maximal system real memory */
         unsigned long swap_kbyte_max;                               /**< Swap size */
         unsigned long total_mem_kbyte; /**< Total real memory in use in the system */
         unsigned long total_swap_kbyte;       /**< Total swap in use in the system */
-        int    total_mem_percent;      /**< Total real memory in use in the system */
-        int    total_swap_percent;            /**< Total swap in use in the system */
-        int    total_cpu_user_percent;   /**< Total CPU in use in user space (pct.)*/
-        int    total_cpu_syst_percent; /**< Total CPU in use in kernel space (pct.)*/
-        int    total_cpu_wait_percent;      /**< Total CPU in use in waiting (pct.)*/
+        double loadavg[3];                                /**< Load average triple */
         struct utsname uname;        /**< Platform information provided by uname() */
+        struct timeval collected;                    /**< When were data collected */
 } SystemInfo_T;
 
 
@@ -559,25 +559,25 @@ typedef struct myport {
         /** Apache-status specific parameters */
         struct apache_status {
                 short loglimit;                  /**< Max percentage of logging processes */
-                short loglimitOP;                                  /**< loglimit operator */
                 short closelimit;             /**< Max percentage of closinging processes */
-                short closelimitOP;                              /**< closelimit operator */
                 short dnslimit;         /**< Max percentage of processes doing DNS lookup */
-                short dnslimitOP;                                  /**< dnslimit operator */
                 short keepalivelimit;          /**< Max percentage of keepalive processes */
-                short keepalivelimitOP;                      /**< keepalivelimit operator */
                 short replylimit;               /**< Max percentage of replying processes */
-                short replylimitOP;                              /**< replylimit operator */
                 short requestlimit;     /**< Max percentage of processes reading requests */
-                short requestlimitOP;                          /**< requestlimit operator */
                 short startlimit;            /**< Max percentage of processes starting up */
-                short startlimitOP;                              /**< startlimit operator */
                 short waitlimit;  /**< Min percentage of processes waiting for connection */
-                short waitlimitOP;                                /**< waitlimit operator */
                 short gracefullimit;/**< Max percentage of processes gracefully finishing */
-                short gracefullimitOP;                        /**< gracefullimit operator */
                 short cleanuplimit;      /**< Max percentage of processes in idle cleanup */
-                short cleanuplimitOP;                          /**< cleanuplimit operator */
+                Operator_Type loglimitOP;                          /**< loglimit operator */
+                Operator_Type closelimitOP;                      /**< closelimit operator */
+                Operator_Type dnslimitOP;                          /**< dnslimit operator */
+                Operator_Type keepalivelimitOP;              /**< keepalivelimit operator */
+                Operator_Type replylimitOP;                      /**< replylimit operator */
+                Operator_Type requestlimitOP;                  /**< requestlimit operator */
+                Operator_Type startlimitOP;                      /**< startlimit operator */
+                Operator_Type waitlimitOP;                        /**< waitlimit operator */
+                Operator_Type gracefullimitOP;                /**< gracefullimit operator */
+                Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
         } ApacheStatus;
 
         Ssl_T SSL;                                             /**< SSL definition */
@@ -840,10 +840,10 @@ typedef struct mynonexist {
 
 /** Defines filesystem configuration */
 typedef struct myfilesystem {
-        int  resource;                        /**< Whether to check inode or space */
+        Resource_Type resource;               /**< Whether to check inode or space */
         Operator_Type operator;                           /**< Comparison operator */
         long long limit_absolute;                          /**< Watermark - blocks */
-        int  limit_percent;                               /**< Watermark - percent */
+        short limit_percent;                              /**< Watermark - percent */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -867,10 +867,10 @@ typedef struct myinfo {
                         long long  f_blocksfreetotal;           /**< Free blocks in filesystem */
                         long long  f_files;                /**< Total file nodes in filesystem */
                         long long  f_filesfree;             /**< Free file nodes in filesystem */
-                        int        inode_percent;              /**< Used inode percentage * 10 */
                         long long  inode_total;                  /**< Used inode total objects */
-                        int        space_percent;              /**< Used space percentage * 10 */
                         long long  space_total;                   /**< Used space total blocks */
+                        short      inode_percent;              /**< Used inode percentage * 10 */
+                        short      space_percent;              /**< Used space percentage * 10 */
                         int        _flags;               /**< Filesystem flags from last cycle */
                         int        flags;              /**< Filesystem flags from actual cycle */
                 } filesystem;
@@ -884,10 +884,10 @@ typedef struct myinfo {
                 } file;
 
                 struct {
-                        int    _pid;                          /**< Process PID from last cycle */
-                        int    _ppid;                  /**< Process parent PID from last cycle */
-                        int    pid;                         /**< Process PID from actual cycle */
-                        int    ppid;                 /**< Process parent PID from actual cycle */
+                        pid_t  _pid;                          /**< Process PID from last cycle */
+                        pid_t  _ppid;                  /**< Process parent PID from last cycle */
+                        pid_t  pid;                         /**< Process PID from actual cycle */
+                        pid_t  ppid;                 /**< Process parent PID from actual cycle */
                         uid_t  uid;                                           /**< Process UID */
                         uid_t  euid;                                /**< Effective Process UID */
                         gid_t  gid;                                           /**< Process GID */
@@ -895,10 +895,10 @@ typedef struct myinfo {
                         int    children;
                         long   mem_kbyte;
                         long   total_mem_kbyte;
-                        int    mem_percent;                               /**< percentage * 10 */
-                        int    total_mem_percent;                         /**< percentage * 10 */
-                        int    cpu_percent;                               /**< percentage * 10 */
-                        int    total_cpu_percent;                         /**< percentage * 10 */
+                        short  mem_percent;                               /**< percentage * 10 */
+                        short  total_mem_percent;                         /**< percentage * 10 */
+                        short  cpu_percent;                               /**< percentage * 10 */
+                        short  total_cpu_percent;                         /**< percentage * 10 */
                         time_t uptime;                                     /**< Process uptime */
                 } process;
 
@@ -920,8 +920,8 @@ typedef struct myservice {
         Monitor_Mode mode;                    /**< Monitoring mode for the service */
         int  ncycle;                          /**< The number of the current cycle */
         int  nstart;           /**< The number of current starts with this service */
-        int  visited;      /**< Service visited flag, set if dependencies are used */
-        int  depend_visited;/**< Depend visited flag, set if dependencies are used */
+        boolean_t visited;      /**< Service visited flag, set if dependencies are used */
+        boolean_t depend_visited;/**< Depend visited flag, set if dependencies are used */
         Every_T every;              /**< Timespec for when to run check of service */
         command_t start;                    /**< The start command for the service */
         command_t stop;                      /**< The stop command for the service */

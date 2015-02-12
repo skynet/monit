@@ -160,10 +160,10 @@ void fillprocesstree(ProcessTree_T *pt, int index) {
 
         ASSERT(pt);
 
-        if (pt[index].visited == 1)
+        if (pt[index].visited == true)
                 return;
 
-        pt[index].visited         = 1;
+        pt[index].visited         = true;
         pt[index].children_sum    = pt[index].children_num;
         pt[index].mem_kbyte_sum   = pt[index].mem_kbyte;
         pt[index].cpu_percent_sum = pt[index].cpu_percent;
