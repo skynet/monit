@@ -220,7 +220,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                 pt[i].starttime   = procs[i].pi_start;
 
                 if (procs[i].pi_state == SZOMB) {
-                        pt[i].status_flag |= PROCESS_ZOMBIE;
+                        pt[i].zombie = true;
                 } else if (getuser(&(procs[i]), sizeof(struct procinfo), &user, sizeof(struct userinfo)) != -1) {
                         pt[i].mem_kbyte = (user.ui_drss + user.ui_trss) * (page_size / 1024);
                         pt[i].cputime   = (user.ui_ru.ru_utime.tv_sec + user.ui_ru.ru_utime.tv_usec * 1.0e-6 + user.ui_ru.ru_stime.tv_sec + user.ui_ru.ru_stime.tv_usec * 1.0e-6) * 10;

@@ -207,8 +207,8 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                 pt[i].mem_kbyte   = (unsigned long)(psall[i].pst_rssize * (page_size / 1024.0));
                 pt[i].cmdline     = (psall[i].pst_cmd && *psall[i].pst_cmd) ? Str_dup(psall[i].pst_cmd) : Str_dup(psall[i].pst_ucomm);
 
-                if ( psall[i].pst_stat == PS_ZOMBIE )
-                        pt[i].status_flag |= PROCESS_ZOMBIE;
+                if (psall[i].pst_stat == PS_ZOMBIE)
+                        pt[i].zombie = true;
         }
 
         *reference = pt;

@@ -204,10 +204,10 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
 
                 /* If we don't have any light-weight processes (LWP) then we are definitely a zombie */
                 if (psinfo->pr_nlwp == 0) {
-                        pt[i].status_flag = PROCESS_ZOMBIE;
-                        pt[i].cputime     = 0;
+                        pt[i].zombie = true;
+                        pt[i].cputime = 0;
                         pt[i].cpu_percent = 0;
-                        pt[i].mem_kbyte   = 0;
+                        pt[i].mem_kbyte = 0;
                         continue;
                 }
 

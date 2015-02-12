@@ -114,7 +114,7 @@ boolean_t update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_
                 s->inf->priv.process.uptime            = time(NULL) - pt[leaf].starttime;
                 s->inf->priv.process.children          = pt[leaf].children_sum;
                 s->inf->priv.process.mem_kbyte         = pt[leaf].mem_kbyte;
-                s->inf->priv.process.status_flag       = pt[leaf].status_flag;
+                s->inf->priv.process.zombie            = pt[leaf].zombie;
                 s->inf->priv.process.total_mem_kbyte   = pt[leaf].mem_kbyte_sum;
                 s->inf->priv.process.cpu_percent       = pt[leaf].cpu_percent;
                 s->inf->priv.process.total_cpu_percent = pt[leaf].cpu_percent_sum;

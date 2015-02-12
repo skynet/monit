@@ -302,7 +302,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                 pt[i].cpu_percent = 0;
                 pt[i].mem_kbyte = (page_shift_to_kb < 0) ? (stat_item_rss >> abs(page_shift_to_kb)) : (stat_item_rss << abs(page_shift_to_kb));
                 if (stat_item_state == 'Z') // State is Zombie -> then we are a Zombie ... clear or? (-:
-                        pt[i].status_flag |= PROCESS_ZOMBIE;
+                        pt[i].zombie = true;
         }
 
         *reference = pt;

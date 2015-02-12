@@ -368,7 +368,7 @@ typedef char MD_T[MD_SIZE];
  */
 typedef struct mycommand {
         char *arg[ARGMAX];                             /**< Program with arguments */
-        int   length;                       /**< The length of the arguments array */
+        short length;                       /**< The length of the arguments array */
         boolean_t has_uid;      /**< true if a new uid is defined for this Command */
         boolean_t has_gid;      /**< true if a new gid is defined for this Command */
         uid_t uid;         /**< The user id to switch to when running this Command */
@@ -470,10 +470,10 @@ typedef struct myauthentication {
 /** Defines process tree - data storage backend*/
 typedef struct myprocesstree {
         boolean_t     visited;
+        boolean_t     zombie;
         pid_t         pid;
         pid_t         ppid;
         int           parent;
-        int           status_flag;
         int           children_num;
         int           children_sum;
         short         cpu_percent;
@@ -891,7 +891,7 @@ typedef struct myinfo {
                         uid_t  uid;                                           /**< Process UID */
                         uid_t  euid;                                /**< Effective Process UID */
                         gid_t  gid;                                           /**< Process GID */
-                        int    status_flag;
+                        boolean_t zombie;
                         int    children;
                         long   mem_kbyte;
                         long   total_mem_kbyte;

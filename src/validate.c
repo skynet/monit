@@ -215,10 +215,10 @@ error:
  */
 static void check_process_state(Service_T s) {
         ASSERT(s);
-        if (s->inf->priv.process.status_flag & PROCESS_ZOMBIE)
+        if (s->inf->priv.process.zombie)
                 Event_post(s, Event_Data, State_Failed, s->action_DATA, "process with pid %d is a zombie", s->inf->priv.process.pid);
         else
-                Event_post(s, Event_Data, State_Succeeded, s->action_DATA, "zombie check succeeded [status_flag=%04x]", s->inf->priv.process.status_flag);
+                Event_post(s, Event_Data, State_Succeeded, s->action_DATA, "zombie check succeeded");
 }
 
 

@@ -31,8 +31,6 @@
 #include <unistd.h>
 #endif
 
-#define PROCESS_ZOMBIE        1
-
 boolean_t update_process_data(Service_T s, ProcessTree_T *, int treesize, pid_t pid);
 boolean_t init_process_info(void);
 boolean_t update_system_load();

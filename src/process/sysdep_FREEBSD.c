@@ -174,7 +174,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
                 int flags       = pinfo[i].ki_stat;
                 char * procname = pinfo[i].ki_comm;
                 if (flags == SZOMB)
-                        pt[i].status_flag |= PROCESS_ZOMBIE;
+                        pt[i].zombie = true;
                 pt[i].cpu_percent = 0;
                 pt[i].time = get_float_time();
                 char **args;

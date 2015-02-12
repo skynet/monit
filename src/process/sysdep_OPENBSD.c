@@ -204,7 +204,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
                 pt[i].cpu_percent = 0;
                 pt[i].mem_kbyte   = (unsigned long)(pinfo[i].p_vm_rssize * pagesize_kbyte);
                 if (pinfo[i].p_stat == SZOMB)
-                        pt[i].status_flag |= PROCESS_ZOMBIE; //FIXME: save system service flag too (kernel threads)
+                        pt[i].zombie = true;
                 pt[i].time = get_float_time();
                 char **args;
 #if (OpenBSD <= 201105)

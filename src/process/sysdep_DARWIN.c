@@ -225,7 +225,7 @@ int initprocesstree_sysdep(ProcessTree_T **reference) {
                 }
 
                 if (pinfo[i].kp_proc.p_stat == SZOMB)
-                        pt[i].status_flag |= PROCESS_ZOMBIE;
+                        pt[i].zombie = true;
                 pt[i].time = get_float_time();
 
                 if (task_for_pid(mytask, pt[i].pid, &task) == KERN_SUCCESS) {
