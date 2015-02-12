@@ -227,7 +227,7 @@ typedef enum {
         Monitor_Yes     = 0x1,
         Monitor_Init    = 0x2,
         Monitor_Waiting = 0x4
-} Monitor_State; // note: don't memory pack for statefile backward compatibility (or introduce new statefile format version for packed)
+} __attribute__((__packed__)) Monitor_State;
 
 
 typedef enum {
@@ -240,7 +240,7 @@ typedef enum {
         Service_Fifo,
         Service_Program,
         Service_Net
-} Service_Type; // note: don't memory pack for statefile backward compatibility (or introduce new statefile format version for packed)
+} __attribute__((__packed__)) Service_Type;
 
 
 typedef enum {
