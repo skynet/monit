@@ -543,16 +543,16 @@ typedef struct myport {
         char *pathname;                   /**< Pathname, in case of an UNIX socket */
         Generic_T generic;                                /**< Generic test handle */
         volatile int socket;                       /**< Socket used for connection */
+        int port;                                                  /**< Portnumber */
         int type;                   /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
-        int port;                                                  /**< Portnumber */
         Hash_Type request_hashtype; /**< The optional type of hash for a req. document */
+        Operator_Type operator;                           /**< Comparison operator */
+        boolean_t is_available;          /**< true if the server/port is available */
         int maxforward;            /**< Optional max forward for protocol checking */
         int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
-        boolean_t is_available;          /**< true if the server/port is available */
         int version;                                         /**< Protocol version */
-        Operator_Type operator;                           /**< Comparison operator */
         int status;                                           /**< Protocol status */
         double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
