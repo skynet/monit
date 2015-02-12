@@ -354,6 +354,9 @@ AC_CHECK_TYPES([boolean_t], [], [],
          #ifdef HAVE_UVM_UVM_PARAM_H
          #include <uvm/uvm_param.h>
          #endif
+         #ifdef HAVE_VM_VM_H
+         #include <vm/vm.h>
+         #endif
         ])
 
 AC_TYPE_MODE_T
