@@ -185,39 +185,39 @@ static char *_addressToString(const struct sockaddr *addr, socklen_t addrlen, ch
 /*
  * Do a non blocking connect, timeout if not connected within timeout milliseconds
  */
-static int do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout) {
-        int error = connect(s, addr, addrlen);
-        if (! error) {
-                return 0;
+static boolean_t do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout, char *error, int errorlen) {
+        int rv = connect(s, addr, addrlen);
+        if (! rv) {
+                return true;
         } else if (errno != EINPROGRESS) {
-                LogError("Connection to %s -- failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
-                return -1;
+                snprintf(error, errorlen, "Connection to %s -- failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                return false;
         }
         struct pollfd fds[1];
         fds[0].fd = s;
         fds[0].events = POLLIN | POLLOUT;
-        error = poll(fds, 1, timeout);
-        if (error == 0) {
-                LogError("Connection to %s -- timed out\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
-                return -1;
-        } else if (error == -1) {
-                LogError("Connection to %s -- poll failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
-                return -1;
+        rv = poll(fds, 1, timeout);
+        if (rv == 0) {
+                snprintf(error, errorlen, "Connection to %s -- timed out\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
+                return false;
+        } else if (rv == -1) {
+                snprintf(error, errorlen, "Connection to %s -- poll failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                return false;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
-                socklen_t errorlen = sizeof(error);
-                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &errorlen) < 0) {
-                        LogError("Connection to %s -- read of error details failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
-                        return -1;
-                } else if (error) {
-                        LogError("Connection to %s -- error: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(error));
-                        return -1;
+                socklen_t rvlen = sizeof(rv);
+                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
+                        snprintf(error, errorlen, "Connection to %s -- read of error details failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                        return false;
+                } else if (rv) {
+                        snprintf(error, errorlen, "Connection to %s -- error: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(rv));
+                        return false;
                 }
         } else {
-                LogError("Connection to %s -- not ready for I/O\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
-                return -1;
+                snprintf(error, errorlen, "Connection to %s -- not ready for I/O\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
+                return false;
         }
-        return 0;
+        return true;
 }
 
 
@@ -322,28 +322,32 @@ int create_socket(const char *hostname, int port, int type, Socket_Family family
                 return -1;
         }
         int s = -1;
+        char error[STRLEN];
+        // Try to connect until succeeded. We log only the last error - the host may resolve to multiple IPs (or IP families) and if at least one succeeded, we have no problem and don't have to flood the log with partial errors
         for (r = result; r; r = r->ai_next) {
                 if ((s = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) >= 0) {
                         if (s >= 0) {
                                 if (Net_setNonBlocking(s)) {
                                         if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
-                                                if (! do_connect(s, r->ai_addr, r->ai_addrlen, timeout)) {
+                                                if (do_connect(s, r->ai_addr, r->ai_addrlen, timeout, error, sizeof(error))) {
                                                         freeaddrinfo(result);
                                                         return s;
                                                 }
                                         } else {
-                                                LogError("Cannot set socket close on exec -- %s\n", STRERROR);
+                                                snprintf(error, sizeof(error), "Cannot set socket close on exec -- %s\n", STRERROR);
                                         }
                                 } else {
-                                        LogError("Cannot set nonblocking socket -- %s\n", STRERROR);
+                                        snprintf(error, sizeof(error), "Cannot set nonblocking socket -- %s\n", STRERROR);
                                 }
                                 Net_close(s);
                         }
                 } else {
-                        LogError("Cannot create socket for [%s]:%d -- %s\n", hostname, port, STRERROR);
+                        snprintf(error, sizeof(error), "Cannot create socket for [%s]:%d -- %s\n", hostname, port, STRERROR);
                 }
+                DEBUG("%s", error);
         }
         freeaddrinfo(result);
+        LogError("%s", error);
         return -1;
 }
 
@@ -355,9 +359,11 @@ int create_unix_socket(const char *pathname, int type, int timeout) {
         if (s >= 0) {
                 unixsocket.sun_family = AF_UNIX;
                 snprintf(unixsocket.sun_path, sizeof(unixsocket.sun_path), "%s", pathname);
-                if (Net_setNonBlocking(s))
-                        if (! do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout))
+                if (Net_setNonBlocking(s)) {
+                        char error[STRLEN];
+                        if (do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout, error, sizeof(error)))
                                 return s;
+                }
                 Net_close(s);
         }
         return -1;
