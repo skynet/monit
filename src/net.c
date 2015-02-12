@@ -136,7 +136,9 @@
 #endif
 #endif
 
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 
 #include "monit.h"
 #include "net.h"
