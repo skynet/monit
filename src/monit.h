@@ -983,7 +983,7 @@ typedef struct myservice {
 
         /** Events */
         struct myevent {
-                #define           EVENT_VERSION  3      /**< The event structure version */
+                #define           EVENT_VERSION  4      /**< The event structure version */
                 long              id;                      /**< The event identification */
                 struct timeval    collected;                 /**< When the event occured */
                 char             *source;                 /**< Event source service name */

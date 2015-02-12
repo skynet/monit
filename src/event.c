@@ -412,6 +412,8 @@ Action_Type Event_get_action(Event_T E) {
                         LogError("Invalid event state: %d\n", E->state);
                         return Action_Ignored;
         }
+        if (! A)
+                return Action_Ignored;
         /* In the case of passive mode we replace the description of start, stop or restart action for alert action, because these actions are passive in this mode */
         return (E->mode == Monitor_Passive && ((A->id == Action_Start) || (A->id == Action_Stop) || (A->id == Action_Restart))) ? Action_Alert : A->id;
 }
@@ -437,55 +439,52 @@ const char *Event_get_action_description(Event_T E) {
  * Reprocess the partially handled event queue
  */
 void Event_queue_process() {
-        DIR           *dir = NULL;
-        FILE          *file = NULL;
-        struct dirent *de = NULL;
-        EventAction_T  ea = NULL;
-        Action_T       a = NULL;
-
         /* return in the case that the eventqueue is not enabled or empty */
         if (! Run.eventlist_dir || (! Run.handler_init && ! Run.handler_queue[Handler_Alert] && ! Run.handler_queue[Handler_Mmonit]))
                 return;
 
-        if (! (dir = opendir(Run.eventlist_dir)) ) {
+        DIR *dir = opendir(Run.eventlist_dir);
+        if (! dir) {
                 if (errno != ENOENT)
                         LogError("Cannot open the directory %s -- %s\n", Run.eventlist_dir, STRERROR);
                 return;
         }
 
-        if ((de = readdir(dir)))
+        struct dirent *de = readdir(dir);
+        if (de)
                 DEBUG("Processing postponed events queue\n");
 
-        NEW(ea);
+        Action_T a;
         NEW(a);
 
-        while (de) {
-                size_t         size;
-                int            handlers_passed = 0;
-                int           *version = NULL;
-                Action_Type   *action = NULL;
-                Event_T        e = NULL;
-                struct stat    st;
-                char           file_name[STRLEN];
+        EventAction_T ea;
+        NEW(ea);
 
-                /* In the case that all handlers failed, skip the further processing in
-                 * this cycle. Alert handler is currently defined anytime (either
-                 * explicitly or localhost by default) */
+        while (de) {
+                int handlers_passed = 0;
+
+                /* In the case that all handlers failed, skip the further processing in this cycle. Alert handler is currently defined anytime (either explicitly or localhost by default) */
                 if ( (Run.mmonits && FLAG(Run.handler_flag, Handler_Mmonit) && FLAG(Run.handler_flag, Handler_Alert)) || FLAG(Run.handler_flag, Handler_Alert))
                         break;
 
-                snprintf(file_name, STRLEN, "%s/%s", Run.eventlist_dir, de->d_name);
+                char file_name[PATH_MAX];
+                snprintf(file_name, sizeof(file_name), "%s/%s", Run.eventlist_dir, de->d_name);
 
+                struct stat st;
                 if (! stat(file_name, &st) && S_ISREG(st.st_mode)) {
-                        DEBUG("Processing queued event %s\n", file_name);
+                        LogInfo("Processing queued event %s\n", file_name);
 
-                        if (! (file = fopen(file_name, "r")) ) {
+                        FILE *file = fopen(file_name, "r");
+                        if (! file) {
                                 LogError("Queued event processing failed - cannot open the file %s -- %s\n", file_name, STRERROR);
                                 goto error1;
                         }
 
+                        size_t size;
+
                         /* read event structure version */
-                        if (! (version = file_readQueue(file, &size))) {
+                        int *version = file_readQueue(file, &size);
+                        if (! version) {
                                 LogError("skipping queued event %s - unknown data format\n", file_name);
                                 goto error2;
                         }
@@ -499,7 +498,8 @@ void Event_queue_process() {
                         }
 
                         /* read event structure */
-                        if (! (e = file_readQueue(file, &size)))
+                        Event_T e = file_readQueue(file, &size);
+                        if (! e)
                                 goto error3;
                         if (size != sizeof(*e))
                                 goto error4;
@@ -513,15 +513,26 @@ void Event_queue_process() {
                                 goto error5;
 
                         /* read event action */
-                        if (! (action = file_readQueue(file, &size)))
+                        Action_Type *action = file_readQueue(file, &size);
+                        if (! action)
                                 goto error6;
                         if (size != sizeof(Action_Type))
                                 goto error7;
                         a->id = *action;
-                        if (e->state == State_Failed)
-                                ea->failed = a;
-                        else
-                                ea->succeeded = a;
+                        switch (a->id) {
+                                case State_Succeeded:
+                                case State_ChangedNot:
+                                        ea->succeeded = a;
+                                        break;
+                                case State_Failed:
+                                case State_Changed:
+                                case State_Init:
+                                        ea->failed = a;
+                                        break;
+                                default:
+                                        LogError("Aborting queue event %s -- invalid action: %d\n", file_name, a->id);
+                                        goto error7;
+                        }
                         e->action = ea;
 
                         /* Retry all remaining handlers */
@@ -703,11 +714,6 @@ static void handle_action(Event_T E, Action_T A) {
  * @param E An event object
  */
 static void Event_queue_add(Event_T E) {
-        char        file_name[STRLEN];
-        int         version = EVENT_VERSION;
-        Action_Type action = Event_get_action(E);
-        boolean_t   rv;
-
         ASSERT(E);
         ASSERT(E->flag != Handler_Succeeded);
 
@@ -722,9 +728,10 @@ static void Event_queue_add(Event_T E) {
         }
 
         /* compose the file name of actual timestamp and service name */
-        snprintf(file_name, STRLEN, "%s/%ld_%lx", Run.eventlist_dir, (long int)time(NULL), (long unsigned)E->source);
+        char file_name[PATH_MAX];
+        snprintf(file_name, PATH_MAX, "%s/%lld_%lx", Run.eventlist_dir, (long long)time(NULL), (long unsigned)E->source);
 
-        DEBUG("Adding event to the queue file %s for later delivery\n", file_name);
+        LogInfo("Adding event to the queue file %s for later delivery\n", file_name);
 
         FILE *file = fopen(file_name, "w");
         if (! file) {
@@ -732,7 +739,10 @@ static void Event_queue_add(Event_T E) {
                 return;
         }
 
+        boolean_t  rv;
+
         /* write event structure version */
+        int version = EVENT_VERSION;
         if (! (rv = file_writeQueue(file, &version, sizeof(int))))
                 goto error;
 
@@ -749,6 +759,7 @@ static void Event_queue_add(Event_T E) {
                 goto error;
 
         /* write event action */
+        Action_Type action = Event_get_action(E);
         if (! (rv = file_writeQueue(file, &action, sizeof(Action_Type))))
                 goto error;
 

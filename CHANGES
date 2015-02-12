@@ -76,6 +76,11 @@ Fixed: Don't show link capacity and upload/download rate if the link is down.
 
 Fixed: Show integer number when presenting byte-values with [B] unit (drop ".0" postfix).
 
+Fixed: Support paths up to PATH_MAX in the event queue.
+
+Fixed: Action was reported as "Ignored" for the state change event type which was not possible to
+deliver during the first attempt and delivery was retried later.
+
 
 Version 5.11
 
