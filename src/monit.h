@@ -94,6 +94,8 @@
 
 //FIXME: we can export this type in libmonit
 #ifndef HAVE_BOOLEAN_T
+#undef true
+#undef false
 typedef enum {
         false = 0,
         true
