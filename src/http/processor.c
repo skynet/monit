@@ -562,7 +562,7 @@ static void create_headers(HttpRequest req) {
         while (true) {
                 if (! socket_readln(S, line, sizeof(line)))
                         break;
-                if (IS(line, "\r\n") || IS(line, "\n"))
+                if (Str_isEqual(line, "\r\n") || Str_isEqual(line, "\n"))
                         break;
                 if (NULL != (value = strchr(line, ':'))) {
                         NEW(header);
