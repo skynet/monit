@@ -105,9 +105,6 @@ void file_init() {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYSTATEFILE);
                 Run.statefile = Str_dup(buf);
         }
-
-        /* Cleanup the http engine resources on start (unix socket may be left if Monit died or received SIGKILL) */
-        Engine_cleanup();
 }
 
 
