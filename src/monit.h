@@ -503,7 +503,7 @@ typedef struct myprocesstree {
 
 /** Defines data for systemwide statistic */
 typedef struct mysysteminfo {
-        short cpus;                                            /**< Number of CPUs */
+        int cpus;                                              /**< Number of CPUs */
         short total_mem_percent;       /**< Total real memory in use in the system */
         short total_swap_percent;             /**< Total swap in use in the system */
         short total_cpu_user_percent;    /**< Total CPU in use in user space (pct.)*/
