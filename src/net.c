@@ -519,7 +519,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
         }
         struct addrinfo *r = result;
         int s = -1;
-        while (s < 0 && r) {
+        while (r && s < 0) {
                 switch (r->ai_family) {
                         case AF_INET:
                                 s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -532,7 +532,8 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                         default:
                                 break;
                 }
-                r = r->ai_next;
+                if (s < 0)
+                        r = r->ai_next;
         }
         if (s < 0) {
                 if (errno == EACCES || errno == EPERM) {
