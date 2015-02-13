@@ -109,9 +109,9 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
 
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
                 if (Run.httpd.flags & Httpd_Net)
-                        StringBuffer_append(B, "<httpd><address>%s</address><port>%d</port><ssl>%d</ssl></httpd>", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : myip, Run.httpd.socket.net.port, Run.httpd.flags & Httpd_Ssl);
+                        StringBuffer_append(B, "<httpd><address>%s</address><port>%d</port><ssl>%d</ssl></httpd>", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : myip ? myip : "", Run.httpd.socket.net.port, Run.httpd.flags & Httpd_Ssl);
                 else if (Run.httpd.flags & Httpd_Unix)
-                        StringBuffer_append(B, "<httpd><unixsocket>%s</unixsocket></httpd>", Run.httpd.socket.unix.path);
+                        StringBuffer_append(B, "<httpd><unixsocket>%s</unixsocket></httpd>", Run.httpd.socket.unix.path ? Run.httpd.socket.unix.path : "");
 
                 if (Run.mmonitcredentials)
                         StringBuffer_append(B, "<credentials><username>%s</username><password>%s</password></credentials>", Run.mmonitcredentials->uname, Run.mmonitcredentials->passwd);

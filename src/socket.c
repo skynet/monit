@@ -384,10 +384,11 @@ const char *socket_get_local_host(Socket_T S, char *host, int hostlen) {
         socklen_t addrlen = sizeof(addr);
         if (! getsockname(S->socket, (struct sockaddr *)&addr, &addrlen)) {
                 int status = getnameinfo((struct sockaddr *)&addr, addrlen, host, hostlen, NULL, 0, 0);
-                if (status) {
-                        LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                        *host = 0;
-                }
+                if (! status)
+                        return host;
+                LogError("Cannot translate address to hostname -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+        } else {
+                LogError("Cannot translate address to hostname -- getsockname failed: %s\n", STRERROR);
         }
         return NULL;
 }
