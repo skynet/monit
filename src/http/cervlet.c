@@ -151,10 +151,10 @@ static void print_service_rules_resource(HttpResponse, Service_T);
 static void print_service_status_port(HttpResponse, Service_T);
 static void print_service_status_socket(HttpResponse, Service_T);
 static void print_service_status_icmp(HttpResponse, Service_T);
-static void print_service_status_perm(HttpResponse, Service_T);
-static void print_service_status_uid(HttpResponse, Service_T);
-static void print_service_status_gid(HttpResponse, Service_T);
-static void print_service_status_timestamp(HttpResponse, Service_T);
+static void print_service_status_perm(HttpResponse, Service_T, mode_t);
+static void print_service_status_uid(HttpResponse, Service_T, uid_t);
+static void print_service_status_gid(HttpResponse, Service_T, gid_t);
+static void print_service_status_timestamp(HttpResponse, Service_T, time_t);
 static void print_service_status_filesystem_flags(HttpResponse, Service_T);
 static void print_service_status_filesystem_blockstotal(HttpResponse, Service_T);
 static void print_service_status_filesystem_blocksfree(HttpResponse, Service_T);
@@ -164,12 +164,10 @@ static void print_service_status_filesystem_inodestotal(HttpResponse, Service_T)
 static void print_service_status_filesystem_inodesfree(HttpResponse, Service_T);
 static void print_service_status_file_size(HttpResponse, Service_T);
 static void print_service_status_file_match(HttpResponse, Service_T);
-static void print_service_status_checksum(HttpResponse, Service_T);
+static void print_service_status_file_checksum(HttpResponse, Service_T);
 static void print_service_status_process_pid(HttpResponse, Service_T);
 static void print_service_status_process_ppid(HttpResponse, Service_T);
-static void print_service_status_process_uid(HttpResponse, Service_T);
 static void print_service_status_process_euid(HttpResponse, Service_T);
-static void print_service_status_process_gid(HttpResponse, Service_T);
 static void print_service_status_process_uptime(HttpResponse, Service_T);
 static void print_service_status_process_children(HttpResponse, Service_T);
 static void print_service_status_process_cpu(HttpResponse, Service_T);
@@ -837,9 +835,9 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         // Status
         switch (s->type) {
                 case Service_Filesystem:
-                        print_service_status_perm(res, s);
-                        print_service_status_uid(res, s);
-                        print_service_status_gid(res, s);
+                        print_service_status_perm(res, s, s->inf->priv.filesystem.mode);
+                        print_service_status_uid(res, s, s->inf->priv.filesystem.uid);
+                        print_service_status_gid(res, s, s->inf->priv.filesystem.gid);
                         print_service_status_filesystem_flags(res, s);
                         print_service_status_filesystem_blockstotal(res, s);
                         print_service_status_filesystem_blocksfree(res, s);
@@ -849,26 +847,26 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                         print_service_status_filesystem_inodesfree(res, s);
                         break;
                 case Service_Directory:
-                        print_service_status_perm(res, s);
-                        print_service_status_uid(res, s);
-                        print_service_status_gid(res, s);
-                        print_service_status_timestamp(res, s);
+                        print_service_status_perm(res, s, s->inf->priv.directory.mode);
+                        print_service_status_uid(res, s, s->inf->priv.directory.uid);
+                        print_service_status_gid(res, s, s->inf->priv.directory.gid);
+                        print_service_status_timestamp(res, s, s->inf->priv.directory.timestamp);
                         break;
                 case Service_File:
-                        print_service_status_perm(res, s);
-                        print_service_status_uid(res, s);
-                        print_service_status_gid(res, s);
+                        print_service_status_perm(res, s, s->inf->priv.file.mode);
+                        print_service_status_uid(res, s, s->inf->priv.file.uid);
+                        print_service_status_gid(res, s, s->inf->priv.file.gid);
+                        print_service_status_timestamp(res, s, s->inf->priv.file.timestamp);
                         print_service_status_file_size(res, s);
                         print_service_status_file_match(res, s);
-                        print_service_status_timestamp(res, s);
-                        print_service_status_checksum(res, s);
+                        print_service_status_file_checksum(res, s);
                         break;
                 case Service_Process:
                         print_service_status_process_pid(res, s);
                         print_service_status_process_ppid(res, s);
-                        print_service_status_process_uid(res, s);
+                        print_service_status_uid(res, s, s->inf->priv.process.uid);
                         print_service_status_process_euid(res, s);
-                        print_service_status_process_gid(res, s);
+                        print_service_status_gid(res, s, s->inf->priv.process.gid);
                         print_service_status_process_uptime(res, s);
                         print_service_status_process_children(res, s);
                         print_service_status_process_cpu(res, s);
@@ -889,10 +887,10 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
                         print_service_status_system_swap(res, s);
                         break;
                 case Service_Fifo:
-                        print_service_status_perm(res, s);
-                        print_service_status_uid(res, s);
-                        print_service_status_gid(res, s);
-                        print_service_status_timestamp(res, s);
+                        print_service_status_perm(res, s, s->inf->priv.fifo.mode);
+                        print_service_status_uid(res, s, s->inf->priv.fifo.uid);
+                        print_service_status_gid(res, s, s->inf->priv.fifo.gid);
+                        print_service_status_timestamp(res, s, s->inf->priv.fifo.timestamp);
                         break;
                 case Service_Program:
                         print_service_status_program_started(res, s);
@@ -1262,10 +1260,10 @@ static void do_home_file(HttpRequest req, HttpResponse res) {
                                             "<td align='right'>%04o</td>"
                                             "<td align='right'>%d</td>"
                                             "<td align='right'>%d</td>",
-                                            Str_bytesToSize(s->inf->priv.file.st_size, buf),
-                                            s->inf->st_mode & 07777,
-                                            s->inf->st_uid,
-                                            s->inf->st_gid);
+                                            Str_bytesToSize(s->inf->priv.file.size, buf),
+                                            s->inf->priv.file.mode & 07777,
+                                            s->inf->priv.file.uid,
+                                            s->inf->priv.file.gid);
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
@@ -1313,9 +1311,9 @@ static void do_home_fifo(HttpRequest req, HttpResponse res) {
                                             "<td align='right'>%o</td>"
                                             "<td align='right'>%d</td>"
                                             "<td align='right'>%d</td>",
-                                            s->inf->st_mode & 07777,
-                                            s->inf->st_uid,
-                                            s->inf->st_gid);
+                                            s->inf->priv.fifo.mode & 07777,
+                                            s->inf->priv.fifo.uid,
+                                            s->inf->priv.fifo.gid);
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
@@ -1363,9 +1361,9 @@ static void do_home_directory(HttpRequest req, HttpResponse res) {
                                             "<td align='right'>%o</td>"
                                             "<td align='right'>%d</td>"
                                             "<td align='right'>%d</td>",
-                                            s->inf->st_mode & 07777,
-                                            s->inf->st_uid,
-                                            s->inf->st_gid);
+                                            s->inf->priv.directory.mode & 07777,
+                                            s->inf->priv.directory.uid,
+                                            s->inf->priv.directory.gid);
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
@@ -2003,32 +2001,32 @@ static void print_service_status_icmp(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_status_perm(HttpResponse res, Service_T s) {
+static void print_service_status_perm(HttpResponse res, Service_T s, mode_t mode) {
         StringBuffer_append(res->outputbuffer, "<tr><td>Permission</td>");
         if (! Util_hasServiceStatus(s))
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         else
-                StringBuffer_append(res->outputbuffer, "<td class='%s'>%o</td>", (s->error & Event_Permission) ? "red-text" : "", s->inf->st_mode & 07777);
+                StringBuffer_append(res->outputbuffer, "<td class='%s'>%o</td>", (s->error & Event_Permission) ? "red-text" : "", mode & 07777);
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
 
 
-static void print_service_status_uid(HttpResponse res, Service_T s) {
+static void print_service_status_uid(HttpResponse res, Service_T s, uid_t uid) {
         StringBuffer_append(res->outputbuffer, "<tr><td>UID</td>");
         if (! Util_hasServiceStatus(s))
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         else
-                StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Uid) ? "red-text" : "", (int)s->inf->st_uid);
+                StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Uid) ? "red-text" : "", (int)uid);
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
 
 
-static void print_service_status_gid(HttpResponse res, Service_T s) {
+static void print_service_status_gid(HttpResponse res, Service_T s, gid_t gid) {
         StringBuffer_append(res->outputbuffer, "<tr><td>GID</td>");
         if (! Util_hasServiceStatus(s))
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         else
-                StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Gid) ? "red-text" : "", (int)s->inf->st_gid);
+                StringBuffer_append(res->outputbuffer, "<td class='%s'>%d</td>", (s->error & Event_Gid) ? "red-text" : "", (int)gid);
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
 
@@ -2090,13 +2088,13 @@ static void print_service_status_upload(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_status_timestamp(HttpResponse res, Service_T s) {
+static void print_service_status_timestamp(HttpResponse res, Service_T s, time_t timestamp) {
         StringBuffer_append(res->outputbuffer, "<tr><td>Timestamp</td>");
         if (! Util_hasServiceStatus(s)) {
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         } else {
                 char t[32];
-                StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Timestamp) ? "red-text" : "", Time_string(s->inf->timestamp, t));
+                StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Timestamp) ? "red-text" : "", Time_string(timestamp, t));
         }
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
@@ -2201,7 +2199,7 @@ static void print_service_status_file_size(HttpResponse res, Service_T s) {
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         } else {
                 char buf[STRLEN];
-                StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Size) ? "red-text" : "", Str_bytesToSize(s->inf->priv.file.st_size, buf));
+                StringBuffer_append(res->outputbuffer, "<td class='%s'>%s</td>", (s->error & Event_Size) ? "red-text" : "", Str_bytesToSize(s->inf->priv.file.size, buf));
         }
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
@@ -2216,7 +2214,7 @@ static void print_service_status_file_match(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_status_checksum(HttpResponse res, Service_T s) {
+static void print_service_status_file_checksum(HttpResponse res, Service_T s) {
         if (s->checksum) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Checksum</td>");
                 if (! Util_hasServiceStatus(s))
@@ -2248,32 +2246,12 @@ static void print_service_status_process_ppid(HttpResponse res, Service_T s) {
 }
 
 
-static void print_service_status_process_uid(HttpResponse res, Service_T s) {
-        StringBuffer_append(res->outputbuffer, "<tr><td>UID</td>");
-        if (! Util_hasServiceStatus(s))
-                StringBuffer_append(res->outputbuffer, "<td>-</td>");
-        else
-                StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.uid);
-        StringBuffer_append(res->outputbuffer, "</tr>");
-}
-
-
 static void print_service_status_process_euid(HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer, "<tr><td>Effective UID</td>");
         if (! Util_hasServiceStatus(s))
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         else
                 StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.euid);
-        StringBuffer_append(res->outputbuffer, "</tr>");
-}
-
-
-static void print_service_status_process_gid(HttpResponse res, Service_T s) {
-        StringBuffer_append(res->outputbuffer, "<tr><td>GID</td>");
-        if (! Util_hasServiceStatus(s))
-                StringBuffer_append(res->outputbuffer, "<td>-</td>");
-        else
-                StringBuffer_append(res->outputbuffer, "<td>%d</td>", s->inf->priv.process.gid);
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
 
@@ -2525,131 +2503,165 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                     "  %-33s %s\n",
                                     "monitoring status", get_monitoring_status(s, buf, sizeof(buf)));
 
+                char *uptime = NULL;
                 if (Util_hasServiceStatus(s)) {
-                        if (s->type == Service_File || s->type == Service_Fifo || s->type == Service_Directory || s->type == Service_Filesystem) {
-                                StringBuffer_append(res->outputbuffer,
+                        switch (s->type) {
+                                case Service_File:
+                                        StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s %o\n"
+                                                    "  %-33s %d\n"
+                                                    "  %-33s %d\n"
+                                                    "  %-33s %s\n"
+                                                    "  %-33s %s\n",
+                                                    "permission", s->inf->priv.file.mode & 07777,
+                                                    "uid", (int)s->inf->priv.file.uid,
+                                                    "gid", (int)s->inf->priv.file.gid,
+                                                    "size", Str_bytesToSize(s->inf->priv.file.size, buf),
+                                                    "timestamp", Time_string(s->inf->priv.file.timestamp, buf));
+                                        if (s->checksum) {
+                                                StringBuffer_append(res->outputbuffer,
+                                                                    "  %-33s %s (%s)\n",
+                                                                    "checksum", s->inf->priv.file.cs_sum,
+                                                                    checksumnames[s->checksum->type]);
+                                        }
+                                        break;
+
+                                case Service_Directory:
+                                        StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s %o\n"
+                                                    "  %-33s %d\n"
+                                                    "  %-33s %d\n"
+                                                    "  %-33s %s\n",
+                                                    "permission", s->inf->priv.directory.mode & 07777,
+                                                    "uid", (int)s->inf->priv.directory.uid,
+                                                    "gid", (int)s->inf->priv.directory.gid,
+                                                    "timestamp", Time_string(s->inf->priv.directory.timestamp, buf));
+                                        break;
+
+                                case Service_Fifo:
+                                        StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s %o\n"
+                                                    "  %-33s %d\n"
+                                                    "  %-33s %d\n"
+                                                    "  %-33s %s\n",
+                                                    "permission", s->inf->priv.directory.mode & 07777,
+                                                    "uid", (int)s->inf->priv.directory.uid,
+                                                    "gid", (int)s->inf->priv.directory.gid,
+                                                    "timestamp", Time_string(s->inf->priv.directory.timestamp, buf));
+                                        break;
+
+                                case Service_Net:
+                                        if (Link_getState(s->inf->priv.net.stats)) {
+                                                long long speed = Link_getSpeed(s->inf->priv.net.stats);
+                                                if (speed > 0)
+                                                        StringBuffer_append(res->outputbuffer,
+                                                                            "  %-33s %.0lf Mb/s %s-duplex\n",
+                                                                            "link speed", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+
+                                                long long ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
+                                                StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
+                                                                    "download",
+                                                                    Str_bytesToSize(ibytes, buf),
+                                                                    Link_getPacketsInPerSecond(s->inf->priv.net.stats),
+                                                                    Link_getErrorsInPerSecond(s->inf->priv.net.stats));
+                                                if (speed > 0 && ibytes > 0)
+                                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
+                                                StringBuffer_append(res->outputbuffer, "\n");
+
+                                                long long obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
+                                                StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
+                                                                    "upload",
+                                                                    Str_bytesToSize(obytes, buf),
+                                                                    Link_getPacketsOutPerSecond(s->inf->priv.net.stats),
+                                                                    Link_getErrorsOutPerSecond(s->inf->priv.net.stats));
+                                                if (speed > 0 && obytes > 0)
+                                                        StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
+                                                StringBuffer_append(res->outputbuffer, "\n");
+                                        }
+                                        break;
+
+                                case Service_Filesystem:
+                                        StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %o\n"
                                                     "  %-33s %d\n"
                                                     "  %-33s %d\n",
-                                                    "permission", s->inf->st_mode & 07777,
-                                                    "uid", (int)s->inf->st_uid,
-                                                    "gid", (int)s->inf->st_gid);
-                        }
-                        if (s->type == Service_File || s->type == Service_Fifo || s->type == Service_Directory) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %s\n",
-                                                    "timestamp", Time_string(s->inf->timestamp, buf));
-                        }
-                        if (s->type == Service_File) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %s\n",
-                                                    "size", Str_bytesToSize(s->inf->priv.file.st_size, buf));
-                                if (s->checksum) {
+                                                    "permission", s->inf->priv.directory.mode & 07777,
+                                                    "uid", (int)s->inf->priv.directory.uid,
+                                                    "gid", (int)s->inf->priv.directory.gid);
                                         StringBuffer_append(res->outputbuffer,
-                                                            "  %-33s %s (%s)\n",
-                                                            "checksum", s->inf->priv.file.cs_sum,
-                                                            checksumnames[s->checksum->type]);
-                                }
-                        }
-                        if (s->type == Service_Net) {
-                                if (Link_getState(s->inf->priv.net.stats)) {
-                                        long long speed = Link_getSpeed(s->inf->priv.net.stats);
-                                        if (speed > 0)
+                                                            "  %-33s 0x%x\n"
+                                                            "  %-33s %s\n",
+                                                            "filesystem flags",
+                                                            s->inf->priv.filesystem.flags,
+                                                            "block size",
+                                                            Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s %s (of which %.1f%% is reserved for root user)\n",
+                                                            "space total",
+                                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize((long long)(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize), buf) : "0 MB",
+                                                            s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)(s->inf->priv.filesystem.f_blocksfreetotal - s->inf->priv.filesystem.f_blocksfree) / (float)s->inf->priv.filesystem.f_blocks) : 0);
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s %s [%.1f%%]\n",
+                                                            "space free for non superuser",
+                                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
+                                                            s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s %s [%.1f%%]\n",
+                                                            "space free total",
+                                                            s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
+                                                            s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
+                                        if (s->inf->priv.filesystem.f_files > 0) {
                                                 StringBuffer_append(res->outputbuffer,
-                                                                    "  %-33s %.0lf Mb/s %s-duplex\n",
-                                                                    "link speed", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                                                                    "  %-33s %lld\n"
+                                                                    "  %-33s %lld [%.1f%%]\n",
+                                                                    "inodes total",
+                                                                    s->inf->priv.filesystem.f_files,
+                                                                    "inodes free",
+                                                                    s->inf->priv.filesystem.f_filesfree,
+                                                                    ((float)100*(float)s->inf->priv.filesystem.f_filesfree/ (float)s->inf->priv.filesystem.f_files));
+                                        }
+                                        break;
 
-                                        long long ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
-                                        StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
-                                                            "download",
-                                                            Str_bytesToSize(ibytes, buf),
-                                                            Link_getPacketsInPerSecond(s->inf->priv.net.stats),
-                                                            Link_getErrorsInPerSecond(s->inf->priv.net.stats));
-                                        if (speed > 0 && ibytes > 0)
-                                                StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * ibytes * 8 / (double)speed);
-                                        StringBuffer_append(res->outputbuffer, "\n");
+                                case Service_Process:
+                                        uptime = Util_getUptime(s->inf->priv.process.uptime, " ");
+                                        StringBuffer_append(res->outputbuffer,
+                                                            "  %-33s %d\n"
+                                                            "  %-33s %d\n"
+                                                            "  %-33s %d\n"
+                                                            "  %-33s %d\n"
+                                                            "  %-33s %d\n"
+                                                            "  %-33s %s\n",
+                                                            "pid", s->inf->priv.process.pid > 0 ? s->inf->priv.process.pid : 0,
+                                                            "parent pid", s->inf->priv.process.ppid > 0 ? s->inf->priv.process.ppid : 0,
+                                                            "uid", s->inf->priv.process.uid,
+                                                            "effective uid", s->inf->priv.process.euid,
+                                                            "gid", s->inf->priv.process.gid,
+                                                            "uptime", uptime);
+                                        FREE(uptime);
+                                        if (Run.doprocess) {
+                                                StringBuffer_append(res->outputbuffer,
+                                                                    "  %-33s %d\n",
+                                                                    "children", s->inf->priv.process.children);
+                                                StringBuffer_append(res->outputbuffer,
+                                                                    "  %-33s %s\n",
+                                                                    "memory", Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
+                                                StringBuffer_append(res->outputbuffer,
+                                                                    "  %-33s %s\n",
+                                                                    "memory total", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
+                                                StringBuffer_append(res->outputbuffer,
+                                                                    "  %-33s %.1f%%\n"
+                                                                    "  %-33s %.1f%%\n"
+                                                                    "  %-33s %.1f%%\n"
+                                                                    "  %-33s %.1f%%\n",
+                                                                    "memory percent", s->inf->priv.process.mem_percent/10.0,
+                                                                    "memory percent total", s->inf->priv.process.total_mem_percent/10.0,
+                                                                    "cpu percent", s->inf->priv.process.cpu_percent/10.0,
+                                                                    "cpu percent total", s->inf->priv.process.total_cpu_percent/10.0);
+                                        }
+                                        break;
 
-                                        long long obytes = Link_getBytesOutPerSecond(s->inf->priv.net.stats);
-                                        StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
-                                                            "upload",
-                                                            Str_bytesToSize(obytes, buf),
-                                                            Link_getPacketsOutPerSecond(s->inf->priv.net.stats),
-                                                            Link_getErrorsOutPerSecond(s->inf->priv.net.stats));
-                                        if (speed > 0 && obytes > 0)
-                                                StringBuffer_append(res->outputbuffer, " (%.1f%% link saturation)", 100. * obytes * 8 / (double)speed);
-                                        StringBuffer_append(res->outputbuffer, "\n");
-                                }
-                        }
-                        if (s->type == Service_Filesystem) {
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s 0x%x\n"
-                                                    "  %-33s %s\n",
-                                                    "filesystem flags",
-                                                    s->inf->priv.filesystem.flags,
-                                                    "block size",
-                                                    Str_bytesToSize(s->inf->priv.filesystem.f_bsize, buf));
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %s (of which %.1f%% is reserved for root user)\n",
-                                                    "space total",
-                                                    s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize((long long)(s->inf->priv.filesystem.f_blocks * s->inf->priv.filesystem.f_bsize), buf) : "0 MB",
-                                                    s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)(s->inf->priv.filesystem.f_blocksfreetotal - s->inf->priv.filesystem.f_blocksfree) / (float)s->inf->priv.filesystem.f_blocks) : 0);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %s [%.1f%%]\n",
-                                                    "space free for non superuser",
-                                                    s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfree * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
-                                                    s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfree / (float)s->inf->priv.filesystem.f_blocks) : 0);
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %s [%.1f%%]\n",
-                                                    "space free total",
-                                                    s->inf->priv.filesystem.f_bsize > 0 ? Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf) : "0 MB",
-                                                    s->inf->priv.filesystem.f_blocks > 0 ? ((float)100 * (float)s->inf->priv.filesystem.f_blocksfreetotal / (float)s->inf->priv.filesystem.f_blocks) : 0);
-                                if (s->inf->priv.filesystem.f_files > 0) {
-                                        StringBuffer_append(res->outputbuffer,
-                                                            "  %-33s %lld\n"
-                                                            "  %-33s %lld [%.1f%%]\n",
-                                                            "inodes total",
-                                                            s->inf->priv.filesystem.f_files,
-                                                            "inodes free",
-                                                            s->inf->priv.filesystem.f_filesfree,
-                                                            ((float)100*(float)s->inf->priv.filesystem.f_filesfree/ (float)s->inf->priv.filesystem.f_files));
-                                }
-                        }
-                        if (s->type == Service_Process) {
-                                char *uptime = Util_getUptime(s->inf->priv.process.uptime, " ");
-                                StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %d\n"
-                                                    "  %-33s %d\n"
-                                                    "  %-33s %d\n"
-                                                    "  %-33s %d\n"
-                                                    "  %-33s %d\n"
-                                                    "  %-33s %s\n",
-                                                    "pid", s->inf->priv.process.pid > 0 ? s->inf->priv.process.pid : 0,
-                                                    "parent pid", s->inf->priv.process.ppid > 0 ? s->inf->priv.process.ppid : 0,
-                                                    "uid", s->inf->priv.process.uid,
-                                                    "effective uid", s->inf->priv.process.euid,
-                                                    "gid", s->inf->priv.process.gid,
-                                                    "uptime", uptime);
-                                FREE(uptime);
-                                if (Run.doprocess) {
-                                        StringBuffer_append(res->outputbuffer,
-                                                            "  %-33s %d\n",
-                                                            "children", s->inf->priv.process.children);
-                                        StringBuffer_append(res->outputbuffer,
-                                                            "  %-33s %s\n",
-                                                            "memory", Str_bytesToSize(s->inf->priv.process.mem_kbyte * 1024., buf));
-                                        StringBuffer_append(res->outputbuffer,
-                                                            "  %-33s %s\n",
-                                                            "memory total", Str_bytesToSize(s->inf->priv.process.total_mem_kbyte * 1024., buf));
-                                        StringBuffer_append(res->outputbuffer,
-                                                            "  %-33s %.1f%%\n"
-                                                            "  %-33s %.1f%%\n"
-                                                            "  %-33s %.1f%%\n"
-                                                            "  %-33s %.1f%%\n",
-                                                            "memory percent", s->inf->priv.process.mem_percent/10.0,
-                                                            "memory percent total", s->inf->priv.process.total_mem_percent/10.0,
-                                                            "cpu percent", s->inf->priv.process.cpu_percent/10.0,
-                                                            "cpu percent total", s->inf->priv.process.total_cpu_percent/10.0);
-                                }
+                                default:
+                                        break;
                         }
                         for (Icmp_T i = s->icmplist; i; i = i->next) {
                                 if (! i->is_available)

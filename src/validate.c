@@ -493,33 +493,26 @@ static void check_checksum(Service_T s) {
 /**
  * Test for associated path permission change
  */
-static void check_perm(Service_T s) {
+static void check_perm(Service_T s, mode_t mode) {
         ASSERT(s && s->perm);
 
-        if ((s->inf->st_mode & 07777) != s->perm->perm)
-                Event_post(s, Event_Permission, State_Failed, s->perm->action, "permission test failed for %s -- current permission is %04o", s->path, s->inf->st_mode&07777);
+        if ((mode & 07777) != s->perm->perm)
+                Event_post(s, Event_Permission, State_Failed, s->perm->action, "permission test failed for %s -- current permission is %04o", s->path, mode & 07777);
         else
-                Event_post(s, Event_Permission, State_Succeeded, s->perm->action, "permission test succeeded [current permission=%04o]", s->inf->st_mode&07777);
+                Event_post(s, Event_Permission, State_Succeeded, s->perm->action, "permission test succeeded [current permission=%04o]", mode & 07777);
 }
 
 
 /**
  * Test UID of file or process
  */
-static void check_uid(Service_T s) {
+static void check_uid(Service_T s, uid_t uid) {
         ASSERT(s && s->uid);
 
-        if (s->type == Service_Process) {
-                if (s->inf->priv.process.uid != s->uid->uid)
-                        Event_post(s, Event_Uid, State_Failed, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, s->inf->priv.process.uid);
-                else
-                        Event_post(s, Event_Uid, State_Succeeded, s->uid->action, "uid test succeeded [current uid=%d]",  s->inf->priv.process.uid);
-        } else {
-                if (s->inf->st_uid != s->uid->uid)
-                        Event_post(s, Event_Uid, State_Failed, s->uid->action, "uid test failed for %s -- current uid is %d", s->path, (int)s->inf->st_uid);
-                else
-                        Event_post(s, Event_Uid, State_Succeeded, s->uid->action, "uid test succeeded [current uid=%d]", (int)s->inf->st_uid);
-        }
+        if (uid != s->uid->uid)
+                Event_post(s, Event_Uid, State_Failed, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, uid);
+        else
+                Event_post(s, Event_Uid, State_Succeeded, s->uid->action, "uid test succeeded [current uid=%d]", uid);
 }
 
 
@@ -539,27 +532,20 @@ static void check_euid(Service_T s) {
 /**
  * Test GID of file or process
  */
-static void check_gid(Service_T s) {
+static void check_gid(Service_T s, gid_t gid) {
         ASSERT(s && s->gid);
 
-        if (s->type == Service_Process) {
-                if (s->inf->priv.process.gid != s->gid->gid )
-                        Event_post(s, Event_Gid, State_Failed, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, s->inf->priv.process.gid);
-                else
-                        Event_post(s, Event_Gid, State_Succeeded, s->gid->action, "gid test succeeded [current gid=%d]", s->inf->priv.process.gid);
-        } else {
-                if (s->inf->st_gid != s->gid->gid )
-                        Event_post(s, Event_Gid, State_Failed, s->gid->action, "gid test failed for %s -- current gid is %d", s->path, (int)s->inf->st_gid);
-                else
-                        Event_post(s, Event_Gid, State_Succeeded, s->gid->action, "gid test succeeded [current gid=%d]", (int)s->inf->st_gid);
-        }
+        if (gid != s->gid->gid )
+                Event_post(s, Event_Gid, State_Failed, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, gid);
+        else
+                Event_post(s, Event_Gid, State_Succeeded, s->gid->action, "gid test succeeded [current gid=%d]", gid);
 }
 
 
 /**
  * Validate timestamps of a service s
  */
-static void check_timestamp(Service_T s) {
+static void check_timestamp(Service_T s, time_t timestamp) {
         time_t now;
 
         ASSERT(s && s->timestamplist);
@@ -575,9 +561,9 @@ static void check_timestamp(Service_T s) {
 
                         /* if we are testing for changes only, the value is variable */
 
-                        if (t->timestamp != s->inf->timestamp) {
+                        if (t->timestamp != timestamp) {
                                 /* reset expected value for next cycle */
-                                t->timestamp = s->inf->timestamp;
+                                t->timestamp = timestamp;
                                 Event_post(s, Event_Timestamp, State_Changed, t->action, "timestamp was changed for %s", s->path);
                         } else {
                                 Event_post(s, Event_Timestamp, State_ChangedNot, t->action, "timestamp was not changed for %s", s->path);
@@ -587,7 +573,7 @@ static void check_timestamp(Service_T s) {
 
                         /* we are testing constant value for failed or succeeded state */
 
-                        if (Util_evalQExpression(t->operator, (int)(now - s->inf->timestamp), t->time))
+                        if (Util_evalQExpression(t->operator, (int)(now - timestamp), t->time))
                                 Event_post(s, Event_Timestamp, State_Failed, t->action, "timestamp test failed for %s", s->path);
                         else
                                 Event_post(s, Event_Timestamp, State_Succeeded, t->action, "timestamp test succeeded for %s", s->path);
@@ -609,23 +595,23 @@ static void check_size(Service_T s) {
                                 /* the size was not initialized during monit start, so set the size now
                                  * and allow further size change testing */
                                 sl->initialized = true;
-                                sl->size = s->inf->priv.file.st_size;
+                                sl->size = s->inf->priv.file.size;
                         } else {
-                                if (sl->size != s->inf->priv.file.st_size) {
+                                if (sl->size != s->inf->priv.file.size) {
                                         Event_post(s, Event_Size, State_Changed, sl->action, "size was changed for %s", s->path);
                                         /* reset expected value for next cycle */
-                                        sl->size = s->inf->priv.file.st_size;
+                                        sl->size = s->inf->priv.file.size;
                                 } else {
-                                        Event_post(s, Event_Size, State_ChangedNot, sl->action, "size has not changed [current size=%s]", Str_bytesToSize(s->inf->priv.file.st_size, buf));
+                                        Event_post(s, Event_Size, State_ChangedNot, sl->action, "size has not changed [current size=%s]", Str_bytesToSize(s->inf->priv.file.size, buf));
                                 }
                         }
                         break;
                 }
                 /* we are testing constant value for failed or succeeded state */
-                if (Util_evalQExpression(sl->operator, s->inf->priv.file.st_size, sl->size))
-                        Event_post(s, Event_Size, State_Failed, sl->action, "size test failed for %s -- current size is %s", s->path, Str_bytesToSize(s->inf->priv.file.st_size, buf));
+                if (Util_evalQExpression(sl->operator, s->inf->priv.file.size, sl->size))
+                        Event_post(s, Event_Size, State_Failed, sl->action, "size test failed for %s -- current size is %s", s->path, Str_bytesToSize(s->inf->priv.file.size, buf));
                 else
-                        Event_post(s, Event_Size, State_Succeeded, sl->action, "size check succeeded [current size=%s]", Str_bytesToSize(s->inf->priv.file.st_size, buf));
+                        Event_post(s, Event_Size, State_Succeeded, sl->action, "size check succeeded [current size=%s]", Str_bytesToSize(s->inf->priv.file.size, buf));
         }
 }
 
@@ -688,11 +674,11 @@ static void check_match(Service_T s) {
                 s->inf->priv.file.readpos = 0;
         } else {
                 /* If inode changed or size shrinked -> set read position = 0 */
-                if (s->inf->priv.file.st_ino != s->inf->priv.file.st_ino_prev || s->inf->priv.file.readpos > s->inf->priv.file.st_size)
+                if (s->inf->priv.file.inode != s->inf->priv.file.inode_prev || s->inf->priv.file.readpos > s->inf->priv.file.size)
                         s->inf->priv.file.readpos = 0;
 
                 /* Do we need to match? Even if not, go to final, so we can reset the content match error flags in this cycle */
-                if (s->inf->priv.file.readpos == s->inf->priv.file.st_size) {
+                if (s->inf->priv.file.readpos == s->inf->priv.file.size) {
                         DEBUG("'%s' content match skipped - file size nor inode has not changed since last test\n", s->name);
                         goto final;
                 }
@@ -1022,11 +1008,11 @@ boolean_t check_process(Service_T s) {
                         check_process_pid(s);
                         check_process_ppid(s);
                         if (s->uid)
-                                check_uid(s);
+                                check_uid(s, s->inf->priv.process.uid);
                         if (s->euid)
                                 check_euid(s);
                         if (s->gid)
-                                check_gid(s);
+                                check_gid(s, s->inf->priv.process.gid);
                         if (s->uptimelist)
                                 check_uptime(s);
                         for (Resource_T pr = s->resourcelist; pr; pr = pr->next)
@@ -1065,13 +1051,13 @@ boolean_t check_filesystem(Service_T s) {
         Event_post(s, Event_Data, State_Succeeded, s->action_DATA, "succeeded getting filesystem statistics for '%s'", s->path);
 
         if (s->perm)
-                check_perm(s);
+                check_perm(s, s->inf->priv.filesystem.mode);
 
         if (s->uid)
-                check_uid(s);
+                check_uid(s, s->inf->priv.filesystem.uid);
 
         if (s->gid)
-                check_gid(s);
+                check_gid(s, s->inf->priv.filesystem.gid);
 
         check_filesystem_flags(s);
 
@@ -1096,19 +1082,19 @@ boolean_t check_file(Service_T s) {
                         Event_post(s, Event_Nonexist, State_Failed, l->action, "file doesn't exist");
                 return false;
         } else {
-                s->inf->st_mode = stat_buf.st_mode;
-                if (s->inf->priv.file.st_ino)
-                        s->inf->priv.file.st_ino_prev = s->inf->priv.file.st_ino;
-                s->inf->priv.file.st_ino  = stat_buf.st_ino;
-                s->inf->st_uid            = stat_buf.st_uid;
-                s->inf->st_gid            = stat_buf.st_gid;
-                s->inf->priv.file.st_size = stat_buf.st_size;
-                s->inf->timestamp         = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
+                s->inf->priv.file.mode = stat_buf.st_mode;
+                if (s->inf->priv.file.inode)
+                        s->inf->priv.file.inode_prev = s->inf->priv.file.inode;
+                s->inf->priv.file.inode = stat_buf.st_ino;
+                s->inf->priv.file.uid = stat_buf.st_uid;
+                s->inf->priv.file.gid = stat_buf.st_gid;
+                s->inf->priv.file.size = stat_buf.st_size;
+                s->inf->priv.file.timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
                 for (Nonexist_T l = s->nonexistlist; l; l = l->next)
                         Event_post(s, Event_Nonexist, State_Succeeded, l->action, "file exists");
         }
 
-        if (! S_ISREG(s->inf->st_mode) && ! S_ISSOCK(s->inf->st_mode)) {
+        if (! S_ISREG(s->inf->priv.file.mode) && ! S_ISSOCK(s->inf->priv.file.mode)) {
                 Event_post(s, Event_Invalid, State_Failed, s->action_INVALID, "is neither a regular file nor a socket");
                 return false;
         } else {
@@ -1119,19 +1105,19 @@ boolean_t check_file(Service_T s) {
                 check_checksum(s);
 
         if (s->perm)
-                check_perm(s);
+                check_perm(s, s->inf->priv.file.mode);
 
         if (s->uid)
-                check_uid(s);
+                check_uid(s, s->inf->priv.file.uid);
 
         if (s->gid)
-                check_gid(s);
+                check_gid(s, s->inf->priv.file.gid);
 
         if (s->sizelist)
                 check_size(s);
 
         if (s->timestamplist)
-                check_timestamp(s);
+                check_timestamp(s, s->inf->priv.file.timestamp);
 
         if (s->matchlist)
                 check_match(s);
@@ -1156,15 +1142,15 @@ boolean_t check_directory(Service_T s) {
                         Event_post(s, Event_Nonexist, State_Failed, l->action, "directory doesn't exist");
                 return false;
         } else {
-                s->inf->st_mode   = stat_buf.st_mode;
-                s->inf->st_uid    = stat_buf.st_uid;
-                s->inf->st_gid    = stat_buf.st_gid;
-                s->inf->timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
+                s->inf->priv.directory.mode = stat_buf.st_mode;
+                s->inf->priv.directory.uid = stat_buf.st_uid;
+                s->inf->priv.directory.gid = stat_buf.st_gid;
+                s->inf->priv.directory.timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
                 for (Nonexist_T l = s->nonexistlist; l; l = l->next)
                         Event_post(s, Event_Nonexist, State_Succeeded, l->action, "directory exists");
         }
 
-        if (! S_ISDIR(s->inf->st_mode)) {
+        if (! S_ISDIR(s->inf->priv.directory.mode)) {
                 Event_post(s, Event_Invalid, State_Failed, s->action_INVALID, "is not directory");
                 return false;
         } else {
@@ -1172,16 +1158,16 @@ boolean_t check_directory(Service_T s) {
         }
 
         if (s->perm)
-                check_perm(s);
+                check_perm(s, s->inf->priv.directory.mode);
 
         if (s->uid)
-                check_uid(s);
+                check_uid(s, s->inf->priv.directory.uid);
 
         if (s->gid)
-                check_gid(s);
+                check_gid(s, s->inf->priv.directory.gid);
 
         if (s->timestamplist)
-                check_timestamp(s);
+                check_timestamp(s, s->inf->priv.directory.timestamp);
 
         return true;
 
@@ -1203,15 +1189,15 @@ boolean_t check_fifo(Service_T s) {
                         Event_post(s, Event_Nonexist, State_Failed, l->action, "fifo doesn't exist");
                 return false;
         } else {
-                s->inf->st_mode   = stat_buf.st_mode;
-                s->inf->st_uid    = stat_buf.st_uid;
-                s->inf->st_gid    = stat_buf.st_gid;
-                s->inf->timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
+                s->inf->priv.fifo.mode = stat_buf.st_mode;
+                s->inf->priv.fifo.uid = stat_buf.st_uid;
+                s->inf->priv.fifo.gid = stat_buf.st_gid;
+                s->inf->priv.fifo.timestamp = MAX(stat_buf.st_mtime, stat_buf.st_ctime);
                 for (Nonexist_T l = s->nonexistlist; l; l = l->next)
                         Event_post(s, Event_Nonexist, State_Succeeded, l->action, "fifo exists");
         }
 
-        if (! S_ISFIFO(s->inf->st_mode)) {
+        if (! S_ISFIFO(s->inf->priv.fifo.mode)) {
                 Event_post(s, Event_Invalid, State_Failed, s->action_INVALID, "is not fifo");
                 return false;
         } else {
@@ -1219,16 +1205,16 @@ boolean_t check_fifo(Service_T s) {
         }
 
         if (s->perm)
-                check_perm(s);
+                check_perm(s, s->inf->priv.fifo.mode);
 
         if (s->uid)
-                check_uid(s);
+                check_uid(s, s->inf->priv.fifo.uid);
 
         if (s->gid)
-                check_gid(s);
+                check_gid(s, s->inf->priv.fifo.gid);
 
         if (s->timestamplist)
-                check_timestamp(s);
+                check_timestamp(s, s->inf->priv.fifo.timestamp);
 
         return true;
 

@@ -125,7 +125,7 @@ typedef struct mystate1 {
         int                ncycle;
         union {
                 struct {
-                        unsigned long long st_ino;
+                        unsigned long long inode;
                         unsigned long long readpos;
                 } file;
         } priv;
@@ -168,7 +168,7 @@ static void update_v1() {
                         else if (service->monitor == Monitor_Not)
                                 service->monitor = Monitor_Init;
                         if (service->type == Service_File) {
-                                service->inf->priv.file.st_ino = state.priv.file.st_ino;
+                                service->inf->priv.file.inode = state.priv.file.inode;
                                 service->inf->priv.file.readpos = state.priv.file.readpos;
                         }
                 }
@@ -223,7 +223,7 @@ void State_save() {
                         state.nstart = service->nstart;
                         state.ncycle = service->ncycle;
                         if (service->type == Service_File) {
-                                state.priv.file.st_ino = service->inf->priv.file.st_ino;
+                                state.priv.file.inode = service->inf->priv.file.inode;
                                 state.priv.file.readpos = service->inf->priv.file.readpos;
                         }
                         if (write(file, &state, sizeof(state)) != sizeof(state))

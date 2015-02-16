@@ -108,9 +108,9 @@ boolean_t filesystem_usage(Service_T s) {
                 }
         }
         if (filesystem_usage_sysdep(buf, s->inf)) {
-                s->inf->st_mode = sb.st_mode;
-                s->inf->st_uid = sb.st_uid;
-                s->inf->st_gid = sb.st_gid;
+                s->inf->priv.filesystem.mode = sb.st_mode;
+                s->inf->priv.filesystem.uid = sb.st_uid;
+                s->inf->priv.filesystem.gid = sb.st_gid;
                 s->inf->priv.filesystem.inode_percent = s->inf->priv.filesystem.f_files > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree)) / (float)s->inf->priv.filesystem.f_files) : 0;
                 s->inf->priv.filesystem.space_percent = s->inf->priv.filesystem.f_blocks > 0 ? (int)((1000.0 * (s->inf->priv.filesystem.f_blocks - s->inf->priv.filesystem.f_blocksfreetotal)) / (float)s->inf->priv.filesystem.f_blocks) : 0;
                 s->inf->priv.filesystem.inode_total = s->inf->priv.filesystem.f_files - s->inf->priv.filesystem.f_filesfree;

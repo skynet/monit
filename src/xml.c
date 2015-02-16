@@ -185,125 +185,169 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
 
         if (L == Level_Full) {
                 if (Util_hasServiceStatus(S)) {
-                        if (S->type == Service_File || S->type == Service_Directory || S->type == Service_Fifo || S->type == Service_Filesystem)
-                                StringBuffer_append(B, "<mode>%o</mode><uid>%d</uid><gid>%d</gid>", S->inf->st_mode & 07777, (int)S->inf->st_uid, (int)S->inf->st_gid);
-                        if (S->type == Service_File || S->type == Service_Fifo || S->type == Service_Directory)
-                                StringBuffer_append(B, "<timestamp>%lld</timestamp>", (long long)S->inf->timestamp);
-                        if (S->type == Service_File) {
-                                StringBuffer_append(B, "<size>%llu</size>", (unsigned long long) S->inf->priv.file.st_size);
-                                if (S->checksum)
-                                        StringBuffer_append(B, "<checksum type=\"%s\">%s</checksum>", checksumnames[S->checksum->type], S->inf->priv.file.cs_sum);
-                        }
-                        if (S->type == Service_Net) {
-                                StringBuffer_append(B,
-                                                    "<link>"
-                                                    "<state>%d</state>"
-                                                    "<speed>%lld</speed>"
-                                                    "<duplex>%d</duplex>"
-                                                    "<download>"
-                                                    "<packets>"
-                                                    "<now>%lld</now>"
-                                                    "<total>%lld</total>"
-                                                    "</packets>"
-                                                    "<bytes>"
-                                                    "<now>%lld</now>"
-                                                    "<total>%lld</total>"
-                                                    "</bytes>"
-                                                    "<errors>"
-                                                    "<now>%lld</now>"
-                                                    "<total>%lld</total>"
-                                                    "</errors>"
-                                                    "</download>"
-                                                    "<upload>"
-                                                    "<packets>"
-                                                    "<now>%lld</now>"
-                                                    "<total>%lld</total>"
-                                                    "</packets>"
-                                                    "<bytes>"
-                                                    "<now>%lld</now>"
-                                                    "<total>%lld</total>"
-                                                    "</bytes>"
-                                                    "<errors>"
-                                                    "<now>%lld</now>"
-                                                    "<total>%lld</total>"
-                                                    "</errors>"
-                                                    "</upload>"
-                                                    "</link>",
-                                                    Link_getState(S->inf->priv.net.stats),
-                                                    Link_getSpeed(S->inf->priv.net.stats),
-                                                    Link_getDuplex(S->inf->priv.net.stats),
-                                                    Link_getPacketsInPerSecond(S->inf->priv.net.stats),
-                                                    Link_getPacketsInTotal(S->inf->priv.net.stats),
-                                                    Link_getBytesInPerSecond(S->inf->priv.net.stats),
-                                                    Link_getBytesInTotal(S->inf->priv.net.stats),
-                                                    Link_getErrorsInPerSecond(S->inf->priv.net.stats),
-                                                    Link_getErrorsInTotal(S->inf->priv.net.stats),
-                                                    Link_getPacketsOutPerSecond(S->inf->priv.net.stats),
-                                                    Link_getPacketsOutTotal(S->inf->priv.net.stats),
-                                                    Link_getBytesOutPerSecond(S->inf->priv.net.stats),
-                                                    Link_getBytesOutTotal(S->inf->priv.net.stats),
-                                                    Link_getErrorsOutPerSecond(S->inf->priv.net.stats),
-                                                    Link_getErrorsOutTotal(S->inf->priv.net.stats));
-                        }
-                        if (S->type == Service_Filesystem) {
-                                StringBuffer_append(B,
-                                                    "<flags>%d</flags>"
-                                                    "<block>"
-                                                    "<percent>%.1f</percent>"
-                                                    "<usage>%.1f</usage>"
-                                                    "<total>%.1f</total>"
-                                                    "</block>",
-                                                    S->inf->priv.filesystem.flags,
-                                                    S->inf->priv.filesystem.space_percent/10.,
-                                                    S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.space_total / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.,
-                                                    S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.f_blocks / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.);
-                                if (S->inf->priv.filesystem.f_files > 0) {
+                        switch (S->type) {
+                                case Service_File:
                                         StringBuffer_append(B,
-                                                            "<inode>"
-                                                            "<percent>%.1f</percent>"
-                                                            "<usage>%lld</usage>"
-                                                            "<total>%lld</total>"
-                                                            "</inode>",
-                                                            S->inf->priv.filesystem.inode_percent/10.,
-                                                            S->inf->priv.filesystem.inode_total,
-                                                            S->inf->priv.filesystem.f_files);
-                                }
-                        }
-                        if (S->type == Service_Process) {
-                                StringBuffer_append(B,
-                                                    "<pid>%d</pid>"
-                                                    "<ppid>%d</ppid>"
-                                                    "<uid>%d</uid>"
-                                                    "<euid>%d</euid>"
-                                                    "<gid>%d</gid>"
-                                                    "<uptime>%lld</uptime>",
-                                                    S->inf->priv.process.pid,
-                                                    S->inf->priv.process.ppid,
-                                                    S->inf->priv.process.uid,
-                                                    S->inf->priv.process.euid,
-                                                    S->inf->priv.process.gid,
-                                                    (long long)S->inf->priv.process.uptime);
-                                if (Run.doprocess) {
+                                                "<mode>%o</mode>"
+                                                "<uid>%d</uid>"
+                                                "<gid>%d</gid>"
+                                                "<timestamp>%lld</timestamp>"
+                                                "<size>%llu</size>",
+                                                S->inf->priv.file.mode & 07777,
+                                                (int)S->inf->priv.file.uid,
+                                                (int)S->inf->priv.file.gid,
+                                                (long long)S->inf->priv.file.timestamp,
+                                                (unsigned long long)S->inf->priv.file.size);
+                                        if (S->checksum)
+                                                StringBuffer_append(B, "<checksum type=\"%s\">%s</checksum>", checksumnames[S->checksum->type], S->inf->priv.file.cs_sum);
+                                        break;
+
+                                case Service_Directory:
                                         StringBuffer_append(B,
-                                                            "<children>%d</children>"
-                                                            "<memory>"
-                                                            "<percent>%.1f</percent>"
-                                                            "<percenttotal>%.1f</percenttotal>"
-                                                            "<kilobyte>%ld</kilobyte>"
-                                                            "<kilobytetotal>%ld</kilobytetotal>"
-                                                            "</memory>"
-                                                            "<cpu>"
-                                                            "<percent>%.1f</percent>"
-                                                            "<percenttotal>%.1f</percenttotal>"
-                                                            "</cpu>",
-                                                            S->inf->priv.process.children,
-                                                            S->inf->priv.process.mem_percent/10.0,
-                                                            S->inf->priv.process.total_mem_percent/10.0,
-                                                            S->inf->priv.process.mem_kbyte,
-                                                            S->inf->priv.process.total_mem_kbyte,
-                                                            S->inf->priv.process.cpu_percent/10.0,
-                                                            S->inf->priv.process.total_cpu_percent/10.0);
-                                }
+                                                "<mode>%o</mode>"
+                                                "<uid>%d</uid>"
+                                                "<gid>%d</gid>"
+                                                "<timestamp>%lld</timestamp>",
+                                                S->inf->priv.directory.mode & 07777,
+                                                (int)S->inf->priv.directory.uid,
+                                                (int)S->inf->priv.directory.gid,
+                                                (long long)S->inf->priv.directory.timestamp);
+                                        break;
+
+                                case Service_Fifo:
+                                        StringBuffer_append(B,
+                                                "<mode>%o</mode>"
+                                                "<uid>%d</uid>"
+                                                "<gid>%d</gid>"
+                                                "<timestamp>%lld</timestamp>",
+                                                S->inf->priv.fifo.mode & 07777,
+                                                (int)S->inf->priv.fifo.uid,
+                                                (int)S->inf->priv.fifo.gid,
+                                                (long long)S->inf->priv.fifo.timestamp);
+                                        break;
+
+                                case Service_Filesystem:
+                                        StringBuffer_append(B,
+                                                "<mode>%o</mode>"
+                                                "<uid>%d</uid>"
+                                                "<gid>%d</gid>"
+                                                "<flags>%d</flags>"
+                                                "<block>"
+                                                "<percent>%.1f</percent>"
+                                                "<usage>%.1f</usage>"
+                                                "<total>%.1f</total>"
+                                                "</block>",
+                                                S->inf->priv.filesystem.mode & 07777,
+                                                (int)S->inf->priv.filesystem.uid,
+                                                (int)S->inf->priv.filesystem.gid,
+                                                S->inf->priv.filesystem.flags,
+                                                S->inf->priv.filesystem.space_percent/10.,
+                                                S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.space_total / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.,
+                                                S->inf->priv.filesystem.f_bsize > 0 ? (double)S->inf->priv.filesystem.f_blocks / 1048576. * (double)S->inf->priv.filesystem.f_bsize : 0.);
+                                        if (S->inf->priv.filesystem.f_files > 0) {
+                                                StringBuffer_append(B,
+                                                        "<inode>"
+                                                        "<percent>%.1f</percent>"
+                                                        "<usage>%lld</usage>"
+                                                        "<total>%lld</total>"
+                                                        "</inode>",
+                                                        S->inf->priv.filesystem.inode_percent/10.,
+                                                        S->inf->priv.filesystem.inode_total,
+                                                        S->inf->priv.filesystem.f_files);
+                                        }
+                                        break;
+
+                                case Service_Net:
+                                        StringBuffer_append(B,
+                                                "<link>"
+                                                "<state>%d</state>"
+                                                "<speed>%lld</speed>"
+                                                "<duplex>%d</duplex>"
+                                                "<download>"
+                                                "<packets>"
+                                                "<now>%lld</now>"
+                                                "<total>%lld</total>"
+                                                "</packets>"
+                                                "<bytes>"
+                                                "<now>%lld</now>"
+                                                "<total>%lld</total>"
+                                                "</bytes>"
+                                                "<errors>"
+                                                "<now>%lld</now>"
+                                                "<total>%lld</total>"
+                                                "</errors>"
+                                                "</download>"
+                                                "<upload>"
+                                                "<packets>"
+                                                "<now>%lld</now>"
+                                                "<total>%lld</total>"
+                                                "</packets>"
+                                                "<bytes>"
+                                                "<now>%lld</now>"
+                                                "<total>%lld</total>"
+                                                "</bytes>"
+                                                "<errors>"
+                                                "<now>%lld</now>"
+                                                "<total>%lld</total>"
+                                                "</errors>"
+                                                "</upload>"
+                                                "</link>",
+                                                Link_getState(S->inf->priv.net.stats),
+                                                Link_getSpeed(S->inf->priv.net.stats),
+                                                Link_getDuplex(S->inf->priv.net.stats),
+                                                Link_getPacketsInPerSecond(S->inf->priv.net.stats),
+                                                Link_getPacketsInTotal(S->inf->priv.net.stats),
+                                                Link_getBytesInPerSecond(S->inf->priv.net.stats),
+                                                Link_getBytesInTotal(S->inf->priv.net.stats),
+                                                Link_getErrorsInPerSecond(S->inf->priv.net.stats),
+                                                Link_getErrorsInTotal(S->inf->priv.net.stats),
+                                                Link_getPacketsOutPerSecond(S->inf->priv.net.stats),
+                                                Link_getPacketsOutTotal(S->inf->priv.net.stats),
+                                                Link_getBytesOutPerSecond(S->inf->priv.net.stats),
+                                                Link_getBytesOutTotal(S->inf->priv.net.stats),
+                                                Link_getErrorsOutPerSecond(S->inf->priv.net.stats),
+                                                Link_getErrorsOutTotal(S->inf->priv.net.stats));
+                                        break;
+
+                                case Service_Process:
+                                        StringBuffer_append(B,
+                                                "<pid>%d</pid>"
+                                                "<ppid>%d</ppid>"
+                                                "<uid>%d</uid>"
+                                                "<euid>%d</euid>"
+                                                "<gid>%d</gid>"
+                                                "<uptime>%lld</uptime>",
+                                                S->inf->priv.process.pid,
+                                                S->inf->priv.process.ppid,
+                                                S->inf->priv.process.uid,
+                                                S->inf->priv.process.euid,
+                                                S->inf->priv.process.gid,
+                                                (long long)S->inf->priv.process.uptime);
+                                        if (Run.doprocess) {
+                                                StringBuffer_append(B,
+                                                        "<children>%d</children>"
+                                                        "<memory>"
+                                                        "<percent>%.1f</percent>"
+                                                        "<percenttotal>%.1f</percenttotal>"
+                                                        "<kilobyte>%ld</kilobyte>"
+                                                        "<kilobytetotal>%ld</kilobytetotal>"
+                                                        "</memory>"
+                                                        "<cpu>"
+                                                        "<percent>%.1f</percent>"
+                                                        "<percenttotal>%.1f</percenttotal>"
+                                                        "</cpu>",
+                                                        S->inf->priv.process.children,
+                                                        S->inf->priv.process.mem_percent/10.0,
+                                                        S->inf->priv.process.total_mem_percent/10.0,
+                                                        S->inf->priv.process.mem_kbyte,
+                                                        S->inf->priv.process.total_mem_kbyte,
+                                                        S->inf->priv.process.cpu_percent/10.0,
+                                                        S->inf->priv.process.total_cpu_percent/10.0);
+                                        }
+                                        break;
+
+                                default:
+                                        break;
                         }
                         for (Icmp_T i = S->icmplist; i; i = i->next) {
                                 StringBuffer_append(B,

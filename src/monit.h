@@ -858,12 +858,6 @@ typedef struct myfilesystem {
 
 /** Defines service data */
 typedef struct myinfo {
-        /* Shared */
-        mode_t  st_mode;                                           /**< Permission */
-        uid_t   st_uid;                                           /**< Owner's uid */
-        gid_t   st_gid;                                           /**< Owner's gid */
-        time_t  timestamp;                                          /**< Timestamp */
-
         union {
                 struct {
                         long long  f_bsize;                           /**< Transfer block size */
@@ -874,36 +868,57 @@ typedef struct myinfo {
                         long long  f_filesfree;             /**< Free file nodes in filesystem */
                         long long  inode_total;                  /**< Used inode total objects */
                         long long  space_total;                   /**< Used space total blocks */
-                        short      inode_percent;              /**< Used inode percentage * 10 */
-                        short      space_percent;              /**< Used space percentage * 10 */
-                        int        _flags;               /**< Filesystem flags from last cycle */
-                        int        flags;              /**< Filesystem flags from actual cycle */
+                        short inode_percent;                   /**< Used inode percentage * 10 */
+                        short space_percent;                   /**< Used space percentage * 10 */
+                        int _flags;                      /**< Filesystem flags from last cycle */
+                        int flags;                     /**< Filesystem flags from actual cycle */
+                        mode_t mode;                                           /**< Permission */
+                        uid_t uid;                                            /**< Owner's uid */
+                        gid_t gid;                                            /**< Owner's gid */
                 } filesystem;
 
                 struct {
-                        off_t st_size;                                               /**< Size */
+                        time_t timestamp;                                       /**< Timestamp */
+                        mode_t mode;                                           /**< Permission */
+                        uid_t uid;                                            /**< Owner's uid */
+                        gid_t gid;                                            /**< Owner's gid */
+                        off_t size;                                                  /**< Size */
                         off_t readpos;                        /**< Position for regex matching */
-                        ino_t st_ino;                                               /**< Inode */
-                        ino_t st_ino_prev;              /**< Previous inode for regex matching */
+                        ino_t inode;                                                /**< Inode */
+                        ino_t inode_prev;               /**< Previous inode for regex matching */
                         MD_T  cs_sum;                                            /**< Checksum */
                 } file;
 
                 struct {
-                        pid_t  _pid;                          /**< Process PID from last cycle */
-                        pid_t  _ppid;                  /**< Process parent PID from last cycle */
-                        pid_t  pid;                         /**< Process PID from actual cycle */
-                        pid_t  ppid;                 /**< Process parent PID from actual cycle */
-                        uid_t  uid;                                           /**< Process UID */
-                        uid_t  euid;                                /**< Effective Process UID */
-                        gid_t  gid;                                           /**< Process GID */
+                        time_t timestamp;                                       /**< Timestamp */
+                        mode_t mode;                                           /**< Permission */
+                        uid_t uid;                                            /**< Owner's uid */
+                        gid_t gid;                                            /**< Owner's gid */
+                } directory;
+
+                struct {
+                        time_t timestamp;                                       /**< Timestamp */
+                        mode_t mode;                                           /**< Permission */
+                        uid_t uid;                                            /**< Owner's uid */
+                        gid_t gid;                                            /**< Owner's gid */
+                } fifo;
+
+                struct {
+                        pid_t _pid;                           /**< Process PID from last cycle */
+                        pid_t _ppid;                   /**< Process parent PID from last cycle */
+                        pid_t pid;                          /**< Process PID from actual cycle */
+                        pid_t ppid;                  /**< Process parent PID from actual cycle */
+                        uid_t uid;                                            /**< Process UID */
+                        uid_t euid;                                 /**< Effective Process UID */
+                        gid_t gid;                                            /**< Process GID */
                         boolean_t zombie;
-                        int    children;
-                        long   mem_kbyte;
-                        long   total_mem_kbyte;
-                        short  mem_percent;                               /**< percentage * 10 */
-                        short  total_mem_percent;                         /**< percentage * 10 */
-                        short  cpu_percent;                               /**< percentage * 10 */
-                        short  total_cpu_percent;                         /**< percentage * 10 */
+                        int children;
+                        long mem_kbyte;
+                        long total_mem_kbyte;
+                        short mem_percent;                                /**< percentage * 10 */
+                        short total_mem_percent;                          /**< percentage * 10 */
+                        short cpu_percent;                                /**< percentage * 10 */
+                        short total_cpu_percent;                          /**< percentage * 10 */
                         time_t uptime;                                     /**< Process uptime */
                 } process;
 
