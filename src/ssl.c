@@ -164,9 +164,6 @@ static Mutex_T *ssl_mutex_table;
  * @return false if an error occured.
  */
 boolean_t embed_ssl_socket(ssl_connection *ssl, int socket) {
-        int ssl_error;
-        time_t ssl_time;
-
         if (! ssl)
                 return false;
 
@@ -180,7 +177,7 @@ boolean_t embed_ssl_socket(ssl_connection *ssl, int socket) {
                 goto sslerror;
         }
 
-        if ((ssl->handler = SSL_new (ssl->ctx)) == NULL) {
+        if (! (ssl->handler = SSL_new(ssl->ctx))) {
                 LogError("Cannot initialize the SSL handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
@@ -192,15 +189,16 @@ boolean_t embed_ssl_socket(ssl_connection *ssl, int socket) {
 
         Net_setNonBlocking(ssl->socket);
 
-        if ((ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE)) == NULL) {
+        if (! (ssl->socket_bio = BIO_new_socket(ssl->socket, BIO_NOCLOSE))) {
                 LogError("Cannot create IO buffer -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
         SSL_set_bio(ssl->handler, ssl->socket_bio, ssl->socket_bio);
-        ssl_time = time(NULL);
+        time_t ssl_time = time(NULL);
 
-        while ((ssl_error = SSL_connect (ssl->handler)) < 0) {
+        int ssl_error;
+        while ((ssl_error = SSL_connect(ssl->handler)) < 0) {
                 if ((time(NULL) - ssl_time) > SSL_TIMEOUT) {
                         LogError("SSL service timeout\n");
                         goto sslerror;
@@ -213,7 +211,7 @@ boolean_t embed_ssl_socket(ssl_connection *ssl, int socket) {
                         goto sslerror;
         }
 
-        ssl->cipher = (char *) SSL_get_cipher(ssl->handler);
+        ssl->cipher = (char *)SSL_get_cipher(ssl->handler);
 
         if (! update_ssl_cert_data(ssl)) {
                 LogError("Cannot get the SSL server certificate\n");
@@ -239,8 +237,8 @@ boolean_t check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
 
         ASSERT(md5sum);
 
-        while ((i < ssl->cert_md5_len) && (md5sum[2*i] != '\0') && (md5sum[2*i+1] != '\0')) {
-                unsigned char c = (md5sum[2*i] > 57 ? md5sum[2*i] - 87 : md5sum[2*i] - 48) * 0x10+ (md5sum[2*i+1] > 57 ? md5sum[2*i+1] - 87 : md5sum[2*i+1] - 48);
+        while ((i < ssl->cert_md5_len) && (md5sum[2 * i] != '\0') && (md5sum[2 * i + 1] != '\0')) {
+                unsigned char c = (md5sum[2 * i] > 57 ? md5sum[2 * i] - 87 : md5sum[2 * i] - 48) * 0x10 + (md5sum[2 * i + 1] > 57 ? md5sum[2 * i + 1] - 87 : md5sum[2 * i + 1] - 48);
                 if (c != ssl->cert_md5[i])
                         return false;
                 i++;
@@ -255,12 +253,11 @@ boolean_t check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
  * @return true, or false if an error has occured.
  */
 boolean_t close_ssl_socket(ssl_connection *ssl) {
-        int rv;
-
         if (! ssl)
                 return false;
 
-        if (! (rv = SSL_shutdown(ssl->handler))) {
+        int rv = SSL_shutdown(ssl->handler);
+        if (! rv) {
                 shutdown(ssl->socket, 1);
                 rv = SSL_shutdown(ssl->handler);
         }
@@ -422,9 +419,6 @@ void close_accepted_ssl_socket(ssl_server_connection *ssl_server, ssl_connection
  * @return true, or false if an error has occured.
  */
 boolean_t embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
-        int ssl_error;
-        time_t ssl_time;
-
         ASSERT(ssl);
 
         ssl->socket = socket;
@@ -451,8 +445,9 @@ boolean_t embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
 
         SSL_set_bio(ssl->handler, ssl->socket_bio, ssl->socket_bio);
 
-        ssl_time = time(NULL);
+        time_t ssl_time = time(NULL);
 
+        int ssl_error;
         while ((ssl_error = SSL_accept(ssl->handler)) < 0) {
 
                 if ((time(NULL) - ssl_time) > SSL_TIMEOUT) {
@@ -883,8 +878,8 @@ static boolean_t update_ssl_cert_data(ssl_connection *ssl) {
         if (! FIPS_mode()) {
                 /* In FIPS-140 mode, MD5 is unavailable. */
 #endif
-                ssl->cert_issuer = X509_NAME_oneline (X509_get_issuer_name(ssl->cert), 0, 0);
-                ssl->cert_subject = X509_NAME_oneline (X509_get_subject_name(ssl->cert), 0, 0);
+                ssl->cert_issuer = X509_NAME_oneline(X509_get_issuer_name(ssl->cert), 0, 0);
+                ssl->cert_subject = X509_NAME_oneline(X509_get_subject_name(ssl->cert), 0, 0);
                 X509_digest(ssl->cert, EVP_md5(), md5, &ssl->cert_md5_len);
                 ssl->cert_md5 = (unsigned char *)Str_dup((char *)md5);
 #ifdef OPENSSL_FIPS
