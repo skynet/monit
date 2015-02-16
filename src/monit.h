@@ -981,7 +981,6 @@ typedef struct myservice {
         Bandwidth_T downloadbyteslist;              /**< Download bytes check list */
         Bandwidth_T downloadpacketslist;          /**< Download packets check list */
 
-
         /** General event handlers */
         EventAction_T action_DATA;       /**< Description of the action upon event */
         EventAction_T action_EXEC;       /**< Description of the action upon event */
@@ -1018,7 +1017,6 @@ typedef struct myservice {
                 EventAction_T     action;           /**< Description of the event action */
                 /** For internal use */
                 struct myevent   *next;                         /**< next event in chain */
-                struct myevent   *previous;                 /**< previous event in chain */
         } *eventlist;                                     /**< Pending events list */
 
         /** Context specific parameters */
