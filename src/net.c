@@ -142,7 +142,6 @@
 
 #include "monit.h"
 #include "net.h"
-#include "ssl.h"
 
 // libmonit
 #include "system/Net.h"
