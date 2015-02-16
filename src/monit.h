@@ -935,13 +935,14 @@ typedef struct myservice {
         /** Common parameters */
         char *name;                                  /**< Service descriptive name */
         boolean_t (*check)(struct myservice *); /**< Service verification function */
+        boolean_t visited;      /**< Service visited flag, set if dependencies are used */
+        boolean_t depend_visited;/**< Depend visited flag, set if dependencies are used */
         Service_Type type;                             /**< Monitored service type */
         Monitor_State monitor;                             /**< Monitor state flag */
         Monitor_Mode mode;                    /**< Monitoring mode for the service */
+        Action_Type doaction;                 /**< Action scheduled by http thread */
         int  ncycle;                          /**< The number of the current cycle */
         int  nstart;           /**< The number of current starts with this service */
-        boolean_t visited;      /**< Service visited flag, set if dependencies are used */
-        boolean_t depend_visited;/**< Depend visited flag, set if dependencies are used */
         Every_T every;              /**< Timespec for when to run check of service */
         command_t start;                    /**< The start command for the service */
         command_t stop;                      /**< The stop command for the service */
@@ -997,7 +998,6 @@ typedef struct myservice {
         int                error_hint;   /**< Failed/Changed hint for error bitmap */
         Info_T             inf;                          /**< Service check result */
         struct timeval     collected;                /**< When were data collected */
-        Action_Type        doaction;          /**< Action scheduled by http thread */
         char              *token;                                /**< Action token */
 
         /** Events */
