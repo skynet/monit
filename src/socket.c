@@ -88,8 +88,10 @@
 
 #define TYPE_LOCAL   0
 #define TYPE_ACCEPT  1
+
+
 // One TCP frame data size
-#define RBUFFER_SIZE 1500
+#define RBUFFER_SIZE 1460
 
 struct Socket_T {
         int port;
@@ -119,21 +121,16 @@ struct Socket_T {
  * @return the length of data read or -1 if an error occured
  */
 static int fill(Socket_T S, int timeout) {
-        int n;
         S->offset = 0;
         S->length = 0;
         if (S->type == SOCK_DGRAM)
                 timeout = 500;
-        if (S->ssl) {
-                n = recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE-S->length, timeout);
-        } else {
-                n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE-S->length, timeout);
-        }
-        if (n > 0) {
+        int n = S->ssl ? recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE - S->length, timeout) : (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE - S->length, timeout);
+        if (n > 0)
                 S->length += n;
-        }  else if (n < 0) {
+        else if (n < 0)
                 return -1;
-        } else if (! (errno == EAGAIN || errno == EWOULDBLOCK)) // Peer closed connection
+        else if (! (errno == EAGAIN || errno == EWOULDBLOCK)) // Peer closed connection
                 return -1;
         return n;
 }
