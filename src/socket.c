@@ -86,26 +86,29 @@
 /* ------------------------------------------------------------- Definitions */
 
 
-#define TYPE_LOCAL   0
-#define TYPE_ACCEPT  1
+typedef enum {
+        Connection_Client = 0,
+        Connection_Server
+} __attribute__((__packed__)) Connection_Type;
 
 
 // One TCP frame data size
 #define RBUFFER_SIZE 1460
 
+
 struct Socket_T {
+        int socket;
         int port;
         int type;
-        Socket_Family family;
-        int socket;
-        char *host;
-        Port_T Port;
         int timeout; // milliseconds
-        int connection_type;
-        ssl_connection *ssl;
-        ssl_server_connection *sslserver;
         int length;
         int offset;
+        Socket_Family family;
+        Connection_Type connection_type;
+        char *host;
+        Port_T Port;
+        ssl_connection *ssl;
+        ssl_server_connection *sslserver;
         unsigned char buffer[RBUFFER_SIZE + 1];
 };
 
@@ -170,7 +173,7 @@ Socket_T socket_create(void *port) {
                 S->family = p->family;
                 S->port = p->port;
                 S->timeout = p->timeout;
-                S->connection_type = TYPE_LOCAL;
+                S->connection_type = Connection_Client;
                 S->host = Str_dup(p->family == Socket_Unix ? LOCALHOST : p->hostname);
                 if (p->SSL.use_ssl && ! socket_switch2ssl(S, p->SSL)) {
                         socket_free(&S);
@@ -203,7 +206,7 @@ Socket_T socket_create_t(const char *host, int port, int type, Socket_Family fam
                 S->family = family;
                 S->timeout = timeout;
                 S->host = Str_dup(host);
-                S->connection_type = TYPE_LOCAL;
+                S->connection_type = Connection_Client;
                 if (ssl.use_ssl && ! socket_switch2ssl(S, ssl)) {
                         socket_free(&S);
                         return NULL;
@@ -227,7 +230,7 @@ Socket_T socket_create_u(const char *path, int type, int timeout) {
                 S->type = proto;
                 S->family = Socket_Unix;
                 S->timeout = timeout;
-                S->connection_type = TYPE_LOCAL;
+                S->connection_type = Connection_Client;
                 return S;
         }
         return NULL;
@@ -241,7 +244,7 @@ Socket_T socket_create_a(int socket, struct sockaddr *addr, void *sslserver) {
         NEW(S);
         S->socket = socket;
         S->timeout = NET_TIMEOUT; // milliseconds
-        S->connection_type = TYPE_ACCEPT;
+        S->connection_type = Connection_Server;
         S->type = SOCK_STREAM;
         if (addr->sa_family == AF_INET) {
                 struct sockaddr_in *a = (struct sockaddr_in *)addr;
@@ -267,10 +270,10 @@ void socket_free(Socket_T *S) {
 #ifdef HAVE_OPENSSL
         if ((*S)->ssl && (*S)->ssl->handler)
         {
-                if ((*S)->connection_type == TYPE_LOCAL) {
+                if ((*S)->connection_type == Connection_Client) {
                         close_ssl_socket((*S)->ssl);
                         delete_ssl_socket((*S)->ssl);
-                } else if ((*S)->connection_type == TYPE_ACCEPT && (*S)->sslserver) {
+                } else if ((*S)->connection_type == Connection_Server && (*S)->sslserver) {
                         close_accepted_ssl_socket((*S)->sslserver, (*S)->ssl);
                 }
         }
