@@ -1117,8 +1117,12 @@ type            : /* EMPTY */ {
                   }
                 ;
 
-certmd5         : /* EMPTY */    { $<string>$ = NULL; }
-                | CERTMD5 STRING { $<string>$ = $2; }
+certmd5         : /* EMPTY */ {
+                        $<string>$ = NULL;
+                  }
+                | CERTMD5 STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
 sslversion      : /* EMPTY */  { $<number>$ = SSL_Disabled; }

@@ -233,17 +233,28 @@ sslerror:
  * @return true, if sums do not match false
  */
 boolean_t check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
-        unsigned int i = 0;
-
         ASSERT(md5sum);
 
-        while ((i < ssl->cert_md5_len) && (md5sum[2 * i] != '\0') && (md5sum[2 * i + 1] != '\0')) {
-                unsigned char c = (md5sum[2 * i] > 57 ? md5sum[2 * i] - 87 : md5sum[2 * i] - 48) * 0x10 + (md5sum[2 * i + 1] > 57 ? md5sum[2 * i + 1] - 87 : md5sum[2 * i + 1] - 48);
-                if (c != ssl->cert_md5[i])
-                        return false;
-                i++;
+#ifdef OPENSSL_FIPS
+        if (! FIPS_mode()) {
+#endif
+                unsigned int len, i = 0;
+                unsigned char md5[EVP_MAX_MD_SIZE];
+                X509_digest(ssl->cert, EVP_md5(), md5, &len);
+                while ((i < len) && (md5sum[2 * i] != '\0') && (md5sum[2 * i + 1] != '\0')) {
+                        unsigned char c = (md5sum[2 * i] > 57 ? md5sum[2 * i] - 87 : md5sum[2 * i] - 48) * 0x10 + (md5sum[2 * i + 1] > 57 ? md5sum[2 * i + 1] - 87 : md5sum[2 * i + 1] - 48);
+                        if (c != md5[i])
+                                return false;
+                        i++;
+                }
+                return true;
+#ifdef OPENSSL_FIPS
+        } else {
+                /* In FIPS-140 mode, MD5 is unavailable. */
+                LogError("Cannot check certificate checksum -- MD5 not supported in FIPS mode\n");
+                return false;
         }
-        return true;
+#endif
 }
 
 
@@ -253,19 +264,17 @@ boolean_t check_ssl_md5sum(ssl_connection *ssl, char *md5sum) {
  * @return true, or false if an error has occured.
  */
 boolean_t close_ssl_socket(ssl_connection *ssl) {
-        if (! ssl)
-                return false;
-
-        int rv = SSL_shutdown(ssl->handler);
-        if (! rv) {
-                shutdown(ssl->socket, 1);
-                rv = SSL_shutdown(ssl->handler);
+        if (ssl) {
+                int rv = SSL_shutdown(ssl->handler);
+                if (! rv) {
+                        shutdown(ssl->socket, 1);
+                        rv = SSL_shutdown(ssl->handler);
+                }
+                Net_close(ssl->socket);
+                cleanup_ssl_socket(ssl);
+                return rv > 0 ? true : false;
         }
-
-        Net_close(ssl->socket);
-        cleanup_ssl_socket(ssl);
-
-        return (rv > 0) ? true : false;
+        return false;
 }
 
 
@@ -274,17 +283,12 @@ boolean_t close_ssl_socket(ssl_connection *ssl) {
  * @param ssl ssl connection
  */
 void delete_ssl_socket(ssl_connection *ssl) {
-        if (! ssl)
-                return;
-
-        cleanup_ssl_socket(ssl);
-
-        if (ssl->ctx && ! ssl->accepted)
-                SSL_CTX_free(ssl->ctx);
-
-        ssl->ctx = NULL;
-
-        FREE(ssl);
+        if (ssl) {
+                cleanup_ssl_socket(ssl);
+                if (ssl->ctx && ! ssl->accepted)
+                        SSL_CTX_free(ssl->ctx);
+                FREE(ssl);
+        }
 }
 
 
@@ -347,15 +351,12 @@ sslerror:
  * @param ssl_server data for ssl server connection
  */
 void delete_ssl_server_socket(ssl_server_connection *ssl_server) {
-        if (! ssl_server)
-                return;
-
-        cleanup_ssl_server_socket(ssl_server);
-
-        if (ssl_server->ctx)
-                SSL_CTX_free(ssl_server->ctx);
-
-        FREE(ssl_server);
+        if (ssl_server) {
+                cleanup_ssl_server_socket(ssl_server);
+                if (ssl_server->ctx)
+                        SSL_CTX_free(ssl_server->ctx);
+                FREE(ssl_server);
+        }
 }
 
 
@@ -365,13 +366,12 @@ void delete_ssl_server_socket(ssl_server_connection *ssl_server) {
  * @return new SSL connection for the connection, or NULL if failed
  */
 ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
-        ssl_connection *ssl;
-
         ASSERT(ssl_server);
 
         if (! ssl_initialized)
                 start_ssl();
 
+        ssl_connection *ssl;
         NEW(ssl);
         ssl->accepted = true;
         if (ssl_server->clientpemfile)
@@ -397,18 +397,18 @@ ssl_connection *insert_accepted_ssl_socket(ssl_server_connection *ssl_server) {
  * @param ssl data the connection to be deleted
  */
 void close_accepted_ssl_socket(ssl_server_connection *ssl_server, ssl_connection *ssl) {
-        if (! ssl || ! ssl_server)
-                return;
-        Net_close(ssl->socket);
-        LOCK(ssl_mutex);
-        {
-                if (ssl->prev)
-                        ssl->prev->next = ssl->next;
-                else
-                        ssl_server->ssl_conn_list = ssl->next;
+        if (ssl && ssl_server) {
+                Net_close(ssl->socket);
+                LOCK(ssl_mutex);
+                {
+                        if (ssl->prev)
+                                ssl->prev->next = ssl->next;
+                        else
+                                ssl_server->ssl_conn_list = ssl->next;
+                }
+                END_LOCK;
+                delete_ssl_socket(ssl);
         }
-        END_LOCK;
-        delete_ssl_socket(ssl);
 }
 
 
@@ -488,14 +488,12 @@ boolean_t embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
  * @return number of bytes transmitted, -1 in case of an error
  */
 int send_ssl_socket(ssl_connection *ssl, void *buffer, size_t len, int timeout) {
-        int n = 0;
-
         ASSERT(ssl);
 
+        int n = 0;
         do {
                 n = SSL_write(ssl->handler, buffer, (int)len);
         } while (n <= 0 && BIO_should_retry(ssl->socket_bio) && can_write(ssl->socket, timeout));
-
         return (n > 0) ? n : -1;
 }
 
@@ -509,14 +507,12 @@ int send_ssl_socket(ssl_connection *ssl, void *buffer, size_t len, int timeout) 
  * @return number of bytes transmitted, -1 in case of an error
  */
 int recv_ssl_socket(ssl_connection *ssl, void *buffer, int len, int timeout) {
-        int n = 0;
-
         ASSERT(ssl);
 
+        int n = 0;
         do {
                 n = SSL_read(ssl->handler, buffer, len);
         } while (n < 0 && BIO_should_retry(ssl->socket_bio) && can_read(ssl->socket, timeout));
-
         return (n >= 0) ? n : -1;
 }
 
@@ -709,18 +705,14 @@ static boolean_t verify_init(ssl_server_connection *ssl_server) {
  */
 static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx) {
         char subject[STRLEN];
-        X509_OBJECT found_cert;
-
-        X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), subject, STRLEN-1);
-
+        X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), subject, STRLEN - 1);
         if (! preverify_ok && ! check_preverify(ctx))
                 return 0;
-
+        X509_OBJECT found_cert;
         if (ctx->error_depth == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(ctx->current_cert), &found_cert) != 1) {
                 LogError("SSL connection rejected. No matching certificate found -- %s\n", SSLERROR);
                 return 0;
         }
-
         return 1;
 }
 
@@ -731,20 +723,14 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx) {
  */
 static boolean_t check_preverify(X509_STORE_CTX *ctx) {
         if ((ctx->error != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) && (ctx->error != X509_V_ERR_INVALID_PURPOSE)) {
-                /* Remote site specified a certificate, but it's not correct */
                 LogError("SSL connection rejected because certificate verification has failed -- error %i\n", ctx->error);
-                /* Reject connection */
                 return false;
         }
-
         if ((Run.httpd.flags & Httpd_AllowSelfSignedCertificates) && (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)) {
-                /* Let's accept self signed certs for the moment! */
                 LogInfo("SSL connection accepted with self signed certificate\n");
                 ctx->error = 0;
                 return true;
         }
-
-        /* Reject connection */
         LogError("SSL connection rejected because certificate verification has failed -- error %i\n", ctx->error);
         return false;
 }
@@ -775,9 +761,7 @@ static void ssl_mutex_lock(int mode, int n, const char *file, int line) {
  * @return true if non fatal, false if non fatal and retry
  */
 static boolean_t handle_error(int code, ssl_connection *ssl) {
-        int ssl_error = SSL_get_error(ssl->handler, code);
-
-        switch (ssl_error) {
+        switch (SSL_get_error(ssl->handler, code)) {
 
                 case SSL_ERROR_NONE:
                         return true;
@@ -807,7 +791,6 @@ static boolean_t handle_error(int code, ssl_connection *ssl) {
                         break;
 
         }
-
         return false;
 }
 
@@ -817,28 +800,21 @@ static boolean_t handle_error(int code, ssl_connection *ssl) {
  * @param ssl ssl connection
  */
 static void cleanup_ssl_socket(ssl_connection *ssl) {
-        if (! ssl)
-                return;
-
-        if (ssl->cert) {
-                X509_free(ssl->cert);
-                ssl->cert = NULL;
+        if (ssl) {
+                if (ssl->cert) {
+                        X509_free(ssl->cert);
+                        ssl->cert = NULL;
+                }
+                if (ssl->handler) {
+                        SSL_free(ssl->handler);
+                        ssl->handler = NULL;
+                }
+                if (ssl->socket_bio) {
+                        /* no BIO_free(ssl->socket_bio); necessary, because BIO is freed by ssl->handler */
+                        ssl->socket_bio = NULL;
+                }
+                FREE(ssl->clientpemfile);
         }
-
-        if (ssl->handler) {
-                SSL_free(ssl->handler);
-                ssl->handler = NULL;
-        }
-
-        if (ssl->socket_bio) {
-                /* no BIO_free(ssl->socket_bio); necessary, because BIO is freed by ssl->handler */
-                ssl->socket_bio = NULL;
-        }
-
-        FREE(ssl->cert_issuer);
-        FREE(ssl->cert_subject);
-        FREE(ssl->cert_md5);
-        FREE(ssl->clientpemfile);
 }
 
 
@@ -847,16 +823,14 @@ static void cleanup_ssl_socket(ssl_connection *ssl) {
  * @param ssl_server data for ssl server connection
  */
 static void cleanup_ssl_server_socket(ssl_server_connection *ssl_server) {
-        if (! ssl_server)
-                return;
-
-        FREE(ssl_server->pemfile);
-        FREE(ssl_server->clientpemfile);
-
-        while (ssl_server->ssl_conn_list) {
-                ssl_connection *ssl = ssl_server->ssl_conn_list;
-                ssl_server->ssl_conn_list = ssl_server->ssl_conn_list->next;
-                close_accepted_ssl_socket(ssl_server, ssl);
+        if (ssl_server) {
+                FREE(ssl_server->pemfile);
+                FREE(ssl_server->clientpemfile);
+                while (ssl_server->ssl_conn_list) {
+                        ssl_connection *ssl = ssl_server->ssl_conn_list;
+                        ssl_server->ssl_conn_list = ssl_server->ssl_conn_list->next;
+                        close_accepted_ssl_socket(ssl_server, ssl);
+                }
         }
 }
 
@@ -867,25 +841,8 @@ static void cleanup_ssl_server_socket(ssl_server_connection *ssl_server) {
  * @return true, if not successful false
  */
 static boolean_t update_ssl_cert_data(ssl_connection *ssl) {
-        unsigned char md5[EVP_MAX_MD_SIZE];
-
         ASSERT(ssl);
-
-        if (! (ssl->cert = SSL_get_peer_certificate(ssl->handler)))
-                return false;
-
-#ifdef OPENSSL_FIPS
-        if (! FIPS_mode()) {
-                /* In FIPS-140 mode, MD5 is unavailable. */
-#endif
-                ssl->cert_issuer = X509_NAME_oneline(X509_get_issuer_name(ssl->cert), 0, 0);
-                ssl->cert_subject = X509_NAME_oneline(X509_get_subject_name(ssl->cert), 0, 0);
-                X509_digest(ssl->cert, EVP_md5(), md5, &ssl->cert_md5_len);
-                ssl->cert_md5 = (unsigned char *)Str_dup((char *)md5);
-#ifdef OPENSSL_FIPS
-        }
-#endif
-        return true;
+        return (ssl->cert = SSL_get_peer_certificate(ssl->handler)) ? true : false;
 }
 
 
@@ -893,18 +850,14 @@ static boolean_t update_ssl_cert_data(ssl_connection *ssl) {
  * Generate a new ssl server connection
  * @return ssl server connection container
  */
-static ssl_server_connection *new_ssl_server_connection(char * pemfile, char * clientpemfile) {
-        ssl_server_connection *ssl_server;
-
+static ssl_server_connection *new_ssl_server_connection(char *pemfile, char *clientpemfile) {
         ASSERT(pemfile);
 
+        ssl_server_connection *ssl_server;
         NEW(ssl_server);
-        ssl_server->ctx = NULL;
-        ssl_server->method = NULL;
-        ssl_server->server_socket = 0;
-        ssl_server->ssl_conn_list = NULL;
         ssl_server->pemfile = Str_dup(pemfile);
-        ssl_server->clientpemfile = clientpemfile ? Str_dup(clientpemfile) : NULL;
+        if (clientpemfile)
+                ssl_server->clientpemfile = Str_dup(clientpemfile);
 
         return ssl_server;
 }
@@ -951,7 +904,6 @@ static boolean_t start_ssl() {
                 }
                 return false;
         }
-
         return true;
 }
 
