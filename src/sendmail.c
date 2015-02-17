@@ -137,8 +137,8 @@ static void open_server(SendMail_T *S) {
                 THROW(IOException, "No mail servers are defined -- see manual for 'set mailserver' statement");
         }
         do {
-                /* wait with ssl-connect if SSL_VERSION_TLSV1 is set (rfc2487) */
-                if (! S->ssl.use_ssl || S->ssl.version == SSL_VERSION_TLSV1 || S->ssl.version == SSL_VERSION_TLSV11 || S->ssl.version == SSL_VERSION_TLSV12)
+                /* wait with ssl-connect if SSL_TLS* is set (rfc2487) */
+                if (! S->ssl.use_ssl || S->ssl.version == SSL_TLSV1 || S->ssl.version == SSL_TLSV11 || S->ssl.version == SSL_TLSV12)
                         S->socket = socket_new(S->server, S->port, SOCKET_TCP, Socket_Ip, false, Run.mailserver_timeout);
                 else
                         S->socket = socket_create_t(S->server, S->port, SOCKET_TCP, Socket_Ip, S->ssl, Run.mailserver_timeout);
@@ -207,10 +207,10 @@ boolean_t sendmail(Mail_T mail) {
                 Time_gmtstring(Time_now(), now);
                 snprintf(S.localhost, sizeof(S.localhost), "%s", Run.mail_hostname ? Run.mail_hostname : Run.system->name);
                 do_status(&S);
-                do_send(&S, "%s %s\r\n", ((S.ssl.use_ssl && (S.ssl.version == SSL_VERSION_TLSV1 || S.ssl.version == SSL_VERSION_TLSV11 || S.ssl.version == SSL_VERSION_TLSV12)) || S.username) ? "EHLO" : "HELO", S.localhost); // Use EHLO if TLS or Authentication is requested
+                do_send(&S, "%s %s\r\n", ((S.ssl.use_ssl && (S.ssl.version == SSL_TLSV1 || S.ssl.version == SSL_TLSV11 || S.ssl.version == SSL_TLSV12)) || S.username) ? "EHLO" : "HELO", S.localhost); // Use EHLO if TLS or Authentication is requested
                 do_status(&S);
                 /* Switch to TLS now if configured */
-                if (S.ssl.use_ssl && (S.ssl.version == SSL_VERSION_TLSV1 || S.ssl.version == SSL_VERSION_TLSV11 || S.ssl.version == SSL_VERSION_TLSV12)) {
+                if (S.ssl.use_ssl && (S.ssl.version == SSL_TLSV1 || S.ssl.version == SSL_TLSV11 || S.ssl.version == SSL_TLSV12)) {
                         do_send(&S, "STARTTLS\r\n");
                         do_status(&S);
                         if (! socket_switch2ssl(S.socket, S.ssl)) {

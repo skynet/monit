@@ -553,7 +553,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 ssl->clientpemfile = Str_dup(clientpemfile);
 
         switch (sslversion) {
-                case SSL_VERSION_SSLV2:
+                case SSL_V2:
 #ifdef OPENSSL_NO_SSL2
                         LogError("SSLv2 is not allowed - use TLS\n");
                         goto sslerror;
@@ -567,7 +567,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                                 ssl->method = SSLv2_client_method();
 #endif
                         break;
-                case SSL_VERSION_SSLV3:
+                case SSL_V3:
 #ifdef OPENSSL_FIPS
                         if (FIPS_mode()) {
                                 LogError("SSLv3 is not allowed in FIPS mode - use TLS\n");
@@ -576,20 +576,20 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
 #endif
                                 ssl->method = SSLv3_client_method();
                         break;
-                case SSL_VERSION_TLSV1:
+                case SSL_TLSV1:
                         ssl->method = TLSv1_client_method();
                         break;
 #ifdef HAVE_TLSV1_1
-                case SSL_VERSION_TLSV11:
+                case SSL_TLSV11:
                         ssl->method = TLSv1_1_client_method();
                         break;
 #endif
 #ifdef HAVE_TLSV1_2
-                case SSL_VERSION_TLSV12:
+                case SSL_TLSV12:
                         ssl->method = TLSv1_2_client_method();
                         break;
 #endif
-                case SSL_VERSION_AUTO:
+                case SSL_Auto:
                 default:
                         ssl->method = SSLv23_client_method();
                         break;
@@ -606,7 +606,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                 goto sslerror;
         }
 
-        if (sslversion == SSL_VERSION_AUTO)
+        if (sslversion == SSL_Auto)
                 SSL_CTX_set_options(ssl->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
         if (ssl->clientpemfile) {

@@ -143,7 +143,7 @@ static int fill(Socket_T S, int timeout) {
 
 
 Socket_T socket_new(const char *host, int port, int type, Socket_Family family, boolean_t use_ssl, int timeout) {
-        Ssl_T ssl = {.use_ssl = use_ssl, .version = SSL_VERSION_AUTO};
+        Ssl_T ssl = {.use_ssl = use_ssl, .version = SSL_Auto};
         return socket_create_t(host, port, type, family, ssl, timeout);
 }
 

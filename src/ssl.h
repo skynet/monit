@@ -38,18 +38,22 @@
 #endif
 #endif
 
-#define SSL_VERSION_AUTO       0
-#define SSL_VERSION_SSLV2      1
-#define SSL_VERSION_SSLV3      2
-#define SSL_VERSION_TLSV1      3
-#define SSL_VERSION_TLSV11     4
-#define SSL_VERSION_TLSV12     5
-#define SSL_VERSION_NONE       6
+
+typedef enum {
+        SSL_Auto = 0,
+        SSL_V2,
+        SSL_V3,
+        SSL_TLSV1,
+        SSL_TLSV11,
+        SSL_TLSV12,
+        SSL_Disabled
+} __attribute__((__packed__)) SSL_Version;
+
 
 /** Defines an SSL object */
 typedef struct myssl {
         boolean_t use_ssl;             /**< true if SSL is required for connection */
-        int   version;                  /**< The SSL version to use for connection */
+        SSL_Version version;            /**< The SSL version to use for connection */
         char *certmd5;       /**< The expected md5 sum of the server's certificate */
         char *clientpemfile;                      /**< Optional client certificate */
 } Ssl_T;

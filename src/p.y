@@ -228,7 +228,7 @@ static void  addicmp(Icmp_T);
 static void  addgeneric(Port_T, char*, char*);
 static void  addcommand(int, unsigned);
 static void  addargument(char *);
-static void  addmmonit(URL_T, int, int, char *);
+static void  addmmonit(URL_T, int, SSL_Version, char *);
 static void  addmailserver(MailServer_T);
 static boolean_t addcredentials(char *, char *, Digest_Type, boolean_t);
 #ifdef HAVE_LIBPAM
@@ -684,9 +684,9 @@ mailserver      : STRING username password sslversion certmd5 {
                     mailserverset.username = $<string>2;
                     mailserverset.password = $<string>3;
                     mailserverset.ssl.version = $<number>4;
-                    if (mailserverset.ssl.version != SSL_VERSION_NONE) {
+                    if (mailserverset.ssl.version != SSL_Disabled) {
                       mailserverset.ssl.use_ssl = true;
-                      if (mailserverset.ssl.version == SSL_VERSION_SSLV2 || mailserverset.ssl.version == SSL_VERSION_SSLV3)
+                      if (mailserverset.ssl.version == SSL_V2 || mailserverset.ssl.version == SSL_V3)
                          mailserverset.port = PORT_SMTPS;
                       mailserverset.ssl.certmd5 = $<string>5;
                     }
@@ -703,7 +703,7 @@ mailserver      : STRING username password sslversion certmd5 {
                     mailserverset.username = $<string>4;
                     mailserverset.password = $<string>5;
                     mailserverset.ssl.version = $<number>6;
-                    if (mailserverset.ssl.version != SSL_VERSION_NONE) {
+                    if (mailserverset.ssl.version != SSL_Disabled) {
                       mailserverset.ssl.use_ssl = true;
                       mailserverset.ssl.certmd5 = $<string>7;
                     }
@@ -1108,8 +1108,8 @@ type            : /* EMPTY */ {
                     portset.type = SOCK_STREAM;
                     portset.SSL.use_ssl = true;
                     portset.SSL.version = $<number>3;
-                    if (portset.SSL.version == SSL_VERSION_NONE)
-                      portset.SSL.version = SSL_VERSION_AUTO;
+                    if (portset.SSL.version == SSL_Disabled)
+                      portset.SSL.version = SSL_Auto;
                     portset.SSL.certmd5 = $<string>4;
                   }
                 | TYPE UDP {
@@ -1121,25 +1121,25 @@ certmd5         : /* EMPTY */    { $<string>$ = NULL; }
                 | CERTMD5 STRING { $<string>$ = $2; }
                 ;
 
-sslversion      : /* EMPTY */  { $<number>$ = SSL_VERSION_NONE; }
-                | SSLV2        { $<number>$ = SSL_VERSION_SSLV2; }
-                | SSLV3        { $<number>$ = SSL_VERSION_SSLV3; }
-                | TLSV1        { $<number>$ = SSL_VERSION_TLSV1; }
+sslversion      : /* EMPTY */  { $<number>$ = SSL_Disabled; }
+                | SSLV2        { $<number>$ = SSL_V2; }
+                | SSLV3        { $<number>$ = SSL_V3; }
+                | TLSV1        { $<number>$ = SSL_TLSV1; }
                 | TLSV11
                 {
 #ifndef HAVE_TLSV1_1
                         yyerror("Your SSL Library does not support TLS version 1.1");
 #endif
-                        $<number>$ = SSL_VERSION_TLSV11;
+                        $<number>$ = SSL_TLSV11;
                 }
                 | TLSV12
                 {
 #ifndef HAVE_TLSV1_2
                         yyerror("Your SSL Library does not support TLS version 1.2");
 #endif
-                        $<number>$ = SSL_VERSION_TLSV12;
+                        $<number>$ = SSL_TLSV12;
                 }
-                | SSLAUTO      { $<number>$ = SSL_VERSION_AUTO; }
+                | SSLAUTO      { $<number>$ = SSL_Auto; }
                 ;
 
 protocol        : /* EMPTY */  {
@@ -1166,7 +1166,7 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL HTTPS httplist {
                         portset.type = SOCK_STREAM;
                         portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_HTTP);
                  }
                 | PROTOCOL IMAP {
@@ -1175,7 +1175,7 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL IMAPS {
                         portset.type = SOCK_STREAM;
                         portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_IMAP);
                   }
                 | PROTOCOL CLAMAV {
@@ -1218,7 +1218,7 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL SMTPS {
                         portset.type = SOCK_STREAM;
                         portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_VERSION_AUTO;
+                        portset.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_SMTP);
                  }
                 | PROTOCOL SSH  {
@@ -3364,7 +3364,7 @@ static void  seturlrequest(int operator, char *regex) {
 /*
  * Add a new data recipient server to the mmonit server list
  */
-static void addmmonit(URL_T url, int timeout, int sslversion, char *certmd5) {
+static void addmmonit(URL_T url, int timeout, SSL_Version sslversion, char *certmd5) {
         Mmonit_T c;
 
         ASSERT(url);
@@ -3376,7 +3376,7 @@ static void addmmonit(URL_T url, int timeout, int sslversion, char *certmd5) {
                         yyerror("SSL check cannot be activated. SSL is not supported");
                 } else {
                         c->ssl.use_ssl = true;
-                        c->ssl.version = (sslversion == SSL_VERSION_NONE) ? SSL_VERSION_AUTO : sslversion;
+                        c->ssl.version = (sslversion == SSL_Disabled) ? SSL_Auto : sslversion;
                         if (certmd5) {
                                 c->ssl.certmd5 = certmd5;
                                 cleanup_hash_string(c->ssl.certmd5);
@@ -3752,7 +3752,7 @@ static void reset_mailserverset() {
         memset(&mailserverset, 0, sizeof(struct mymailserver));
         mailserverset.port = PORT_SMTP;
         mailserverset.ssl.use_ssl = false;
-        mailserverset.ssl.version = SSL_VERSION_AUTO;
+        mailserverset.ssl.version = SSL_Auto;
 }
 
 
@@ -3764,7 +3764,7 @@ static void reset_portset() {
         portset.socket = -1;
         portset.type = SOCK_STREAM;
         portset.family = Socket_Ip;
-        portset.SSL.version = SSL_VERSION_AUTO;
+        portset.SSL.version = SSL_Auto;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;
         portset.maxforward = 70;
