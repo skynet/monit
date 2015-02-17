@@ -77,11 +77,11 @@ typedef struct my_ssl_connection {
 
 
 typedef struct my_ssl_server_connection {
-        int               server_socket;
-        SSL_CTX          *ctx;
-        char             *pemfile;
-        char             *clientpemfile;
-        ssl_connection   *ssl_conn_list;
+        int server_socket;
+        SSL_CTX *ctx;
+        char *pemfile;
+        char *clientpemfile;
+        ssl_connection *ssl_conn_list;
 } ssl_server_connection;
 
 
