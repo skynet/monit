@@ -70,7 +70,6 @@ typedef struct my_ssl_connection {
         X509             *cert;
         const SSL_METHOD *method;
         BIO              *socket_bio;
-        const char       *cipher;
         char             *clientpemfile;
 
         struct my_ssl_connection *prev;

@@ -211,8 +211,6 @@ boolean_t embed_ssl_socket(ssl_connection *ssl, int socket) {
                         goto sslerror;
         }
 
-        ssl->cipher = (char *)SSL_get_cipher(ssl->handler);
-
         if (! update_ssl_cert_data(ssl)) {
                 LogError("Cannot get the SSL server certificate\n");
                 goto sslerror;
@@ -462,8 +460,6 @@ boolean_t embed_accepted_ssl_socket(ssl_connection *ssl, int socket) {
                         return false;
 
         }
-
-        ssl->cipher = (char *)SSL_get_cipher(ssl->handler);
 
         if (! update_ssl_cert_data(ssl) && ssl->clientpemfile) {
                 LogError("The client did not supply a required client certificate\n");
