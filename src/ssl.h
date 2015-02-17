@@ -63,14 +63,13 @@ typedef struct myssl {
 
 
 typedef struct my_ssl_connection {
-        int               socket;
-        boolean_t         accepted;
-        SSL              *handler;
-        SSL_CTX          *ctx;
-        X509             *cert;
-        const SSL_METHOD *method;
-        BIO              *socket_bio;
-        char             *clientpemfile;
+        boolean_t accepted;
+        int socket;
+        SSL *handler;
+        SSL_CTX *ctx;
+        X509 *cert;
+        BIO *socket_bio;
+        char *clientpemfile;
 
         struct my_ssl_connection *prev;
         struct my_ssl_connection *next;
@@ -79,7 +78,6 @@ typedef struct my_ssl_connection {
 
 typedef struct my_ssl_server_connection {
         int               server_socket;
-        const SSL_METHOD *method;
         SSL_CTX          *ctx;
         char             *pemfile;
         char             *clientpemfile;

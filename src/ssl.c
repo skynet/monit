@@ -300,11 +300,12 @@ ssl_server_connection *init_ssl_server(char *pemfile, char *clientpemfile) {
         if (! ssl_initialized)
                 start_ssl();
         ssl_server_connection *ssl_server = new_ssl_server_connection(pemfile, clientpemfile);
-        if (! (ssl_server->method = SSLv23_server_method())) {
+        const SSL_METHOD *method = SSLv23_server_method();
+        if (! method) {
                 LogError("Cannot initialize the SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
-        if (! (ssl_server->ctx = SSL_CTX_new(ssl_server->method))) {
+        if (! (ssl_server->ctx = SSL_CTX_new(method))) {
                 LogError("Cannot initialize SSL server certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
@@ -544,6 +545,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
         if (clientpemfile)
                 ssl->clientpemfile = Str_dup(clientpemfile);
 
+        const SSL_METHOD *method;
         switch (sslversion) {
                 case SSL_V2:
 #ifdef OPENSSL_NO_SSL2
@@ -556,7 +558,7 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                                 goto sslerror;
                         } else
 #endif
-                                ssl->method = SSLv2_client_method();
+                                method = SSLv2_client_method();
 #endif
                         break;
                 case SSL_V3:
@@ -566,34 +568,34 @@ ssl_connection *new_ssl_connection(char *clientpemfile, int sslversion) {
                                 goto sslerror;
                         } else
 #endif
-                                ssl->method = SSLv3_client_method();
+                                method = SSLv3_client_method();
                         break;
                 case SSL_TLSV1:
-                        ssl->method = TLSv1_client_method();
+                        method = TLSv1_client_method();
                         break;
 #ifdef HAVE_TLSV1_1
                 case SSL_TLSV11:
-                        ssl->method = TLSv1_1_client_method();
+                        method = TLSv1_1_client_method();
                         break;
 #endif
 #ifdef HAVE_TLSV1_2
                 case SSL_TLSV12:
-                        ssl->method = TLSv1_2_client_method();
+                        method = TLSv1_2_client_method();
                         break;
 #endif
                 case SSL_Auto:
                 default:
-                        ssl->method = SSLv23_client_method();
+                        method = SSLv23_client_method();
                         break;
 
         }
 
-        if (! ssl->method) {
+        if (! method) {
                 LogError("Cannot initialize SSL method -- %s\n", SSLERROR);
                 goto sslerror;
         }
 
-        if (! (ssl->ctx = SSL_CTX_new(ssl->method))) {
+        if (! (ssl->ctx = SSL_CTX_new(method))) {
                 LogError("Cannot initialize SSL client certificate handler -- %s\n", SSLERROR);
                 goto sslerror;
         }
