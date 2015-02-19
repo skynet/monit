@@ -936,8 +936,9 @@ static URL_T create_URL(char *proto) {
         url->protocol = proto;
         if (IS(url->protocol, "https")) {
                 url->port = 443;
-                if (! have_ssl())
+#ifndef HAVE_OPENSSL
                 yyerror("HTTPS protocol not supported -- SSL support disabled" );
+#endif
         } else if (IS(url->protocol, "http")) {
                 url->port = 80;
         } else {
@@ -945,3 +946,4 @@ static URL_T create_URL(char *proto) {
         }
         return url;
 }
+

@@ -120,26 +120,6 @@ int create_server_socket_unix(const char *path, int backlog);
 
 
 /**
- * Check if data is available, if not, wait timeout milliseconds for data
- * to be present.
- * @param socket A socket
- * @param timeout How long to wait before timeout (value in milliseconds)
- * @return Return true if the event occured, otherwise false.
- */
-boolean_t can_read(int socket, int timeout);
-
-
-/**
- * Check if data can be sent to the socket, if not, wait timeout
- * milliseconds for the socket to be ready.
- * @param socket A socket
- * @param timeout How long to wait before timeout (value in milliseconds)
- * @return Return true if the event occured, otherwise false.
- */
-boolean_t can_write(int socket, int timeout);
-
-
-/**
  * Write <code>size</code> bytes from the <code>buffer</code> to the
  * <code>socket</code>
  * @param socket the socket to write to

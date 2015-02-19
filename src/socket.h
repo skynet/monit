@@ -79,7 +79,7 @@ Socket_T socket_create(void *port);
  * @param timeout The timeout value in milliseconds
  * @return The connected Socket or NULL if an error occurred
  */
-Socket_T socket_create_t(const char *host, int port, int type, Socket_Family family, Ssl_T ssl, int timeout);
+Socket_T socket_create_t(const char *host, int port, int type, Socket_Family family, SslOptions_T ssl, int timeout);
 
 
 /**
@@ -241,7 +241,7 @@ const char *socket_getError(Socket_T S);
  * @param ssl Options for ssl
  * @return true if ssl is ready otherwise false
  */
-boolean_t socket_switch2ssl(Socket_T S, Ssl_T ssl);
+boolean_t socket_switch2ssl(Socket_T S, SslOptions_T ssl);
 
 
 /**

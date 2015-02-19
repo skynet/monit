@@ -76,8 +76,8 @@ typedef struct request {
         char *pathinfo;
         char *remote_user;
         HttpHeader headers;
-        ssl_connection *ssl;
         HttpParameter params;
+        Ssl_T ssl;
 } *HttpRequest;
 
 
@@ -87,9 +87,9 @@ typedef struct response {
         const char *protocol;
         boolean_t is_committed;
         HttpHeader headers;
-        ssl_connection *ssl;
         const char *status_msg;
         StringBuffer_T outputbuffer;
+        Ssl_T ssl;
 } *HttpResponse;
 
 

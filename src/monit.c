@@ -72,7 +72,6 @@
 
 #include "monit.h"
 #include "net.h"
-#include "ssl.h"
 #include "process.h"
 #include "state.h"
 #include "event.h"
@@ -161,6 +160,9 @@ int main(int argc, char **argv) {
         Bootstrap_setErrorHandler(vLogError);
         setlocale(LC_ALL, "C");
         prog = File_basename(argv[0]);
+#ifdef HAVE_OPENSSL
+        Ssl_start();
+#endif
         init_env();
         handle_options(argc, argv);
         do_init();
@@ -475,6 +477,9 @@ static void do_exit() {
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_STOP, "Monit stopped");
         }
         gc();
+#ifdef HAVE_OPENSSL
+        Ssl_stop();
+#endif
         exit(0);
 }
 
@@ -826,6 +831,9 @@ static void *heartbeat(void *args) {
                 }
         }
         END_LOCK;
+#ifdef HAVE_OPENSSL
+        Ssl_threadCleanup();
+#endif
         LogInfo("M/Monit heartbeat stopped\n");
         return NULL;
 }

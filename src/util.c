@@ -130,6 +130,9 @@
 #include "event.h"
 #include "state.h"
 
+// libmonit
+#include "io/File.h"
+
 
 struct ad_user {
         const char *login;
@@ -680,7 +683,7 @@ boolean_t Util_getChecksum(char *file, Hash_Type hashtype, char *buf, int bufsiz
                         return false;
         }
 
-        if (file_isFile(file)) {
+        if (File_isFile(file)) {
                 FILE *f = fopen(file, "r");
                 if (f) {
                         boolean_t fresult = false;
@@ -1307,7 +1310,7 @@ char *Util_monitId(char *idfile) {
 
         ASSERT(idfile);
 
-        if (! file_exist(idfile)) {
+        if (! File_exist(idfile)) {
                 md5_context_t ctx;
                 char buf[STRLEN];
                 MD_T digest;
@@ -1325,7 +1328,7 @@ char *Util_monitId(char *idfile) {
                 fprintf(file, "%s", Run.id);
                 LogInfo("Generated unique Monit id %s and stored to '%s'\n", Run.id, idfile);
         } else {
-                if (! file_isFile(idfile)) {
+                if (! File_isFile(idfile)) {
                         LogError("idfile '%s' is not a regular file\n", idfile);
                         return NULL;
                 }
@@ -1353,11 +1356,11 @@ pid_t Util_getPid(char *pidfile) {
 
         ASSERT(pidfile);
 
-        if (! file_exist(pidfile)) {
+        if (! File_exist(pidfile)) {
                 DEBUG("pidfile '%s' does not exist\n", pidfile);
                 return 0;
         }
-        if (! file_isFile(pidfile)) {
+        if (! File_isFile(pidfile)) {
                 LogError("pidfile '%s' is not a regular file\n", pidfile);
                 return 0;
         }

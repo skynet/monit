@@ -65,9 +65,9 @@
 #endif
 
 #include "net.h"
-#include "ssl.h"
 #include "monit.h"
 #include "socket.h"
+#include "SslServer.h"
 
 // libmonit
 #include "exceptions/assert.h"
@@ -107,8 +107,10 @@ struct Socket_T {
         Connection_Type connection_type;
         char *host;
         Port_T Port;
-        ssl_connection *ssl;
-        ssl_server_connection *sslserver;
+#ifdef HAVE_OPENSSL
+        Ssl_T ssl;
+        SslServer_T sslserver;
+#endif
         unsigned char buffer[RBUFFER_SIZE + 1];
 };
 
@@ -128,7 +130,7 @@ static int fill(Socket_T S, int timeout) {
         S->length = 0;
         if (S->type == SOCK_DGRAM)
                 timeout = 500;
-        int n = S->ssl ? recv_ssl_socket(S->ssl, S->buffer + S->length, RBUFFER_SIZE - S->length, timeout) : (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE - S->length, timeout);
+        int n = S->ssl ? Ssl_read(S->ssl, S->buffer + S->length, RBUFFER_SIZE - S->length, timeout) : (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE - S->length, timeout); //FIXME: ifdef
         if (n > 0)
                 S->length += n;
         else if (n < 0)
@@ -143,8 +145,7 @@ static int fill(Socket_T S, int timeout) {
 
 
 Socket_T socket_new(const char *host, int port, int type, Socket_Family family, boolean_t use_ssl, int timeout) {
-        Ssl_T ssl = {.use_ssl = use_ssl, .version = SSL_Auto};
-        return socket_create_t(host, port, type, family, ssl, timeout);
+        return socket_create_t(host, port, type, family, (SslOptions_T){.use_ssl = use_ssl, .version = SSL_Auto}, timeout);
 }
 
 
@@ -187,7 +188,7 @@ Socket_T socket_create(void *port) {
 }
 
 
-Socket_T socket_create_t(const char *host, int port, int type, Socket_Family family, Ssl_T ssl, int timeout) {
+Socket_T socket_create_t(const char *host, int port, int type, Socket_Family family, SslOptions_T ssl, int timeout) {
         ASSERT(host);
         ASSERT(timeout > 0);
         if (ssl.use_ssl)
@@ -197,7 +198,7 @@ Socket_T socket_create_t(const char *host, int port, int type, Socket_Family fam
         timeout = timeout * 1000; // Internally milliseconds is used
         int proto = type == SOCKET_UDP ? SOCK_DGRAM : SOCK_STREAM;
         int s = create_socket(host, port, proto, family, timeout);
-        if (s != -1) {
+        if (s >= 0) {
                 Socket_T S;
                 NEW(S);
                 S->socket = s;
@@ -251,13 +252,15 @@ Socket_T socket_create_a(int socket, struct sockaddr *addr, void *sslserver) {
                 S->family = Socket_Ip4;
                 S->port = ntohs(a->sin_port);
                 S->host = Str_dup(inet_ntoa(a->sin_addr));
+#ifdef HAVE_OPENSSL
                 if (sslserver) {
                         S->sslserver = sslserver;
-                        if (! (S->ssl = insert_accepted_ssl_socket(S->sslserver)) || ! embed_accepted_ssl_socket(S->ssl, S->socket)) {
+                        if (! (S->ssl = SslServer_newConnection(S->sslserver)) || ! SslServer_accept(S->ssl, S->socket)) {
                                 socket_free(&S);
                                 return NULL;
                         }
                 }
+#endif
         } else {
                 S->family = Socket_Unix;
         }
@@ -268,13 +271,13 @@ Socket_T socket_create_a(int socket, struct sockaddr *addr, void *sslserver) {
 void socket_free(Socket_T *S) {
         ASSERT(S && *S);
 #ifdef HAVE_OPENSSL
-        if ((*S)->ssl && (*S)->ssl->handler)
+        if ((*S)->ssl)
         {
                 if ((*S)->connection_type == Connection_Client) {
-                        close_ssl_socket((*S)->ssl);
-                        delete_ssl_socket((*S)->ssl);
+                        Ssl_close((*S)->ssl);
+                        Ssl_free(&((*S)->ssl));
                 } else if ((*S)->connection_type == Connection_Server && (*S)->sslserver) {
-                        close_accepted_ssl_socket((*S)->sslserver, (*S)->ssl);
+                        SslServer_freeConnection((*S)->sslserver, &((*S)->ssl));
                 }
         }
         else
@@ -413,17 +416,13 @@ const char *socket_getError(Socket_T S) {
 /* ---------------------------------------------------------------- Public */
 
 
-boolean_t socket_switch2ssl(Socket_T S, Ssl_T ssl)  {
+boolean_t socket_switch2ssl(Socket_T S, SslOptions_T ssl)  {
         assert(S);
-        if (! (S->ssl = new_ssl_connection(ssl.clientpemfile, ssl.version)))
-                return false;
-        if (! embed_ssl_socket(S->ssl, S->socket))
-                return false;
-        if (ssl.certmd5 && ! check_ssl_md5sum(S->ssl, ssl.certmd5)) {
-                LogError("md5sum of certificate does not match!\n");
-                return false;
-        }
-        return true;
+#ifdef HAVE_OPENSSL
+        if ((S->ssl = Ssl_new(ssl.clientpemfile, ssl.version)) && Ssl_connect(S->ssl, S->socket) && (! ssl.certmd5 || Ssl_checkCertificate(S->ssl, ssl.certmd5)))
+                return true;
+#endif
+        return false;
 }
 
 
@@ -447,8 +446,8 @@ int socket_write(Socket_T S, void *b, size_t size) {
         void *p = b;
         ASSERT(S);
         while (size > 0) {
-                if (S->ssl) {
-                        n = send_ssl_socket(S->ssl, p, size, S->timeout);
+                if (S->ssl) { //FIXME
+                        n = Ssl_write(S->ssl, p, (int)size, S->timeout); //FIXME
                 } else {
                         if (S->type == SOCK_DGRAM)
                                 n = udp_write(S->socket,  p, size, S->timeout);
@@ -510,12 +509,6 @@ void socket_reset(Socket_T S) {
                 ;
         S->offset = 0;
         S->length = 0;
-}
-
-
-boolean_t socket_shutdown_write(Socket_T S) {
-        ASSERT(S);
-        return (shutdown(S->socket, 1) == 0);
 }
 
 

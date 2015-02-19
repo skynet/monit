@@ -97,6 +97,7 @@
 #include "processor.h"
 #include "cervlet.h"
 #include "socket.h"
+#include "SslServer.h"
 
 // libmonit
 #include "system/Net.h"
@@ -136,7 +137,9 @@ typedef struct HostsAllow_T {
 
 static volatile boolean_t stopped = false;
 static int myServerSocket = 0;
-ssl_server_connection *mySSLServerConnection = NULL;
+#ifdef HAVE_OPENSSL
+SslServer_T mySSLServerConnection = NULL;
+#endif
 static HostsAllow_T hostlist = NULL;
 static Mutex_T mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -282,7 +285,7 @@ static Socket_T _socketProducer(int server, Httpd_Flags flags) {
         struct sockaddr_un addr_un;
         struct sockaddr *addr = NULL;
         socklen_t addrlen;
-        if (can_read(server, 1000)) {
+        if (Net_canRead(server, 1000)) {
                 if (flags & Httpd_Net) {
                         addr = (struct sockaddr *)&addr_in;
                         addrlen = sizeof(struct sockaddr_storage);
@@ -314,22 +317,23 @@ void Engine_start() {
         //FIXME: we listen currently only on one server socket: either on IP or unix socket ... should support listening on multiple sockets (IPv4, IPv6, unix)
         if (Run.httpd.flags & Httpd_Net) {
                 if ((myServerSocket = create_server_socket(Run.httpd.socket.net.address, Run.httpd.socket.net.port, 1024)) >= 0) {
+#ifdef HAVE_OPENSSL
                         if (Run.httpd.flags & Httpd_Ssl) {
-                                if (! (mySSLServerConnection = init_ssl_server(Run.httpd.socket.net.ssl.pem, Run.httpd.socket.net.ssl.clientpem))) {
+                                if (! (mySSLServerConnection = SslServer_new(Run.httpd.socket.net.ssl.pem, Run.httpd.socket.net.ssl.clientpem, myServerSocket))) {
                                         LogError("HTTP server: not available -- could not initialize SSL engine\n");
                                         Net_close(myServerSocket);
                                         return;
                                 }
-#ifdef HAVE_OPENSSL
-                                mySSLServerConnection->server_socket = myServerSocket;
-#endif
                         }
+#endif
                         while (! stopped) {
                                 Socket_T S = _socketProducer(myServerSocket, Run.httpd.flags);
                                 if (S)
                                         http_processor(S);
                         }
-                        delete_ssl_server_socket(mySSLServerConnection);
+#ifdef HAVE_OPENSSL
+                        SslServer_free(&mySSLServerConnection);
+#endif
                         Net_close(myServerSocket);
                 } else {
                         LogError("HTTP server: not available -- could not create a server socket at port %d -- %s\n", Run.httpd.socket.net.port, STRERROR);

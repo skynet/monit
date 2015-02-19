@@ -53,7 +53,6 @@
 #endif
 
 #include "monit.h"
-#include "ssl.h"
 #include "net.h"
 #include "socket.h"
 #include "process.h"
@@ -88,7 +87,7 @@ boolean_t status(char *level) {
         Socket_T S;
         if (Run.httpd.flags & Httpd_Net)
                 // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
-                S = socket_create_t(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, SOCKET_TCP, Socket_Ip4, (Ssl_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
+                S = socket_create_t(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, SOCKET_TCP, Socket_Ip4, (SslOptions_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
         else
                 S = socket_create_u(Run.httpd.socket.unix.path, SOCKET_TCP, NET_TIMEOUT);
         if (! S) {

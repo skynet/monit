@@ -119,7 +119,6 @@
 #include "engine.h"
 #include "alert.h"
 #include "process.h"
-#include "ssl.h"
 #include "device.h"
 
 // libmonit
@@ -228,7 +227,7 @@ static void  addicmp(Icmp_T);
 static void  addgeneric(Port_T, char*, char*);
 static void  addcommand(int, unsigned);
 static void  addargument(char *);
-static void  addmmonit(URL_T, int, SSL_Version, char *);
+static void  addmmonit(URL_T, int, Ssl_Version, char *);
 static void  addmailserver(MailServer_T);
 static boolean_t addcredentials(char *, char *, Digest_Type, boolean_t);
 #ifdef HAVE_LIBPAM
@@ -582,9 +581,7 @@ setinit         : SET INIT {
                 ;
 
 setfips         : SET FIPS {
-                  #ifdef OPENSSL_FIPS
                     Run.fipsEnabled = true;
-                  #endif
                   }
                 ;
 
@@ -744,12 +741,14 @@ ssl             : ssldisable optssllist {
                   }
                 | sslenable optssllist {
                         Run.httpd.flags |= Httpd_Ssl;
-                        if (! have_ssl())
-                                yyerror("SSL is not supported");
-                        else if (! Run.httpd.socket.net.ssl.pem)
+#ifdef HAVE_OPENSSL
+                        if (! Run.httpd.socket.net.ssl.pem)
                                 yyerror("SSL server PEM file is required (pemfile option)");
                         else if (! file_checkStat(Run.httpd.socket.net.ssl.pem, "SSL server PEM file", S_IRWXU))
                                 yyerror("SSL server PEM file permissions check failed");
+#else
+                        yyerror("SSL is not supported");
+#endif
                   }
                 ;
 
@@ -2308,9 +2307,7 @@ static void preparse() {
         Run.MailFormat.message      = NULL;
         depend_list                 = NULL;
         Run.handler_init            = true;
-        #ifdef OPENSSL_FIPS
         Run.fipsEnabled             = false;
-        #endif
         for (i = 0; i <= Handler_Max; i++)
                 Run.handler_queue[i] = 0;
         /*
@@ -2343,7 +2340,7 @@ static void preparse() {
  */
 static void postparse() {
         if (cfg_errflag)
-        return;
+                return;
 
         /* If defined - add the last service to the service list */
         if (current)
@@ -2394,6 +2391,10 @@ static void postparse() {
 
         /* Check the sanity of any dependency graph */
         check_depend();
+
+#ifdef HAVE_OPENSSL
+        Ssl_setFipsMode(Run.fipsEnabled);
+#endif
 }
 
 
@@ -2633,16 +2634,16 @@ static void addport(Port_T *list, Port_T port) {
         }
 
         if (port->SSL.use_ssl == true) {
-                if (! have_ssl()) {
-                        yyerror("ssl check cannot be activated. SSL is not supported");
-                } else {
-                        if (port->SSL.certmd5 != NULL) {
-                                p->SSL.certmd5 = port->SSL.certmd5;
-                                cleanup_hash_string(p->SSL.certmd5);
-                        }
-                        p->SSL.use_ssl = true;
-                        p->SSL.version = port->SSL.version;
+#ifdef HAVE_OPENSSL
+                if (port->SSL.certmd5 != NULL) {
+                        p->SSL.certmd5 = port->SSL.certmd5;
+                        cleanup_hash_string(p->SSL.certmd5);
                 }
+                p->SSL.use_ssl = true;
+                p->SSL.version = port->SSL.version;
+#else
+                yyerror("SSL check cannot be activated -- SSL disabled");
+#endif
         }
         p->maxforward = port->maxforward;
         p->next = *list;
@@ -2690,7 +2691,7 @@ static void addtimestamp(Timestamp_T ts, boolean_t notime) {
         t->test_changes = ts->test_changes;
 
         if (t->test_changes || notime) {
-                if (! file_exist(current->path)) {
+                if (! File_exist(current->path)) {
                         DEBUG("The path '%s' used in the TIMESTAMP statement refer to a non-existing object\n", current->path);
                 } else if (! (t->timestamp = file_getTimestamp(current->path, S_IFDIR|S_IFREG))) {
                         yyerror2("Cannot get the timestamp for '%s'", current->path);
@@ -3368,7 +3369,7 @@ static void  seturlrequest(int operator, char *regex) {
 /*
  * Add a new data recipient server to the mmonit server list
  */
-static void addmmonit(URL_T url, int timeout, SSL_Version sslversion, char *certmd5) {
+static void addmmonit(URL_T url, int timeout, Ssl_Version sslversion, char *certmd5) {
         Mmonit_T c;
 
         ASSERT(url);
@@ -3376,16 +3377,16 @@ static void addmmonit(URL_T url, int timeout, SSL_Version sslversion, char *cert
         NEW(c);
         c->url = url;
         if (IS(c->url->protocol, "https")) {
-                if (! have_ssl()) {
-                        yyerror("SSL check cannot be activated. SSL is not supported");
-                } else {
-                        c->ssl.use_ssl = true;
-                        c->ssl.version = (sslversion == SSL_Disabled) ? SSL_Auto : sslversion;
-                        if (certmd5) {
-                                c->ssl.certmd5 = certmd5;
-                                cleanup_hash_string(c->ssl.certmd5);
-                        }
+#ifdef HAVE_OPENSSL
+                c->ssl.use_ssl = true;
+                c->ssl.version = (sslversion == SSL_Disabled) ? SSL_Auto : sslversion;
+                if (certmd5) {
+                        c->ssl.certmd5 = certmd5;
+                        cleanup_hash_string(c->ssl.certmd5);
                 }
+#else
+                yyerror("SSL check cannot be activated -- SSL disabled");
+#endif
         }
         c->timeout = timeout;
         c->next = NULL;

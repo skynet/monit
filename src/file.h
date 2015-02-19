@@ -76,39 +76,6 @@ boolean_t file_createPidFile(char *pidfile);
 
 
 /**
- * Check if the file is a regular file
- * @param file A path to the file to check
- * @return true if file exist and is a regular file, otherwise false
- */
-boolean_t file_isFile(char *file);
-
-
-/**
- * Check if this is a directory.
- * @param dir An absolute  directory path
- * @return true if dir exist and is a regular directory, otherwise
- * false
- */
-boolean_t file_isDirectory(char *dir);
-
-
-/**
- * Check if this is a fifo
- * @param fifo A path to the fifo to check
- * @return true if fifo exist, otherwise false
- */
-boolean_t file_isFifo(char *fifo);
-
-
-/**
- * Check if the file exist on the system
- * @file A path to the file to check
- * @return true if file exist otherwise false
- */
-boolean_t file_exist(char *file);
-
-
-/**
  * Security check for files. The files must have the same uid as the
  * REAL uid of this process, it must have permissions no greater than
  * "maxpermission" and it must not be a symbolic link.  We check these

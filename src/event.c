@@ -62,6 +62,8 @@
 #include "event.h"
 #include "process.h"
 
+// libmonit
+#include "io/File.h"
 
 /**
  * Implementation of the event interface.
@@ -470,8 +472,7 @@ void Event_queue_process() {
                 char file_name[PATH_MAX];
                 snprintf(file_name, sizeof(file_name), "%s/%s", Run.eventlist_dir, de->d_name);
 
-                struct stat st;
-                if (! stat(file_name, &st) && S_ISREG(st.st_mode)) {
+                if (File_isFile(file_name)) {
                         LogInfo("Processing queued event %s\n", file_name);
 
                         FILE *file = fopen(file_name, "r");

@@ -460,16 +460,6 @@ error:
 }
 
 
-boolean_t can_read(int socket, int timeout) {
-        return Net_canRead(socket, timeout);
-}
-
-
-boolean_t can_write(int socket, int timeout) {
-        return Net_canWrite(socket, timeout);
-}
-
-
 ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout) {
         return Net_write(socket, buffer, size, timeout);
 }

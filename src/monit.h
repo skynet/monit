@@ -106,7 +106,9 @@ typedef enum {
 #endif
 
 
-#include "ssl.h"
+#include "Ssl.h"
+#include "SslOptions.h"
+
 
 // libmonit
 #include "system/Command.h"
@@ -426,8 +428,8 @@ typedef struct myrequest {
 /** Defines an event notification and status receiver object */
 typedef struct mymmonit {
         URL_T url;                                             /**< URL definition */
-        Ssl_T ssl;                                             /**< SSL definition */
-        int   timeout;              /**< The timeout to wait for connection or i/o */
+        SslOptions_T ssl;                                      /**< SSL definition */
+        int timeout;                /**< The timeout to wait for connection or i/o */
 
         /** For internal use */
         struct mymmonit *next;                         /**< next receiver in chain */
@@ -455,7 +457,7 @@ typedef struct mymailserver {
         int   port;                                               /**< Server port */
         char *username;                               /** < Username for SMTP_AUTH */
         char *password;                               /** < Password for SMTP_AUTH */
-        Ssl_T ssl;                                             /**< SSL definition */
+        SslOptions_T ssl;                                      /**< SSL definition */
 
         /** For internal use */
         struct mymailserver *next;        /**< Next server to try on connect error */
@@ -539,6 +541,7 @@ typedef struct mygenericproto {
 } *Generic_T;
 
 /** Defines a port object */
+//FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         List_T http_headers;    /**< Optional list of headers to send with request */
@@ -585,7 +588,7 @@ typedef struct myport {
                 Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
         } ApacheStatus;
 
-        Ssl_T SSL;                                             /**< SSL definition */
+        SslOptions_T SSL;                                      /**< SSL definition */
         Protocol_T protocol;     /**< Protocol object for testing a port's service */
         Request_T url_request;             /**< Optional url client request object */
 
@@ -930,6 +933,7 @@ typedef struct myinfo {
 
 
 /** Defines service data */
+//FIXME: use union for type-specific rules
 typedef struct myservice {
 
         /** Common parameters */
@@ -1035,35 +1039,40 @@ typedef struct myevent *Event_T;
 
 /** Defines data for application runtime */
 struct myrun {
+        //FIXME: create enum for Run flags and replace set of various boolean_t single-purpose flags with common flags where possible
+        char debug;                                               /**< Debug level */
+        boolean_t once;                                  /**< true - run only once */
+        boolean_t init;              /**< true - don't background to run from init */
+        boolean_t isdaemon;            /**< true if program should run as a daemon */
+        boolean_t use_syslog;                     /**< If true write log to syslog */
+        boolean_t dolog;  /**< true if program should log actions, otherwise false */
+        boolean_t fipsEnabled;          /** true if monit should use FIPS-140 mode */
+        boolean_t handler_init;             /**< The handlers queue initialization */
+        boolean_t doprocess;            /**< true if process status engine is used */
+        boolean_t doaction;        /**< true if some service(s) has action pending */
+        boolean_t dommonitcredentials; /**< true if M/Monit should receive credentials */
         volatile boolean_t stopped; /**< true if monit was stopped. Flag used by threads */
+        volatile boolean_t doreload; /**< true if a monit daemon should reinitialize */
+        volatile boolean_t dowakeup; /**< true if a monit daemon was wake up by signal */
+        Handler_Type handler_flag;                    /**< The handlers state flag */
+        //FIXME: move files to sub-struct
         char *controlfile;                /**< The file to read configuration from */
         char *logfile;                         /**< The file to write logdata into */
         char *pidfile;                                  /**< This programs pidfile */
         char *idfile;                           /**< The file with unique monit id */
-        MD_T id;                                              /**< Unique monit id */
         char *statefile;                /**< The file with the saved runtime state */
         char *mygroup;                              /**< Group Name of the Service */
-        short  debug;                                             /**< Debug level */
-        boolean_t use_syslog;                     /**< If true write log to syslog */
-        boolean_t dolog;  /**< true if program should log actions, otherwise false */
-        boolean_t isdaemon;            /**< true if program should run as a daemon */
+        MD_T id;                                              /**< Unique monit id */
         int  polltime;        /**< In deamon mode, the sleeptime (sec) between run */
         int  startdelay;                    /**< the sleeptime (sec) after startup */
-        boolean_t once;                                  /**< true - run only once */
-        boolean_t init;              /**< true - don't background to run from init */
         int  facility;              /** The facility to use when running openlog() */
-        boolean_t doprocess;            /**< true if process status engine is used */
-        volatile boolean_t doreload; /**< true if a monit daemon should reinitialize */
-        volatile boolean_t dowakeup; /**< true if a monit daemon was wake up by signal */
-        boolean_t doaction;        /**< true if some service(s) has action pending */
+        int  eventlist_slots;          /**< The event queue size - number of slots */
+        int  expectbuffer; /**< Generic protocol expect buffer - STRLEN by default */
+        int mailserver_timeout; /**< Connect and read timeout ms for a SMTP server */
         time_t incarnation;              /**< Unique ID for running monit instance */
-        boolean_t handler_init;             /**< The handlers queue initialization */
-        Handler_Type handler_flag;                    /**< The handlers state flag */
         int  handler_queue[Handler_Max + 1];       /**< The handlers queue counter */
         Service_T system;                          /**< The general system service */
         char *eventlist_dir;                   /**< The event queue base directory */
-        int  eventlist_slots;          /**< The event queue size - number of slots */
-        int  expectbuffer; /**< Generic protocol expect buffer - STRLEN by default */
 
         /** An object holding Monit HTTP interface setup */
         struct {
@@ -1092,11 +1101,9 @@ struct myrun {
         } Env;
 
         char *mail_hostname;    /**< Used in HELO/EHLO/MessageID when sending mail */
-        int mailserver_timeout; /**< Connect and read timeout ms for a SMTP server */
         Mail_T maillist;                /**< Global alert notification mailinglist */
         MailServer_T mailservers;    /**< List of MTAs used for alert notification */
         Mmonit_T mmonits;        /**< Event notification and status receivers list */
-        boolean_t dommonitcredentials; /**< true if M/Monit should receive credentials */
         Auth_T mmonitcredentials;     /**< Pointer to selected credentials or NULL */
         Event_T eventlist;              /** A list holding partialy handled events */
         /** User selected standard mail format */
@@ -1108,9 +1115,6 @@ struct myrun {
         } MailFormat;
 
         Mutex_T mutex;            /**< Mutex used for service data synchronization */
-#ifdef OPENSSL_FIPS
-        boolean_t fipsEnabled;          /** true if monit should use FIPS-140 mode */
-#endif
 };
 
 

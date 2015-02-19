@@ -90,7 +90,7 @@ typedef struct {
         int port;
         const char *username;
         const char *password;
-        Ssl_T ssl;
+        SslOptions_T ssl;
         char localhost[STRLEN];
 } SendMail_T;
 

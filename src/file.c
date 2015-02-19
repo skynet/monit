@@ -67,6 +67,9 @@
 #include "monit.h"
 #include "engine.h"
 
+// libmonit
+#include "io/File.h"
+
 /**
  *  Utilities for managing files used by monit.
  *
@@ -142,22 +145,22 @@ char *file_findControlFile() {
         char *rcfile = CALLOC(sizeof(char), STRLEN + 1);
 
         snprintf(rcfile, STRLEN, "%s/.%s", Run.Env.home, MONITRC);
-        if (file_exist(rcfile)) {
+        if (File_exist(rcfile)) {
                 return rcfile;
         }
         snprintf(rcfile, STRLEN, "/etc/%s", MONITRC);
-        if (file_exist(rcfile)) {
+        if (File_exist(rcfile)) {
                 return rcfile;
         }
         snprintf(rcfile, STRLEN, "%s/%s", SYSCONFDIR, MONITRC);
-        if (file_exist(rcfile)) {
+        if (File_exist(rcfile)) {
                 return rcfile;
         }
         snprintf(rcfile, STRLEN, "/usr/local/etc/%s", MONITRC);
-        if (file_exist(rcfile)) {
+        if (File_exist(rcfile)) {
                 return rcfile;
         }
-        if (file_exist(MONITRC)) {
+        if (File_exist(MONITRC)) {
                 snprintf(rcfile, STRLEN, "%s/%s", Run.Env.cwd, MONITRC);
                 return rcfile;
         }
@@ -180,50 +183,6 @@ boolean_t file_createPidFile(char *pidfile) {
         fclose(F);
 
         return true;
-
-}
-
-
-boolean_t file_isFile(char *file) {
-
-        struct stat buf;
-
-        ASSERT(file);
-
-        return (stat(file, &buf) == 0 && S_ISREG(buf.st_mode));
-
-}
-
-
-boolean_t file_isDirectory(char *dir) {
-
-        struct stat buf;
-
-        ASSERT(dir);
-
-        return (stat(dir, &buf) == 0 && S_ISDIR(buf.st_mode));
-
-}
-
-
-boolean_t file_isFifo(char *fifo) {
-
-        struct stat buf;
-
-        ASSERT(fifo);
-
-        return (stat(fifo, &buf) == 0 && S_ISFIFO(buf.st_mode));
-
-}
-
-
-boolean_t file_exist(char *file) {
-
-        struct stat buf;
-
-        ASSERT(file);
-
-        return (stat(file, &buf) == 0);
 
 }
 
