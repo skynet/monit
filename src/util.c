@@ -44,17 +44,6 @@
 #include <signal.h>
 #endif
 
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -132,6 +121,7 @@
 
 // libmonit
 #include "io/File.h"
+#include "system/Time.h"
 
 
 struct ad_user {
@@ -1320,7 +1310,7 @@ char *Util_monitId(char *idfile) {
                         return NULL;
                 }
                 /* Generate the unique id */
-                snprintf(buf, STRLEN, "%lu%d%lu", (unsigned long)time(NULL), getpid(), random());
+                snprintf(buf, STRLEN, "%lu%d%lu", (unsigned long)Time_now(), getpid(), random());
                 md5_init(&ctx);
                 md5_append(&ctx, (const md5_byte_t *)buf, (int)strlen(buf));
                 md5_finish(&ctx, (md5_byte_t *)digest);

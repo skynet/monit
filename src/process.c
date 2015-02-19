@@ -58,6 +58,9 @@
 #include "process.h"
 #include "process_sysdep.h"
 
+// libmonit
+#include "system/Time.h"
+
 /**
  *  General purpose /proc methods.
  *
@@ -111,7 +114,7 @@ boolean_t update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_
                 s->inf->priv.process.uid               = pt[leaf].uid;
                 s->inf->priv.process.euid              = pt[leaf].euid;
                 s->inf->priv.process.gid               = pt[leaf].gid;
-                s->inf->priv.process.uptime            = time(NULL) - pt[leaf].starttime;
+                s->inf->priv.process.uptime            = Time_now() - pt[leaf].starttime;
                 s->inf->priv.process.children          = pt[leaf].children_sum;
                 s->inf->priv.process.mem_kbyte         = pt[leaf].mem_kbyte;
                 s->inf->priv.process.zombie            = pt[leaf].zombie;
@@ -312,7 +315,7 @@ int findprocess(int pid, ProcessTree_T *pt, int treesize) {
 time_t getProcessUptime(pid_t pid, ProcessTree_T *pt, int treesize) {
         if (pt) {
                 int leaf = findprocess(pid, pt, treesize);
-                return (time_t)((leaf >= 0 && leaf < treesize) ? time(NULL) - pt[leaf].starttime : -1);
+                return (time_t)((leaf >= 0 && leaf < treesize) ? Time_now() - pt[leaf].starttime : -1);
         } else {
                 return 0;
         }

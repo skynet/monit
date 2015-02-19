@@ -64,6 +64,7 @@
 
 // libmonit
 #include "io/File.h"
+#include "system/Time.h"
 
 /**
  * Implementation of the event interface.
@@ -730,7 +731,7 @@ static void Event_queue_add(Event_T E) {
 
         /* compose the file name of actual timestamp and service name */
         char file_name[PATH_MAX];
-        snprintf(file_name, PATH_MAX, "%s/%lld_%lx", Run.eventlist_dir, (long long)time(NULL), (long unsigned)E->source);
+        snprintf(file_name, PATH_MAX, "%s/%lld_%lx", Run.eventlist_dir, (long long)Time_now(), (long unsigned)E->source);
 
         LogInfo("Adding event to the queue file %s for later delivery\n", file_name);
 

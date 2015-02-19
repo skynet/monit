@@ -37,17 +37,6 @@
 #include <memory.h>
 #endif
 
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -355,21 +344,25 @@ boolean_t Ssl_connect(T C, int socket) {
         SSL_set_fd(C->handler, C->socket);
         boolean_t retry = false;
         do {
-                switch (SSL_get_error(C->handler, SSL_connect(C->handler))) {
-                        case SSL_ERROR_NONE:
-                                return true;
-                        case SSL_ERROR_WANT_READ:
-                                retry = Net_canRead(C->socket, SSL_TIMEOUT);
-                                break;
-                        case SSL_ERROR_WANT_WRITE:
-                                retry = Net_canWrite(C->socket, SSL_TIMEOUT);
-                                break;
-                        default:
-                                LogError("SSL: connection error -- %s\n", SSLERROR);
-                                return false;
+                int rv = SSL_connect(C->handler);
+                if (rv < 0) {
+                        switch (SSL_get_error(C->handler, rv)) {
+                                case SSL_ERROR_WANT_READ:
+                                        retry = Net_canRead(C->socket, SSL_TIMEOUT);
+                                        break;
+                                case SSL_ERROR_WANT_WRITE:
+                                        retry = Net_canWrite(C->socket, SSL_TIMEOUT);
+                                        break;
+                                default:
+                                        LogError("SSL: connection error -- %s\n", SSLERROR);
+                                        return false;
+                        }
+                } else {
+                        return true;
                 }
         } while (retry);
-        return true;
+        LogError("SSL: connection timed out\n");
+        return false;
 }
 
 
@@ -561,22 +554,30 @@ boolean_t SslServer_accept(T C, int socket) {
         ASSERT(socket >= 0);
         C->socket = socket;
         SSL_set_fd(C->handler, C->socket);
-        boolean_t retry = false;
         do {
-                switch (SSL_get_error(C->handler, SSL_accept(C->handler))) {
-                        case SSL_ERROR_NONE:
-                                return true;
-                        case SSL_ERROR_WANT_READ:
-                                retry = Net_canRead(C->socket, SSL_TIMEOUT);
-                                break;
-                        case SSL_ERROR_WANT_WRITE:
-                                retry = Net_canWrite(C->socket, SSL_TIMEOUT);
-                                break;
-                        default:
-                                LogError("SSL: accept error -- %s\n", SSLERROR);
-                                return false;
+                int error = SSL_accept(C->handler);
+                if (error < 0) {
+                        switch (SSL_get_error(C->handler, error)) {
+                                case SSL_ERROR_WANT_READ:
+                                        if (! Net_canRead(C->socket, SSL_TIMEOUT)) {
+                                                LogError("SSL: accept timed out\n");
+                                                return false;
+                                        }
+                                        break;
+                                case SSL_ERROR_WANT_WRITE:
+                                        if (! Net_canWrite(C->socket, SSL_TIMEOUT)) {
+                                                LogError("SSL: accept timed out\n");
+                                                return false;
+                                        }
+                                        break;
+                                default:
+                                        LogError("SSL: accept error -- %s\n", SSLERROR);
+                                        return false;
+                        }
+                } else {
+                        break;
                 }
-        } while (retry);
+        } while (true);
         if (C->clientpemfile) {
                 X509 *cert = SSL_get_peer_certificate(C->handler);
                 if (! cert) {

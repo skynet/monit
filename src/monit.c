@@ -81,6 +81,7 @@
 #include "Bootstrap.h"
 #include "io/Dir.h"
 #include "io/File.h"
+#include "system/Time.h"
 #include "exceptions/AssertException.h"
 
 
@@ -236,7 +237,7 @@ static void do_init() {
         /*
          * Initialize the random number generator
          */
-        srandom((unsigned)(time(NULL) + getpid()));
+        srandom((unsigned)(Time_now() + getpid()));
 
         /*
          * Initialize the Runtime mutex. This mutex
@@ -524,7 +525,7 @@ static void do_default() {
                 atexit(file_finalize);
 
                 if (Run.startdelay) {
-                        time_t now = time(NULL);
+                        time_t now = Time_now();
                         time_t delay = now + Run.startdelay;
 
                         /* sleep can be interrupted by signal => make sure we paused long enough */
@@ -532,7 +533,7 @@ static void do_default() {
                                 sleep((unsigned int)(delay - now));
                                 if (Run.stopped)
                                         do_exit();
-                                now = time(NULL);
+                                now = Time_now();
                         }
                 }
 
@@ -825,7 +826,7 @@ static void *heartbeat(void *args) {
         {
                 while (! Run.stopped && ! Run.doreload) {
                         handle_mmonit(NULL);
-                        wait.tv_sec = time(NULL) + Run.polltime;
+                        wait.tv_sec = Time_now() + Run.polltime;
                         wait.tv_nsec = 0;
                         Sem_timeWait(heartbeatCond, heartbeatMutex, wait);
                 }

@@ -42,6 +42,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "system/Time.h"
+
 /**
  *  Check the server response, check the time it returns and accept a
  *  TIME_TOLERANCE sec delta with the current system time.
@@ -71,7 +74,7 @@ boolean_t check_rdate(Socket_T socket) {
         /* Get remote time and substract offset to allow unix time comparision */
         rdatet = ntohl(rdatet) - TIME_OFFSET;
 
-        if ((systemt = time(NULL)) == -1) {
+        if ((systemt = Time_now()) == -1) {
                 socket_setError(socket, "RDATE error: cannot get system time -- %s", STRERROR);
                 return false;
         }
