@@ -130,7 +130,13 @@ static int fill(Socket_T S, int timeout) {
         S->length = 0;
         if (S->type == SOCK_DGRAM)
                 timeout = 500;
-        int n = S->ssl ? Ssl_read(S->ssl, S->buffer + S->length, RBUFFER_SIZE - S->length, timeout) : (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE - S->length, timeout); //FIXME: ifdef
+        int n;
+#ifdef HAVE_OPENSSL
+        if (S->ssl)
+                n = Ssl_read(S->ssl, S->buffer + S->length, RBUFFER_SIZE - S->length, timeout);
+        else
+#endif
+                n = (int)sock_read(S->socket, S->buffer + S->length,  RBUFFER_SIZE - S->length, timeout);
         if (n > 0)
                 S->length += n;
         else if (n < 0)
@@ -322,7 +328,11 @@ boolean_t socket_is_ready(Socket_T S) {
 
 boolean_t socket_is_secure(Socket_T S) {
         ASSERT(S);
+#ifdef HAVE_OPENSSL
         return (S->ssl != NULL);
+#else
+        return false;
+#endif
 }
 
 
@@ -446,15 +456,20 @@ int socket_write(Socket_T S, void *b, size_t size) {
         void *p = b;
         ASSERT(S);
         while (size > 0) {
-                if (S->ssl) { //FIXME
-                        n = Ssl_write(S->ssl, p, (int)size, S->timeout); //FIXME
+#ifdef HAVE_OPENSSL
+                if (S->ssl) {
+                        n = Ssl_write(S->ssl, p, (int)size, S->timeout);
                 } else {
+#endif
                         if (S->type == SOCK_DGRAM)
                                 n = udp_write(S->socket,  p, size, S->timeout);
                         else
                                 n = sock_write(S->socket,  p, size, S->timeout);
+#ifdef HAVE_OPENSSL
                 }
-                if (n <= 0) break;
+#endif
+                if (n <= 0)
+                        break;
                 p += n;
                 size -= n;
 

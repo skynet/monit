@@ -301,7 +301,11 @@ static Socket_T _socketProducer(int server, Httpd_Flags flags) {
                         Net_abort(client);
                         return NULL;
                 }
+#ifdef HAVE_OPENSSL
                 return socket_create_a(client, addr, mySSLServerConnection);
+#else
+                return socket_create_a(client, addr, NULL);
+#endif
         }
         return NULL;
 }
