@@ -45,51 +45,26 @@
 // libmonit
 #include "system/Time.h"
 
+
 /**
- *  Check the server response, check the time it returns and accept a
- *  TIME_TOLERANCE sec delta with the current system time.
+ *  Check the server time with three seconds difference tolerance.
  *
- *  This test is based on RFC868. Rdate returns number of seconds since
- *  00:00:00 UTC, January 1, 1900.
+ *  This test is based on RFC868
  *
  *  @file
  */
 boolean_t check_rdate(Socket_T socket) {
-
-        /* Offset of 00:00:00 UTC, January 1, 1970 from 00:00:00 UTC, January 1, 1900 */
-#define  TIME_OFFSET    2208988800UL
-#define  TIME_TOLERANCE (time_t)3
-
-        time_t delta;
-        time_t rdatet;
-        time_t systemt;
-
         ASSERT(socket);
-
-        if (socket_read(socket,(char*) &rdatet, sizeof(time_t)) <= 0) {
+        time_t time;
+        if (socket_read(socket, (char *)&time, sizeof(time)) <= 0) {
                 socket_setError(socket, "RDATE: error receiving data -- %s", STRERROR);
                 return false;
         }
-
-        /* Get remote time and substract offset to allow unix time comparision */
-        rdatet = ntohl(rdatet) - TIME_OFFSET;
-
-        if ((systemt = Time_now()) == -1) {
-                socket_setError(socket, "RDATE error: cannot get system time -- %s", STRERROR);
+        // Compare system time with the RDATE server time (RDATE starts at 00:00:00 UTC, January 1, 1900 => add offset to 00:00:00 UTC, January 1, 1970)
+        if (llabs((long long)Time_now() + 2208988800LL - (long long)ntohl(time)) > 3LL) {
+                socket_setError(socket, "RDATE error: time does not match system time");
                 return false;
         }
-
-        if (rdatet >= systemt)
-                delta = (rdatet-systemt);
-        else
-                delta = (systemt-rdatet);
-
-        if (delta > TIME_TOLERANCE) {
-                socket_setError(socket, "RDATE error: time does not match system time -- %s", STRERROR);
-                return false;
-        }
-
         return true;
-
 }
 
