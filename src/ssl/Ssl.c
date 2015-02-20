@@ -342,27 +342,19 @@ boolean_t Ssl_connect(T C, int socket) {
         ASSERT(socket >= 0);
         C->socket = socket;
         SSL_set_fd(C->handler, C->socket);
-        boolean_t retry = false;
-        do {
-                int rv = SSL_connect(C->handler);
-                if (rv < 0) {
-                        switch (SSL_get_error(C->handler, rv)) {
-                                case SSL_ERROR_WANT_READ:
-                                        retry = Net_canRead(C->socket, SSL_TIMEOUT);
-                                        break;
-                                case SSL_ERROR_WANT_WRITE:
-                                        retry = Net_canWrite(C->socket, SSL_TIMEOUT);
-                                        break;
-                                default:
-                                        LogError("SSL: connection error -- %s\n", SSLERROR);
-                                        return false;
-                        }
-                } else {
-                        return true;
+        int rv = SSL_connect(C->handler);
+        if (rv < 0) {
+                switch (SSL_get_error(C->handler, rv)) {
+                        case SSL_ERROR_NONE:
+                        case SSL_ERROR_WANT_READ:
+                        case SSL_ERROR_WANT_WRITE:
+                                break;
+                        default:
+                                LogError("SSL: connection error -- %s\n", SSLERROR);
+                                return false;
                 }
-        } while (retry);
-        LogError("SSL: connection timed out\n");
-        return false;
+        }
+        return true;
 }
 
 
@@ -554,30 +546,18 @@ boolean_t SslServer_accept(T C, int socket) {
         ASSERT(socket >= 0);
         C->socket = socket;
         SSL_set_fd(C->handler, C->socket);
-        do {
-                int error = SSL_accept(C->handler);
-                if (error < 0) {
-                        switch (SSL_get_error(C->handler, error)) {
-                                case SSL_ERROR_WANT_READ:
-                                        if (! Net_canRead(C->socket, SSL_TIMEOUT)) {
-                                                LogError("SSL: accept timed out\n");
-                                                return false;
-                                        }
-                                        break;
-                                case SSL_ERROR_WANT_WRITE:
-                                        if (! Net_canWrite(C->socket, SSL_TIMEOUT)) {
-                                                LogError("SSL: accept timed out\n");
-                                                return false;
-                                        }
-                                        break;
-                                default:
-                                        LogError("SSL: accept error -- %s\n", SSLERROR);
-                                        return false;
-                        }
-                } else {
-                        break;
+        int rv = SSL_accept(C->handler);
+        if (rv < 0) {
+                switch (SSL_get_error(C->handler, rv)) {
+                        case SSL_ERROR_NONE:
+                        case SSL_ERROR_WANT_READ:
+                        case SSL_ERROR_WANT_WRITE:
+                                break;
+                        default:
+                                LogError("SSL: accept error -- %s\n", SSLERROR);
+                                return false;
                 }
-        } while (true);
+        }
         if (C->clientpemfile) {
                 X509 *cert = SSL_get_peer_certificate(C->handler);
                 if (! cert) {
