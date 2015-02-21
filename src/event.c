@@ -521,7 +521,7 @@ void Event_queue_process() {
                         if (size != sizeof(Action_Type))
                                 goto error7;
                         a->id = *action;
-                        switch (a->id) {
+                        switch (e->state) {
                                 case State_Succeeded:
                                 case State_ChangedNot:
                                         ea->succeeded = a;
