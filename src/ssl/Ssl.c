@@ -69,7 +69,6 @@
 #include <string.h>
 #endif
 
-
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
@@ -341,6 +340,7 @@ boolean_t Ssl_connect(T C, int socket) {
         ASSERT(C);
         ASSERT(socket >= 0);
         C->socket = socket;
+        SSL_set_connect_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
         int rv = SSL_connect(C->handler);
         if (rv < 0) {
@@ -361,20 +361,54 @@ boolean_t Ssl_connect(T C, int socket) {
 int Ssl_write(T C, void *b, int size, int timeout) {
         ASSERT(C);
         int n;
+        boolean_t retry = false;
         do {
-                n = SSL_write(C->handler, b, size);
-        } while (n <= 0 && Net_canWrite(C->socket, timeout));
-        return (n > 0) ? n : -1;
+                switch (SSL_get_error(C->handler, (n = SSL_write(C->handler, b, size)))) {
+                        case SSL_ERROR_NONE:
+                        case SSL_ERROR_ZERO_RETURN:
+                                return n;
+                        case SSL_ERROR_WANT_READ:
+                                retry = Net_canRead(C->socket, timeout);
+                                break;
+                        case SSL_ERROR_WANT_WRITE:
+                                retry = Net_canWrite(C->socket, timeout);
+                                break;
+                        case SSL_ERROR_SYSCALL:
+                                LogError("SSL: write error -- %s\n", STRERROR);
+                                break;
+                        default:
+                                LogError("SSL: write error -- %s\n", SSLERROR);
+                                return -1;
+                }
+        } while (retry);
+        return n;
 }
 
 
 int Ssl_read(T C, void *b, int size, int timeout) {
         ASSERT(C);
         int n;
+        boolean_t retry = false;
         do {
-                n = SSL_read(C->handler, b, size);
-        } while (n < 0 && Net_canRead(C->socket, timeout));
-        return (n >= 0) ? n : -1;
+                switch (SSL_get_error(C->handler, (n = SSL_read(C->handler, b, size)))) {
+                        case SSL_ERROR_NONE:
+                        case SSL_ERROR_ZERO_RETURN:
+                                return n;
+                        case SSL_ERROR_WANT_READ:
+                                retry = Net_canRead(C->socket, timeout);
+                                break;
+                        case SSL_ERROR_WANT_WRITE:
+                                retry = Net_canWrite(C->socket, timeout);
+                                break;
+                        case SSL_ERROR_SYSCALL:
+                                LogError("SSL: read error -- %s\n", STRERROR);
+                                break;
+                        default:
+                                LogError("SSL: read error -- %s\n", SSLERROR);
+                                return -1;
+                }
+        } while (retry);
+        return n;
 }
 
 
@@ -545,6 +579,7 @@ boolean_t SslServer_accept(T C, int socket) {
         ASSERT(C);
         ASSERT(socket >= 0);
         C->socket = socket;
+        SSL_set_accept_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
         int rv = SSL_accept(C->handler);
         if (rv < 0) {
