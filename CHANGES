@@ -71,6 +71,9 @@ Fixed: Issue #144: Websocket protocol test - mask frames per RFC-6455.
 
 Fixed: Issue #146: Monit didn't start if checksum test was set for nonexistent file.
 
+Fixed: Issue #150: Linux: Pattern based process check may not match for command lines longer
+then 1024 characters.
+
 Fixed: "monit validate" returns exit value 1 only if there were some errors.
 
 Fixed: port test: if the hostname has multiple IP addresses, try each IP address until first success

@@ -114,10 +114,10 @@ static int                page_shift_to_kb = 0;
  * @return seconds since unix epoch
  */
 static time_t get_starttime() {
-        char   buf[1024];
+        char   buf[STRLEN];
         double up = 0;
 
-        if (! read_proc_file(buf, 1024, "uptime", -1, NULL)) {
+        if (! read_proc_file(buf, sizeof(buf), "uptime", -1, NULL)) {
                 LogError("system statistic error -- cannot get system uptime\n");
                 return 0;
         }
@@ -136,7 +136,7 @@ static time_t get_starttime() {
 
 boolean_t init_process_info_sysdep(void) {
         char *ptr;
-        char  buf[1024];
+        char  buf[2048];
         long  page_size;
         int   page_shift;
 
@@ -191,7 +191,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
         int                 stat_gid = 0;
         char               *tmp = NULL;
         char                procname[STRLEN];
-        char                buf[1024];
+        char                buf[4096];
         char                stat_item_state;
         long                stat_item_cutime = 0;
         long                stat_item_cstime = 0;
@@ -290,7 +290,7 @@ int initprocesstree_sysdep(ProcessTree_T ** reference) {
                 pt[i].gid = stat_gid;
                 pt[i].starttime = get_starttime() + (time_t)(stat_item_starttime / HZ);
                 pt[i].cmdline = Str_dup(*buf ? buf : procname);
-                pt[i].cputime = ((float)(stat_item_utime + stat_item_stime) * 10.0) / HZ; // jiffies -> seconds = 1 / HZ. HZ is defined in "asm/param.h"  and it is usually 1/100s but on alpha system it is 1/1024s
+                pt[i].cputime = ((float)(stat_item_utime + stat_item_stime) * 10.0) / HZ; // jiffies -> seconds = 1 / HZ. HZ is defined in "asm/param.h" and it is usually 1/100s but on alpha system it is 1/1024s
                 pt[i].cpu_percent = 0;
                 pt[i].mem_kbyte = (page_shift_to_kb < 0) ? (stat_item_rss >> abs(page_shift_to_kb)) : (stat_item_rss << abs(page_shift_to_kb));
                 if (stat_item_state == 'Z') // State is Zombie -> then we are a Zombie ... clear or? (-:
@@ -336,7 +336,7 @@ int getloadavg_sysdep(double *loadv, int nelem) {
  */
 boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         char          *ptr;
-        char           buf[1024];
+        char           buf[2048];
         unsigned long  mem_free = 0UL;
         unsigned long  buffers = 0UL;
         unsigned long  cached = 0UL;
@@ -344,7 +344,7 @@ boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         unsigned long  swap_total = 0UL;
         unsigned long  swap_free = 0UL;
 
-        if (! read_proc_file(buf, 1024, "meminfo", -1, NULL)) {
+        if (! read_proc_file(buf, sizeof(buf), "meminfo", -1, NULL)) {
                 LogError("system statistic error -- cannot get real memory free amount\n");
                 goto error;
         }
@@ -397,9 +397,9 @@ boolean_t used_system_cpu_sysdep(SystemInfo_T *si) {
         unsigned long long cpu_wait;
         unsigned long long cpu_irq;
         unsigned long long cpu_softirq;
-        char               buf[1024];
+        char buf[STRLEN];
 
-        if (! read_proc_file(buf, 1024, "stat", -1, NULL)) {
+        if (! read_proc_file(buf, sizeof(buf), "stat", -1, NULL)) {
                 LogError("system statistic error -- cannot read /proc/stat\n");
                 goto error;
         }
