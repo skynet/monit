@@ -1604,7 +1604,10 @@ static void print_service_rules_icmp(HttpResponse res, Service_T s) {
 static void print_service_rules_perm(HttpResponse res, Service_T s) {
         if (s->perm) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Permissions</td><td>");
-                Util_printRule(res->outputbuffer, s->perm->action, "If failed %o", s->perm->perm);
+                if (s->perm->test_changes)
+                        Util_printRule(res->outputbuffer, s->perm->action, "If changed");
+                else
+                        Util_printRule(res->outputbuffer, s->perm->action, "If failed %o", s->perm->perm);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }

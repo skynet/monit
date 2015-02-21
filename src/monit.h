@@ -638,9 +638,9 @@ typedef struct mydependant {
 
 /** Defines resource data */
 typedef struct myresource {
-        Resource_Type  resource_id;                    /**< Which value is checked */
-        long limit;                                     /**< Limit of the resource */
+        Resource_Type resource_id;                     /**< Which value is checked */
         Operator_Type operator;                           /**< Comparison operator */
+        long limit;                                     /**< Limit of the resource */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -650,9 +650,9 @@ typedef struct myresource {
 
 /** Defines timestamp object */
 typedef struct mytimestamp {
+        boolean_t test_changes;       /**< true if we only should test for changes */
         Operator_Type operator;                           /**< Comparison operator */
         int  time;                                        /**< Timestamp watermark */
-        boolean_t test_changes;       /**< true if we only should test for changes */
         time_t timestamp; /**< The original last modified timestamp for this object*/
         EventAction_T action;  /**< Description of the action upon event occurence */
 
@@ -689,8 +689,8 @@ typedef struct myevery {
 
 typedef struct mystatus {
         boolean_t initialized;                 /**< true if status was initialized */
-        int return_value;                /**< Return value of the program to check */
         Operator_Type operator;                           /**< Comparison operator */
+        int return_value;                /**< Return value of the program to check */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -711,10 +711,10 @@ typedef struct myprogram {
 
 /** Defines size object */
 typedef struct mysize {
+        boolean_t initialized;                   /**< true if size was initialized */
+        boolean_t test_changes;       /**< true if we only should test for changes */
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long size;                               /**< Size watermark */
-        boolean_t test_changes;       /**< true if we only should test for changes */
-        boolean_t initialized;                   /**< true if size was initialized */
         EventAction_T action;  /**< Description of the action upon event occurence */
 
         /** For internal use */
@@ -775,18 +775,19 @@ typedef struct mybandwidth {
 
 /** Defines checksum object */
 typedef struct mychecksum {
-        MD_T  hash;                     /**< A checksum hash computed for the path */
-        Hash_Type type;                   /**< The type of hash (e.g. md5 or sha1) */
-        int   length;                                      /**< Length of the hash */
-        boolean_t test_changes;       /**< true if we only should test for changes */
         boolean_t initialized;               /**< true if checksum was initialized */
+        boolean_t test_changes;       /**< true if we only should test for changes */
+        Hash_Type type;                   /**< The type of hash (e.g. md5 or sha1) */
+        MD_T  hash;                     /**< A checksum hash computed for the path */
+        int   length;                                      /**< Length of the hash */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Checksum_T;
 
 
 /** Defines permission object */
 typedef struct myperm {
-        int       perm;                                     /**< Access permission */
+        boolean_t test_changes;       /**< true if we only should test for changes */
+        int perm;                                           /**< Access permission */
         EventAction_T action;  /**< Description of the action upon event occurence */
 } *Perm_T;
 

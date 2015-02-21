@@ -1004,7 +1004,13 @@ void Util_printService(Service_T s) {
 
         if (s->perm && s->perm->action) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Permission", StringBuffer_toString(Util_printRule(buf, s->perm->action, "if failed %04o", s->perm->perm)));
+                printf(" %-20s = %s\n", "Permission",
+                       s->perm->test_changes
+                       ?
+                       StringBuffer_toString(Util_printRule(buf, s->perm->action, "if changed"))
+                       :
+                       StringBuffer_toString(Util_printRule(buf, s->perm->action, "if failed %04o", s->perm->perm))
+                       );
         }
 
         if (s->uid && s->uid->action) {

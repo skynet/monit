@@ -495,11 +495,20 @@ static void check_checksum(Service_T s) {
  */
 static void check_perm(Service_T s, mode_t mode) {
         ASSERT(s && s->perm);
-
-        if ((mode & 07777) != s->perm->perm)
-                Event_post(s, Event_Permission, State_Failed, s->perm->action, "permission test failed for %s -- current permission is %04o", s->path, mode & 07777);
-        else
-                Event_post(s, Event_Permission, State_Succeeded, s->perm->action, "permission test succeeded [current permission=%04o]", mode & 07777);
+        mode_t m = mode & 07777;
+        if (m != s->perm->perm) {
+                if (s->perm->test_changes) {
+                        Event_post(s, Event_Permission, State_Changed, s->perm->action, "permission for %s changed from %04o to %04o", s->path, s->perm->perm, m);
+                        s->perm->perm = m;
+                } else {
+                        Event_post(s, Event_Permission, State_Failed, s->perm->action, "permission test failed for %s [current permission %04o]", s->path, m);
+                }
+        } else {
+                if (s->perm->test_changes)
+                        Event_post(s, Event_Permission, State_ChangedNot, s->perm->action, "permission not changed for %s", s->path);
+                else
+                        Event_post(s, Event_Permission, State_Succeeded, s->perm->action, "permission test succeeded [current permission %04o]", m);
+        }
 }
 
 
@@ -553,14 +562,13 @@ static void check_timestamp(Service_T s, time_t timestamp) {
         if ((int)time(&now) == -1) {
                 Event_post(s, Event_Data, State_Failed, s->action_DATA, "can't obtain actual system time");
                 return;
-        } else
+        } else {
                 Event_post(s, Event_Data, State_Succeeded, s->action_DATA, "actual system time obtained");
+        }
 
         for (Timestamp_T t = s->timestamplist; t; t = t->next) {
                 if (t->test_changes) {
-
                         /* if we are testing for changes only, the value is variable */
-
                         if (t->timestamp != timestamp) {
                                 /* reset expected value for next cycle */
                                 t->timestamp = timestamp;
@@ -568,11 +576,8 @@ static void check_timestamp(Service_T s, time_t timestamp) {
                         } else {
                                 Event_post(s, Event_Timestamp, State_ChangedNot, t->action, "timestamp was not changed for %s", s->path);
                         }
-                        break;
                 } else {
-
                         /* we are testing constant value for failed or succeeded state */
-
                         if (Util_evalQExpression(t->operator, (int)(now - timestamp), t->time))
                                 Event_post(s, Event_Timestamp, State_Failed, t->action, "timestamp test failed for %s", s->path);
                         else
@@ -605,13 +610,13 @@ static void check_size(Service_T s) {
                                         Event_post(s, Event_Size, State_ChangedNot, sl->action, "size has not changed [current size=%s]", Str_bytesToSize(s->inf->priv.file.size, buf));
                                 }
                         }
-                        break;
+                } else {
+                        /* we are testing constant value for failed or succeeded state */
+                        if (Util_evalQExpression(sl->operator, s->inf->priv.file.size, sl->size))
+                                Event_post(s, Event_Size, State_Failed, sl->action, "size test failed for %s -- current size is %s", s->path, Str_bytesToSize(s->inf->priv.file.size, buf));
+                        else
+                                Event_post(s, Event_Size, State_Succeeded, sl->action, "size check succeeded [current size=%s]", Str_bytesToSize(s->inf->priv.file.size, buf));
                 }
-                /* we are testing constant value for failed or succeeded state */
-                if (Util_evalQExpression(sl->operator, s->inf->priv.file.size, sl->size))
-                        Event_post(s, Event_Size, State_Failed, sl->action, "size test failed for %s -- current size is %s", s->path, Str_bytesToSize(s->inf->priv.file.size, buf));
-                else
-                        Event_post(s, Event_Size, State_Succeeded, sl->action, "size check succeeded [current size=%s]", Str_bytesToSize(s->inf->priv.file.size, buf));
         }
 }
 

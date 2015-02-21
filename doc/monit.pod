@@ -1962,9 +1962,13 @@ Monit can test the permissions of file objects. This test may
 only be used in the context of a file, fifo, directory or
 filesystem service types.
 
-Syntax:
+Syntax for testing specific permissions:
 
  IF FAILED PERM(ISSION) octalnumber THEN action
+
+Syntax for testing any permission change:
+
+ IF CHANGED PERM(ISSION) THEN action
 
 I<octalnumber> defines permissions for a file, a directory or a
 filesystem as four octal digits (0-7). Valid range is 0000 - 7777 (you

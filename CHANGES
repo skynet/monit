@@ -39,6 +39,13 @@ rather then blocks count.
 
 New: Provide more details for HTTP request errors.
 
+New: The permission statement extended by permissions change test. Syntax:
+    if changed permission then <action>
+
+Fixed: If multiple timestamp or size test rules were defined for single object
+and the list of rules included value change test, the list of rules may not
+be fully evaluated.
+
 Fixed: Linux: Issue #142: fix the speed monitoring for 10Gb/s+ interfaces.
 
 Fixed: Issue #147: invalid total (up/down)load values.

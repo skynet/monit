@@ -1916,6 +1916,11 @@ permission      : IF FAILED PERMISSION NUMBER rate1 THEN action1 recovery {
                     addeventaction(&(permset).action, $<number>7, $<number>8);
                     addperm(&permset);
                   }
+                | IF CHANGED PERMISSION rate1 THEN action1 recovery {
+                    permset.test_changes = true;
+                    addeventaction(&(permset).action, $<number>6, Action_Ignored);
+                    addperm(&permset);
+                  }
                 ;
 
 match           : IF matchflagnot MATCH PATH rate1 THEN action1 {
@@ -2691,11 +2696,10 @@ static void addtimestamp(Timestamp_T ts, boolean_t notime) {
         t->test_changes = ts->test_changes;
 
         if (t->test_changes || notime) {
-                if (! File_exist(current->path)) {
+                if (! File_exist(current->path))
                         DEBUG("The path '%s' used in the TIMESTAMP statement refer to a non-existing object\n", current->path);
-                } else if (! (t->timestamp = file_getTimestamp(current->path, S_IFDIR|S_IFREG))) {
+                else if (! (t->timestamp = file_getTimestamp(current->path, S_IFDIR|S_IFREG)))
                         yyerror2("Cannot get the timestamp for '%s'", current->path);
-                }
         }
 
         t->next = current->timestamplist;
@@ -2903,16 +2907,24 @@ static void addchecksum(Checksum_T cs) {
  * Set Perm object in the current service
  */
 static void addperm(Perm_T ps) {
-        Perm_T p;
-
         ASSERT(ps);
 
+        Perm_T p;
         NEW(p);
-        p->perm       = ps->perm;
-        p->action     = ps->action;
+        p->action = ps->action;
+        p->test_changes = ps->test_changes;
+        if (p->test_changes) {
+                if (! File_exist(current->path))
+                        DEBUG("The path '%s' used in the PERMISSION statement refer to a non-existing object\n", current->path);
+                else if ((p->perm = File_mod(current->path)) < 0)
+                        yyerror2("Cannot get the timestamp for '%s'", current->path);
+                else
+                        p->perm &= 07777;
+        } else {
+                p->perm = ps->perm;
+        }
         current->perm = p;
         reset_permset();
-        
 }
 
 
@@ -3906,6 +3918,7 @@ static void reset_checksumset() {
  * Reset the Perm set to default values
  */
 static void reset_permset() {
+        permset.test_changes = false;
         permset.perm = 0;
         permset.action = NULL;
 }
