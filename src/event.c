@@ -532,7 +532,7 @@ void Event_queue_process() {
                                         ea->failed = a;
                                         break;
                                 default:
-                                        LogError("Aborting queue event %s -- invalid action: %d\n", file_name, a->id);
+                                        LogError("Aborting queue event %s -- invalid state: %d\n", file_name, e->state);
                                         goto error7;
                         }
                         e->action = ea;

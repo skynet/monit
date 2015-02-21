@@ -77,6 +77,8 @@
 #include "process.h"
 #include "process_sysdep.h"
 
+// libmonit
+#include "system/Time.h"
 
 /**
  *  System dependent resource gathering code for Linux.
