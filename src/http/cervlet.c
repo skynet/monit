@@ -1147,7 +1147,7 @@ static void do_home_net(HttpRequest req, HttpResponse res) {
                 StringBuffer_append(res->outputbuffer,
                                     "</td>");
 
-                if (! Util_hasServiceStatus(s) || ! Link_getState(s->inf->priv.net.stats)) {
+                if (! Util_hasServiceStatus(s) || Link_getState(s->inf->priv.net.stats) != 1) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
@@ -2035,15 +2035,15 @@ static void print_service_status_gid(HttpResponse res, Service_T s, gid_t gid) {
 
 
 static void print_service_status_link(HttpResponse res, Service_T s) {
-        StringBuffer_append(res->outputbuffer, "<tr><td>Link</td>");
-        if (! Util_hasServiceStatus(s) || ! Link_getState(s->inf->priv.net.stats)) {
+        StringBuffer_append(res->outputbuffer, "<tr><td>Link capacity</td>");
+        if (! Util_hasServiceStatus(s) || Link_getState(s->inf->priv.net.stats) != 1) {
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         } else {
                 long long speed = Link_getSpeed(s->inf->priv.net.stats);
                 if (speed > 0)
                         StringBuffer_append(res->outputbuffer, "<td class='%s'>%.0lf Mb&#47;s %s-duplex</td>", s->error & Event_Speed ? "red-text" : "", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
                 else
-                        StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A</td>");
+                        StringBuffer_append(res->outputbuffer, "<td class='gray-text'>N/A for this link type</td>");
         }
         StringBuffer_append(res->outputbuffer, "</tr>");
 }
@@ -2051,7 +2051,7 @@ static void print_service_status_link(HttpResponse res, Service_T s) {
 
 static void print_service_status_download(HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer, "<tr><td>Download</td>");
-        if (! Util_hasServiceStatus(s) || ! Link_getState(s->inf->priv.net.stats)) {
+        if (! Util_hasServiceStatus(s) || Link_getState(s->inf->priv.net.stats) != 1) {
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         } else {
                 char buf[STRLEN];
@@ -2072,7 +2072,7 @@ static void print_service_status_download(HttpResponse res, Service_T s) {
 
 static void print_service_status_upload(HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer, "<tr><td>Upload</td>");
-        if (! Util_hasServiceStatus(s) || ! Link_getState(s->inf->priv.net.stats)) {
+        if (! Util_hasServiceStatus(s) || Link_getState(s->inf->priv.net.stats) != 1) {
                 StringBuffer_append(res->outputbuffer, "<td>-</td>");
         } else {
                 char buf[STRLEN];
@@ -2554,12 +2554,16 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                         break;
 
                                 case Service_Net:
-                                        if (Link_getState(s->inf->priv.net.stats)) {
+                                        if (Link_getState(s->inf->priv.net.stats) == 1) {
                                                 long long speed = Link_getSpeed(s->inf->priv.net.stats);
                                                 if (speed > 0)
                                                         StringBuffer_append(res->outputbuffer,
                                                                             "  %-33s %.0lf Mb/s %s-duplex\n",
-                                                                            "link speed", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                                                                            "link capacity", (double)speed / 1000000., Link_getDuplex(s->inf->priv.net.stats) == 1 ? "full" : "half");
+                                                else
+                                                        StringBuffer_append(res->outputbuffer,
+                                                                            "  %-33s N/A for this link type\n",
+                                                                            "link capacity");
 
                                                 long long ibytes = Link_getBytesInPerSecond(s->inf->priv.net.stats);
                                                 StringBuffer_append(res->outputbuffer, "  %-33s %s/s [%lld packets/s] [%lld errors]",
