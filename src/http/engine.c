@@ -325,7 +325,8 @@ void Engine_start() {
                                         http_processor(S);
                         }
 #ifdef HAVE_OPENSSL
-                        SslServer_free(&mySSLServerConnection);
+                        if (Run.httpd.flags & Httpd_Ssl)
+                                SslServer_free(&mySSLServerConnection);
 #endif
                         Net_close(myServerSocket);
                 } else {
