@@ -268,21 +268,19 @@ boolean_t file_checkQueueDirectory(char *path) {
 
 
 boolean_t file_checkQueueLimit(char *path, int limit) {
-        int            used = 0;
-        DIR           *dir = NULL;
-        struct dirent *de = NULL;
-
         if (limit < 0)
                 return true;
-
-        if (! (dir = opendir(path)) ) {
+        DIR *dir = opendir(path);
+        if (! dir) {
                 LogError("Cannot open the event queue directory %s -- %s\n", path, STRERROR);
                 return false;
         }
-        while ( (de = readdir(dir)) ) {
-                struct stat st;
-
-                if (! stat(de->d_name, &st) && S_ISREG(st.st_mode) && ++used > limit) {
+        int used = 0;
+        struct dirent *de = NULL;
+        while ((de = readdir(dir)) ) {
+                char buf[PATH_MAX];
+                snprintf(buf, sizeof(buf), "%s/%s", path, de->d_name);
+                if (File_isFile(buf) && ++used > limit) {
                         LogError("Event queue is full\n");
                         closedir(dir);
                         return false;
