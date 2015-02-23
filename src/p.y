@@ -4027,11 +4027,9 @@ static int check_perm(int perm) {
  * Check hostname
  */
 static void check_hostname(char *hostname) {
-
         ASSERT(hostname);
-
         if (! check_host(hostname))
-                yywarning2("Hostname did not resolve");
+                yywarning2("Hostname %s did not resolve", hostname);
 }
 
 /*

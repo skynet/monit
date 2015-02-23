@@ -477,12 +477,14 @@ group[ \t]+       {
 
 {number}          {
                     yylval.number = atoi(yytext);
-                    save_arg(); return NUMBER;
+                    save_arg();
+                    return NUMBER;
                   }
 
 {real}            {
                     yylval.real = atof(yytext);
-                    save_arg(); return REAL;
+                    save_arg();
+                    return REAL;
                   }
 
 {percent}         {
@@ -491,74 +493,87 @@ group[ \t]+       {
 
 [a-zA-Z0-9]{str}  {
                     yylval.string = Str_dup(yytext);
-                    save_arg(); return STRING;
+                    save_arg();
+                    return STRING;
                   }
 
 \"[/][^\"\n]*\"   {
                     yylval.string = handle_quoted_string(yytext);
-                    save_arg(); return PATH;
+                    save_arg();
+                    return PATH;
                   }
 
 \'[/][^\'\n]*\'   {
                     yylval.string = handle_quoted_string(yytext);
-                    save_arg(); return PATH;
+                    save_arg();
+                    return PATH;
                   }
 
 \"[^\"]*\"        {
                     steplinenobycr(yytext);
                     yylval.string = handle_quoted_string(yytext);
-                    save_arg(); return STRING;
+                    save_arg();
+                    return STRING;
                   }
 
 \'[^\']*\'        {
                     steplinenobycr(yytext);
                     yylval.string = handle_quoted_string(yytext);
-                    save_arg(); return STRING;
+                    save_arg();
+                    return STRING;
                   }
 
 {str}[@]{str}     {
                     yylval.string = Str_dup(yytext);
-                    save_arg(); return MAILADDR;
+                    save_arg();
+                    return MAILADDR;
                   }
 
 [/]{str}          {
                      yylval.string = Str_dup(yytext);
-                     save_arg(); return PATH;
+                     save_arg();
+                    return PATH;
                   }
 
 "/"               {
                      yylval.string = Str_dup(yytext);
-                     save_arg(); return PATH;
+                     save_arg();
+                    return PATH;
                   }
 
 "from:"[ \t]*{str}[@]{str} {
                       char *p = yytext+strlen("from:");
                       yylval.string = Str_trim(Str_dup(p));
-                      save_arg(); return MAILFROM;
+                      save_arg();
+                      return MAILFROM;
                   }
 
 "reply-to:"[ \t]*{str}[@]{str} {
                       char *p = yytext+strlen("reply-to:");
                       yylval.string = Str_trim(Str_dup(p));
-                      save_arg(); return MAILREPLYTO;
+                      save_arg();
+                      return MAILREPLYTO;
                   }
 
 "subject:"[^}\n]* {
                       char *p = yytext+strlen("subject:");
                       yylval.string = Str_trim(Str_dup(p));
-                      save_arg(); return MAILSUBJECT;
+                      save_arg();
+                      return MAILSUBJECT;
                   }
 
 "message:"[^}]*   {
                       char *p = yytext+strlen("message:");
                       steplinenobycr(yytext);
                       yylval.string = Str_trim(Str_dup(p));
-                      save_arg(); return MAILBODY;
+                      save_arg();
+                      return MAILBODY;
                   }
 
 {hostname}        {
                       yylval.string = Str_dup(yytext);
-                      save_arg(); return STRING;
+                      save_arg();
+                      return STRING;
                   }
 
 [\"\']            {
@@ -576,19 +591,22 @@ group[ \t]+       {
   {str}           {
                     yylval.string = Str_dup(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return SERVICENAME;
+                    save_arg();
+                    return SERVICENAME;
                   }
 
   \"{str}\"       {
                     yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return SERVICENAME;
+                    save_arg();
+                    return SERVICENAME;
                   }
 
   \'{str}\'       {
                     yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return SERVICENAME;
+                    save_arg();
+                    return SERVICENAME;
                   }
 
   [\"\']          {
@@ -607,7 +625,8 @@ group[ \t]+       {
 
   {str}           {
                     yylval.string = Str_dup(yytext);
-                    save_arg(); return SERVICENAME;
+                    save_arg();
+                    return SERVICENAME;
                   }
 
   [ \r\n\t]+[^,]  {
@@ -633,7 +652,8 @@ group[ \t]+       {
   \'[^\']*\'      {
                       steplinenobycr(yytext);
                       yylval.string = handle_quoted_string(yytext);
-                      save_arg(); return STRING;
+                      save_arg();
+                      return STRING;
                   }
 
   \'              {
@@ -642,7 +662,8 @@ group[ \t]+       {
 
   [^ \t\n\"]+     {
                       yylval.string = Str_dup(yytext);
-                      save_arg(); return STRING;
+                      save_arg();
+                      return STRING;
                   }
 
 }
@@ -652,18 +673,19 @@ group[ \t]+       {
   {ws}|[\n]       {
                       BEGIN(INITIAL);
                       if (! yylval.url->hostname)
-                        yyerror("missing hostname in URL");
+                                yyerror("missing hostname in URL");
                       if (! yylval.url->path)
-                        yylval.url->path = Str_dup("/");
-                      yylval.url->url = Str_cat("%s://%s:%d%s%s%s",
-                        yylval.url->protocol,
-                        /* possible credentials are hidden */
-                        yylval.url->hostname,
-                        yylval.url->port,
-                        yylval.url->path,
-                        yylval.url->query?"?":"",
-                        yylval.url->query?yylval.url->query:"");
-                      save_arg(); return URLOBJECT;
+                                yylval.url->path = Str_dup("/");
+                      yylval.url->url = Str_cat("%s://[%s]:%d%s%s%s",
+                                yylval.url->protocol,
+                                /* possible credentials are hidden */
+                                yylval.url->hostname,
+                                yylval.url->port,
+                                yylval.url->path,
+                                yylval.url->query ? "?" : "",
+                                yylval.url->query ? yylval.url->query : "");
+                      save_arg();
+                      return URLOBJECT;
                   }
 
   [^:@ ]+/[:][^@: ]+[@] {
@@ -675,8 +697,12 @@ group[ \t]+       {
                       yylval.url->password = Str_ndup(yytext, strlen(yytext)-1);
                   }
 
-  [^/?:#\r\n ]+   {
+  ([a-zA-Z0-9\-]+)([.]([a-zA-Z0-9\-]+))* {
                       yylval.url->hostname = Str_dup(yytext);
+                  }
+
+  \[[0-9a-zA-Z:%]+\] {
+                      yylval.url->hostname = Str_ndup(yytext + 1, yyleng - 2);
                   }
 
   [:]{number}     {
@@ -702,19 +728,22 @@ group[ \t]+       {
   {str}           {
                     yylval.string = Str_dup(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return STRINGNAME;
+                    save_arg();
+                    return STRINGNAME;
                   }
 
   \"{str}\"       {
                     yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return STRINGNAME;
+                    save_arg();
+                    return STRINGNAME;
                   }
 
   \'{str}\'       {
                     yylval.string = handle_quoted_string(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return STRINGNAME;
+                    save_arg();
+                    return STRINGNAME;
                   }
 
   [\"\']          {
@@ -730,13 +759,15 @@ group[ \t]+       {
   {number}        {
                     yylval.number = atoi(yytext);
                     BEGIN(INITIAL);
-                    save_arg(); return NUMBER;
+                    save_arg();
+                    return NUMBER;
                   }
 
   ['"]{ws}?[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}?['"] { // A minimal syntax check of the cron format string; 5 fields separated with white-space
                     yylval.string = Str_dup(Str_unquote(yytext));
                     BEGIN(INITIAL);
-                    save_arg(); return TIMESPEC;
+                    save_arg();
+                    return TIMESPEC;
                   }
 
   .               {
