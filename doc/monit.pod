@@ -553,22 +553,19 @@ files in I</etc/monit.d> that ends with the prefix I<.cfg>.
 
 =head1 MONIT HTTPD
 
-If specified in the control file, Monit will start with http support
-either on TCP port or unix socket (only one type is supported for Monit
-HTTP currently, Monit cannot listen on both TCP port and unix socket at
-the same time).
+If specified in the control file, Monit will start with http support.
+You can then use Monit CLI to start and stop services, disable or
+enable service monitoring as well as view the status of each service.
 
-You can then use Monit CLI to start and stop services, disable or enable
-service monitoring as well as view the status of each service.
+If http support is enabled over TCP rather than over a Unix Socket, you
+can also view Monit's informative dashboard in your web browser.
 
-If TCP port is used instead of unix socket, you can use your web browser
-tp connect to simple HTTP GUI too.
-
-Note that if the HTTP support is disabled the Monit CLI interface won't
-work, as CLI commands (such as "monit status") are handled by communicating
-with the Monit background process via the the HTTP interface. So basically
-you should have this enabled, though you can bind the HTTP interface to
-localhost only or use unix socket so Monit is not accessible from the outside.
+Note that if HTTP support is disabled, the Monit CLI interface will
+have reduced functionality, as most CLI commands (such as "monit
+status") need to communicate with the Monit background process via the
+the HTTP interface. We strongly recommend having HTTP support enabled.
+If security is a concern, bind the HTTP interface to local host only or
+use Unix Socket so Monit is not accessible from the outside.
 
 Syntax for TCP port:
 
@@ -589,10 +586,9 @@ You can now use L<http://localhost:2812/|http://localhost:2812/> to
 access Monit's web interface from a browser, after you have entered
 username and password as credentials.
 
-Syntax for unix socket:
+Syntax for Unix Socket:
 
   SET HTTPD UNIXSOCKET <path>
-      [SIGNATURE <ENABLE | DISABLE>]
       ALLOW <user:password>+
 
 Example:
@@ -600,8 +596,10 @@ Example:
  set httpd unixsocket /var/run/monit.sock
      allow username:password
 
-B<UNIXSOCKET> set the path to unix socket Monit should bind to and listen
-on.
+=head4 Options: 
+
+B<UNIXSOCKET> set the path to the Unix Socket Monit should bind to 
+and listen on.
 
 B<PORT> set the port Monit should bind to and listen on. Monit is
 usually setup on port 2812.
@@ -1898,14 +1896,16 @@ Example:
 
 =head2 SPACE TESTING
 
-Monit can test a filesystem or disk for space usage. This test may only
-be used in the context of a filesystem service type.
+Monit can test a filesystem or a disk for space usage. This test may
+only be used in the context of a filesystem service type.
 
-Filesystems usually have some space reserved for the root user (ca. 1-5%),
-so non-superusers cannot write to a nearly full filesystem. If you set a
-limit for the filesystem which is used by non-root users you should reflect
-the reserved blocks (Monit reports the reserved blocks percent in the CLI
-status and HTTP interface for the given filesystem).
+Filesystems usually have some space reserved for the root user (ca.
+1-5%), so non-superusers cannot write to a nearly full filesystem. If
+you set a limit for the filesystem which is used by non-root users you
+might want to consider these reserved blocks when setting the limit.
+You can use Monit itself to view the reserved blocks percentage by
+using the CLI status command or the HTTP interface for the given
+filesystem.
 
 Syntax:
 
