@@ -596,7 +596,7 @@ Example:
  set httpd unixsocket /var/run/monit.sock
      allow username:password
 
-=head4 Options: 
+B<Options>:
 
 B<UNIXSOCKET> set the path to the Unix Socket Monit should bind to 
 and listen on.
