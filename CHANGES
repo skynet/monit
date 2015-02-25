@@ -4,6 +4,7 @@
 
 Version 5.13
 
+Fixed: Issue #154: Upstart script should stop monit early when the system stops [Linux]
 
 
 Version 5.12
