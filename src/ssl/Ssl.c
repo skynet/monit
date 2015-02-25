@@ -125,9 +125,6 @@ struct T {
         SSL *handler;
         SSL_CTX *ctx;
         char *clientpemfile;
-
-        struct T *prev;
-        struct T *next;
 };
 
 
@@ -136,11 +133,9 @@ struct SslServer_T {
         SSL_CTX *ctx;
         char *pemfile;
         char *clientpemfile;
-        T connections; // FIXME: replace with Table + remove next/prev links in Ssl_T
 };
 
 
-static Mutex_T instanceMutex = PTHREAD_MUTEX_INITIALIZER;
 static Mutex_T *instanceMutexTable;
 
 
@@ -519,11 +514,6 @@ sslerror:
 
 void SslServer_free(SslServer_T *S) {
         ASSERT(S && *S);
-        while ((*S)->connections) {
-                T C = (*S)->connections;
-                (*S)->connections = (*S)->connections->next;
-                SslServer_freeConnection(*S, &C);
-        }
         if ((*S)->ctx)
                 SSL_CTX_free((*S)->ctx);
         FREE((*S)->pemfile);
@@ -546,15 +536,6 @@ T SslServer_newConnection(SslServer_T S) {
         SSL_set_mode(C->handler, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
         if (S->clientpemfile)
                 C->clientpemfile = Str_dup(S->clientpemfile);
-        LOCK(instanceMutex)
-        {
-                if (S->connections) {
-                        C->next = S->connections;
-                        C->next->prev = C;
-                }
-                S->connections = C;
-        }
-        END_LOCK;
         return C;
 }
 
@@ -563,14 +544,6 @@ void SslServer_freeConnection(SslServer_T S, T *C) {
         ASSERT(S);
         ASSERT(C && *C);
         Ssl_close(*C);
-        LOCK(instanceMutex);
-        {
-                if ((*C)->prev)
-                        (*C)->prev->next = (*C)->next;
-                else
-                        S->connections = (*C)->next;
-        }
-        END_LOCK;
         Ssl_free(C);
 }
 
