@@ -256,9 +256,8 @@ boolean_t check_host(const char *hostname) {
 #endif
         };
         struct addrinfo *res;
-        if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
-                return false;
-        freeaddrinfo(res);
+        if (! getaddrinfo(hostname, NULL, &hints, &res))
+                freeaddrinfo(res);
         return true;
 }
 

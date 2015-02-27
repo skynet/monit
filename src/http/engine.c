@@ -365,32 +365,32 @@ boolean_t Engine_addHostAllow(char *pattern) {
         struct addrinfo *res, hints = {
                 .ai_family = AF_INET /* we support just IPv4 currently */
         };
-        if (getaddrinfo(pattern, NULL, &hints, &res) != 0)
-                return false;
         int added = 0;
-        for (struct addrinfo *_res = res; _res; _res = _res->ai_next) {
-                if (_res->ai_family == AF_INET) {
-                        struct sockaddr_in *sin = (struct sockaddr_in *)_res->ai_addr;
-                        HostsAllow_T h;
-                        NEW(h);
-                        memcpy(&h->network, &sin->sin_addr, 4);
-                        h->mask = 0xffffffff;
-                        LOCK(mutex)
-                        {
-                                if (_hasHostAllow(h))  {
-                                        DEBUG("Skipping redundant host '%s'\n", pattern);
-                                        FREE(h);
-                                } else {
-                                        DEBUG("Adding host allow '%s'\n", pattern);
-                                        h->next = hostlist;
-                                        hostlist = h;
-                                        added++;
+        if (! getaddrinfo(pattern, NULL, &hints, &res)) {
+                for (struct addrinfo *_res = res; _res; _res = _res->ai_next) {
+                        if (_res->ai_family == AF_INET) {
+                                struct sockaddr_in *sin = (struct sockaddr_in *)_res->ai_addr;
+                                HostsAllow_T h;
+                                NEW(h);
+                                memcpy(&h->network, &sin->sin_addr, 4);
+                                h->mask = 0xffffffff;
+                                LOCK(mutex)
+                                {
+                                        if (_hasHostAllow(h))  {
+                                                DEBUG("Skipping redundant host '%s'\n", pattern);
+                                                FREE(h);
+                                        } else {
+                                                DEBUG("Adding host allow '%s'\n", pattern);
+                                                h->next = hostlist;
+                                                hostlist = h;
+                                                added++;
+                                        }
                                 }
+                                END_LOCK;
                         }
-                        END_LOCK;
                 }
+                freeaddrinfo(res);
         }
-        freeaddrinfo(res);
         return added ? true : false;
 }
 

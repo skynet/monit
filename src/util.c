@@ -1922,23 +1922,22 @@ int Util_getfqdnhostname(char *buf, unsigned len) {
         snprintf(buf, len, "%s", hostname);
 
         // Try to look for FQDN hostname
-        struct addrinfo *result, hints = {
+        struct addrinfo *result = NULL, hints = {
                 .ai_family = AF_UNSPEC,
                 .ai_flags = AI_CANONNAME,
                 .ai_socktype = SOCK_STREAM
         };
-        if ((status = getaddrinfo(hostname, NULL, &hints, &result))) {
-                LogError("Cannot translate '%s' to FQDN name -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-        } else {
+        if (! (status = getaddrinfo(hostname, NULL, &hints, &result))) {
                 for (struct addrinfo *r = result; r; r = r->ai_next) {
                         if (Str_startsWith(r->ai_canonname, hostname)) {
                                 snprintf(buf, len, "%s", r->ai_canonname);
                                 break;
                         }
                 }
-        }
-        if (result)
                 freeaddrinfo(result);
+        } else {
+                LogError("Cannot translate '%s' to FQDN name -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+        }
         return 0;
 }
 
