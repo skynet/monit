@@ -1027,14 +1027,14 @@ boolean_t check_process(Service_T s) {
                 }
         }
         if (s->portlist) {
-                /* pause port tests int the start timeout timeframe while the process is starting (it may take some time to the process before it starts accepting connections) */
-                if (s->start && s->inf->priv.process.uptime > s->start->timeout)
+                /* pause port tests in the start timeout timeframe while the process is starting (it may take some time to the process before it starts accepting connections) */
+                if (! s->start || s->inf->priv.process.uptime > s->start->timeout)
                         for (Port_T pp = s->portlist; pp; pp = pp->next)
                                 check_connection(s, pp);
         }
         if (s->socketlist) {
-                /* pause socket tests int the start timeout timeframe while the process is starting (it may take some time to the process before it starts accepting connections) */
-                if (s->start && s->inf->priv.process.uptime > s->start->timeout)
+                /* pause socket tests in the start timeout timeframe while the process is starting (it may take some time to the process before it starts accepting connections) */
+                if (! s->start || s->inf->priv.process.uptime > s->start->timeout)
                         for (Port_T pp = s->socketlist; pp; pp = pp->next)
                                 check_connection(s, pp);
         }

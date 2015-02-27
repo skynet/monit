@@ -8,6 +8,8 @@ Fixed: Issue #154: Upstart script should stop monit early when the system stops 
 
 Fixed: Issue #155: Monit may crash if the system hostname resolving failed.
 
+Fixed: Monit skipped the connection tests if no start program was defined.
+
 
 Version 5.12
 
