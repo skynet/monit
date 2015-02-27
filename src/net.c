@@ -256,11 +256,11 @@ boolean_t check_host(const char *hostname) {
 #endif
         };
         struct addrinfo *res;
-        if (! getaddrinfo(hostname, NULL, &hints, &res)) {
+        if (getaddrinfo(hostname, NULL, &hints, &res) == 0) {
                 freeaddrinfo(res);
-                return false;
+                return true;
         }
-        return true;
+        return false;
 }
 
 
