@@ -363,7 +363,8 @@ void Engine_cleanup() {
 boolean_t Engine_addHostAllow(char *pattern) {
         ASSERT(pattern);
         struct addrinfo *res, hints = {
-                .ai_family = AF_INET /* we support just IPv4 currently */
+                .ai_family = AF_INET, /* we support just IPv4 currently */
+                .ai_protocol = IPPROTO_TCP
         };
         int added = 0;
         if (! getaddrinfo(pattern, NULL, &hints, &res)) {
