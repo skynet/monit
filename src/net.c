@@ -332,6 +332,7 @@ int create_socket(const char *hostname, int port, int type, Socket_Family family
                                 if (Net_setNonBlocking(s)) {
                                         if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
                                                 if (do_connect(s, r->ai_addr, r->ai_addrlen, timeout, error, sizeof(error))) {
+                                                        DEBUG("Connection to %s succeeded\n", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN));
                                                         freeaddrinfo(result);
                                                         return s;
                                                 }
