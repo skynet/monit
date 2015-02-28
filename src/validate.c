@@ -170,7 +170,7 @@ retry:
                 if (socket_is_udp(socket)) {
                         // Only test "connected" UDP sockets without protocol, TCP connect is verified on create
                         if (! socket_is_ready(socket)) {
-                                snprintf(report, STRLEN, "connection failed, %s is not ready for i|o -- %s", Util_portDescription(p, buf, sizeof(buf)), STRERROR);
+                                snprintf(report, STRLEN, "connection to %s failed -- %s", Util_portDescription(p, buf, sizeof(buf)), STRERROR);
                                 rv = false;
                                 goto error;
                         }
