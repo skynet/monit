@@ -31,7 +31,6 @@
 #include "monit.h"
 #include "socket.h"
 
-
 /* Protocols supported */
 typedef enum {
         Protocol_DEFAULT = 0,
@@ -68,37 +67,37 @@ typedef enum {
 } Protocol_Type;
 
 
-boolean_t check_apache_status(Socket_T);
-boolean_t check_default(Socket_T);
-boolean_t check_dns(Socket_T);
-boolean_t check_dwp(Socket_T);
-boolean_t check_ftp(Socket_T);
-boolean_t check_generic(Socket_T);
-boolean_t check_http(Socket_T);
-boolean_t check_imap(Socket_T);
-boolean_t check_clamav(Socket_T);
-boolean_t check_ldap2(Socket_T);
-boolean_t check_ldap3(Socket_T);
-boolean_t check_mongodb(Socket_T);
-boolean_t check_mysql(Socket_T);
-boolean_t check_nntp(Socket_T);
-boolean_t check_ntp3(Socket_T);
-boolean_t check_postfix_policy(Socket_T);
-boolean_t check_pop(Socket_T);
-boolean_t check_sieve(Socket_T);
-boolean_t check_smtp(Socket_T);
-boolean_t check_ssh(Socket_T);
-boolean_t check_redis(Socket_T);
-boolean_t check_rdate(Socket_T);
-boolean_t check_rsync(Socket_T);
-boolean_t check_tns(Socket_T);
-boolean_t check_pgsql(Socket_T);
-boolean_t check_sip(Socket_T);
-boolean_t check_lmtp(Socket_T);
-boolean_t check_gps(Socket_T);
-boolean_t check_radius(Socket_T);
-boolean_t check_memcache(Socket_T);
-boolean_t check_websocket(Socket_T);
+void check_apache_status(Socket_T);
+void check_default(Socket_T);
+void check_dns(Socket_T);
+void check_dwp(Socket_T);
+void check_ftp(Socket_T);
+void check_generic(Socket_T);
+void check_http(Socket_T);
+void check_imap(Socket_T);
+void check_clamav(Socket_T);
+void check_ldap2(Socket_T);
+void check_ldap3(Socket_T);
+void check_mongodb(Socket_T);
+void check_mysql(Socket_T);
+void check_nntp(Socket_T);
+void check_ntp3(Socket_T);
+void check_postfix_policy(Socket_T);
+void check_pop(Socket_T);
+void check_sieve(Socket_T);
+void check_smtp(Socket_T);
+void check_ssh(Socket_T);
+void check_redis(Socket_T);
+void check_rdate(Socket_T);
+void check_rsync(Socket_T);
+void check_tns(Socket_T);
+void check_pgsql(Socket_T);
+void check_sip(Socket_T);
+void check_lmtp(Socket_T);
+void check_gps(Socket_T);
+void check_radius(Socket_T);
+void check_memcache(Socket_T);
+void check_websocket(Socket_T);
 
 
 /*

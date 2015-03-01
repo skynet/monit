@@ -32,10 +32,6 @@
 #include <stdlib.h>
 #endif
 
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
 #endif
@@ -56,6 +52,10 @@
 #include <netinet/in.h>
 #endif
 
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -74,10 +74,6 @@
 
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
-#endif
-
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
 #endif
 
 #ifdef HAVE_NETDB_H
@@ -164,69 +160,11 @@
 /* ----------------------------------------------------------------- Private */
 
 
-static char *_addressToString(const struct sockaddr *addr, socklen_t addrlen, char *buf, int buflen) {
-        int oerrno = errno;
-        if (addr->sa_family == AF_UNIX) {
-                snprintf(buf, buflen, "%s", ((struct sockaddr_un *)addr)->sun_path);
-        } else {
-                char ip[46], port[6];
-                int status = getnameinfo(addr, addrlen, ip, sizeof(ip), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
-                if (status) {
-                        LogError("Cannot get address string -- %s\n", status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                        *buf = 0;
-                } else {
-                        snprintf(buf, buflen, "[%s]:%s", ip, port);
-                }
-        }
-        errno = oerrno;
-        return buf;
-}
-
-
-/*
- * Do a non blocking connect, timeout if not connected within timeout milliseconds
- */
-static boolean_t do_connect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout, char *error, int errorlen) {
-        int rv = connect(s, addr, addrlen);
-        if (! rv) {
-                return true;
-        } else if (errno != EINPROGRESS) {
-                snprintf(error, errorlen, "Connection to %s -- failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
-                return false;
-        }
-        struct pollfd fds[1];
-        fds[0].fd = s;
-        fds[0].events = POLLIN | POLLOUT;
-        rv = poll(fds, 1, timeout);
-        if (rv == 0) {
-                snprintf(error, errorlen, "Connection to %s -- timed out\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
-                return false;
-        } else if (rv == -1) {
-                snprintf(error, errorlen, "Connection to %s -- poll failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
-                return false;
-        }
-        if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
-                socklen_t rvlen = sizeof(rv);
-                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
-                        snprintf(error, errorlen, "Connection to %s -- read of error details failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
-                        return false;
-                } else if (rv) {
-                        snprintf(error, errorlen, "Connection to %s -- error: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(rv));
-                        return false;
-                }
-        } else {
-                snprintf(error, errorlen, "Connection to %s -- not ready for I/O\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
-                return false;
-        }
-        return true;
-}
-
-
 /*
  * Compute Internet Checksum for "count" bytes beginning at location "addr".
  * Based on RFC1071.
  */
-static unsigned short checksum_ip(unsigned char *_addr, int count) {
+static unsigned short _checksum(unsigned char *_addr, int count) {
         register long sum = 0;
         unsigned short *addr = (unsigned short *)_addr;
         while (count > 1) {
@@ -261,120 +199,6 @@ boolean_t check_host(const char *hostname) {
                 return true;
         }
         return false;
-}
-
-
-boolean_t check_socket(int socket) {
-        return (Net_canRead(socket, 500) || Net_canWrite(socket, 500)); // wait ms
-}
-
-
-boolean_t check_udp_socket(int socket) {
-        char token[1] = {};
-        /* We have to send something and if the UDP server is down/unreachable
-         *  the remote host should send an ICMP error. We then need to call read
-         *  to get the ICMP error as a ECONNREFUSED errno. This test is asynchronous
-         *  so we must wait, but we do not want to block to long either and it is
-         *  probably better to report a server falsely up than to block too long.
-         */
-        Net_write(socket, token, 1, 0);
-        if (Net_read(socket, token, 1, 1200) < 0) {
-                switch (errno) {
-                        case ECONNREFUSED:
-                                return false;
-                        default:
-                                break;
-                }
-        }
-        return true;
-}
-
-
-int create_socket(const char *hostname, int port, int type, Socket_Family family, int timeout) {
-        ASSERT(hostname);
-
-        struct addrinfo *result, *r, hints = {
-#ifdef AI_ADDRCONFIG
-                .ai_flags = AI_ADDRCONFIG,
-#endif
-                .ai_socktype = type,
-                .ai_protocol = type == SOCK_DGRAM ? IPPROTO_UDP : IPPROTO_TCP
-        };
-        switch (family) {
-                case Socket_Ip:
-                        hints.ai_family = AF_UNSPEC;
-                        break;
-                case Socket_Ip4:
-                        hints.ai_family = AF_INET;
-                        break;
-#ifdef IPV6
-                case Socket_Ip6:
-                        hints.ai_family = AF_INET6;
-                        break;
-#endif
-                default:
-                        LogError("create_socket: Invalid socket family %d\n", family);
-                        return -1;
-        }
-        char _port[6];
-        snprintf(_port, sizeof(_port), "%d", port);
-        int status = getaddrinfo(hostname, _port, &hints, &result);
-        if (status) {
-                LogError("Cannot translate '%s' to IP address -- %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                return -1;
-        }
-        int s = -1;
-        char error[STRLEN];
-        // Try to connect until succeeded. We log only the last error - the host may resolve to multiple IPs (or IP families) and if at least one succeeded, we have no problem and don't have to flood the log with partial errors
-        for (r = result; r; r = r->ai_next) {
-                if ((s = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) >= 0) {
-                        if (s >= 0) {
-                                if (Net_setNonBlocking(s)) {
-                                        if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
-                                                if (do_connect(s, r->ai_addr, r->ai_addrlen, timeout, error, sizeof(error))) {
-                                                        DEBUG("Connection to %s succeeded\n", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN));
-                                                        freeaddrinfo(result);
-                                                        return s;
-                                                }
-                                        } else {
-                                                snprintf(error, sizeof(error), "Cannot set socket close on exec -- %s\n", STRERROR);
-                                        }
-                                } else {
-                                        snprintf(error, sizeof(error), "Cannot set nonblocking socket -- %s\n", STRERROR);
-                                }
-                                Net_close(s);
-                        }
-                } else {
-                        snprintf(error, sizeof(error), "Cannot create socket for [%s]:%d -- %s\n", hostname, port, STRERROR);
-                }
-                DEBUG("%s", error);
-        }
-        freeaddrinfo(result);
-        LogError("%s", error);
-        return -1;
-}
-
-
-int create_unix_socket(const char *pathname, int type, int timeout) {
-        struct sockaddr_un unixsocket;
-        ASSERT(pathname);
-        int s = socket(PF_UNIX, type, 0);
-        if (s >= 0) {
-                unixsocket.sun_family = AF_UNIX;
-                snprintf(unixsocket.sun_path, sizeof(unixsocket.sun_path), "%s", pathname);
-                if (Net_setNonBlocking(s)) {
-                        char error[STRLEN];
-                        if (do_connect(s, (struct sockaddr *)&unixsocket, sizeof(unixsocket), timeout, error, sizeof(error)))
-                                return s;
-                        LogError("%s", error);
-                } else {
-                        LogError("Cannot set nonblocking unix socket %s -- %s\n", pathname, STRERROR);
-                }
-                Net_close(s);
-        } else {
-                LogError("Cannot create unix socket %s -- %s", pathname, STRERROR);
-        }
-        return -1;
 }
 
 
@@ -459,21 +283,6 @@ error:
         if (close(s) < 0)
                 LogError("Socket %d close failed -- %s\n", s, STRERROR);
         return -1;
-}
-
-
-ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout) {
-        return Net_write(socket, buffer, size, timeout);
-}
-
-
-ssize_t sock_read(int socket, void *buffer, int size, int timeout) {
-        return Net_read(socket, buffer, size, timeout);
-}
-
-
-int udp_write(int socket, void *b, size_t len, int timeout) {
-        return (int)Net_write(socket, b, len, timeout);
 }
 
 
@@ -577,7 +386,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                                 gettimeofday((struct timeval *)(out_icmp4->icmp_data), NULL); // set data to timestamp
                                 in_len = sizeof(struct ip) + sizeof(struct icmp);
                                 out_len = offsetof(struct icmp, icmp_data) + DATALEN;
-                                out_icmp4->icmp_cksum = checksum_ip((unsigned char *)out_icmp4, out_len); // IPv4 requires checksum computation
+                                out_icmp4->icmp_cksum = _checksum((unsigned char *)out_icmp4, out_len); // IPv4 requires checksum computation
                                 out_icmp = out_icmp4;
                                 break;
 #ifdef IPV6

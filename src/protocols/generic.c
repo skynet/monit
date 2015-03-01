@@ -34,11 +34,10 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
 
-/*
- Escape zero i.e. '\0' in expect buffer with "\0" so zero can be tested in expect strings
- as "\0". If there are no '\0' in the buffer it is returned as it is
- */
+/* Escape zero i.e. '\0' in expect buffer with "\0" so zero can be tested in expect strings as "\0". If there are no '\0' in the buffer it is returned as it is */
 static char *_escapeZeroInExpectBuffer(char *s, int n) {
         assert(n < EXPECT_BUFFER_MAX);
         int i, j;
@@ -65,7 +64,7 @@ static char *_escapeZeroInExpectBuffer(char *s, int n) {
  *
  *  @file
  */
-boolean_t check_generic(Socket_T socket) {
+void check_generic(Socket_T socket) {
         Generic_T g = NULL;
         char *buf;
 #ifdef HAVE_REGEX_H
@@ -74,82 +73,73 @@ boolean_t check_generic(Socket_T socket) {
 
         ASSERT(socket);
 
-        if (socket_get_Port(socket))
-                g = ((Port_T)(socket_get_Port(socket)))->generic;
+        if (Socket_getPort(socket))
+                g = ((Port_T)(Socket_getPort(socket)))->generic;
 
         buf = CALLOC(sizeof(char), Run.expectbuffer + 1);
 
         while (g != NULL) {
 
                 if (g->send != NULL) {
-
-                        /* Unescape any \0x00 escaped chars in g's send string
-                         to allow sending a string containing \0 bytes also */
+                        /* Unescape any \0x00 escaped chars in g's send string to allow sending a string containing \0 bytes also */
                         char *X = Str_dup(g->send);
                         int l = Util_handle0Escapes(X);
 
-                        if (socket_write(socket, X, l) < 0) {
-                                socket_setError(socket, "GENERIC: error sending data -- %s", STRERROR);
+                        if (Socket_write(socket, X, l) < 0) {
                                 FREE(X);
                                 FREE(buf);
-                                return false;
-                        } else
+                                THROW(IOException, "GENERIC: error sending data -- %s", STRERROR);
+                        } else {
                                 DEBUG("GENERIC: successfully sent: '%s'\n", g->send);
-
+                        }
                         FREE(X);
-
                 } else if (g->expect != NULL) {
                         /* Since the protocol is unknown we need to wait on EOF. To avoid waiting
                          timeout seconds on EOF we first read one byte to fill the socket's read
                          buffer and then set a low timeout on next read which reads remaining bytes
                          as well as wait on EOF */
-                        *buf = socket_read_byte(socket);
+                        *buf = Socket_readByte(socket);
                         if (*buf < 0) {
-                                socket_setError(socket, "GENERIC: error receiving data -- %s", STRERROR);
                                 FREE(buf);
-                                return false;
+                                THROW(IOException, "GENERIC: error receiving data -- %s", STRERROR);
                         }
-                        int timeout = socket_getTimeout(socket);
-                        socket_setTimeout(socket, 200);
-                        int n = socket_read(socket, buf + 1, Run.expectbuffer - 1) + 1;
+                        int timeout = Socket_getTimeout(socket);
+                        Socket_setTimeout(socket, 200);
+                        int n = Socket_read(socket, buf + 1, Run.expectbuffer - 1) + 1;
                         buf[n] = 0;
                         if (n > 0)
                                 _escapeZeroInExpectBuffer(buf, n);
-                        socket_setTimeout(socket, timeout); // Reset back original timeout for next send/expect
+                        Socket_setTimeout(socket, timeout); // Reset back original timeout for next send/expect
 #ifdef HAVE_REGEX_H
                         regex_return = regexec(g->expect, buf, 0, NULL, 0);
                         if (regex_return != 0) {
                                 char e[STRLEN];
                                 regerror(regex_return, g->expect, e, STRLEN);
-                                socket_setError(socket, "GENERIC: receiving unexpected data [%s] -- %s", Str_trunc(buf, STRLEN - 4), e);
                                 FREE(buf);
-                                return false;
-                        } else
+                                THROW(IOException, "GENERIC: received unexpected data -- %s", e);
+                        } else {
                                 DEBUG("GENERIC: successfully received: '%s'\n", Str_trunc(buf, STRLEN - 4));
+                        }
 
 #else
                         /* w/o regex support */
 
                         if (strncmp(buf, g->expect, strlen(g->expect)) != 0) {
-                                socket_setError(socket, "GENERIC: receiving unexpected data [%s]", Str_trunc(buf, STRLEN - 4));
                                 FREE(buf);
-                                return false;
-                        } else
+                                THROW(IOException, "GENERIC: received unexpected data");
+                        } else {
                                 DEBUG("GENERIC: successfully received: '%s'\n", Str_trunc(buf, STRLEN - 4));
+                        }
 
 #endif
 
                 } else {
                         /* This should not happen */
-                        socket_setError(socket, "GENERIC: unexpected strangeness");
                         FREE(buf);
-                        return false;
+                        THROW(IOException, "GENERIC: unexpected strangeness");
                 }
                 g = g->next;
         }
-
         FREE(buf);
-        return true;
-
 }
 

@@ -30,6 +30,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /**
  *  A WebSocket test.
@@ -38,7 +41,6 @@
  *
  *  Establish websocket connection, send ping and close.
  *
- *  Return true if the status code is OK, otherwise false.
  *  @file
  */
 
@@ -46,15 +48,13 @@
 /* ----------------------------------------------------------------- Private */
 
 
-static boolean_t read_response(Socket_T socket, int opcode) {
+static void read_response(Socket_T socket, int opcode) {
         int n;
         do {
                 char buf[STRLEN];
                 // Read frame header
-                if ((n = socket_read(socket, buf, 2)) != 2) {
-                        socket_setError(socket, "WEBSOCKET: response header read error -- %s", STRERROR);
-                        return false;
-                }
+                if ((n = Socket_read(socket, buf, 2)) != 2)
+                        THROW(IOException, "WEBSOCKET: response header read error -- %s", STRERROR);
                 /*
                  * As we don't know the specific protocol used by this websocket server, the pipeline
                  * may contain some frames sent by server before the response we're waiting for (such
@@ -65,37 +65,33 @@ static boolean_t read_response(Socket_T socket, int opcode) {
                         // Skip payload of current frame
                         unsigned payload_size = *(buf + 1) & 0x7F;
                         if (payload_size <= sizeof(buf)) {
-                                if ((n = socket_read(socket, buf, payload_size)) != payload_size) {
-                                        socket_setError(socket, "WEBSOCKET: response data read error");
-                                        return false;
-                                }
+                                if ((n = Socket_read(socket, buf, payload_size)) != payload_size)
+                                        THROW(IOException, "WEBSOCKET: response data read error");
                         } else {
                                 /* STRLEN buffer should be sufficient for any frame spuriously sent by
                                  * the server. Guard against too large frames. If in real life such
                                  * situation will be valid (payload > STRLEN), then fix */
-                                socket_setError(socket, "WEBSOCKET: response data read error -- unexpected payload size: %d", payload_size);
-                                return false;
+                                THROW(IOException, "WEBSOCKET: response data read error -- unexpected payload size: %d", payload_size);
                         }
                 } else {
                         break; // Found frame with matching opcode
                 }
         } while (n > 0);
-        return true;
 }
 
 
 /* ------------------------------------------------------------------ Public */
 
 
-boolean_t check_websocket(Socket_T socket) {
+void check_websocket(Socket_T socket) {
         ASSERT(socket);
 
-        Port_T P = socket_get_Port(socket);
+        Port_T P = Socket_getPort(socket);
         ASSERT(P);
 
         // Establish websocket connection
         char buf[STRLEN];
-        if (socket_print(socket,
+        if (Socket_print(socket,
                          "GET %s HTTP/1.1\r\n"
                          "Host: %s\r\n"
                          "Upgrade: websocket\r\n"
@@ -111,19 +107,14 @@ boolean_t check_websocket(Socket_T socket) {
                          P->version,
                          P->pathname ? P->pathname : "http://www.mmonit.com") < 0)
         {
-                socket_setError(socket, "WEBSOCKET: error sending data -- %s", STRERROR);
-                return false;
+                THROW(IOException, "WEBSOCKET: error sending data -- %s", STRERROR);
         }
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "WEBSOCKET: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "WEBSOCKET: error receiving data -- %s", STRERROR);
         int status;
-        if (! sscanf(buf, "%*s %d", &status) || (status != 101)) {
-                socket_setError(socket, "WEBSOCKET: error -- %s", buf);
-                return false;
-        }
-        while (socket_readln(socket, buf, sizeof(buf)) && ! Str_isEqual(buf, "\r\n"))
+        if (! sscanf(buf, "%*s %d", &status) || (status != 101))
+                THROW(IOException, "WEBSOCKET: error -- %s", buf);
+        while (Socket_readLine(socket, buf, sizeof(buf)) && ! Str_isEqual(buf, "\r\n"))
                 ; // drop remaining HTTP response headers from the pipeline
 
         // Ping
@@ -132,14 +123,11 @@ boolean_t check_websocket(Socket_T socket) {
                 0x80,                  // Mask:True, Payload:0
                 0x5b, 0x63, 0x68, 0x84 // Key
         };
-        if (socket_write(socket, ping, sizeof(ping)) < 0) {
-                socket_setError(socket, "WEBSOCKET: error sending ping -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_write(socket, ping, sizeof(ping)) < 0)
+                THROW(IOException, "WEBSOCKET: error sending ping -- %s", STRERROR);
 
         // Pong: verify response opcode is Pong (0xA)
-        if (! read_response(socket, 0xA))
-                return false;
+        read_response(socket, 0xA);
 
         // Close request
         unsigned char close_request[6] = {
@@ -147,15 +135,10 @@ boolean_t check_websocket(Socket_T socket) {
                 0x80,                  // Mask:True, Payload:0
                 0x5b, 0x63, 0x68, 0x84 // Key
         };
-        if (socket_write(socket, close_request, sizeof(close_request)) < 0) {
-                socket_setError(socket, "WEBSOCKET: error sending close -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_write(socket, close_request, sizeof(close_request)) < 0)
+                THROW(IOException, "WEBSOCKET: error sending close -- %s", STRERROR);
 
         // Close response (0x8)
-        if (! read_response(socket, 0x8))
-                return false;
-
-        return true;
+        read_response(socket, 0x8);
 }
 

@@ -64,7 +64,7 @@
  */
 static boolean_t data_send(Socket_T socket, Mmonit_T C, const char *D) {
         char *auth = Util_getBasicAuthHeader(C->url->user, C->url->password);
-        int rv = socket_print(socket,
+        int rv = Socket_print(socket,
                               "POST %s HTTP/1.1\r\n"
                               "Host: %s:%d\r\n"
                               "Content-Type: text/xml\r\n"
@@ -98,7 +98,7 @@ static boolean_t data_send(Socket_T socket, Mmonit_T C, const char *D) {
 static boolean_t data_check(Socket_T socket, Mmonit_T C) {
         int  status;
         char buf[STRLEN];
-        if (! socket_readln(socket, buf, sizeof(buf))) {
+        if (! Socket_readLine(socket, buf, sizeof(buf))) {
                 LogError("M/Monit: error receiving data from %s -- %s\n", C->url->url, STRERROR);
                 return false;
         }
@@ -127,16 +127,13 @@ Handler_Type handle_mmonit(Event_T E) {
                 return Handler_Succeeded;
         StringBuffer_T sb = StringBuffer_create(256);
         for (Mmonit_T C = Run.mmonits; C; C = C->next) {
-                Socket_T  socket = socket_create_t(C->url->hostname, C->url->port, SOCKET_TCP, Socket_Ip, C->ssl, C->timeout);
+                Socket_T  socket = Socket_create(C->url->hostname, C->url->port, Socket_Tcp, Socket_Ip, C->ssl, C->timeout);
                 if (! socket) {
                         LogError("M/Monit: cannot open a connection to %s\n", C->url->url);
                         goto error;
                 }
-                if (! socket_set_tcp_nodelay(socket)) {
-                        LogError("M/Monit: error setting TCP_NODELAY on socket: %s -- %s\n", C->url->url, STRERROR);
-                }
                 char buf[STRLEN];
-                status_xml(sb, E, E ? Level_Summary : Level_Full, 2, socket_get_local_host(socket, buf, sizeof(buf)));
+                status_xml(sb, E, E ? Level_Summary : Level_Full, 2, Socket_getLocalHost(socket, buf, sizeof(buf)));
                 if (! data_send(socket, C, StringBuffer_toString(sb))) {
                         LogError("M/Monit: cannot send %s message to %s\n", E ? "event" : "status", C->url->url);
                         goto error;
@@ -150,7 +147,7 @@ Handler_Type handle_mmonit(Event_T E) {
                 DEBUG("M/Monit: %s message sent to %s\n", E ? "event" : "status", C->url->url);
         error:
                 if (socket)
-                        socket_free(&socket);
+                        Socket_free(&socket);
         }
         StringBuffer_free(&sb);
         return rv;

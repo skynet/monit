@@ -361,9 +361,9 @@ boolean_t control_service_daemon(const char *S, const char *action) {
         // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
         Socket_T socket;
         if (Run.httpd.flags & Httpd_Net)
-                socket = socket_create_t(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, SOCKET_TCP, Socket_Ip4, (SslOptions_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
+                socket = Socket_create(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, Socket_Tcp, Socket_Ip4, (SslOptions_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
         else
-                socket = socket_create_u(Run.httpd.socket.unix.path, SOCKET_TCP, NET_TIMEOUT);
+                socket = Socket_createUnix(Run.httpd.socket.unix.path, Socket_Tcp, NET_TIMEOUT);
         if (! socket) {
                 LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
                 return false;
@@ -371,7 +371,7 @@ boolean_t control_service_daemon(const char *S, const char *action) {
 
         /* Send request */
         char *auth = Util_getBasicAuthHeaderMonit();
-        if (socket_print(socket,
+        if (Socket_print(socket,
                          "POST /%s HTTP/1.0\r\n"
                          "Content-Type: application/x-www-form-urlencoded\r\n"
                          "Content-Length: %lu\r\n"
@@ -389,7 +389,7 @@ boolean_t control_service_daemon(const char *S, const char *action) {
 
         /* Process response */
         char buf[STRLEN];
-        if (! socket_readln(socket, buf, STRLEN)) {
+        if (! Socket_readLine(socket, buf, STRLEN)) {
                 LogError("Error receiving data -- %s\n", STRERROR);
                 goto err1;
         }
@@ -404,13 +404,13 @@ boolean_t control_service_daemon(const char *S, const char *action) {
                 int content_length = 0;
 
                 /* Skip headers */
-                while (socket_readln(socket, buf, STRLEN)) {
+                while (Socket_readLine(socket, buf, STRLEN)) {
                         if (! strncmp(buf, "\r\n", sizeof(buf)))
                                 break;
                         if (Str_startsWith(buf, "Content-Length") && ! sscanf(buf, "%*s%*[: ]%d", &content_length))
                                 goto err1;
                 }
-                if (content_length > 0 && content_length < 1024 && socket_readln(socket, buf, STRLEN)) {
+                if (content_length > 0 && content_length < 1024 && Socket_readLine(socket, buf, STRLEN)) {
                         char token[] = "</h2>";
                         char *p = strstr(buf, token);
                         if (strlen(p) <= strlen(token))
@@ -429,7 +429,7 @@ boolean_t control_service_daemon(const char *S, const char *action) {
                 rv = true;
 err1:
         FREE(auth);
-        socket_free(&socket);
+        Socket_free(&socket);
         return rv;
 }
 

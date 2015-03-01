@@ -103,7 +103,7 @@ void do_send(SendMail_T *S, const char *s, ...) {
         va_start(ap,s);
         char *msg = Str_vcat(s, ap);
         va_end(ap);
-        int rv = socket_write(S->socket, msg, strlen(msg));
+        int rv = Socket_write(S->socket, msg, strlen(msg));
         FREE(msg);
         if (rv <= 0)
                 THROW(IOException, "Error sending data to the server '%s' -- %s", S->server, STRERROR);
@@ -115,7 +115,7 @@ static void do_status(SendMail_T *S) {
         StringBuffer_clear(S->status_message);
         char buf[STRLEN];
         do {
-                if (! socket_readln(S->socket, buf, sizeof(buf)))
+                if (! Socket_readLine(S->socket, buf, sizeof(buf)))
                         THROW(IOException, "Error receiving data from the mailserver '%s' -- %s", S->server, STRERROR);
                 StringBuffer_append(S->status_message, "%s", buf);
         } while (buf[3] == '-'); // multi-line response
@@ -139,9 +139,9 @@ static void open_server(SendMail_T *S) {
         do {
                 /* wait with ssl-connect if SSL_TLS* is set (rfc2487) */
                 if (! S->ssl.use_ssl || S->ssl.version == SSL_TLSV1 || S->ssl.version == SSL_TLSV11 || S->ssl.version == SSL_TLSV12)
-                        S->socket = socket_new(S->server, S->port, SOCKET_TCP, Socket_Ip, false, Run.mailserver_timeout);
+                        S->socket = Socket_new(S->server, S->port, Socket_Tcp, Socket_Ip, false, Run.mailserver_timeout);
                 else
-                        S->socket = socket_create_t(S->server, S->port, SOCKET_TCP, Socket_Ip, S->ssl, Run.mailserver_timeout);
+                        S->socket = Socket_create(S->server, S->port, Socket_Tcp, Socket_Ip, S->ssl, Run.mailserver_timeout);
                 if (S->socket)
                         break;
                 LogError("Cannot open a connection to the mailserver '%s:%i' -- %s\n", S->server, S->port, STRERROR);
@@ -177,7 +177,7 @@ static void close_server(SendMail_T *S) {
         FINALLY
         {
                 if (S->socket)
-                        socket_free(&(S->socket));
+                        Socket_free(&(S->socket));
         }
         END_TRY;
 }
@@ -213,7 +213,7 @@ boolean_t sendmail(Mail_T mail) {
                 if (S.ssl.use_ssl && (S.ssl.version == SSL_TLSV1 || S.ssl.version == SSL_TLSV11 || S.ssl.version == SSL_TLSV12)) {
                         do_send(&S, "STARTTLS\r\n");
                         do_status(&S);
-                        if (! socket_switch2ssl(S.socket, S.ssl)) {
+                        if (! Socket_enableSsl(S.socket, S.ssl)) {
                                 S.quit = false;
                                 THROW(IOException, "Cannot switch to SSL");
                         }

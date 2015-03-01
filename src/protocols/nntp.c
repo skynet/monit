@@ -30,51 +30,41 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
+
 /**
- *  Check the server for greeting code 200 and then send a QUIT and
- *  check for code 205. If alive return true, else, return false.
+ *  Check the server for greeting code 200 and then send a QUIT and check for code 205
  *
  *  @file
  */
-boolean_t check_nntp(Socket_T socket) {
+void check_nntp(Socket_T socket) {
 
         int status = 0;
         char buf[STRLEN];
 
         ASSERT(socket);
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "NNTP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "NNTP: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
 
         sscanf(buf, "%d %*s", &status);
-        if (status != 200) {
-                socket_setError(socket, "NNTP error: %s", buf);
-                return false;
-        }
+        if (status != 200)
+                THROW(IOException, "NNTP error: %s", buf);
 
-        if (socket_print(socket, "QUIT\r\n") < 0) {
-                socket_setError(socket, "NNTP: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "QUIT\r\n") < 0)
+                THROW(IOException, "NNTP: error sending data -- %s", STRERROR);
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "NNTP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "NNTP: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
 
         sscanf(buf, "%d %*s", &status);
-        if (status != 205) {
-                socket_setError(socket, "NNTP error: %s", buf);
-                return false;
-        }
-
-        return true;
-
+        if (status != 205)
+                THROW(IOException, "NNTP error: %s", buf);
 }
 

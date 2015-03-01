@@ -30,6 +30,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 /**
  *  Simple LDAPv2 protocol test.
  *
@@ -45,7 +48,7 @@
  *
  *  @file
  */
-boolean_t check_ldap2(Socket_T socket) {
+void check_ldap2(Socket_T socket) {
 
         unsigned char buf[STRLEN];
 
@@ -114,29 +117,16 @@ boolean_t check_ldap2(Socket_T socket) {
         ASSERT(socket);
 
 
-        if (socket_write(socket, (unsigned char *)request, sizeof(request)) < 0) {
-                socket_setError(socket, "LDAP: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_write(socket, (unsigned char *)request, sizeof(request)) < 0)
+                THROW(IOException, "LDAP: error sending data -- %s", STRERROR);
 
-        if (socket_read(socket, (unsigned char *)buf, sizeof(response)) <= 0) {
-                socket_setError(socket, "LDAP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, (unsigned char *)buf, sizeof(response)) <= 0)
+                THROW(IOException, "LDAP: error receiving data -- %s", STRERROR);
 
-        if (memcmp((unsigned char *)buf,
-                   (unsigned char *)response,
-                   sizeof(response))) {
-                socket_setError(socket, "LDAP: anonymous bind failed");
-                return false;
-        }
+        if (memcmp((unsigned char *)buf, (unsigned char *)response, sizeof(response)))
+                THROW(IOException, "LDAP: anonymous bind failed");
 
-        if (socket_write(socket, (unsigned char *)unbind, sizeof(unbind)) < 0) {
-                socket_setError(socket, "LDAP: error sending data -- %s", STRERROR);
-                return false;
-        }
-
-        return true;
-
+        if (Socket_write(socket, (unsigned char *)unbind, sizeof(unbind)) < 0)
+                THROW(IOException, "LDAP: error sending data -- %s", STRERROR);
 }
 

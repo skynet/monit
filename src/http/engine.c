@@ -286,14 +286,14 @@ static Socket_T _socketProducer(int server, Httpd_Flags flags) {
                         LogError("HTTP server: cannot accept connection -- %s\n", stopped ? "service stopped" : STRERROR);
                         return NULL;
                 }
-                if (Net_setNonBlocking(client) < 0 || ! check_socket(client) || ! _authenticateHost(addr)) {
+                if (Net_setNonBlocking(client) < 0 || ! Net_canRead(client, 500) || ! Net_canWrite(client, 500) || ! _authenticateHost(addr)) {
                         Net_abort(client);
                         return NULL;
                 }
 #ifdef HAVE_OPENSSL
-                return socket_create_a(client, addr, mySSLServerConnection);
+                return Socket_createAccepted(client, addr, addrlen, mySSLServerConnection);
 #else
-                return socket_create_a(client, addr, NULL);
+                return Socket_createAccepted(client, addr, addrlen, NULL);
 #endif
         }
         return NULL;

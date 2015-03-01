@@ -81,6 +81,10 @@
 #include <netdb.h>
 #endif
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 #ifdef HAVE_MACH_BOOLEAN_H
 #include <mach/boolean.h>
 #endif
@@ -181,14 +185,6 @@ typedef enum {
         Operator_NotEqual,
         Operator_Changed
 } __attribute__((__packed__)) Operator_Type;
-
-
-typedef enum {
-        Socket_Unix = 0,
-        Socket_Ip,      // IP, version not specified (IPv4 or IPv6)
-        Socket_Ip4,     // IPv4 only
-        Socket_Ip6      // IPv6 only
-} __attribute__((__packed__)) Socket_Family;
 
 
 typedef enum {
@@ -524,7 +520,7 @@ typedef struct mysysteminfo {
 /** Defines a protocol object with protocol functions */
 typedef struct Protocol_T {
         const char *name;                                       /**< Protocol name */
-        boolean_t (*check)(Socket_T);          /**< Protocol verification function */
+        void (*check)(Socket_T);          /**< Protocol verification function */
 } *Protocol_T;
 
 
@@ -552,7 +548,7 @@ typedef struct myport {
         Generic_T generic;                                /**< Generic test handle */
         volatile int socket;                       /**< Socket used for connection */
         int port;                                                  /**< Portnumber */
-        int type;                   /**< Socket type used for connection (UDP/TCP) */
+        Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
         Hash_Type request_hashtype; /**< The optional type of hash for a req. document */
         Operator_Type operator;                           /**< Comparison operator */

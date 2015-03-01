@@ -53,48 +53,6 @@ boolean_t check_host(const char *hostname);
 
 
 /**
- * Verify that the socket is ready for i|o
- * @param socket A socket
- * @return true if the socket is ready, otherwise false.
- */
-boolean_t check_socket(int socket);
-
-
-/**
- * Verify that the udp server is up. The given socket must be a
- * connected udp socket if we should be able to test the udp server.
- * The test is conducted by sending a datagram to the server and
- * check for a returned ICMP error when reading from the socket.
- * @param socket A socket
- * @return true if the socket is ready, otherwise false.
- */
-boolean_t check_udp_socket(int socket);
-
-
-/**
- * Create a non-blocking socket against hostname:port with the given
- * protocol. The protocol should be either SOCK_STREAM or SOCK_DGRAM.
- * @param hostname The host to open a socket at
- * @param port The port number to connect to
- * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
- * @param family The socket family to use (see Socket_Family type)
- * @param timeout If not connected within timeout milliseconds abort and return -1
- * @return The socket or -1 if an error occured.
- */
-int create_socket(const char *hostname, int port, int type, Socket_Family family, int timeout);
-
-
-/**
- * Create a non-blocking UNIX socket.
- * @param pathname The pathname to use for the unix socket
- * @param type Socket type to use (SOCK_STREAM|SOCK_DGRAM)
- * @param timeout If not connected within timeout milliseconds abort and return -1
- * @return The socket or -1 if an error occured.
- */
-int create_unix_socket(const char *pathname, int type, int timeout);
-
-
-/**
  * Create a non-blocking server socket and bind it to the specified local
  * port number, with the specified backlog. Set a socket option to
  * make the port reusable again. If a bind address is given the socket
@@ -117,44 +75,6 @@ int create_server_socket(const char *address, int port, int backlog);
  * @return The socket ready for accept, or -1 if an error occured.
  */
 int create_server_socket_unix(const char *path, int backlog);
-
-
-/**
- * Write <code>size</code> bytes from the <code>buffer</code> to the
- * <code>socket</code>
- * @param socket the socket to write to
- * @param buffer The buffer to write
- * @param size Number of bytes to send
- * @param timeout Milliseconds to wait for data to be written
- * @return The number of bytes sent or -1 if an error occured.
- */
-ssize_t sock_write(int socket, const void *buffer, size_t size, int timeout);
-
-
-/**
- * Read up to size bytes from the <code>socket</code> into the
- * <code>buffer</code>. If data is not available wait for
- * <code>timeout</code> milliseconds.
- * @param socket the Socket to read data from
- * @param buffer The buffer to write the data to
- * @param size Number of bytes to read from the socket
- * @param timeout Milliseconds to wait for data to be available
- * @return The number of bytes read or -1 if an error occured.
-*/
-ssize_t sock_read(int socket, void *buffer, int size, int timeout);
-
-
-/**
- * Write <code>size</code> bytes from the <code>buffer</code> to the
- * <code>socket</code>. The given socket <b>must</b> be a connected
- * UDP socket
- * @param socket the socket to write to
- * @param buffer The buffer to write
- * @param size Number of bytes to send
- * @param timeout Milliseconds to wait for data to be written
- * @return The number of bytes sent or -1 if an error occured.
- */
-int udp_write(int socket, void *b, size_t len, int timeout);
 
 
 /**

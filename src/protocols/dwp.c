@@ -30,6 +30,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 /**
  *  A simple DWP (database wire protocol) test.
  *
@@ -38,11 +41,10 @@
  *  and check the server's status code.
  *
  *  If the status code is >= 400, an error has occurred.
- *  Return true if the status code is 200, otherwise false.
  *
  *  @file
  */
-boolean_t check_dwp(Socket_T socket) {
+void check_dwp(Socket_T socket) {
 
 #define REQ_LENGTH  1024
 
@@ -53,26 +55,16 @@ boolean_t check_dwp(Socket_T socket) {
 
         ASSERT(socket);
 
-        if (socket_print(socket, "HEAD / HTTP/1.1\r\n"
-                         "Connection: close\r\n\r\n") < 0) {
-                socket_setError(socket, "DWP: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n") < 0)
+                THROW(IOException, "DWP: error sending data -- %s", STRERROR);
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "DWP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "DWP: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
 
         n = sscanf(buf, "%255s %d", proto, &status);
-        if (n != 2 || (status >= 400)) {
-                socket_setError(socket, "DWP error: %s", buf);
-                return false;
-        }
-
-        return true;
-
+        if (n != 2 || (status >= 400))
+                THROW(IOException, "DWP error: %s", buf);
 }
 

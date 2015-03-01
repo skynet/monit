@@ -44,27 +44,23 @@
 
 // libmonit
 #include "system/Time.h"
+#include "exceptions/IOException.h"
 
 
 /**
- *  Check the server time with three seconds difference tolerance.
+ *  Check the server time with three seconds difference tolerance
  *
  *  This test is based on RFC868
  *
  *  @file
  */
-boolean_t check_rdate(Socket_T socket) {
+void check_rdate(Socket_T socket) {
         ASSERT(socket);
         time_t time;
-        if (socket_read(socket, (char *)&time, sizeof(time)) <= 0) {
-                socket_setError(socket, "RDATE: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, (char *)&time, sizeof(time)) <= 0)
+                THROW(IOException, "RDATE: error receiving data -- %s", STRERROR);
         // Compare system time with the RDATE server time (RDATE starts at 00:00:00 UTC, January 1, 1900 => add offset to 00:00:00 UTC, January 1, 1970)
-        if (llabs((long long)Time_now() + 2208988800LL - (long long)ntohl(time)) > 3LL) {
-                socket_setError(socket, "RDATE error: time does not match system time");
-                return false;
-        }
-        return true;
+        if (llabs((long long)Time_now() + 2208988800LL - (long long)ntohl(time)) > 3LL)
+                THROW(IOException, "RDATE error: time does not match system time");
 }
 

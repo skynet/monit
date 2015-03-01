@@ -30,45 +30,33 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 /**
- *  Check the server for greeting code 220 and then send a QUIT and
- *  check for code 221. If alive return true, else, return false.
+ *  Check the server for greeting code 220 and then send a QUIT and check for code 221
  *
  *  @file
  */
-boolean_t check_ftp(Socket_T socket) {
+void check_ftp(Socket_T socket) {
         int status;
         char buf[STRLEN];
 
         ASSERT(socket);
 
         do {
-                if (! socket_readln(socket, buf, STRLEN)) {
-                        socket_setError(socket, "FTP: error receiving data -- %s", STRERROR);
-                        return false;
-                }
+                if (! Socket_readLine(socket, buf, STRLEN))
+                        THROW(IOException, "FTP: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
-        if (sscanf(buf, "%d", &status) != 1 || status != 220) {
-                socket_setError(socket, "FTP greeting error: %s", buf);
-                return false;
-        }
-
-        if (socket_print(socket, "QUIT\r\n") < 0) {
-                socket_setError(socket, "FTP: error sending data -- %s", STRERROR);
-                return false;
-        }
-
-        if (! socket_readln(socket, buf, STRLEN)) {
-                socket_setError(socket, "FTP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (sscanf(buf, "%d", &status) != 1 || status != 220)
+                THROW(IOException, "FTP greeting error: %s", buf);
+        if (Socket_print(socket, "QUIT\r\n") < 0)
+                THROW(IOException, "FTP: error sending data -- %s", STRERROR);
+        if (! Socket_readLine(socket, buf, STRLEN))
+                THROW(IOException, "FTP: error receiving data -- %s", STRERROR);
         Str_chomp(buf);
-        if (sscanf(buf, "%d", &status) != 1 || status != 221) {
-                socket_setError(socket, "FTP quit error: %s", buf);
-                return false;
-        }
-
-        return true;
+        if (sscanf(buf, "%d", &status) != 1 || status != 221)
+                THROW(IOException, "FTP quit error: %s", buf);
 }
 

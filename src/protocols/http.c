@@ -35,6 +35,8 @@
 #include "httpstatus.h"
 #include "util/Str.h"
 
+// libmonit
+#include "exceptions/IOException.h"
 
 /**
  *  A HTTP test.
@@ -44,11 +46,10 @@
  *  'GET /custom/page  HTTP/1.1' ... if request statement is defined
  *  and check the server's status code.
  *
- *  If the statement defines hostname, it's used in the 'Host:' header
- * otherwise a default (empty) Host header is set.
+ *  If the statement defines hostname, it's used in the 'Host:' header otherwise a default (empty) Host header is set.
  *
  *  If the status code is >= 400, an error has occurred.
- *  Return true if the status code is OK, otherwise false.
+ *
  *  @file
  */
 
@@ -78,25 +79,20 @@ static const char *_findHostHeaderIn(List_T list) {
 }
 
 
-static boolean_t do_regex(Socket_T socket, int content_length, Request_T R) {
+static void do_regex(Socket_T socket, int content_length, Request_T R) {
         boolean_t rv = false;
-        int n, size = 0, length = 0, regex_return;
-        char *buf = NULL;
 
-        if (content_length == 0) {
-                socket_setError(socket, "HTTP error: No content returned from server");
-                return false;
-        } else if (content_length < 0) { /* Not defined in response */
+        if (content_length == 0)
+                THROW(IOException, "HTTP error: No content returned from server");
+        else if (content_length < 0) /* Not defined in response */
                 content_length = HTTP_CONTENT_MAX;
-        } else if (content_length > HTTP_CONTENT_MAX) {
+        else if (content_length > HTTP_CONTENT_MAX)
                 content_length = HTTP_CONTENT_MAX;
-        }
 
-        length = content_length;
-        buf = ALLOC(content_length + 1);
-
+        int size = 0, length = content_length, buflen = content_length + 1;
+        char *buf = ALLOC(buflen);
         do {
-                n = socket_read(socket, &buf[size], length);
+                int n = Socket_read(socket, &buf[size], length);
                 if (n <= 0)
                         break;
                 size += n;
@@ -104,15 +100,15 @@ static boolean_t do_regex(Socket_T socket, int content_length, Request_T R) {
         } while (length > 0);
 
         if (size == 0) {
-                socket_setError(socket, "HTTP error: receiving data -- %s", STRERROR);
+                snprintf(buf, buflen, "Receiving data -- %s", STRERROR);
                 goto error;
         }
         buf[size] = 0;
 
 #ifdef HAVE_REGEX_H
-        regex_return = regexec(R->regex, buf, 0, NULL, 0);
+        int regex_return = regexec(R->regex, buf, 0, NULL, 0);
 #else
-        regex_return = strstr(buf, R->regex) ? 0 : 1;
+        int regex_return = strstr(buf, R->regex) ? 0 : 1;
 #endif
         switch (R->operator) {
                 case Operator_Equal:
@@ -123,31 +119,33 @@ static boolean_t do_regex(Socket_T socket, int content_length, Request_T R) {
 #ifdef HAVE_REGEX_H
                                 char errbuf[STRLEN];
                                 regerror(regex_return, NULL, errbuf, sizeof(errbuf));
-                                socket_setError(socket, "HTTP error: Regular expression doesn't match: %s", errbuf);
+                                snprintf(buf, buflen, "Regular expression doesn't match: %s", errbuf);
 #else
-                                socket_setError(socket, "HTTP error: Regular expression doesn't match");
+                                snprintf(buf, buflen, "Regular expression doesn't match");
 #endif
                         }
                         break;
                 case Operator_NotEqual:
                         if (regex_return == 0) {
-                                socket_setError(socket, "HTTP error: Regular expression matches");
+                                snprintf(buf, buflen, "Regular expression matches");
                         } else {
                                 rv = true;
                                 DEBUG("HTTP: Regular expression doesn't match\n");
                         }
                         break;
                 default:
-                        socket_setError(socket, "HTTP error: Invalid content operator");
+                        snprintf(buf, buflen, "Invalid content operator");
+                        break;
         }
 
 error:
         FREE(buf);
-        return rv;
+        if (rv)
+                THROW(IOException, "HTTP error: %s", buf);
 }
 
 
-static boolean_t check_request_checksum(Socket_T socket, int content_length, char *checksum, Hash_Type hashtype) {
+static void check_request_checksum(Socket_T socket, int content_length, char *checksum, Hash_Type hashtype) {
         int n, keylength = 0;
         MD_T result, hash;
         md5_context_t ctx_md5;
@@ -156,14 +154,14 @@ static boolean_t check_request_checksum(Socket_T socket, int content_length, cha
 
         if (content_length <= 0) {
                 DEBUG("HTTP warning: Response does not contain a valid Content-Length -- cannot compute checksum\n");
-                return true;
+                return;
         }
 
         switch (hashtype) {
                 case Hash_Md5:
                         md5_init(&ctx_md5);
                         while (content_length > 0) {
-                                if ((n = socket_read(socket, buf, content_length > sizeof(buf) ? sizeof(buf) : content_length)) < 0)
+                                if ((n = Socket_read(socket, buf, content_length > sizeof(buf) ? sizeof(buf) : content_length)) < 0)
                                         break;
                                 md5_append(&ctx_md5, (const md5_byte_t *)buf, n);
                                 content_length -= n;
@@ -174,7 +172,7 @@ static boolean_t check_request_checksum(Socket_T socket, int content_length, cha
                 case Hash_Sha1:
                         sha1_init(&ctx_sha1);
                         while (content_length > 0) {
-                                if ((n = socket_read(socket, buf, content_length > sizeof(buf) ? sizeof(buf) : content_length)) < 0)
+                                if ((n = Socket_read(socket, buf, content_length > sizeof(buf) ? sizeof(buf) : content_length)) < 0)
                                         break;
                                 sha1_append(&ctx_sha1, (md5_byte_t *)buf, n);
                                 content_length -= n;
@@ -183,17 +181,11 @@ static boolean_t check_request_checksum(Socket_T socket, int content_length, cha
                         keylength = 20; /* Raw key bytes not string chars! */
                         break;
                 default:
-                        socket_setError(socket, "HTTP checksum error: Unknown hash type");
-                        return false;
+                        THROW(IOException, "HTTP checksum error: Unknown hash type");
         }
-
-        if (strncasecmp(Util_digest2Bytes((unsigned char *)hash, keylength, result), checksum, keylength * 2) != 0) {
-                socket_setError(socket, "HTTP checksum error: Document checksum mismatch");
-                return false;
-        } else {
-                DEBUG("HTTP: Succeeded testing document checksum\n");
-        }
-        return true;
+        if (strncasecmp(Util_digest2Bytes((unsigned char *)hash, keylength, result), checksum, keylength * 2) != 0)
+                THROW(IOException, "HTTP checksum error: Document checksum mismatch");
+        DEBUG("HTTP: Succeeded testing document checksum\n");
 }
 
 
@@ -201,45 +193,33 @@ static boolean_t check_request_checksum(Socket_T socket, int content_length, cha
  * Check that the server returns a valid HTTP response as well as checksum
  * or content regex if required
  * @param s A socket
- * @return true if the response is valid otherwise false
  */
-static boolean_t check_request(Socket_T socket, Port_T P) {
+static void check_request(Socket_T socket, Port_T P) {
         int status, content_length = -1;
         char buf[LINE_SIZE];
-        if (! socket_readln(socket, buf, LINE_SIZE)) {
-                socket_setError(socket, "HTTP: Error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, LINE_SIZE))
+                THROW(IOException, "HTTP: Error receiving data -- %s", STRERROR);
         Str_chomp(buf);
-        if (! sscanf(buf, "%*s %d", &status)) {
-                socket_setError(socket, "HTTP error: Cannot parse HTTP status in response: %s", buf);
-                return false;
-        }
-        if (! Util_evalQExpression(P->operator, status, P->status)) {
-                socket_setError(socket, "HTTP error: Server returned status %d", status);
-                return false;
-        }
+        if (! sscanf(buf, "%*s %d", &status))
+                THROW(IOException, "HTTP error: Cannot parse HTTP status in response: %s", buf);
+        if (! Util_evalQExpression(P->operator, status, P->status))
+                THROW(IOException, "HTTP error: Server returned status %d", status);
         /* Get Content-Length header value */
-        while (socket_readln(socket, buf, LINE_SIZE)) {
+        while (Socket_readLine(socket, buf, LINE_SIZE)) {
                 if ((buf[0] == '\r' && buf[1] == '\n') || (buf[0] == '\n'))
                         break;
                 Str_chomp(buf);
                 if (Str_startsWith(buf, "Content-Length")) {
-                        if (! sscanf(buf, "%*s%*[: ]%d", &content_length)) {
-                                socket_setError(socket, "HTTP error: Parsing Content-Length response header '%s'", buf);
-                                return false;
-                        }
-                        if (content_length < 0) {
-                                socket_setError(socket, "HTTP error: Illegal Content-Length response header '%s'", buf);
-                                return false;
-                        }
+                        if (! sscanf(buf, "%*s%*[: ]%d", &content_length))
+                                THROW(IOException, "HTTP error: Parsing Content-Length response header '%s'", buf);
+                        if (content_length < 0)
+                                THROW(IOException, "HTTP error: Illegal Content-Length response header '%s'", buf);
                 }
         }
-        if (P->url_request && P->url_request->regex && ! do_regex(socket, content_length, P->url_request))
-                return false;
+        if (P->url_request && P->url_request->regex)
+                do_regex(socket, content_length, P->url_request);
         if (P->request_checksum)
-                return check_request_checksum(socket, content_length, P->request_checksum, P->request_hashtype);
-        return true;
+                check_request_checksum(socket, content_length, P->request_checksum, P->request_hashtype);
 }
 
 
@@ -274,7 +254,7 @@ static char *get_auth_header(Port_T P, char *auth, int l) {
 /* ------------------------------------------------------------------ Public */
 
 
-boolean_t check_http(Socket_T socket) {
+void check_http(Socket_T socket) {
         Port_T P;
         char host[STRLEN];
         char auth[STRLEN] = {};
@@ -283,7 +263,7 @@ boolean_t check_http(Socket_T socket) {
 
         ASSERT(socket);
 
-        P = socket_get_Port(socket);
+        P = Socket_getPort(socket);
 
         ASSERT(P);
 
@@ -311,13 +291,10 @@ boolean_t check_http(Socket_T socket) {
                 }
         }
         StringBuffer_append(sb, "\r\n");
-        int send_status = socket_write(socket, (void*)StringBuffer_toString(sb), StringBuffer_length(sb));
+        int send_status = Socket_write(socket, (void*)StringBuffer_toString(sb), StringBuffer_length(sb));
         StringBuffer_free(&sb);
-        if (send_status < 0) {
-                socket_setError(socket, "HTTP: error sending data -- %s", STRERROR);
-                return false;
-        }
-
-        return check_request(socket, P);
+        if (send_status < 0)
+                THROW(IOException, "HTTP: error sending data -- %s", STRERROR);
+        check_request(socket, P);
 }
 

@@ -191,7 +191,7 @@ void Ssl_start() {
         else if (File_exist(RANDOM_DEVICE))
                 RAND_load_file(RANDOM_DEVICE, RANDOM_BYTES);
         else
-                THROW(AssertException, "SSL: cannot find %s nor %s on the system\n", URANDOM_DEVICE, RANDOM_DEVICE);
+                THROW(AssertException, "SSL: cannot find %s nor %s on the system", URANDOM_DEVICE, RANDOM_DEVICE);
         int locks = CRYPTO_num_locks();
         instanceMutexTable = CALLOC(locks, sizeof(Mutex_T));
         for (int i = 0; i < locks; i++)
@@ -221,9 +221,9 @@ void Ssl_threadCleanup() {
 void Ssl_setFipsMode(boolean_t enabled) {
 #ifdef OPENSSL_FIPS
         if (enabled && ! FIPS_mode() && ! FIPS_mode_set(1))
-                THROW(AssertException, "SSL: cannot enter FIPS mode -- %s\n", SSLERROR);
+                THROW(AssertException, "SSL: cannot enter FIPS mode -- %s", SSLERROR);
         else if (! enabled && FIPS_mode() && ! FIPS_mode_set(0))
-                THROW(AssertException, "SSL: cannot exit FIPS mode -- %s\n", SSLERROR);
+                THROW(AssertException, "SSL: cannot exit FIPS mode -- %s", SSLERROR);
 #endif
 }
 

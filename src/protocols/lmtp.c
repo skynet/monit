@@ -30,34 +30,28 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
 
 /* --------------------------------------------------------------- Private */
 
 
-static boolean_t say(Socket_T socket, char *msg) {
-        if (socket_write(socket, msg, strlen(msg)) < 0) {
-                socket_setError(socket, "LMTP: error sending data -- %s", STRERROR);
-                return false;
-        }
-        return true;
+static void say(Socket_T socket, char *msg) {
+        if (Socket_write(socket, msg, strlen(msg)) < 0)
+                THROW(IOException, "LMTP: error sending data -- %s", STRERROR);
 }
 
 
-static boolean_t expect(Socket_T socket, int expect) {
+static void expect(Socket_T socket, int expect) {
         int status;
         char buf[STRLEN];
         do {
-                if (! socket_readln(socket, buf, STRLEN)) {
-                        socket_setError(socket, "LMTP: error receiving data -- %s", STRERROR);
-                        return false;
-                }
+                if (! Socket_readLine(socket, buf, STRLEN))
+                        THROW(IOException, "LMTP: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
-        if (sscanf(buf, "%d", &status) != 1 || status != expect) {
-                socket_setError(socket, "LMTP error: %s", buf);
-                return false;
-        }
-        return true;
+        if (sscanf(buf, "%d", &status) != 1 || status != expect)
+                THROW(IOException, "LMTP error: %s", buf);
 }
 
 
@@ -65,22 +59,19 @@ static boolean_t expect(Socket_T socket, int expect) {
 
 
 /**
- * Check the server for greeting code 220, send LHLO, test for return code 250
- * and finally send QUIT and check for return code 221. If alive return true
- * else return false.
+ * Check the server for greeting code 220, send LHLO, test for return code 250 and finally send QUIT and check for return code 221
  *
  * @see RFC2033
  *
  * @file
  */
-boolean_t check_lmtp(Socket_T socket) {
+void check_lmtp(Socket_T socket) {
         ASSERT(socket);
-        if (expect(socket, 220)
-            && (say(socket, "LHLO localhost\r\n") && expect(socket, 250))
-            && (say(socket, "QUIT\r\n") && expect(socket, 221)))
-                return true;
-
-        return false;
+        expect(socket, 220);
+        say(socket, "LHLO localhost\r\n");
+        expect(socket, 250);
+        say(socket, "QUIT\r\n");
+        expect(socket, 221);
 }
 
 

@@ -1086,6 +1086,7 @@ host            : /* EMPTY */ {
                 ;
 
 port            : PORT NUMBER {
+                        //FIXME: add support for specific IPv6 or IPv4 ... for port and ping tests
                         portset.port = $2;
                         portset.family = Socket_Ip;
                   }
@@ -1098,13 +1099,13 @@ unixsocket      : UNIXSOCKET PATH {
                 ;
 
 type            : /* EMPTY */ {
-                    portset.type = SOCK_STREAM;
+                    portset.type = Socket_Tcp;
                   }
                 | TYPE TCP {
-                    portset.type = SOCK_STREAM;
+                    portset.type = Socket_Tcp;
                   }
                 | TYPE TCPSSL sslversion certmd5  {
-                    portset.type = SOCK_STREAM;
+                    portset.type = Socket_Tcp;
                     portset.SSL.use_ssl = true;
                     portset.SSL.version = $<number>3;
                     if (portset.SSL.version == SSL_Disabled)
@@ -1112,7 +1113,7 @@ type            : /* EMPTY */ {
                     portset.SSL.certmd5 = $<string>4;
                   }
                 | TYPE UDP {
-                    portset.type = SOCK_DGRAM;
+                    portset.type = Socket_Udp;
                   }
                 ;
 
@@ -1167,7 +1168,7 @@ protocol        : /* EMPTY */  {
                         portset.protocol = Protocol_get(Protocol_HTTP);
                   }
                 | PROTOCOL HTTPS httplist {
-                        portset.type = SOCK_STREAM;
+                        portset.type = Socket_Tcp;
                         portset.SSL.use_ssl = true;
                         portset.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_HTTP);
@@ -1176,7 +1177,7 @@ protocol        : /* EMPTY */  {
                         portset.protocol = Protocol_get(Protocol_IMAP);
                   }
                 | PROTOCOL IMAPS {
-                        portset.type = SOCK_STREAM;
+                        portset.type = Socket_Tcp;
                         portset.SSL.use_ssl = true;
                         portset.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_IMAP);
@@ -1204,7 +1205,7 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL NTP3  {
                     portset.protocol = Protocol_get(Protocol_NTP3);
-                    portset.type = SOCK_DGRAM;
+                    portset.type = Socket_Udp;
                   }
                 | PROTOCOL POSTFIXPOLICY {
                     portset.protocol = Protocol_get(Protocol_POSTFIXPOLICY);
@@ -1219,7 +1220,7 @@ protocol        : /* EMPTY */  {
                     portset.protocol = Protocol_get(Protocol_SMTP);
                   }
                 | PROTOCOL SMTPS {
-                        portset.type = SOCK_STREAM;
+                        portset.type = Socket_Tcp;
                         portset.SSL.use_ssl = true;
                         portset.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_SMTP);
@@ -3338,7 +3339,7 @@ static void prepare_urlrequest(URL_T U) {
         check_hostname(portset.hostname);
         portset.port = U->port;
         portset.url_request = urlrequest;
-        portset.type = SOCK_STREAM;
+        portset.type = Socket_Tcp;
         portset.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");
         /* Only the HTTP protocol is supported for URLs.
          See also the lexer if this is to be changed in
@@ -3779,7 +3780,7 @@ static void reset_mailserverset() {
 static void reset_portset() {
         memset(&portset, 0, sizeof(struct myport));
         portset.socket = -1;
-        portset.type = SOCK_STREAM;
+        portset.type = Socket_Tcp;
         portset.family = Socket_Ip;
         portset.SSL.version = SSL_Auto;
         portset.timeout = NET_TIMEOUT;

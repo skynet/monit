@@ -30,6 +30,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 #define MEMCACHELEN 24
 
 /* Magic Byte */
@@ -53,7 +56,7 @@
  *
  *  @file
  */
-boolean_t check_memcache(Socket_T socket) {
+void check_memcache(Socket_T socket) {
         unsigned int length;
         unsigned char response[MEMCACHELEN];
         unsigned int status;
@@ -72,51 +75,45 @@ boolean_t check_memcache(Socket_T socket) {
 
         ASSERT(socket);
 
-        if (socket_write(socket, (unsigned char *)request, sizeof(request)) <= 0) {
-                socket_setError(socket, "MEMCACHE: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_write(socket, (unsigned char *)request, sizeof(request)) <= 0)
+                THROW(IOException, "MEMCACHE: error sending data -- %s", STRERROR);
 
         /* Response should have at least MEMCACHELEN bytes */
-        length = socket_read(socket, (unsigned char *)response, sizeof(response));
-        if (length != MEMCACHELEN) {
-                socket_setError(socket, "MEMCACHE: Received %d bytes from server, expected %d bytes", length, MEMCACHELEN);
-                return false;
-        }
+        length = Socket_read(socket, (unsigned char *)response, sizeof(response));
+        if (length != MEMCACHELEN)
+                THROW(IOException, "MEMCACHE: Received %d bytes from server, expected %d bytes", length, MEMCACHELEN);
 
-        if (response[0] != MAGIC_RESPONSE) {
-                socket_setError(socket, "MEMCACHELEN: Invalid response code -- error occured");
-                return false;
-        }
+        if (response[0] != MAGIC_RESPONSE)
+                THROW(IOException, "MEMCACHELEN: Invalid response code -- error occured");
 
         status = (response[6] << 8) | response[7];
         switch (status ) {
                 case NO_ERROR:
-                        return true;
+                        break;
                 case OUT_OF_MEMORY:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Out of memory");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Out of memory");
+                        break;
                 case UNKNOWN_COMMAND:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Unknown command");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Unknown command");
+                        break;
                 case INVALID_ARGUMENTS:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Invalid arguments");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Invalid arguments");
+                        break;
                 case VALUE_TOO_BIG:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Value too big");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Value too big");
+                        break;
                 case ITEM_NOT_STORED:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Item not stored");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Item not stored");
+                        break;
                 case KEY_NOT_FOUND:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Key not found");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Key not found");
+                        break;
                 case KEY_EXISTS:
-                        socket_setError(socket, "MEMCACHELEN: Invalid response code -- Key exists");
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Invalid response code -- Key exists");
+                        break;
                 default:
-                        socket_setError(socket, "MEMCACHELEN: Unknow response code %u -- error occured", status);
-                        return false;
+                        THROW(IOException, "MEMCACHELEN: Unknow response code %u -- error occured", status);
+                        break;
         }
 }
 

@@ -87,22 +87,22 @@ boolean_t status(char *level) {
         Socket_T S;
         if (Run.httpd.flags & Httpd_Net)
                 // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
-                S = socket_create_t(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, SOCKET_TCP, Socket_Ip4, (SslOptions_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
+                S = Socket_create(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, Socket_Tcp, Socket_Ip4, (SslOptions_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
         else
-                S = socket_create_u(Run.httpd.socket.unix.path, SOCKET_TCP, NET_TIMEOUT);
+                S = Socket_createUnix(Run.httpd.socket.unix.path, Socket_Tcp, NET_TIMEOUT);
         if (! S) {
                 LogError("Error connecting to the monit daemon\n");
                 return status;
         }
 
         auth = Util_getBasicAuthHeaderMonit();
-        socket_print(S,
+        Socket_print(S,
                      "GET /_status?format=text&level=%s HTTP/1.0\r\n%s\r\n",
                      level, auth ? auth : "");
         FREE(auth);
 
         /* Read past HTTP headers and check status */
-        while (socket_readln(S, buf, LINE)) {
+        while (Socket_readLine(S, buf, LINE)) {
                 if (*buf == '\n' || *buf == '\r')
                         break;
                 if (Str_startsWith(buf, "HTTP/1.0 200"))
@@ -112,11 +112,11 @@ boolean_t status(char *level) {
         if (! status) {
                 LogError("Cannot read status from the monit daemon\n");
         } else {
-                while (socket_readln(S, buf, LINE)) {
+                while (Socket_readLine(S, buf, LINE)) {
                         printf("%s", buf);
                 }
         }
-        socket_free(&S);
+        Socket_free(&S);
 
         return status;
 }

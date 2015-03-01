@@ -89,18 +89,18 @@ void init_env() {
         for (int i = 0; i < 3; i++) {
                 struct stat st;
                 if (fstat(i, &st) == -1 && open("/dev/null", O_RDWR) != i)
-                        THROW(AssertException, "Cannot open /dev/null -- %s\n", STRERROR);
+                        THROW(AssertException, "Cannot open /dev/null -- %s", STRERROR);
         }
         // Get password struct with user info
         struct passwd *pw = getpwuid(geteuid());
         if (! pw)
-                THROW(AssertException, "%s: You don't exist. Go away.\n", prog);
+                THROW(AssertException, "%s: You don't exist. Go away", prog);
         Run.Env.home = Str_dup(pw->pw_dir);
         Run.Env.user = Str_dup(pw->pw_name);
         // Get CWD
         char t[PATH_MAX];
         if (! Dir_cwd(t, PATH_MAX))
-                THROW(AssertException, "Monit: Cannot read current directory -- %s\n", STRERROR);
+                THROW(AssertException, "Monit: Cannot read current directory -- %s", STRERROR);
         Run.Env.cwd = Str_dup(t);
 }
 

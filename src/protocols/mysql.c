@@ -42,6 +42,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /* ----------------------------------------------------------- Definitions */
 
@@ -76,27 +79,21 @@ static unsigned int B3(unsigned char *b) {
 }
 
 
-static boolean_t _response(Socket_T socket, mysql_packet_t *pkt) {
+static void _response(Socket_T socket, mysql_packet_t *pkt) {
         memset(pkt, 0, sizeof *pkt);
-        if (socket_read(socket, pkt->buf, 4) < 4) {
-                socket_setError(socket, "Error receiving server response -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, pkt->buf, 4) < 4)
+                THROW(IOException, "Error receiving server response -- %s", STRERROR);
         pkt->len = B3(pkt->buf);
         pkt->len = pkt->len > STRLEN ? STRLEN : pkt->len; // Adjust packet length for this buffer
         pkt->seq = pkt->buf[3];
         pkt->msg = pkt->buf + 4;
-        if (socket_read(socket, pkt->msg, pkt->len) != pkt->len) {
-                socket_setError(socket, "Error receiving server response -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, pkt->msg, pkt->len) != pkt->len)
+                THROW(IOException, "Error receiving server response -- %s", STRERROR);
         if (*pkt->msg == MYSQL_ERROR) {
                 unsigned short code = B2(pkt->msg + 1);
                 unsigned char *err = pkt->msg + 9;
-                socket_setError(socket, "Server returned error code %d -- %s", code, err);
-                return false;
+                THROW(IOException, "Server returned error code %d -- %s", code, err);
         }
-        return true;
 }
 
 
@@ -104,29 +101,22 @@ static boolean_t _response(Socket_T socket, mysql_packet_t *pkt) {
 
 
 /**
- * Simple MySQL test. Connect to MySQL and read Server Handshake Packet.
- * If we can read the packet and it is not an error packet we assume the
- * server is up and working.
+ * Simple MySQL test. Connect to MySQL and read Server Handshake Packet. If we can read the packet and it is not an error packet we assume the server is up and working.
  *
  *  @see http://dev.mysql.com/doc/internals/en/client-server-protocol.html
  */
-boolean_t check_mysql(Socket_T socket) {
+void check_mysql(Socket_T socket) {
         ASSERT(socket);
         mysql_packet_t pkt;
-        if (_response(socket, &pkt)) {
-                short protocol_version = pkt.msg[0];
-                unsigned char *server_version = pkt.msg + 1;
-                // Protocol is 10 for MySQL 5.x
-                if ((protocol_version > 12) || (protocol_version < 9))
-                        socket_setError(socket, "Invalid protocol version %d", protocol_version);
-                // Handshake packet should have sequence id 0
-                else if (pkt.seq != 0)
-                        socket_setError(socket, "Invalid packet sequence id %d", pkt.seq);
-                else {
-                        DEBUG("MySQL: Protocol: %d, Server Version: %s\n", protocol_version, server_version);
-                        return true;
-                }
-        }
-        return false;
+        _response(socket, &pkt);
+        short protocol_version = pkt.msg[0];
+        unsigned char *server_version = pkt.msg + 1;
+        // Protocol is 10 for MySQL 5.x
+        if ((protocol_version > 12) || (protocol_version < 9))
+                THROW(IOException, "Invalid protocol version %d", protocol_version);
+        // Handshake packet should have sequence id 0
+        if (pkt.seq != 0)
+                THROW(IOException, "Invalid packet sequence id %d", pkt.seq);
+        DEBUG("MySQL: Protocol: %d, Server Version: %s\n", protocol_version, server_version);
 }
 

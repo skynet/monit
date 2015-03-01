@@ -42,6 +42,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /* ----------------------------------------------------------- Definitions */
 
@@ -74,7 +77,7 @@ static unsigned int B4(unsigned char *b) {
 }
 
 
-static boolean_t _ping(Socket_T socket) {
+static void _ping(Socket_T socket) {
         unsigned char ping[58] = {
                 // Message header
                 0x3a, 0x00, 0x00, 0x00,                                           // total message size (58 bytes)
@@ -93,41 +96,30 @@ static boolean_t _ping(Socket_T socket) {
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f,                   // element value (1)
                 0x00                                                              // BSON document terminal
         };
-        if (socket_write(socket, (unsigned char *)ping, sizeof(ping)) < 0) {
-                socket_setError(socket, "MONGODB: ping command error -- %s", STRERROR);
-                return false;
-        }
-        return true;
+        if (Socket_write(socket, (unsigned char *)ping, sizeof(ping)) < 0)
+                THROW(IOException, "MONGODB: ping command error -- %s", STRERROR);
 }
 
 
-static boolean_t _pong(Socket_T socket) {
+static void _pong(Socket_T socket) {
         op_reply_t pong;
         unsigned char buf[STRLEN + 1];
         memset(&pong, 0, sizeof(op_reply_t));
-        if (socket_read(socket, buf, 16) < 16) { // read the header
-                socket_setError(socket, "MONGODB: error receiving PING response -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, buf, 16) < 16) // read the header
+                THROW(IOException, "MONGODB: error receiving PING response -- %s", STRERROR);
         // check response ID: should be 1 (hardcoded in _ping request above)
         pong.responseToId = B4(buf + 8);
-        if (pong.responseToId != 1) {
-                socket_setError(socket, "MONGODB: PING response error -- unexpected response id (%d)", pong.responseToId);
-                return false;
-        }
+        if (pong.responseToId != 1)
+                THROW(IOException, "MONGODB: PING response error -- unexpected response id (%d)", pong.responseToId);
         // check operation type: should be OP_REPLY == 0x1
         pong.operation = B4(buf + 12);
-        if (pong.operation != 1) {
-                socket_setError(socket, "MONGODB: PING response error -- unexpected operation type (0x%x)", pong.operation);
-                return false;
-        }
+        if (pong.operation != 1)
+                THROW(IOException, "MONGODB: PING response error -- unexpected operation type (0x%x)", pong.operation);
         // read OP_REPLY
         pong.messageSize = B4(buf);
         int len = pong.messageSize - 16 > STRLEN ? STRLEN : pong.messageSize - 16; // Adjust message size for this buffer (minus 16 bytes of header - already read)
-        if (socket_read(socket, buf, len) != len) {
-                socket_setError(socket, "MONGODB: error receiving OP_REPLY data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, buf, len) != len)
+                THROW(IOException, "MONGODB: error receiving OP_REPLY data -- %s", STRERROR);
         // check BSON encoded OK response: {ok:1}
         pong.response = buf + 20;
         unsigned char ok[17] = {
@@ -137,11 +129,8 @@ static boolean_t _pong(Socket_T socket) {
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // element value (1)
                 0x00                                            // BSON document terminal
         };
-        if (memcmp(pong.response, ok, sizeof(ok))) {
-                socket_setError(socket, "MONGODB: PING response error -- invalid reply");
-                return false;
-        }
-        return true;
+        if (memcmp(pong.response, ok, sizeof(ok)))
+                THROW(IOException, "MONGODB: PING response error -- invalid reply");
 }
 
 
@@ -154,16 +143,13 @@ static boolean_t _pong(Socket_T socket) {
  *     1. send a {ping:1} request to "admin.$cmd"
  *     2. expect a {ok:1} response
  *
- * If passed return true else return false.
- *
  * @see http://docs.mongodb.org/meta-driver/latest/legacy/mongodb-wire-protocol/ and http://bsonspec.org/spec.html
  *
  * @file
  */
-boolean_t check_mongodb(Socket_T socket) {
+void check_mongodb(Socket_T socket) {
         ASSERT(socket);
-        if (_ping(socket) && _pong(socket))
-                return true;
-        return false;
+        _ping(socket);
+        _pong(socket);
 }
 

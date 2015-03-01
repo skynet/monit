@@ -832,7 +832,7 @@ void Util_printRunList() {
                                mta->port,
                                mta->ssl.use_ssl ? "(ssl)" : "",
                                mta->next ? ", " : " ");
-                printf("with timeout %d seconds", Run.mailserver_timeout/1000);
+                printf("with timeout %d seconds", Run.mailserver_timeout / 1000);
                 if (Run.mail_hostname)
                         printf(" using '%s' as my hostname", Run.mail_hostname);
                 printf("\n");
@@ -1728,10 +1728,10 @@ boolean_t Util_hasServiceStatus(Service_T s) {
 
 
 char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
-        if (socket_get_remote_port(s) == 80)
-                snprintf(hostBuf, len, "%s", socket_get_remote_host(s));
+        if (Socket_getRemotePort(s) == 80)
+                snprintf(hostBuf, len, "%s", Socket_getRemoteHost(s));
         else
-                snprintf(hostBuf, len, "%s:%d", socket_get_remote_host(s), socket_get_remote_port(s));
+                snprintf(hostBuf, len, "%s:%d", Socket_getRemoteHost(s), Socket_getRemotePort(s));
         return hostBuf;
 }
 
@@ -1889,9 +1889,9 @@ StringBuffer_T Util_printRule(StringBuffer_T buf, EventAction_T action, const ch
 
 char *Util_portTypeDescription(Port_T p) {
         switch (p->type) {
-                case SOCK_STREAM:
+                case Socket_Tcp:
                         return p->SSL.use_ssl ? "TCPSSL" : "TCP";
-                case SOCK_DGRAM:
+                case Socket_Udp:
                         return "UDP";
                 default:
                         return "UNKNOWN";

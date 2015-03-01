@@ -296,11 +296,11 @@ static void printFavicon(HttpResponse res) {
         }
         if (l) {
                 res->is_committed = true;
-                socket_print(S, "HTTP/1.0 200 OK\r\n");
-                socket_print(S, "Content-length: %lu\r\n", (unsigned long)l);
-                socket_print(S, "Content-Type: image/x-icon\r\n");
-                socket_print(S, "Connection: close\r\n\r\n");
-                socket_write(S, favicon, l);
+                Socket_print(S, "HTTP/1.0 200 OK\r\n");
+                Socket_print(S, "Content-length: %lu\r\n", (unsigned long)l);
+                Socket_print(S, "Content-Type: image/x-icon\r\n");
+                Socket_print(S, "Connection: close\r\n\r\n");
+                Socket_write(S, favicon, l);
         }
 }
 
@@ -2474,7 +2474,7 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
         if (stringFormat && Str_startsWith(stringFormat, "xml")) {
                 char buf[STRLEN];
                 StringBuffer_T sb = StringBuffer_create(256);
-                status_xml(sb, NULL, level, version, socket_get_local_host(req->S, buf, sizeof(buf)));
+                status_xml(sb, NULL, level, version, Socket_getLocalHost(req->S, buf, sizeof(buf)));
                 StringBuffer_append(res->outputbuffer, "%s", StringBuffer_toString(sb));
                 StringBuffer_free(&sb);
                 set_content_type(res, "text/xml");

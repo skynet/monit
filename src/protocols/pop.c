@@ -30,49 +30,39 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
+
 /**
- *  Check the server for greeting code +OK, then send QUIT and check
- *  for code +OK. If alive return true, else, return false.
+ *  Check the server for greeting code +OK, then send QUIT and check for code +OK
  *
  *  @file
  */
-boolean_t check_pop(Socket_T socket) {
+void check_pop(Socket_T socket) {
 
         char buf[STRLEN];
         const char *ok = "+OK";
 
         ASSERT(socket);
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "POP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "POP: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
 
-        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
-                socket_setError(socket, "POP error: %s", buf);
-                return false;
-        }
+        if (strncasecmp(buf, ok, strlen(ok)) != 0)
+                THROW(IOException, "POP error: %s", buf);
 
-        if (socket_print(socket, "QUIT\r\n") < 0) {
-                socket_setError(socket, "POP: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "QUIT\r\n") < 0)
+                THROW(IOException, "POP: error sending data -- %s", STRERROR);
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "POP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "POP: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
 
-        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
-                socket_setError(socket, "POP error: %s", buf);
-                return false;
-        }
-
-        return true;
-
+        if (strncasecmp(buf, ok, strlen(ok)) != 0)
+                THROW(IOException, "POP error: %s", buf);
 }
 

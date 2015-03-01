@@ -144,56 +144,25 @@ static void _programOutput(InputStream_T I, StringBuffer_T S) {
  * Test the connection and protocol
  */
 static void check_connection(Service_T s, Port_T p) {
+        ASSERT(s && p);
         volatile int retry_count = p->retry;
         volatile boolean_t rv = true;
         char buf[STRLEN];
         char report[STRLEN] = {};
-        struct timeval t1;
-        struct timeval t2;
-
-        ASSERT(s && p);
 retry:
-        /* Get time of connection attempt beginning */
-        gettimeofday(&t1, NULL);
-
-        /* Open a socket to the destination NET[hostname:port] or UNIX[pathname] */
-        Socket_T socket = socket_create(p);
-        if (! socket) {
-                snprintf(report, STRLEN, "failed, cannot open a connection to %s", Util_portDescription(p, buf, sizeof(buf)));
-                rv = false;
-                goto error;
-        } else {
-                DEBUG("'%s' succeeded connecting to %s\n", s->name, Util_portDescription(p, buf, sizeof(buf)));
-        }
-
-        if (p->protocol->check == check_default) {
-                if (socket_is_udp(socket)) {
-                        // Only test "connected" UDP sockets without protocol, TCP connect is verified on create
-                        if (! socket_is_ready(socket)) {
-                                snprintf(report, STRLEN, "connection to %s failed -- %s", Util_portDescription(p, buf, sizeof(buf)), STRERROR);
-                                rv = false;
-                                goto error;
-                        }
-                }
-        }
-        /* Run the protocol verification routine through the socket */
-        if (! p->protocol->check(socket)) {
-                snprintf(report, STRLEN, "failed protocol test [%s] at %s -- %s", p->protocol->name, Util_portDescription(p, buf, sizeof(buf)), socket_getError(socket));
-                rv = false;
-                goto error;
-        } else {
+        TRY
+        {
+                long long start = Time_milli();
+                Socket_test(p);
+                p->response = (Time_milli() - start) / 1000.;
                 DEBUG("'%s' succeeded testing protocol [%s] at %s\n", s->name, p->protocol->name, Util_portDescription(p, buf, sizeof(buf)));
         }
-
-        /* Get time of connection attempt finish */
-        gettimeofday(&t2, NULL);
-
-        /* Get the response time */
-        p->response = (double)(t2.tv_sec - t1.tv_sec) + (double)(t2.tv_usec - t1.tv_usec)/1000000;
-
-error:
-        if (socket)
-                socket_free(&socket);
+        ELSE
+        {
+                snprintf(report, STRLEN, "failed protocol test [%s] at %s -- %s", p->protocol->name, Util_portDescription(p, buf, sizeof(buf)), Exception_frame.message);
+                rv = false;
+        }
+        END_TRY;
         if (! rv) {
                 if (retry_count-- > 1) {
                         DEBUG("'%s' %s (attempt %d/%d)\n", s->name, report, p->retry - retry_count, p->retry);
@@ -206,7 +175,6 @@ error:
                 p->is_available = true;
                 Event_post(s, Event_Connection, State_Succeeded, p->action, "connection succeeded to %s", Util_portDescription(p, buf, sizeof(buf)));
         }
-
 }
 
 

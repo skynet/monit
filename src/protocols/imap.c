@@ -30,13 +30,15 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 /**
- *  Check the server for greeting code '* OK' and then send LOGOUT and
- *  check for code '* BYE'. If alive return true, else, return false.
+ *  Check the server for greeting code '* OK' and then send LOGOUT and check for code '* BYE'
  *
  *  @file
  */
-boolean_t check_imap(Socket_T socket) {
+void check_imap(Socket_T socket) {
         char buf[STRLEN];
         const char *ok = "* OK";
         const char *bye = "* BYE";
@@ -44,31 +46,19 @@ boolean_t check_imap(Socket_T socket) {
         ASSERT(socket);
 
         // Read and check IMAP greeting
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "IMAP: greeting read error -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "IMAP: greeting read error -- %s", STRERROR);
         Str_chomp(buf);
-        if (strncasecmp(buf, ok, strlen(ok)) != 0) {
-                socket_setError(socket, "IMAP: invalid greeting -- %s", buf);
-                return false;
-        }
+        if (strncasecmp(buf, ok, strlen(ok)) != 0)
+                THROW(IOException, "IMAP: invalid greeting -- %s", buf);
 
         // Logout and check response
-        if (socket_print(socket, "001 LOGOUT\r\n") < 0) {
-                socket_setError(socket, "IMAP: logout command error -- %s", STRERROR);
-                return false;
-        }
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "IMAP: logout response read error -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "001 LOGOUT\r\n") < 0)
+                THROW(IOException, "IMAP: logout command error -- %s", STRERROR);
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "IMAP: logout response read error -- %s", STRERROR);
         Str_chomp(buf);
-        if (strncasecmp(buf, bye, strlen(bye)) != 0) {
-                socket_setError(socket, "IMAP: invalid logout response: %s", buf);
-                return false;
-        }
-
-        return true;
+        if (strncasecmp(buf, bye, strlen(bye)) != 0)
+                THROW(IOException, "IMAP: invalid logout response: %s", buf);
 }
 

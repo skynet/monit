@@ -30,12 +30,16 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
+
 /**
  *  PostgreSQL test.
  *
  *  @file
  */
-boolean_t check_pgsql(Socket_T socket) {
+void check_pgsql(Socket_T socket) {
 
         unsigned char buf[STRLEN];
 
@@ -102,36 +106,28 @@ boolean_t check_pgsql(Socket_T socket) {
 
         ASSERT(socket);
 
-        if (socket_write(socket, (unsigned char *)requestLogin, sizeof(requestLogin)) <= 0) {
-                socket_setError(socket, "PGSQL: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_write(socket, (unsigned char *)requestLogin, sizeof(requestLogin)) <= 0)
+                THROW(IOException, "PGSQL: error sending data -- %s", STRERROR);
 
         /** Nine-byte is enough to hold Auth-Ok */
-        if (socket_read(socket, buf, 9) <= 0) {
-                socket_setError(socket, "PGSQL: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_read(socket, buf, 9) <= 0)
+                THROW(IOException, "PGSQL: error receiving data -- %s", STRERROR);
 
         /** If server insists on auth error it is working anyway */
-        if (*buf == 'E') {
-                return true;
-        }
+        if (*buf == 'E')
+                return;
 
         /** Successful connection */
         if (! memcmp((unsigned char *)buf, (unsigned char *)responseAuthOk, 9)) {
                 /** This is where suspicious people can do SELECT query that I dont */
-                socket_write(socket, (unsigned char *)requestTerm, sizeof(requestTerm));
-                return true;
+                Socket_write(socket, (unsigned char *)requestTerm, sizeof(requestTerm));
+                return;
         }
 
         /** The last possibility must be that server is demanding password */
-        if (*buf == 'R') {
-                return true;
-        }
+        if (*buf == 'R')
+                return;
 
-        socket_setError(socket, "PGSQL: unknown error");
-
-        return false;
+        THROW(IOException, "PGSQL: unknown error");
 }
 

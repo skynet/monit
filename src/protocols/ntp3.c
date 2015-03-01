@@ -30,6 +30,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /**
  *  NTP (Network time procol) version 3 test
@@ -54,8 +57,7 @@
 /* ------------------------------------------------------------------ Public */
 
 
-boolean_t check_ntp3(Socket_T socket)
-{
+void check_ntp3(Socket_T socket) {
         int  br;
         char ntpRequest[NTPLEN];
         char ntpResponse[NTPLEN];
@@ -71,30 +73,18 @@ boolean_t check_ntp3(Socket_T socket)
          bits 2-4 ... Version Number
          bits 5-7 ... Mode
          */
-        ntpRequest[0]=
-        (NTP_LEAP_NOTSYNC << 6)
-        |
-        (NTP_VERSION << 3)
-        |
-        (NTP_MODE_CLIENT);
+        ntpRequest[0]= (NTP_LEAP_NOTSYNC << 6) | (NTP_VERSION << 3) | (NTP_MODE_CLIENT);
 
         /* Send request to NTP server */
-        if (socket_write(socket, ntpRequest, NTPLEN) <= 0 ) {
-                socket_setError(socket, "NTP: error sending NTP request -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_write(socket, ntpRequest, NTPLEN) <= 0)
+                THROW(IOException, "NTP: error sending NTP request -- %s", STRERROR);
 
         /* Receive and validate response */
-        if ( (br = socket_read(socket, ntpResponse, NTPLEN)) <= 0) {
-                socket_setError(socket, "NTP: did not receive answer from server -- %s", STRERROR);
-                return false;
-        }
+        if ((br = Socket_read(socket, ntpResponse, NTPLEN)) <= 0)
+                THROW(IOException, "NTP: did not receive answer from server -- %s", STRERROR);
 
-        if ( br != NTPLEN ) {
-                socket_setError(socket, "NTP: Received %d bytes from server, expected %d bytes",
-                                br, NTPLEN);
-                return false;
-        }
+        if (br != NTPLEN)
+                THROW(IOException, "NTP: Received %d bytes from server, expected %d bytes", br, NTPLEN);
 
         /*
          Compare NTP response. The first octet consists of:
@@ -102,22 +92,11 @@ boolean_t check_ntp3(Socket_T socket)
          bits 2-4 ... Version Number
          bits 5-7 ... Mode
          */
-        if ( (ntpResponse[0] & 0x07) != NTP_MODE_SERVER )
-        {
-                socket_setError(socket, "NTP: Server mode error");
-                return false;
-        }
-        if ( (ntpResponse[0] & 0x38) != NTP_VERSION << 3 )
-        {
-                socket_setError(socket, "NTP: Server protocol version error");
-                return false;
-        }
-        if ( (ntpResponse[0] & 0xc0) == NTP_LEAP_NOTSYNC << 6 )
-        {
-                socket_setError(socket, "NTP: Server not synchronized");
-                return false;
-        }
-
-        return true;
+        if ((ntpResponse[0] & 0x07) != NTP_MODE_SERVER)
+                THROW(IOException, "NTP: Server mode error");
+        if ((ntpResponse[0] & 0x38) != NTP_VERSION << 3)
+                THROW(IOException, "NTP: Server protocol version error");
+        if ((ntpResponse[0] & 0xc0) == NTP_LEAP_NOTSYNC << 6)
+                THROW(IOException, "NTP: Server not synchronized");
 }
 

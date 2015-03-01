@@ -26,6 +26,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /* --------------------------------------------------------------- Public */
 
@@ -37,33 +40,22 @@
  *     2. expect a PONG response
  *     3. send a QUIT command
  *
- * If passed return true else return false.
- *
  * @see http://redis.io/topics/protocol
  *
  * @file
  */
-boolean_t check_redis(Socket_T socket) {
+void check_redis(Socket_T socket) {
         ASSERT(socket);
         char buf[STRLEN];
 
-        if (socket_print(socket, "*1\r\n$4\r\nPING\r\n") < 0) {
-                socket_setError(socket, "REDIS: PING command error -- %s", STRERROR);
-                return false;
-        }
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "REDIS: PING response error -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "*1\r\n$4\r\nPING\r\n") < 0)
+                THROW(IOException, "REDIS: PING command error -- %s", STRERROR);
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "REDIS: PING response error -- %s", STRERROR);
         Str_chomp(buf);
-        if (! Str_isEqual(buf, "+PONG") && ! Str_startsWith(buf, "-NOAUTH")) { // We accept authentication error (-NOAUTH Authentication required): redis responded to request, but requires authentication => we assume it works
-                socket_setError(socket, "REDIS: PING error -- %s", buf);
-                return false;
-        }
-        if (socket_print(socket, "*1\r\n$4\r\nQUIT\r\n") < 0) {
-                socket_setError(socket, "REDIS: QUIT command error -- %s", STRERROR);
-                return false;
-        }
-        return true;
+        if (! Str_isEqual(buf, "+PONG") && ! Str_startsWith(buf, "-NOAUTH")) // We accept authentication error (-NOAUTH Authentication required): redis responded to request, but requires authentication => we assume it works
+                THROW(IOException, "REDIS: PING error -- %s", buf);
+        if (Socket_print(socket, "*1\r\n$4\r\nQUIT\r\n") < 0)
+                THROW(IOException, "REDIS: QUIT command error -- %s", STRERROR);
 }
 

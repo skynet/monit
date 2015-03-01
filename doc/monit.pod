@@ -2411,6 +2411,8 @@ to 10 seconds for a reply
 
 =head2 CONNECTION TESTING
 
+//FIXME: document that when hostname is used, we try all options until first success or all failed => the test may hang for timeout and it could be better to use specific IP address (IPv6 or IPv4)
+
 Monit can perform connection testing via network ports or via
 Unix sockets. A connection test may only be used within a
 process or host service type context.

@@ -131,11 +131,11 @@ static int get_next_token(char *s, int *cursor, char **r);
  * @param s A Socket_T representing the client connection
  */
 void *http_processor(Socket_T s) {
-        if (! Net_canRead(socket_get_socket(s), REQUEST_TIMEOUT * 1000))
+        if (! Net_canRead(Socket_getSocket(s), REQUEST_TIMEOUT * 1000))
                 internal_error(s, SC_REQUEST_TIMEOUT, "Time out when handling the Request");
         else
                 do_service(s);
-        socket_free(&s);
+        Socket_free(&s);
         return NULL;
 }
 
@@ -464,17 +464,17 @@ static void send_response(HttpResponse res) {
                 res->is_committed = true;
                 get_date(date, STRLEN);
                 get_server(server, STRLEN);
-                socket_print(S, "%s %d %s\r\n", res->protocol, res->status,
+                Socket_print(S, "%s %d %s\r\n", res->protocol, res->status,
                              res->status_msg);
-                socket_print(S, "Date: %s\r\n", date);
-                socket_print(S, "Server: %s\r\n", server);
-                socket_print(S, "Content-Length: %d\r\n", length);
-                socket_print(S, "Connection: close\r\n");
+                Socket_print(S, "Date: %s\r\n", date);
+                Socket_print(S, "Server: %s\r\n", server);
+                Socket_print(S, "Content-Length: %d\r\n", length);
+                Socket_print(S, "Connection: close\r\n");
                 if (headers)
-                        socket_print(S, "%s", headers);
-                socket_print(S, "\r\n");
+                        Socket_print(S, "%s", headers);
+                Socket_print(S, "\r\n");
                 if (length)
-                        socket_write(S, (unsigned char *)StringBuffer_toString(res->outputbuffer), length);
+                        Socket_write(S, (unsigned char *)StringBuffer_toString(res->outputbuffer), length);
                 FREE(headers);
         }
 }
@@ -493,7 +493,7 @@ static HttpRequest create_HttpRequest(Socket_T S) {
         char protocol[STRLEN];
         char method[REQ_STRLEN];
 
-        if (socket_readln(S, line, REQ_STRLEN) == NULL) {
+        if (Socket_readLine(S, line, REQ_STRLEN) == NULL) {
                 internal_error(S, SC_BAD_REQUEST, "No request found");
                 return NULL;
         }
@@ -550,7 +550,7 @@ static void create_headers(HttpRequest req) {
 
         S = req->S;
         while (true) {
-                if (! socket_readln(S, line, sizeof(line)))
+                if (! Socket_readLine(S, line, sizeof(line)))
                         break;
                 if (Str_isEqual(line, "\r\n") || Str_isEqual(line, "\n"))
                         break;
@@ -587,7 +587,7 @@ static boolean_t create_parameters(HttpRequest req) {
                         return false;
                 if (len == 0)
                         return true;
-                if (((n = socket_read(S, query_string, len)) <= 0) || (n != len))
+                if (((n = Socket_read(S, query_string, len)) <= 0) || (n != len))
                         return false;
                 query_string[n] = 0;
         } else if (IS(req->method, METHOD_GET)) {
@@ -724,12 +724,12 @@ static boolean_t basic_authenticate(HttpRequest req) {
                 return false;
         /* Check if user exist */
         if (NULL == Util_getUserCredentials(uname)) {
-                LogError("Warning: Client '%s' supplied unknown user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
+                LogError("Warning: Client '%s' supplied unknown user '%s' accessing monit httpd\n", Socket_getRemoteHost(req->S), uname);
                 return false;
         }
         /* Check if user has supplied the right password */
         if (! Util_checkCredentials(uname,  password)) {
-                LogError("Warning: Client '%s' supplied wrong password for user '%s' accessing monit httpd\n", socket_get_remote_host(req->S), uname);
+                LogError("Warning: Client '%s' supplied wrong password for user '%s' accessing monit httpd\n", Socket_getRemoteHost(req->S), uname);
                 return false;
         }
         req->remote_user = Str_dup(uname);
@@ -752,7 +752,7 @@ static void internal_error(Socket_T S, int status, char *msg) {
 
         get_date(date, STRLEN);
         get_server(server, STRLEN);
-        socket_print(S,
+        Socket_print(S,
                      "%s %d %s\r\n"
                      "Date: %s\r\n"
                      "Server: %s\r\n"

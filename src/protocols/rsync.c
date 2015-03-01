@@ -30,13 +30,16 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
+
 /**
- *  Check the server for greeting "@RSYNCD: XX, then send this greeting back
- *  to server, send command '#list' to get a listing of modules.
+ *  Check the server for greeting "@RSYNCD: XX, then send this greeting back to server, send command '#list' to get a listing of modules.
  *
  *  @file
  */
-boolean_t check_rsync(Socket_T socket) {
+void check_rsync(Socket_T socket) {
         char  buf[64];
         char  header[11];
         int   rc, version_major, version_minor;
@@ -46,47 +49,30 @@ boolean_t check_rsync(Socket_T socket) {
         ASSERT(socket);
 
         /* Read and check the greeting */
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "RSYNC: did not see server greeting  -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "RSYNC: did not see server greeting  -- %s", STRERROR);
         Str_chomp(buf);
         rc = sscanf(buf, "%10s %d.%d", header, &version_major, &version_minor);
-        if ((rc == EOF) || (rc != 3)) {
-                socket_setError(socket, "RSYNC: server greeting parse error %s", buf);
-                return false;
-        }
-        if (strncasecmp(header, rsyncd, strlen(rsyncd)) != 0) {
-                socket_setError(socket, "RSYNC: server sent unexpected greeting -- %s", buf);
-                return false;
-        }
+        if ((rc == EOF) || (rc != 3))
+                THROW(IOException, "RSYNC: server greeting parse error %s", buf);
+        if (strncasecmp(header, rsyncd, strlen(rsyncd)) != 0)
+                THROW(IOException, "RSYNC: server sent unexpected greeting -- %s", buf);
 
         /* Send back the greeting */
-        if (socket_print(socket, "%s\n", buf) <= 0) {
-                socket_setError(socket, "RSYNC: identification string send failed -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "%s\n", buf) <= 0)
+                THROW(IOException, "RSYNC: identification string send failed -- %s", STRERROR);
 
         /* Send #list command */
-        if (socket_print(socket, "#list\n") < 0) {
-                socket_setError(socket, "RSYNC: #list command failed -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "#list\n") < 0)
+                THROW(IOException, "RSYNC: #list command failed -- %s", STRERROR);
 
         /* Read response: discard list output and check that we've received successful exit */
         do {
-                if (! socket_readln(socket, buf, sizeof(buf))) {
-                        socket_setError(socket, "RSYNC: error receiving data -- %s", STRERROR);
-                        return false;
-                }
+                if (! Socket_readLine(socket, buf, sizeof(buf)))
+                        THROW(IOException, "RSYNC: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);
         } while (strncasecmp(buf, rsyncd, strlen(rsyncd)));
-        if (strncasecmp(buf, rsyncd_exit, strlen(rsyncd_exit)) != 0) {
-                socket_setError(socket, "RSYNC: server sent unexpected response -- %s", buf);
-                return false;
-        }
-
-        return true;
-
+        if (strncasecmp(buf, rsyncd_exit, strlen(rsyncd_exit)) != 0)
+                THROW(IOException, "RSYNC: server sent unexpected response -- %s", buf);
 }
 

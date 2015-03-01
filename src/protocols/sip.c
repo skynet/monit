@@ -41,6 +41,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /**
  *
@@ -53,8 +56,7 @@
  *
  *  The test sends an OPTIONS request and check the server's status code.
  *
- *  The status code must be between 200 and 300
- *  Return true if the status code is OK, otherwise false
+ *  The status code must be between 200 and 300.
  *
  *  In this current version, redirection is not supported. This code is
  * a rewrite of a patch we recieved from Pierrick Grasland and Bret McDanel
@@ -66,41 +68,35 @@
 
 /* -------------------------------------------------------------- Public*/
 
-boolean_t check_sip(Socket_T socket) {
+void check_sip(Socket_T socket) {
         ASSERT(socket);
 
-        Port_T P = socket_get_Port(socket);
+        Port_T P = Socket_getPort(socket);
         ASSERT(P);
         const char *request = P->request ? P->request : "monit@foo.bar";
 
-        int port = socket_get_local_port(socket);
-        char *proto = socket_is_secure(socket) ? "sips" : "sip";
+        int port = Socket_getLocalPort(socket);
+        char *proto = Socket_isSecure(socket) ? "sips" : "sip";
 
         char *transport;
         char *rport = "";
-        switch (socket_get_type(socket)) {
-                case SOCK_DGRAM:
-                {
+        switch (Socket_getType(socket)) {
+                case Socket_Udp:
                         transport = "UDP";
                         rport = ";rport";
                         break;
-                }
-                case SOCK_STREAM:
-                {
+                case Socket_Tcp:
                         transport = "TCP";
                         break;
-                }
                 default:
-                {
-                        socket_setError(socket, "Unsupported socket type, only TCP and UDP are supported");
-                        return true;
-                }
+                        THROW(IOException, "Unsupported socket type, only TCP and UDP are supported");
+                        break;
         }
 
         char buf[STRLEN];
-        const char *myip = socket_get_local_host(socket, buf, sizeof(buf));
+        const char *myip = Socket_getLocalHost(socket, buf, sizeof(buf));
 
-        if (socket_print(socket,
+        if (Socket_print(socket,
                          "OPTIONS %s:%s SIP/2.0\r\n"
                          "Via: SIP/2.0/%s %s:%d;branch=z9hG4bKh%ld%s\r\n"
                          "Max-Forwards: %d\r\n"
@@ -131,40 +127,26 @@ boolean_t check_sip(Socket_T socket) {
                          port,             // contact port
                          VERSION           // user agent
                          ) < 0) {
-                socket_setError(socket, "SIP: error sending data -- %s", STRERROR);
-                return false;
+                THROW(IOException, "SIP: error sending data -- %s", STRERROR);
         }
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "SIP: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "SIP: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
 
         DEBUG("Response from SIP server: %s\n", buf);
 
         int status;
-        if (! sscanf(buf, "%*s %d", &status)) {
-                socket_setError(socket, "SIP error: cannot parse SIP status in response: %s", buf);
-                return false;
-        }
+        if (! sscanf(buf, "%*s %d", &status))
+                THROW(IOException, "SIP error: cannot parse SIP status in response: %s", buf);
 
-        if (status >= 400) {
-                socket_setError(socket, "SIP error: Server returned status %d", status);
-                return false;
-        }
+        if (status >= 400)
+                THROW(IOException, "SIP error: Server returned status %d", status);
 
-        if (status >= 300 && status < 400) {
-                socket_setError(socket, "SIP info: Server redirection. Returned status %d", status);
-                return false;
-        }
+        if (status >= 300 && status < 400)
+                THROW(IOException, "SIP info: Server redirection. Returned status %d", status);
 
-        if (status > 100 && status < 200) {
-                socket_setError(socket, "SIP error: Provisional response . Returned status %d", status);
-                return false;
-        }
-
-        return true;
-
+        if (status > 100 && status < 200)
+                THROW(IOException, "SIP error: Provisional response . Returned status %d", status);
 }

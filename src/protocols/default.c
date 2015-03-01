@@ -26,17 +26,31 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+#include "system/Net.h"
+
 /**
- *  Default service test. Left empty.
+ * Default service test with no protocol. TCP socket is connection-oriented so we know if it is reachable after the TCP handshake already - the UDP is connection-less so we have to send something to see
+ * if the UDP server is down/unreachable. In such case the remote host should send an ICMP error, we then need to call read to get the ICMP error as a ECONNREFUSED errno.
  *
  *  @file
  */
-boolean_t check_default(Socket_T socket) {
-
+void check_default(Socket_T socket) {
         ASSERT(socket);
-
-        return true;
-
+        if (Socket_getType(socket) == Socket_Udp) {
+                char token[1] = {};
+                int s = Socket_getSocket(socket);
+                Net_write(s, token, 1, 0);
+                if (Net_read(s, token, 1, 1200) < 0) {
+                        switch (errno) {
+                                case ECONNREFUSED:
+                                        THROW(IOException, "%s", STRERROR);
+                                        break;
+                                default:
+                                        break;
+                        }
+                }
+        }
 }
-
 

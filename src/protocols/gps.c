@@ -30,13 +30,16 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 /**
  *  Check gpsd status.
  *  There is a project site for gpsd at <http://gpsd.berlios.de/>.
  *
  *  @file
  */
-boolean_t check_gps(Socket_T socket) {
+void check_gps(Socket_T socket) {
         char buf[STRLEN];
         const char *ok_gps_device = "GPSD,G=GPS";
         const char *ok_rtcm104_device = "GPSD,G=RTCM104";
@@ -44,26 +47,16 @@ boolean_t check_gps(Socket_T socket) {
 
         ASSERT(socket);
 
-        if (socket_print(socket, "G\r\n") < 0) {
-                socket_setError(socket, "GPS: error sending data -- %s", STRERROR);
-                return false;
-        }
+        if (Socket_print(socket, "G\r\n") < 0)
+                THROW(IOException, "GPS: error sending data -- %s", STRERROR);
 
-        if (! socket_readln(socket, buf, sizeof(buf))) {
-                socket_setError(socket, "GPS: error receiving data -- %s", STRERROR);
-                return false;
-        }
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
+                THROW(IOException, "GPS: error receiving data -- %s", STRERROR);
 
         Str_chomp(buf);
-        if (strncasecmp(buf, ok_gps_device, strlen(ok_gps_device)) != 0) {
-                if (strncasecmp(buf, ok_rtcm104v2_device, strlen(ok_rtcm104v2_device)) != 0) {
-                        if (strncasecmp(buf, ok_rtcm104_device, strlen(ok_rtcm104_device)) != 0) {
-                                socket_setError(socket, "GPS error (no device): %s", buf);
-                                return false;
-                        }
-                }
-        }
-        
-        return true;
+        if (strncasecmp(buf, ok_gps_device, strlen(ok_gps_device)) != 0)
+                if (strncasecmp(buf, ok_rtcm104v2_device, strlen(ok_rtcm104v2_device)) != 0)
+                        if (strncasecmp(buf, ok_rtcm104_device, strlen(ok_rtcm104_device)) != 0)
+                                THROW(IOException, "GPS error (no device): %s", buf);
 }
 

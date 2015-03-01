@@ -30,6 +30,9 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /* --------------------------------------------------------------- Public */
 
@@ -37,39 +40,29 @@
 /**
  * Sieve protocol test. Expect "OK" when connected, send "LOGOUT" to quit.
  *
- * If passed return true else return false.
- *
  * @see RFC 5804
  *
  * @file
  */
-boolean_t check_sieve(Socket_T socket) {
+void check_sieve(Socket_T socket) {
         ASSERT(socket);
 
         char buf[STRLEN];
         do {
-                if (! socket_readln(socket, buf, STRLEN)) {
-                        socket_setError(socket, "SIEVE: error receiving server capabilities -- %s", STRERROR);
-                        return false;
-                }
+                if (! Socket_readLine(socket, buf, STRLEN))
+                        THROW(IOException, "SIEVE: error receiving server capabilities -- %s", STRERROR);
                 Str_chomp(buf);
                 if (Str_startsWith(buf, "OK")) {
-                        if (socket_print(socket, "LOGOUT\r\n") < 0) {
-                                socket_setError(socket, "SIEVE: error sending LOGOUT command  -- %s", STRERROR);
-                                return false;
-                        }
-                        if (! socket_readln(socket, buf, STRLEN)) {
-                                socket_setError(socket, "SIEVE: error receiving LOGOUT response -- %s", STRERROR);
-                                return false;
-                        }
+                        if (Socket_print(socket, "LOGOUT\r\n") < 0)
+                                THROW(IOException, "SIEVE: error sending LOGOUT command  -- %s", STRERROR);
+                        if (! Socket_readLine(socket, buf, STRLEN))
+                                THROW(IOException, "SIEVE: error receiving LOGOUT response -- %s", STRERROR);
                         Str_chomp(buf);
-                        if (! Str_startsWith(buf, "OK")) {
-                                socket_setError(socket, "SIEVE: invalid LOGOUT response -- %s", buf);
-                                return false;
-                        }
-                        return true;
+                        if (! Str_startsWith(buf, "OK"))
+                                THROW(IOException, "SIEVE: invalid LOGOUT response -- %s", buf);
+                        return;
                 }
         } while (true); // Discard all server capabilities until we receive "OK"
-        return false;
+        THROW(IOException, "SIEVE: data error");
 }
 

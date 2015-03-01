@@ -30,35 +30,29 @@
 
 #include "protocol.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+
 
 /* --------------------------------------------------------------- Private */
 
 
-static boolean_t say(Socket_T socket, char *msg) {
-        if (socket_write(socket, msg, strlen(msg)) < 0) {
-                socket_setError(socket, "SMTP: error sending data -- %s", STRERROR);
-                return false;
-        }
-        return true;
+static void say(Socket_T socket, char *msg) {
+        if (Socket_write(socket, msg, strlen(msg)) < 0)
+                THROW(IOException, "SMTP: error sending data -- %s", STRERROR);
 }
 
 
-static boolean_t expect(Socket_T socket, int expect, boolean_t log) {
+static void expect(Socket_T socket, int expect) {
         int status;
         char buf[STRLEN];
         do {
-                if (! socket_readln(socket, buf, STRLEN)) {
-                        socket_setError(socket, "SMTP: error receiving data -- %s", STRERROR);
-                        return false;
-                }
+                if (! Socket_readLine(socket, buf, STRLEN))
+                        THROW(IOException, "SMTP: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);
         } while (buf[3] == '-'); // Discard multi-line response
-        if (sscanf(buf, "%d", &status) != 1 || status != expect) {
-                if (log)
-                        socket_setError(socket, "SMTP error: %s", buf);
-                return false;
-        }
-        return true;
+        if (sscanf(buf, "%d", &status) != 1 || status != expect)
+                THROW(IOException, "SMTP error: %s", buf);
 }
 
 
@@ -66,20 +60,26 @@ static boolean_t expect(Socket_T socket, int expect, boolean_t log) {
 
 
 /**
- * Check the server for greeting code 220 and send EHLO. If that failed
- * try HELO and test for return code 250 and finally send QUIT and check
- * for return code 221. If alive return true else return false.
+ * Check the server for greeting code 220 and send EHLO. If that failed try HELO and test for return code 250 and finally send QUIT and check for return code 221
  *
  *  @file
  */
-boolean_t check_smtp(Socket_T socket) {
+void check_smtp(Socket_T socket) {
         ASSERT(socket);
 
         /* Try HELO also before giving up as of rfc2821 4.1.1.1 */
-        if (expect(socket, 220, true)
-            && ((say(socket, "EHLO localhost\r\n") && expect(socket, 250, false)) || (say(socket, "HELO localhost\r\n") && expect(socket, 250, true)))
-            && (say(socket, "QUIT\r\n") && expect(socket, 221, true)))
-                return true;
-
-        return false;
+        expect(socket, 220);
+        say(socket, "EHLO localhost\r\n");
+        TRY
+        {
+                expect(socket, 250);
+        }
+        ELSE
+        {
+                say(socket, "HELO localhost\r\n");
+                expect(socket, 250);
+        }
+        END_TRY;
+        say(socket, "QUIT\r\n");
+        expect(socket, 221);
 }
