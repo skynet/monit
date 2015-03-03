@@ -78,7 +78,7 @@ void check_sip(Socket_T socket) {
         int port = Socket_getLocalPort(socket);
         char *proto = Socket_isSecure(socket) ? "sips" : "sip";
 
-        char *transport;
+        char *transport = "";
         char *rport = "";
         switch (Socket_getType(socket)) {
                 case Socket_Udp:
