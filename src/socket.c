@@ -318,13 +318,13 @@ static T _createUnixSocket(const char *pathname, Socket_Type type, int timeout) 
                                 S->host = Str_dup(LOCALHOST);
                                 return S;
                         }
-                        LogError("%s", error);
+                        LogError("%s\n", error);
                 } else {
                         LogError("Cannot set nonblocking unix socket %s -- %s\n", pathname, STRERROR);
                 }
                 Net_close(s);
         } else {
-                LogError("Cannot create unix socket %s -- %s", pathname, STRERROR);
+                LogError("Cannot create unix socket %s -- %s\n", pathname, STRERROR);
         }
         return NULL;
 }
@@ -360,7 +360,7 @@ T Socket_create(const char *host, int port, Socket_Type type, Socket_Family fami
                 freeaddrinfo(result);
         }
         if (! S)
-                LogError("Cannot create socket to [%s]:%d -- %s", host, port, error);
+                LogError("Cannot create socket to [%s]:%d -- %s\n", host, port, error);
         return S;
 }
 
