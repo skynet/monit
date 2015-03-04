@@ -555,7 +555,7 @@ void Socket_test(void *P) {
                                                 ELSE
                                                 {
                                                         snprintf(error, sizeof(error), "%s", Exception_frame.message);
-                                                        DEBUG("Socket test failed for %s -- %s\n", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN), error);
+                                                        DEBUG("Socket test failed for %s -- %s", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN), error);
                                                 }
                                                 FINALLY
                                                 {
