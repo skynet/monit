@@ -599,6 +599,7 @@ typedef struct myicmp {
         int count;                                   /**< ICMP echo requests count */
         int timeout;         /**< The timeout in milliseconds to wait for response */
         boolean_t is_available;               /**< true if the server is available */
+        Socket_Family family;                 /**< ICMP family used for connection */
         double response;                              /**< ICMP ECHO response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
 

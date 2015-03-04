@@ -1271,7 +1271,7 @@ boolean_t check_remote_host(Service_T s) {
                 switch (icmp->type) {
                         case ICMP_ECHO:
 
-                                icmp->response = icmp_echo(s->path, icmp->timeout, icmp->count);
+                                icmp->response = icmp_echo(s->path, icmp->family, icmp->timeout, icmp->count);
 
                                 if (icmp->response == -2) {
                                         icmp->is_available = true;

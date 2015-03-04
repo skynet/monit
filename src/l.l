@@ -219,6 +219,8 @@ start             { return START; }
 stop              { return STOP; }
 port(number)?     { return PORT; }
 unix(socket)?     { return UNIXSOCKET; }
+ipv4              { return IPV4; }
+ipv6              { return IPV6; }
 type              { return TYPE; }
 proto(col)?       { return PROTOCOL; }
 tcp               { return TCP; }
@@ -330,6 +332,8 @@ unmonitor         { return UNMONITOR; }
 action            { return ACTION; }
 icmp              { return ICMP; }
 ping              { return PING; }
+ping4             { return PING4; }
+ping6             { return PING6; }
 echo              { return ICMPECHO; }
 send              { return SEND; }
 expect            { return EXPECT; }

@@ -386,11 +386,19 @@ StringBuffer_T Util_printRule(StringBuffer_T buf, EventAction_T action, const ch
 
 
 /**
+ * Print port IP version description
+ * @param p A port structure
+ * @return the socket IP version description
+ */
+const char *Util_portIpDescription(Port_T p);
+
+
+/**
  * Print port type description
  * @param p A port structure
  * @return the socket type description
  */
-char *Util_portTypeDescription(Port_T p);
+const char *Util_portTypeDescription(Port_T p);
 
 
 /**

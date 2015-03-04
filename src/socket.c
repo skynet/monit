@@ -161,7 +161,7 @@ static int _fill(T S, int timeout) {
 int _getPort(const struct sockaddr *addr, socklen_t addrlen) {
         if (addr->sa_family == AF_INET)
                 return ntohs(((struct sockaddr_in *)addr)->sin_port);
-#ifdef IPV6
+#ifdef HAVE_IPV6
         else if (addr->sa_family == AF_INET6)
                 return ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
 #endif
@@ -237,7 +237,7 @@ T _createIpSocket(const char *host, const struct sockaddr *addr, socklen_t addrl
                                         NEW(S);
                                         S->socket = s;
                                         S->type = type;
-                                        S->family = family;
+                                        S->family = family == AF_INET ? Socket_Ip4 : Socket_Ip6;
                                         S->timeout = timeout;
                                         S->host = Str_dup(host);
                                         S->port = _getPort(addr, addrlen);
@@ -279,7 +279,7 @@ struct addrinfo *_resolve(const char *hostname, int port, Socket_Type type, Sock
                 case Socket_Ip4:
                         hints.ai_family = AF_INET;
                         break;
-#ifdef IPV6
+#ifdef HAVE_IPV6
                 case Socket_Ip6:
                         hints.ai_family = AF_INET6;
                         break;

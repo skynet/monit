@@ -290,13 +290,14 @@ error:
  * Create a ICMP socket against hostname, send echo and wait for response.
  * The 'count' echo requests is send and we expect at least one reply.
  * @param hostname The host to open a socket at
+ * @param family The socket family to use
  * @param timeout If response will not come within timeout milliseconds abort
  * @param count How many pings to send
  * @return response time on succes, -1 on error, -2 when monit has no
  * permissions for raw socket (normally requires root or net_icmpaccess
  * privilege on Solaris)
  */
-double icmp_echo(const char *hostname, int timeout, int count) {
+double icmp_echo(const char *hostname, Socket_Family family, int timeout, int count) {
         ASSERT(hostname);
         double response = -1.;
         struct addrinfo *result, hints = {
@@ -304,13 +305,26 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                 .ai_flags = AI_ADDRCONFIG
 #endif
         };
-#ifdef IPV6
+        switch (family) {
+                case Socket_Ip:
+                        hints.ai_family = AF_UNSPEC;
+                        break;
+                case Socket_Ip4:
+                        hints.ai_family = AF_INET;
+                        break;
+#ifdef HAVE_IPV6
+                case Socket_Ip6:
+                        hints.ai_family = AF_INET6;
+                        break;
+#endif
+                default:
+                        LogError("Invalid socket family %d\n", family);
+                        return response;
+        }
+#ifdef HAVE_IPV6
         struct icmp6_filter filter;
         ICMP6_FILTER_SETBLOCKALL(&filter);
         ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filter);
-        hints.ai_family = AF_UNSPEC;
-#else
-        hints.ai_family = AF_INET;
 #endif
         int status = getaddrinfo(hostname, NULL, &hints, &result);
         if (status) {
@@ -324,7 +338,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                         case AF_INET:
                                 s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
                                 break;
-#ifdef IPV6
+#ifdef HAVE_IPV6
                         case AF_INET6:
                                 s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
                                 break;
@@ -350,7 +364,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                 case AF_INET:
                         setsockopt(s, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
                         break;
-#ifdef IPV6
+#ifdef HAVE_IPV6
                 case AF_INET6:
                         setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl));
                         setsockopt(s, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl));
@@ -372,7 +386,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                 unsigned char *data = NULL;
                 struct icmp *in_icmp4, *out_icmp4;
                 struct ip *in_iphdr4;
-#ifdef IPV6
+#ifdef HAVE_IPV6
                 struct icmp6_hdr *in_icmp6, *out_icmp6;
 #endif
                 switch (r->ai_family) {
@@ -389,7 +403,7 @@ double icmp_echo(const char *hostname, int timeout, int count) {
                                 out_icmp4->icmp_cksum = _checksum((unsigned char *)out_icmp4, out_len); // IPv4 requires checksum computation
                                 out_icmp = out_icmp4;
                                 break;
-#ifdef IPV6
+#ifdef HAVE_IPV6
                         case AF_INET6:
                                 out_icmp6 = (struct icmp6_hdr *)buf;
                                 out_icmp6->icmp6_type = ICMP6_ECHO_REQUEST;
@@ -447,7 +461,7 @@ readnext:
                                         in_seq = ntohs(in_icmp4->icmp_seq);
                                         data = (unsigned char *)in_icmp4->icmp_data;
                                         break;
-#ifdef IPV6
+#ifdef HAVE_IPV6
                                 case AF_INET6:
                                         in_addrmatch = memcmp(&((struct sockaddr_in6 *)&addr)->sin6_addr, &((struct sockaddr_in6 *)(r->ai_addr))->sin6_addr, sizeof(struct in6_addr)) ? false : true;
                                         in_icmp6 = (struct icmp6_hdr *)buf;

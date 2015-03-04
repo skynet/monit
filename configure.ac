@@ -453,7 +453,7 @@ AC_CACHE_VAL(ac_cv_ipv6,
         ac_cv_ipv6=no))
 AC_MSG_RESULT($ac_cv_ipv6)
 if test $ac_cv_ipv6 = yes ; then
-        AC_DEFINE([IPV6], 1, [Define to 1 if the system supports IPv6])
+        AC_DEFINE([HAVE_IPV6], 1, [Define to 1 if the system supports IPv6])
 fi
 
 

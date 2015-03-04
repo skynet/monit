@@ -300,7 +300,7 @@ static int verifyMaxForward(int);
 %token INTERFACE LINK PACKET ERROR BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
-%token HOST HOSTNAME PORT TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
+%token HOST HOSTNAME PORT IPV4 IPV6 TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
 %token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP IMAPS CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
@@ -321,7 +321,7 @@ static int verifyMaxForward(int);
 %token SSLAUTO SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
 %token INODE SPACE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
-%token EXEC UNMONITOR PING ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
+%token EXEC UNMONITOR PING PING4 PING6 ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
 %token URL CONTENT PID PPID FSFLAG
 %token REGISTER CREDENTIALS
 %token <url> URLOBJECT
@@ -1032,15 +1032,13 @@ hostname        : /* EMPTY */     { $<string>$ = NULL; }
                 | HOSTNAME STRING { $<string>$ = $2; }
                 ;
 
-connection      : IF FAILED host port type protocol urloption nettimeout retry rate1 THEN action1 recovery {
-                    portset.timeout = $<number>8;
-                    portset.retry = $<number>9;
-                    /* This is a workaround to support content match without having to create
-                     an URL object. 'urloption' creates the Request_T object we need minus the
-                     URL object, but with enough information to perform content test.
+connection      : IF FAILED host port ip type protocol urloption nettimeout retry rate1 THEN action1 recovery {
+                    portset.timeout = $<number>9;
+                    portset.retry = $<number>10;
+                    /* This is a workaround to support content match without having to create an URL object. 'urloption' creates the Request_T object we need minus the URL object, but with enough information to perform content test.
                      TODO: Parser is in need of refactoring */
                     portset.url_request = urlrequest;
-                    addeventaction(&(portset).action, $<number>12, $<number>13);
+                    addeventaction(&(portset).action, $<number>13, $<number>14);
                     addport(&(current->portlist), &portset);
                   }
                 | IF FAILED URL URLOBJECT urloption nettimeout retry rate1 THEN action1 recovery {
@@ -1061,6 +1059,7 @@ connectionunix  : IF FAILED unixsocket type protocol nettimeout retry rate1 THEN
                 ;
 
 icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action1 recovery {
+                        icmpset.family = Socket_Ip;
                         icmpset.type = $<number>4;
                         icmpset.count = $<number>5;
                         icmpset.timeout = $<number>6;
@@ -1068,6 +1067,23 @@ icmp            : IF FAILED ICMP icmptype icmpcount nettimeout rate1 THEN action
                         addicmp(&icmpset);
                   }
                 | IF FAILED PING icmpcount nettimeout rate1 THEN action1 recovery {
+                        icmpset.family = Socket_Ip;
+                        icmpset.type = ICMP_ECHO;
+                        icmpset.count = $<number>4;
+                        icmpset.timeout = $<number>5;
+                        addeventaction(&(icmpset).action, $<number>8, $<number>9);
+                        addicmp(&icmpset);
+                 }
+                | IF FAILED PING4 icmpcount nettimeout rate1 THEN action1 recovery {
+                        icmpset.family = Socket_Ip4;
+                        icmpset.type = ICMP_ECHO;
+                        icmpset.count = $<number>4;
+                        icmpset.timeout = $<number>5;
+                        addeventaction(&(icmpset).action, $<number>8, $<number>9);
+                        addicmp(&icmpset);
+                 }
+                | IF FAILED PING6 icmpcount nettimeout rate1 THEN action1 recovery {
+                        icmpset.family = Socket_Ip6;
                         icmpset.type = ICMP_ECHO;
                         icmpset.count = $<number>4;
                         icmpset.timeout = $<number>5;
@@ -1086,15 +1102,24 @@ host            : /* EMPTY */ {
                 ;
 
 port            : PORT NUMBER {
-                        //FIXME: add support for specific IPv6 or IPv4 ... for port and ping tests
                         portset.port = $2;
-                        portset.family = Socket_Ip;
                   }
                 ;
 
 unixsocket      : UNIXSOCKET PATH {
                         portset.pathname = $2;
                         portset.family = Socket_Unix;
+                  }
+                ;
+
+ip              : /* EMPTY */ {
+                    portset.family = Socket_Ip;
+                  }
+                | IPV4 {
+                    portset.family = Socket_Ip4;
+                  }
+                | IPV6 {
+                    portset.family = Socket_Ip6;
                   }
                 ;
 
@@ -3194,6 +3219,7 @@ static void addicmp(Icmp_T is) {
         ASSERT(is);
 
         NEW(icmp);
+        icmp->family       = is->family;
         icmp->type         = is->type;
         icmp->count        = is->count;
         icmp->timeout      = is->timeout;

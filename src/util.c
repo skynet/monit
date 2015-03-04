@@ -1030,15 +1030,25 @@ void Util_printService(Service_T s) {
 
         for (Icmp_T o = s->icmplist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Ping", StringBuffer_toString(Util_printRule(buf, o->action, "if failed count %d with timeout %d seconds", o->count, o->timeout / 1000)));
+                switch (o->family) {
+                        case Socket_Ip4:
+                                printf(" %-20s = %s\n", "Ping4", StringBuffer_toString(Util_printRule(buf, o->action, "if failed count %d with timeout %d seconds", o->count, o->timeout / 1000)));
+                                break;
+                        case Socket_Ip6:
+                                printf(" %-20s = %s\n", "Ping6", StringBuffer_toString(Util_printRule(buf, o->action, "if failed count %d with timeout %d seconds", o->count, o->timeout / 1000)));
+                                break;
+                        default:
+                                printf(" %-20s = %s\n", "Ping", StringBuffer_toString(Util_printRule(buf, o->action, "if failed count %d with timeout %d seconds", o->count, o->timeout / 1000)));
+                                break;
+                }
         }
 
         for (Port_T o = s->portlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 if (o->retry > 1)
-                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
                 else
-                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s protocol %s with timeout %d seconds", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000)));
+                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000)));
                 if (o->SSL.certmd5 != NULL)
                         printf(" %-20s = %s\n", "Server cert md5 sum", o->SSL.certmd5);
         }
@@ -1046,9 +1056,9 @@ void Util_printService(Service_T s) {
         for (Port_T o = s->socketlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 if (o->retry > 1)
-                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s protocol %s with timeout %d seconds and retry %d times", o->pathname, Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->pathname, Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
                 else
-                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s protocol %s with timeout %d seconds", o->pathname, Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s/%s protocol %s with timeout %d seconds", o->pathname, Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
         }
 
         for (Timestamp_T o = s->timestamplist; o; o = o->next) {
@@ -1887,7 +1897,21 @@ StringBuffer_T Util_printRule(StringBuffer_T buf, EventAction_T action, const ch
 }
 
 
-char *Util_portTypeDescription(Port_T p) {
+const char *Util_portIpDescription(Port_T p) {
+        switch (p->family) {
+                case Socket_Ip:
+                        return "IP";
+                case Socket_Ip4:
+                        return "IPv4";
+                case Socket_Ip6:
+                        return "IPv6";
+                default:
+                        return "UNKNOWN";
+        }
+}
+
+
+const char *Util_portTypeDescription(Port_T p) {
         switch (p->type) {
                 case Socket_Tcp:
                         return p->SSL.use_ssl ? "TCPSSL" : "TCP";
@@ -1901,7 +1925,7 @@ char *Util_portTypeDescription(Port_T p) {
 
 char *Util_portDescription(Port_T p, char *buf, int bufsize) {
         if (p->family == Socket_Ip || p->family == Socket_Ip4 || p->family == Socket_Ip6)
-                snprintf(buf, STRLEN, "[%s]:%d%s [%s]", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p));
+                snprintf(buf, STRLEN, "[%s]:%d%s [%s/%s]", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), Util_portIpDescription(p));
         else if (p->family == Socket_Unix)
                 snprintf(buf, STRLEN, "%s", p->pathname);
         else
