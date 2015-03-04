@@ -141,7 +141,7 @@ static void do_regex(Socket_T socket, int content_length, Request_T R) {
         }
 
 error:
-        if (rv)
+        if (! rv)
                 THROW(IOException, "HTTP error: %s", error);
 }
 
