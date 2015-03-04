@@ -614,7 +614,7 @@ int Socket_write(T S, void *b, size_t size) {
                         n = Ssl_write(S->ssl, p, (int)size, S->timeout);
                 } else {
 #endif
-                        Net_write(S->socket, p, size, S->timeout);
+                        n = Net_write(S->socket, p, size, S->timeout);
 #ifdef HAVE_OPENSSL
                 }
 #endif
