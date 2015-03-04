@@ -5,15 +5,17 @@
 Version 5.12.1
 
 New: Allow to specify the IPv4 or IPv6 only for port and ping tests. If not specified,
-Monit will test any available address until first success or no options are left.
+Monit will test any available address until first success or no options are left. You can
+also combine different IP version tests to make sure the machine is accessible via both IP
+versions - use the indifferent format if you don't care about the IP version.
 Ping examples:
     if failed ping  then alert        # Use any available IP version
-    if failed ping4 then alert        # Use IPv4 only
-    if failed ping6 then alert        # Use IPv6 only
+    if failed ping4 then alert        # Check IPv4 only
+    if failed ping6 then alert        # Check IPv6 only
 Port examples:
     if failed port 22      then alert # Use any available IP version
-    if failed port 22 ipv4 then alert # Use IPv4 only
-    if failed port 22 ipv6 then alert # Use IPv6 only
+    if failed port 22 ipv4 then alert # Check IPv4 only
+    if failed port 22 ipv6 then alert # Check IPv6 only
 
 Fixed: Issue #154: Upstart script should stop monit early when the system stops [Linux]
 

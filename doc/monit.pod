@@ -2372,9 +2372,17 @@ is allowed to).
 
 Syntax:
 
-  IF FAILED PING
+  IF FAILED PING[4|6]
      [COUNT number] [WITH] [TIMEOUT number SECONDS]
   THEN action
+
+By default Monit will try to ping any available interface (IPv4 or IPv6).
+If multiple options are possible (multiple IPv4 and IPv6 addresses)
+and a ping via one interface type failed, Monit will try the
+next option until connection succeeded or no options are left.
+You can force Monit to ping IPv4 or IPv6 address only to make sure the
+system is accessible via given IP version by using either PING4 or
+PING6 test.
 
 The B<COUNT> parameter specifies how many consecutive ping requests
 will be sent to the host in one cycle. If no reply arrive within
@@ -2398,20 +2406,22 @@ tests.
 Example:
 
  check host mmonit.com with address mmonit.com
-       if failed ping then alert
+       if failed ping then alert  # Use any available address (IPv4 or IPv6)
+
+or test that the system is accessible via both IPv4 and IPv6:
+
+ check host mmonit.com with address mmonit.com
+       if failed ping4 then alert  # Check IPv4
+       if failed ping6 then alert  # Check IPv6
 
 or with all parameters; Send 5 pings to mmonit.com and wait for up
 to 10 seconds for a reply
 
   check host mmonit.com with address mmonit.com
-        if failed
-           ping count 5 with timeout 10 seconds
-        then alert
+        if failed ping count 5 with timeout 10 seconds then alert
 
 
 =head2 CONNECTION TESTING
-
-//FIXME: document that when hostname is used, we try all options until first success or all failed => the test may hang for timeout and it could be better to use specific IP address (IPv6 or IPv4)
 
 Monit can perform connection testing via network ports or via
 Unix sockets. A connection test may only be used within a
@@ -2428,6 +2438,7 @@ TCP/UDP port test syntax:
  IF FAILED
     [host]
     <port>
+    [ipversion]
     [type]
     [protocol | {send/expect}+]
     [timeout]
@@ -2463,6 +2474,13 @@ I<port: PORT number>. The port number to connect to
 
 I<unixsocket: UNIXSOCKET path>. Specifies the path to a Unix
 socket (local machine only).
+
+I<ipversion: IPV4 | IPV6 >. Optionally specify the IP version
+Monit should use when trying to connect to the port. If not used,
+Monit will try to connect via any available interface (IPv4 or IPv6).
+If multiple options are possible (multiple IPv4 and IPv6 addresses)
+and the connection via one interface type failed, Monit will try the
+next option until connection succeeded or no options are left.
 
 I<type: TYPE {TCP|UDP|TCPSSL}>. Optionally specify the socket type
 Monit should use when trying to connect to the port. The
