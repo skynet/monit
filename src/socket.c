@@ -193,7 +193,7 @@ static boolean_t _doConnect(int s, const struct sockaddr *addr, socklen_t addrle
         if (! rv) {
                 return true;
         } else if (errno != EINPROGRESS) {
-                snprintf(error, errorlen, "Connection to %s -- failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                snprintf(error, errorlen, "Connection to %s -- failed: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
                 return false;
         }
         struct pollfd fds[1];
@@ -201,23 +201,23 @@ static boolean_t _doConnect(int s, const struct sockaddr *addr, socklen_t addrle
         fds[0].events = POLLIN | POLLOUT;
         rv = poll(fds, 1, timeout);
         if (rv == 0) {
-                snprintf(error, errorlen, "Connection to %s -- timed out\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
+                snprintf(error, errorlen, "Connection to %s -- timed out", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
                 return false;
         } else if (rv == -1) {
-                snprintf(error, errorlen, "Connection to %s -- poll failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                snprintf(error, errorlen, "Connection to %s -- poll failed: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
                 return false;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
                 socklen_t rvlen = sizeof(rv);
                 if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
-                        snprintf(error, errorlen, "Connection to %s -- read of error details failed: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                        snprintf(error, errorlen, "Connection to %s -- read of error details failed: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
                         return false;
                 } else if (rv) {
-                        snprintf(error, errorlen, "Connection to %s -- error: %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(rv));
+                        snprintf(error, errorlen, "Connection to %s -- error: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(rv));
                         return false;
                 }
         } else {
-                snprintf(error, errorlen, "Connection to %s -- not ready for I/O\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
+                snprintf(error, errorlen, "Connection to %s -- not ready for I/O", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
                 return false;
         }
         return true;
@@ -248,14 +248,14 @@ T _createIpSocket(const char *host, const struct sockaddr *addr, socklen_t addrl
                                         return S;
                                 }
                         } else {
-                                snprintf(error, sizeof(error), "Cannot set socket close on exec -- %s\n", STRERROR);
+                                snprintf(error, sizeof(error), "Cannot set socket close on exec -- %s", STRERROR);
                         }
                 } else {
-                        snprintf(error, sizeof(error), "Cannot set nonblocking socket -- %s\n", STRERROR);
+                        snprintf(error, sizeof(error), "Cannot set nonblocking socket -- %s", STRERROR);
                 }
                 Net_close(s);
         } else {
-                snprintf(error, sizeof(error), "Cannot create socket to %s -- %s\n", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                snprintf(error, sizeof(error), "Cannot create socket to %s -- %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
         }
         THROW(IOException, "%s", error);
         return NULL;
@@ -555,7 +555,7 @@ void Socket_test(void *P) {
                                                 ELSE
                                                 {
                                                         snprintf(error, sizeof(error), "%s", Exception_frame.message);
-                                                        DEBUG("Socket test failed for %s -- %s", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN), error);
+                                                        DEBUG("Socket test failed for %s -- %s\n", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN), error);
                                                 }
                                                 FINALLY
                                                 {
