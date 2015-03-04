@@ -89,6 +89,7 @@ static void do_regex(Socket_T socket, int content_length, Request_T R) {
         else if (content_length > HTTP_CONTENT_MAX)
                 content_length = HTTP_CONTENT_MAX;
 
+        char error[STRLEN];
         int size = 0, length = content_length, buflen = content_length + 1;
         char *buf = ALLOC(buflen);
         do {
@@ -100,7 +101,7 @@ static void do_regex(Socket_T socket, int content_length, Request_T R) {
         } while (length > 0);
 
         if (size == 0) {
-                snprintf(buf, buflen, "Receiving data -- %s", STRERROR);
+                snprintf(error, sizeof(error), "Receiving data -- %s", STRERROR);
                 goto error;
         }
         buf[size] = 0;
@@ -110,6 +111,7 @@ static void do_regex(Socket_T socket, int content_length, Request_T R) {
 #else
         int regex_return = strstr(buf, R->regex) ? 0 : 1;
 #endif
+        FREE(buf);
         switch (R->operator) {
                 case Operator_Equal:
                         if (regex_return == 0) {
@@ -119,29 +121,28 @@ static void do_regex(Socket_T socket, int content_length, Request_T R) {
 #ifdef HAVE_REGEX_H
                                 char errbuf[STRLEN];
                                 regerror(regex_return, NULL, errbuf, sizeof(errbuf));
-                                snprintf(buf, buflen, "Regular expression doesn't match: %s", errbuf);
+                                snprintf(error, sizeof(error), "Regular expression doesn't match: %s", errbuf);
 #else
-                                snprintf(buf, buflen, "Regular expression doesn't match");
+                                snprintf(error, sizeof(error), "Regular expression doesn't match");
 #endif
                         }
                         break;
                 case Operator_NotEqual:
                         if (regex_return == 0) {
-                                snprintf(buf, buflen, "Regular expression matches");
+                                snprintf(error, sizeof(error), "Regular expression matches");
                         } else {
                                 rv = true;
                                 DEBUG("HTTP: Regular expression doesn't match\n");
                         }
                         break;
                 default:
-                        snprintf(buf, buflen, "Invalid content operator");
+                        snprintf(error, sizeof(error), "Invalid content operator");
                         break;
         }
 
 error:
-        FREE(buf);
         if (rv)
-                THROW(IOException, "HTTP error: %s", buf);
+                THROW(IOException, "HTTP error: %s", error);
 }
 
 
