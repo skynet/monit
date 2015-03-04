@@ -152,9 +152,7 @@ static void check_connection(Service_T s, Port_T p) {
 retry:
         TRY
         {
-                long long start = Time_milli();
                 Socket_test(p);
-                p->response = (Time_milli() - start) / 1000.;
                 DEBUG("'%s' succeeded testing protocol [%s] at %s\n", s->name, p->protocol->name, Util_portDescription(p, buf, sizeof(buf)));
         }
         ELSE
@@ -168,11 +166,8 @@ retry:
                         DEBUG("'%s' %s (attempt %d/%d)\n", s->name, report, p->retry - retry_count, p->retry);
                         goto retry;
                 }
-                p->response = -1;
-                p->is_available = false;
                 Event_post(s, Event_Connection, State_Failed, p->action, "%s", report);
         } else {
-                p->is_available = true;
                 Event_post(s, Event_Connection, State_Succeeded, p->action, "connection succeeded to %s", Util_portDescription(p, buf, sizeof(buf)));
         }
 }

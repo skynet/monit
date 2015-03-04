@@ -82,6 +82,7 @@
 #include "exceptions/IOException.h"
 #include "util/Str.h"
 #include "system/Net.h"
+#include "system/Time.h"
 
 
 
@@ -508,69 +509,81 @@ const char *Socket_getLocalHost(T S, char *host, int hostlen) {
 }
 
 
+static void _testUnix(Port_T p) {
+        long long start = Time_milli();
+        T S = _createUnixSocket(p->pathname, p->type, p->timeout);
+        if (S) {
+                S->Port = p;
+                TRY
+                {
+                        p->protocol->check(S);
+                        p->is_available = true;
+                        p->response = (Time_milli() - start) / 1000.;
+                }
+                FINALLY
+                {
+                        Socket_free(&S);
+                }
+                END_TRY;
+        } else {
+                THROW(IOException, "Cannot create unix socket for %s", p->pathname);
+        }
+}
+
+
+static void _testIp(Port_T p) {
+        char error[STRLEN];
+        struct addrinfo *result = _resolve(p->hostname, p->port, p->type, p->family);
+        if (result) {
+                // The host may resolve to multiple IPs and if at least one succeeded, we have no problem and don't have to flood the log with partial errors => log only the last error
+                for (struct addrinfo *r = result; r && ! p->is_available; r = r->ai_next) {
+                        volatile T S = NULL;
+                        TRY
+                        {
+                                long long start = Time_milli();
+                                S = _createIpSocket(p->hostname, r->ai_addr, r->ai_addrlen, r->ai_family, r->ai_socktype, r->ai_protocol, p->SSL, p->timeout);
+                                S->Port = p;
+                                p->protocol->check(S);
+                                p->is_available = true;
+                                p->response = (Time_milli() - start) / 1000.;
+                        }
+                        ELSE
+                        {
+                                snprintf(error, sizeof(error), "%s", Exception_frame.message);
+                                DEBUG("Socket test failed for %s -- %s\n", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN), error);
+                        }
+                        FINALLY
+                        {
+                                if (S)
+                                        Socket_free((Socket_T *)&S);
+                        }
+                        END_TRY;
+                }
+                freeaddrinfo(result);
+                if (! p->is_available)
+                        THROW(IOException, "%s", error);
+        } else {
+                THROW(IOException, "Cannot resolve [%s]:%d", p->hostname, p->port);
+        }
+}
+
+
 /* ---------------------------------------------------------------- Public */
 
 
 void Socket_test(void *P) {
         ASSERT(P);
         Port_T p = P;
+        p->response = -1;
+        p->is_available = false;
         switch (p->family) {
                 case Socket_Unix:
-                        {
-                                T S = _createUnixSocket(p->pathname, p->type, p->timeout);
-                                if (S) {
-                                        S->Port = p;
-                                        TRY
-                                        {
-                                                p->protocol->check(S);
-                                        }
-                                        FINALLY
-                                        {
-                                                Socket_free(&S);
-                                        }
-                                        END_TRY;
-                                } else {
-                                        THROW(IOException, "Cannot create unix socket for %s", p->pathname);
-                                }
-                        }
+                        _testUnix(p);
                         break;
                 case Socket_Ip:
                 case Socket_Ip4:
                 case Socket_Ip6:
-                        {
-                                char error[STRLEN];
-                                struct addrinfo *result = _resolve(p->hostname, p->port, p->type, p->family);
-                                if (result) {
-                                        // The host may resolve to multiple IPs and if at least one succeeded, we have no problem and don't have to flood the log with partial errors => log only the last error
-                                        volatile boolean_t succeeded = false;
-                                        for (struct addrinfo *r = result; r && ! succeeded; r = r->ai_next) {
-                                                volatile T S = NULL;
-                                                TRY
-                                                {
-                                                        S = _createIpSocket(p->hostname, r->ai_addr, r->ai_addrlen, r->ai_family, r->ai_socktype, r->ai_protocol, p->SSL, p->timeout);
-                                                        S->Port = p;
-                                                        p->protocol->check(S);
-                                                        succeeded = true;
-                                                }
-                                                ELSE
-                                                {
-                                                        snprintf(error, sizeof(error), "%s", Exception_frame.message);
-                                                        DEBUG("Socket test failed for %s -- %s\n", _addressToString(r->ai_addr, r->ai_addrlen, (char[STRLEN]){}, STRLEN), error);
-                                                }
-                                                FINALLY
-                                                {
-                                                        if (S)
-                                                                Socket_free((Socket_T *)&S);
-                                                }
-                                                END_TRY;
-                                        }
-                                        freeaddrinfo(result);
-                                        if (! succeeded)
-                                                THROW(IOException, "%s", error);
-                                } else {
-                                        THROW(IOException, "Cannot resolve [%s]:%d", p->hostname, p->port);
-                                }
-                        }
+                        _testIp(p);
                         break;
                 default:
                         LogError("Invalid socket family %d\n", p->family);
