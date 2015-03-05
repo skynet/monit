@@ -229,17 +229,16 @@ static void check_process_ppid(Service_T s) {
  * Check process resources
  */
 static void check_process_resources(Service_T s, Resource_T r) {
+        ASSERT(s && r);
 
         boolean_t okay = true;
         char report[STRLEN]={0}, buf1[STRLEN], buf2[STRLEN];
-
-        ASSERT(s && r);
-
         switch (r->resource_id) {
 
                 case Resource_CpuPercent:
                         if (s->monitor & Monitor_Init || s->inf->priv.process.cpu_percent < 0) {
                                 DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
+                                return;
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.cpu_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.cpu_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -250,6 +249,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case Resource_CpuPercentTotal:
                         if (s->monitor & Monitor_Init || s->inf->priv.process.total_cpu_percent < 0) {
                                 DEBUG("'%s' total cpu usage check skipped (initializing)\n", s->name);
+                                return;
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.total_cpu_percent, r->limit)) {
                                 snprintf(report, STRLEN, "total cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.total_cpu_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -260,6 +260,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case Resource_CpuUser:
                         if (s->monitor & Monitor_Init || systeminfo.total_cpu_user_percent < 0) {
                                 DEBUG("'%s' cpu user usage check skipped (initializing)\n", s->name);
+                                return;
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_user_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu user usage of %.1f%% matches resource limit [cpu user usage%s%.1f%%]", systeminfo.total_cpu_user_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -270,6 +271,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case Resource_CpuSystem:
                         if (s->monitor & Monitor_Init || systeminfo.total_cpu_syst_percent < 0) {
                                 DEBUG("'%s' cpu system usage check skipped (initializing)\n", s->name);
+                                return;
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_syst_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu system usage of %.1f%% matches resource limit [cpu system usage%s%.1f%%]", systeminfo.total_cpu_syst_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
@@ -280,6 +282,7 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case Resource_CpuWait:
                         if (s->monitor & Monitor_Init || systeminfo.total_cpu_wait_percent < 0) {
                                 DEBUG("'%s' cpu wait usage check skipped (initializing)\n", s->name);
+                                return;
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_wait_percent, r->limit)) {
                                 snprintf(report, STRLEN, "cpu wait usage of %.1f%% matches resource limit [cpu wait usage%s%.1f%%]", systeminfo.total_cpu_wait_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
                                 okay = false;
