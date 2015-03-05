@@ -47,7 +47,7 @@ void check_imap(Socket_T socket) {
 
         // Read and check IMAP greeting
         if (! Socket_readLine(socket, buf, sizeof(buf)))
-                THROW(IOException, "IMAP: greeting read error -- %s", STRERROR);
+                THROW(IOException, "IMAP: greeting read error -- %s", errno ? STRERROR : "no data");
         Str_chomp(buf);
         if (strncasecmp(buf, ok, strlen(ok)) != 0)
                 THROW(IOException, "IMAP: invalid greeting -- %s", buf);
@@ -56,7 +56,7 @@ void check_imap(Socket_T socket) {
         if (Socket_print(socket, "001 LOGOUT\r\n") < 0)
                 THROW(IOException, "IMAP: logout command error -- %s", STRERROR);
         if (! Socket_readLine(socket, buf, sizeof(buf)))
-                THROW(IOException, "IMAP: logout response read error -- %s", STRERROR);
+                THROW(IOException, "IMAP: logout response read error -- %s", errno ? STRERROR : "no data");
         Str_chomp(buf);
         if (strncasecmp(buf, bye, strlen(bye)) != 0)
                 THROW(IOException, "IMAP: invalid logout response: %s", buf);

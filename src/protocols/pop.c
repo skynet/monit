@@ -40,29 +40,25 @@
  *  @file
  */
 void check_pop(Socket_T socket) {
+        ASSERT(socket);
 
         char buf[STRLEN];
         const char *ok = "+OK";
 
-        ASSERT(socket);
-
+        // Read and check POP greeting
         if (! Socket_readLine(socket, buf, sizeof(buf)))
-                THROW(IOException, "POP: error receiving data -- %s", STRERROR);
-
+                THROW(IOException, "POP: greeting read error -- %s", errno ? STRERROR : "no data");
         Str_chomp(buf);
-
         if (strncasecmp(buf, ok, strlen(ok)) != 0)
-                THROW(IOException, "POP error: %s", buf);
+                THROW(IOException, "POP: invalid greeting -- %s", buf);
 
+        // QUIT and check response
         if (Socket_print(socket, "QUIT\r\n") < 0)
-                THROW(IOException, "POP: error sending data -- %s", STRERROR);
-
+                THROW(IOException, "POP: QUIT command error -- %s", STRERROR);
         if (! Socket_readLine(socket, buf, sizeof(buf)))
-                THROW(IOException, "POP: error receiving data -- %s", STRERROR);
-
+                THROW(IOException, "POP: QUIT response read error -- %s", errno ? STRERROR : "no data");
         Str_chomp(buf);
-
         if (strncasecmp(buf, ok, strlen(ok)) != 0)
-                THROW(IOException, "POP error: %s", buf);
+                THROW(IOException, "POP: invalid QUIT response -- %s", buf);
 }
 
