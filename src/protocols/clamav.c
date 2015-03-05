@@ -39,15 +39,18 @@
  *  @file
  */
 void check_clamav(Socket_T socket) {
-        char buf[STRLEN];
-        const char *ok = "PONG";
         ASSERT(socket);
+
+        // Send PING
         if (Socket_print(socket, "PING\r\n") < 0)
-                THROW(IOException, "CLAMAV: error sending data -- %s", STRERROR);
+                THROW(IOException, "CLAMAV: PING command error -- %s", STRERROR);
+
+        // Read and check PONG
+        char buf[STRLEN];
         if (! Socket_readLine(socket, buf, sizeof(buf)))
-                THROW(IOException, "CLAMAV: error receiving data -- %s", STRERROR);
+                THROW(IOException, "CLAMAV: PONG read error -- %s", STRERROR);
         Str_chomp(buf);
-        if (strncasecmp(buf, ok, strlen(ok)) != 0)
-                THROW(IOException, "CLAMAV error: %s", buf);
+        if (strncasecmp(buf, "PONG", 4) != 0)
+                THROW(IOException, "CLAMAV: invalid PONG response -- %s", buf);
 }
 
