@@ -1584,9 +1584,9 @@ static void print_service_rules_socket(HttpResponse res, Service_T s) {
         for (Port_T p = s->socketlist; p; p = p->next) {
                 StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Unix Socket</td><td>");
                 if (p->retry > 1)
-                        Util_printRule(res->outputbuffer, p->action, "If failed %s type %s/%s protocol %s with timeout %d seconds and retry %d time(s)", p->pathname, Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name, p->timeout / 1000, p->retry);
+                        Util_printRule(res->outputbuffer, p->action, "If failed %s type %s protocol %s with timeout %d seconds and retry %d time(s)", p->pathname, Util_portTypeDescription(p), p->protocol->name, p->timeout / 1000, p->retry);
                 else
-                        Util_printRule(res->outputbuffer, p->action, "If failed %s type %s/%s protocol %s with timeout %d seconds", p->pathname, Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name, p->timeout / 1000);
+                        Util_printRule(res->outputbuffer, p->action, "If failed %s type %s protocol %s with timeout %d seconds", p->pathname, Util_portTypeDescription(p), p->protocol->name, p->timeout / 1000);
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
         }
 }
@@ -1989,9 +1989,9 @@ static void print_service_status_socket(HttpResponse res, Service_T s) {
                 if (! status)
                         StringBuffer_append(res->outputbuffer, "<td>-<td>");
                 else if (! p->is_available)
-                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s type %s/%s protocol %s</td>", p->pathname, Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name);
+                        StringBuffer_append(res->outputbuffer, "<td class='red-text'>connection failed to %s type %s protocol %s</td>", p->pathname, Util_portTypeDescription(p), p->protocol->name);
                 else
-                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s type %s/%s protocol %s</td>", p->response, p->pathname, Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name);
+                        StringBuffer_append(res->outputbuffer, "<td>%.3fs to %s type %s protocol %s</td>", p->response, p->pathname, Util_portTypeDescription(p), p->protocol->name);
                 StringBuffer_append(res->outputbuffer, "</tr>");
         }
 }
@@ -2701,8 +2701,8 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                         }
                         for (Port_T p = s->socketlist; p; p = p->next) {
                                 StringBuffer_append(res->outputbuffer,
-                                                    "  %-33s %.3fs to %s type %s/%s protocol %s\n",
-                                                    "unix socket response time", p->is_available ? p->response : 0., p->pathname, Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name);
+                                                    "  %-33s %.3fs to %s type %s protocol %s\n",
+                                                    "unix socket response time", p->is_available ? p->response : 0., p->pathname, Util_portTypeDescription(p), p->protocol->name);
                         }
                         if (s->type == Service_System && Run.doprocess) {
                                 StringBuffer_append(res->outputbuffer,
