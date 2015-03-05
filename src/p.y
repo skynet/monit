@@ -303,7 +303,7 @@ static int verifyMaxForward(int);
 %token HOST HOSTNAME PORT IPV4 IPV6 TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
-%token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP IMAP IMAPS CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
+%token DEFAULT HTTP HTTPS APACHESTATUS FTP SMTP SMTPS POP POPS IMAP IMAPS CLAMAV NNTP NTP3 MYSQL DNS WEBSOCKET
 %token SSH DWP LDAP2 LDAP3 RDATE RSYNC TNS PGSQL POSTFIXPOLICY SIP LMTP GPS RADIUS MEMCACHE REDIS MONGODB SIEVE
 %token <string> STRING PATH MAILADDR MAILFROM MAILREPLYTO MAILSUBJECT
 %token <string> MAILBODY SERVICENAME STRINGNAME
@@ -1236,6 +1236,12 @@ protocol        : /* EMPTY */  {
                     portset.protocol = Protocol_get(Protocol_POSTFIXPOLICY);
                   }
                 | PROTOCOL POP {
+                    portset.protocol = Protocol_get(Protocol_POP);
+                  }
+                | PROTOCOL POPS {
+                    portset.type = Socket_Tcp;
+                    portset.SSL.use_ssl = true;
+                    portset.SSL.version = SSL_Auto;
                     portset.protocol = Protocol_get(Protocol_POP);
                   }
                 | PROTOCOL SIEVE {

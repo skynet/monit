@@ -249,6 +249,7 @@ smtp              { return SMTP; }
 smtps             { return SMTPS; }
 postfix-policy    { return POSTFIXPOLICY; }
 pop               { return POP; }
+pops              { return POPS; }
 imap              { return IMAP; }
 imaps             { return IMAPS; }
 clamav            { return CLAMAV; }
