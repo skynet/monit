@@ -194,7 +194,7 @@ static boolean_t _doConnect(int s, const struct sockaddr *addr, socklen_t addrle
         if (! rv) {
                 return true;
         } else if (errno != EINPROGRESS) {
-                snprintf(error, errorlen, "Connection to %s -- failed: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                snprintf(error, errorlen, "%s", STRERROR);
                 return false;
         }
         struct pollfd fds[1];
@@ -202,23 +202,23 @@ static boolean_t _doConnect(int s, const struct sockaddr *addr, socklen_t addrle
         fds[0].events = POLLIN | POLLOUT;
         rv = poll(fds, 1, timeout);
         if (rv == 0) {
-                snprintf(error, errorlen, "Connection to %s -- timed out", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
+                snprintf(error, errorlen, "Connection timed out");
                 return false;
         } else if (rv == -1) {
-                snprintf(error, errorlen, "Connection to %s -- poll failed: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                snprintf(error, errorlen, "Poll failed: %s", STRERROR);
                 return false;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
                 socklen_t rvlen = sizeof(rv);
                 if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
-                        snprintf(error, errorlen, "Connection to %s -- read of error details failed: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), STRERROR);
+                        snprintf(error, errorlen, "Read of error details failed: %s", STRERROR);
                         return false;
                 } else if (rv) {
-                        snprintf(error, errorlen, "Connection to %s -- error: %s", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN), strerror(rv));
+                        snprintf(error, errorlen, "%s", strerror(rv));
                         return false;
                 }
         } else {
-                snprintf(error, errorlen, "Connection to %s -- not ready for I/O", _addressToString(addr, addrlen, (char[STRLEN]){}, STRLEN));
+                snprintf(error, errorlen, "Not ready for I/O");
                 return false;
         }
         return true;
