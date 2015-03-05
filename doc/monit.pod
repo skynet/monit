@@ -2367,7 +2367,7 @@ Monit can perform a network ping test by sending ICMP echo request
 datagram packets to a host and wait for the reply. This test can
 only be used within a check host statement. Monit must also run as
 the root user in order to be able to perform the ping test (because
-a ping test must use raw sockets which usually only the super user
+the ping test must use raw sockets which usually only the super user
 is allowed to).
 
 Syntax:
@@ -2376,13 +2376,12 @@ Syntax:
      [COUNT number] [WITH] [TIMEOUT number SECONDS]
   THEN action
 
-By default Monit will try to ping any available interface (IPv4 or IPv6).
-If multiple options are possible (multiple IPv4 and IPv6 addresses)
-and a ping via one interface type failed, Monit will try the
-next option until connection succeeded or no options are left.
-You can force Monit to ping IPv4 or IPv6 address only to make sure the
-system is accessible via given IP version by using either PING4 or
-PING6 test.
+If a DNS host name was used in the I<check host> statement and the host
+name resolve to several addresses (either IPv4 or IPv6), Monit will
+ping the first available address and continue with the next address
+until one connection succeed or until there are no more addresses left
+to try. You can force Monit to only ping IPv4 or IPv6 addresses by
+using the PING4 or the PING6 keyword instead of PING.
 
 The B<COUNT> parameter specifies how many consecutive ping requests
 will be sent to the host in one cycle. If no reply arrive within
@@ -2406,13 +2405,16 @@ tests.
 Example:
 
  check host mmonit.com with address mmonit.com
-       if failed ping then alert  # Use any available address (IPv4 or IPv6)
+       if failed ping then alert  # IPv4 or IPv6
 
-or test that the system is accessible via both IPv4 and IPv6:
+ check host mmonit.com with address 62.109.39.247
+       if failed ping then alert # Address is IPv4 so IPv4 is preferred
+
+or test that the system is explicit accessible via IPv4 and IPv6:
 
  check host mmonit.com with address mmonit.com
-       if failed ping4 then alert  # Check IPv4
-       if failed ping6 then alert  # Check IPv6
+       if failed ping4 then alert  # IPv4 only
+       if failed ping6 then alert  # IPv6 only
 
 or with all parameters; Send 5 pings to mmonit.com and wait for up
 to 10 seconds for a reply
@@ -2475,12 +2477,12 @@ I<port: PORT number>. The port number to connect to
 I<unixsocket: UNIXSOCKET path>. Specifies the path to a Unix
 socket (local machine only).
 
-I<ipversion: IPV4 | IPV6 >. Optionally specify the IP version
-Monit should use when trying to connect to the port. If not used,
-Monit will try to connect via any available interface (IPv4 or IPv6).
-If multiple options are possible (multiple IPv4 and IPv6 addresses)
-and the connection via one interface type failed, Monit will try the
-next option until connection succeeded or no options are left.
+I<ipversion: IPV4 | IPV6 >. Optionally specify the IP version Monit
+should use when trying to connect to the port. If not used, Monit will
+try to connect to the first available address (IPv4 or IPv6). If
+multiple addresses are available and connection to one address failed,
+Monit will try the next address and so on until a connection succeed or
+until there are no more addresses left to try.
 
 I<type: TYPE {TCP|UDP|TCPSSL}>. Optionally specify the socket type
 Monit should use when trying to connect to the port. The
