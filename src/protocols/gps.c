@@ -34,8 +34,7 @@
 #include "exceptions/IOException.h"
 
 /**
- *  Check gpsd status.
- *  There is a project site for gpsd at <http://gpsd.berlios.de/>.
+ *  Check gpsd (http://www.catb.org/gpsd/) status.
  *
  *  @file
  */
