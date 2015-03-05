@@ -2695,14 +2695,24 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                                             "ping response time", i->response);
                         }
                         for (Port_T p = s->portlist; p; p = p->next) {
-                                StringBuffer_append(res->outputbuffer,
+                                if (p->is_available)
+                                        StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %.3fs to [%s]:%d%s type %s/%s protocol %s\n",
-                                                    "port response time", p->is_available ? p->response : 0., p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name);
+                                                    "port response time", p->response, p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name);
+                                else
+                                        StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s FAILED to [%s]:%d%s type %s/%s protocol %s\n",
+                                                    "port response time", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), Util_portIpDescription(p), p->protocol->name);
                         }
                         for (Port_T p = s->socketlist; p; p = p->next) {
-                                StringBuffer_append(res->outputbuffer,
+                                if (p->is_available)
+                                        StringBuffer_append(res->outputbuffer,
                                                     "  %-33s %.3fs to %s type %s protocol %s\n",
-                                                    "unix socket response time", p->is_available ? p->response : 0., p->pathname, Util_portTypeDescription(p), p->protocol->name);
+                                                    "unix socket response time", p->response, p->pathname, Util_portTypeDescription(p), p->protocol->name);
+                                else
+                                        StringBuffer_append(res->outputbuffer,
+                                                    "  %-33s FAILED to %s type %s protocol %s\n",
+                                                    "unix socket response time", p->pathname, Util_portTypeDescription(p), p->protocol->name);
                         }
                         if (s->type == Service_System && Run.doprocess) {
                                 StringBuffer_append(res->outputbuffer,
