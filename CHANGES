@@ -24,6 +24,8 @@ Fixed: Issue #155: Monit may crash if the system hostname resolving failed.
 Fixed: Issue #157: Hostname based connection test for UDP service on dual-stack host
 (IPv4 and IPv6) may fail if the service listens on IPv4 only.
 
+Fixed: Issue #161: Show only first line of program output in Monit dashboard.
+
 Fixed: Monit skipped the connection tests if no start program was defined.
 
 Fixed: The socket timeout was 1000x higher then requested.

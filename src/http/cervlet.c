@@ -1094,14 +1094,27 @@ static void do_home_program(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer, "<td align='right'>-</td>");
                 } else {
                         if (s->program->started) {
-                                char t[32];
                                 StringBuffer_append(res->outputbuffer, "<td align='left' class='short'>");
-                                if (StringBuffer_length(s->program->output))
-                                        escapeHTML(res->outputbuffer, StringBuffer_toString(s->program->output));
-                                else
+                                if (StringBuffer_length(s->program->output)) {
+                                        // Print first line only (escape HTML characters if any)
+                                        const char *output = StringBuffer_toString(s->program->output);
+                                        for (int i = 0; output[i]; i++) {
+                                                if (output[i] == '<')
+                                                        StringBuffer_append(res->outputbuffer, "&lt;");
+                                                else if (output[i] == '>')
+                                                        StringBuffer_append(res->outputbuffer, "&gt;");
+                                                else if (output[i] == '&')
+                                                        StringBuffer_append(res->outputbuffer, "&amp;");
+                                                else if (output[i] == '\r' || output[i] == '\n')
+                                                        break;
+                                                else
+                                                        StringBuffer_append(res->outputbuffer, "%c", output[i]);
+                                        }
+                                } else {
                                         StringBuffer_append(res->outputbuffer, "no output");
+                                }
                                 StringBuffer_append(res->outputbuffer, "</td>");
-                                StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_fmt(t, sizeof(t), "%d %b %Y %H:%M:%S", s->program->started));
+                                StringBuffer_append(res->outputbuffer, "<td align='right'>%s</td>", Time_fmt((char[32]){}, 32, "%d %b %Y %H:%M:%S", s->program->started));
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>%d</td>", s->program->exitStatus);
                         } else {
                                 StringBuffer_append(res->outputbuffer, "<td align='right'>N/A</td>");
