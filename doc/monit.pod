@@ -2731,16 +2731,17 @@ Syntax:
  PROTOCOL APACHE-STATUS <limit operator number>+
 
 I<limit> is acronym for child status:
- o logging (loglimit)
- o closing connections (closelimit)
- o performing DNS lookups (dnslimit)
- o in keepalive with a client (keepalivelimit)
- o replying to a client (replylimit)
- o receiving a request (requestlimit)
- o initialising (startlimit)
- o waiting for incoming connections (waitlimit)
- o gracefully closing down (gracefullimit)
- o performing cleanup procedures (cleanuplimit)
+
+ (1) logging (loglimit)
+ (2) closing connections (closelimit)
+ (3) performing DNS lookups (dnslimit)
+ (4) in keepalive with a client (keepalivelimit)
+ (5) replying to a client (replylimit)
+ (6) receiving a request (requestlimit)
+ (7) initialising (startlimit)
+ (8) waiting for incoming connections (waitlimit)
+ (9) gracefully closing down (gracefullimit)
+ (10) performing cleanup procedures (cleanuplimit)
 
 I<operator> is one of "<", "=", ">".
 
