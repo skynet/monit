@@ -481,39 +481,45 @@ static void check_perm(Service_T s, mode_t mode) {
 /**
  * Test UID of file or process
  */
-static void check_uid(Service_T s, uid_t uid) {
+static void check_uid(Service_T s, int uid) {
         ASSERT(s && s->uid);
 
-        if (uid != s->uid->uid)
-                Event_post(s, Event_Uid, State_Failed, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, uid);
-        else
-                Event_post(s, Event_Uid, State_Succeeded, s->uid->action, "uid test succeeded [current uid=%d]", uid);
+        if (uid >= 0) {
+                if (uid != s->uid->uid)
+                        Event_post(s, Event_Uid, State_Failed, s->uid->action, "uid test failed for %s -- current uid is %d", s->name, uid);
+                else
+                        Event_post(s, Event_Uid, State_Succeeded, s->uid->action, "uid test succeeded [current uid=%d]", uid);
+        }
 }
 
 
 /**
  * Test effective UID of process
  */
-static void check_euid(Service_T s) {
-        ASSERT(s && s->uid);
+static void check_euid(Service_T s, int euid) {
+        ASSERT(s && s->euid);
 
-        if (s->inf->priv.process.euid != s->euid->uid)
-                Event_post(s, Event_Uid, State_Failed, s->euid->action, "euid test failed for %s -- current euid is %d", s->name, s->inf->priv.process.euid);
-        else
-                Event_post(s, Event_Uid, State_Succeeded, s->euid->action, "euid test succeeded [current euid=%d]", s->inf->priv.process.euid);
+        if (euid >= 0) {
+                if (euid != s->euid->uid)
+                        Event_post(s, Event_Uid, State_Failed, s->euid->action, "euid test failed for %s -- current euid is %d", s->name, euid);
+                else
+                        Event_post(s, Event_Uid, State_Succeeded, s->euid->action, "euid test succeeded [current euid=%d]", euid);
+        }
 }
 
 
 /**
  * Test GID of file or process
  */
-static void check_gid(Service_T s, gid_t gid) {
+static void check_gid(Service_T s, int gid) {
         ASSERT(s && s->gid);
 
-        if (gid != s->gid->gid )
-                Event_post(s, Event_Gid, State_Failed, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, gid);
-        else
-                Event_post(s, Event_Gid, State_Succeeded, s->gid->action, "gid test succeeded [current gid=%d]", gid);
+        if (gid >= 0) {
+                if (gid != s->gid->gid)
+                        Event_post(s, Event_Gid, State_Failed, s->gid->action, "gid test failed for %s -- current gid is %d", s->name, gid);
+                else
+                        Event_post(s, Event_Gid, State_Succeeded, s->gid->action, "gid test succeeded [current gid=%d]", gid);
+        }
 }
 
 
@@ -689,7 +695,7 @@ static void check_match(Service_T s) {
                         }
                 } else {
                         /* Remove appending newline */
-                        line[length-1] = 0;
+                        line[length - 1] = 0;
                 }
                 /* Set read position to the end of last read */
                 s->inf->priv.file.readpos += length;
@@ -981,7 +987,7 @@ boolean_t check_process(Service_T s) {
                         if (s->uid)
                                 check_uid(s, s->inf->priv.process.uid);
                         if (s->euid)
-                                check_euid(s);
+                                check_euid(s, s->inf->priv.process.euid);
                         if (s->gid)
                                 check_gid(s, s->inf->priv.process.gid);
                         if (s->uptimelist)

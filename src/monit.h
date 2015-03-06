@@ -470,20 +470,20 @@ typedef struct myauthentication {
 } *Auth_T;
 
 
-/** Defines process tree - data storage backend*/
+/** Defines process tree - data storage backend */
 typedef struct myprocesstree {
         boolean_t     visited;
         boolean_t     zombie;
         pid_t         pid;
         pid_t         ppid;
         int           parent;
+        int           uid;
+        int           euid;
+        int           gid;
         int           children_num;
         int           children_sum;
         short         cpu_percent;
         short         cpu_percent_sum;
-        uid_t         uid;
-        uid_t         euid;
-        gid_t         gid;
         unsigned long mem_kbyte;
         unsigned long mem_kbyte_sum;
         time_t        starttime;
@@ -873,16 +873,16 @@ typedef struct myinfo {
                         short space_percent;                   /**< Used space percentage * 10 */
                         int _flags;                      /**< Filesystem flags from last cycle */
                         int flags;                     /**< Filesystem flags from actual cycle */
+                        int uid;                                              /**< Owner's uid */
+                        int gid;                                              /**< Owner's gid */
                         mode_t mode;                                           /**< Permission */
-                        uid_t uid;                                            /**< Owner's uid */
-                        gid_t gid;                                            /**< Owner's gid */
                 } filesystem;
 
                 struct {
                         time_t timestamp;                                       /**< Timestamp */
                         mode_t mode;                                           /**< Permission */
-                        uid_t uid;                                            /**< Owner's uid */
-                        gid_t gid;                                            /**< Owner's gid */
+                        int uid;                                              /**< Owner's uid */
+                        int gid;                                              /**< Owner's gid */
                         off_t size;                                                  /**< Size */
                         off_t readpos;                        /**< Position for regex matching */
                         ino_t inode;                                                /**< Inode */
@@ -893,15 +893,15 @@ typedef struct myinfo {
                 struct {
                         time_t timestamp;                                       /**< Timestamp */
                         mode_t mode;                                           /**< Permission */
-                        uid_t uid;                                            /**< Owner's uid */
-                        gid_t gid;                                            /**< Owner's gid */
+                        int uid;                                              /**< Owner's uid */
+                        int gid;                                              /**< Owner's gid */
                 } directory;
 
                 struct {
                         time_t timestamp;                                       /**< Timestamp */
                         mode_t mode;                                           /**< Permission */
-                        uid_t uid;                                            /**< Owner's uid */
-                        gid_t gid;                                            /**< Owner's gid */
+                        int uid;                                              /**< Owner's uid */
+                        int gid;                                              /**< Owner's gid */
                 } fifo;
 
                 struct {
@@ -909,9 +909,9 @@ typedef struct myinfo {
                         pid_t _ppid;                   /**< Process parent PID from last cycle */
                         pid_t pid;                          /**< Process PID from actual cycle */
                         pid_t ppid;                  /**< Process parent PID from actual cycle */
-                        uid_t uid;                                            /**< Process UID */
-                        uid_t euid;                                 /**< Effective Process UID */
-                        gid_t gid;                                            /**< Process GID */
+                        int uid;                                              /**< Process UID */
+                        int euid;                                   /**< Effective Process UID */
+                        int gid;                                              /**< Process GID */
                         boolean_t zombie;
                         int children;
                         long mem_kbyte;
