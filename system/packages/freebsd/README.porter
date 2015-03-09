@@ -16,18 +16,26 @@
   cp -rp monit monit-new
   perl -p -i -e 's/^PORTVERSION=.*/PORTVERSION=    <new_version>' monit-new/Makefile
   make -C monit-new makesum
-  diff -ruN monit monit-new > /tmp/monit.patch
+  mkdir /tmp/monit_port
+  diff -ruN monit monit-new > /tmp/monit_port/monit.patch
+  cd monit-new
+  portlint         > /tmp/monit_port/portlint.txt
+  make check-plist > /tmp/monit_port/make_check-plist.txt
+  make stage-qa    > /tmp/monit_port/make_stage-qa.txt
 
 
 3.) send the port upgrade (for example using https://bugs.freebsd.org/bugzilla/)
 
-    synopsis: [maintainer update] sysutils/monit <new_version>
-    class:    maintainer-update
-    category: ports
+    component:  Individual Port(s)
+    summary:    [MAINTAINER] sysutils/monit: Update to <new_version>
+    severity:   Affects Some People
+    Version:    Latest
+    HW:         Any
+    OS:         Any
 
-
-  include diff as standalone attachment, provide output of:
-        portlint
-        make check-plist
-        make stage-qa
+  Attach the following files:
+        monit.patch
+        portlint.txt
+        make_check-plist.txt
+        make_stage-qa.txt
 
