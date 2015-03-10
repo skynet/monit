@@ -370,7 +370,7 @@ int Ssl_write(T C, void *b, int size, int timeout) {
                                 break;
                         case SSL_ERROR_SYSCALL:
                                 LogError("SSL: write error -- %s\n", STRERROR);
-                                break;
+                                return -1;
                         default:
                                 LogError("SSL: write error -- %s\n", SSLERROR);
                                 return -1;
@@ -397,7 +397,7 @@ int Ssl_read(T C, void *b, int size, int timeout) {
                                 break;
                         case SSL_ERROR_SYSCALL:
                                 LogError("SSL: read error -- %s\n", STRERROR);
-                                break;
+                                return -1;
                         default:
                                 LogError("SSL: read error -- %s\n", SSLERROR);
                                 return -1;
