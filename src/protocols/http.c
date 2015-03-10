@@ -58,9 +58,7 @@
 /* ------------------------------------------------------------- Definitions */
 
 
-#undef   READ_SIZE
-#define  READ_SIZE  8192
-#define  LINE_SIZE  512
+#define HTTP_CONTENT_MAX 1048576
 
 
 /* ----------------------------------------------------------------- Private */
@@ -84,9 +82,7 @@ static void do_regex(Socket_T socket, int content_length, Request_T R) {
 
         if (content_length == 0)
                 THROW(IOException, "HTTP error: No content returned from server");
-        else if (content_length < 0) /* Not defined in response */
-                content_length = HTTP_CONTENT_MAX;
-        else if (content_length > HTTP_CONTENT_MAX)
+        else if (content_length < 0 || content_length > HTTP_CONTENT_MAX) /* content_length < 0 if no Content-Length header was found */
                 content_length = HTTP_CONTENT_MAX;
 
         char error[STRLEN];
@@ -151,7 +147,7 @@ static void check_request_checksum(Socket_T socket, int content_length, char *ch
         MD_T result, hash;
         md5_context_t ctx_md5;
         sha1_context_t ctx_sha1;
-        char buf[READ_SIZE];
+        char buf[8192];
 
         if (content_length <= 0) {
                 DEBUG("HTTP warning: Response does not contain a valid Content-Length -- cannot compute checksum\n");
@@ -197,8 +193,8 @@ static void check_request_checksum(Socket_T socket, int content_length, char *ch
  */
 static void check_request(Socket_T socket, Port_T P) {
         int status, content_length = -1;
-        char buf[LINE_SIZE];
-        if (! Socket_readLine(socket, buf, LINE_SIZE))
+        char buf[512];
+        if (! Socket_readLine(socket, buf, sizeof(buf)))
                 THROW(IOException, "HTTP: Error receiving data -- %s", STRERROR);
         Str_chomp(buf);
         if (! sscanf(buf, "%*s %d", &status))
@@ -206,7 +202,7 @@ static void check_request(Socket_T socket, Port_T P) {
         if (! Util_evalQExpression(P->operator, status, P->status))
                 THROW(IOException, "HTTP error: Server returned status %d", status);
         /* Get Content-Length header value */
-        while (Socket_readLine(socket, buf, LINE_SIZE)) {
+        while (Socket_readLine(socket, buf, sizeof(buf))) {
                 if ((buf[0] == '\r' && buf[1] == '\n') || (buf[0] == '\n'))
                         break;
                 Str_chomp(buf);
