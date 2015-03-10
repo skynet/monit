@@ -374,7 +374,15 @@ int Ssl_write(T C, void *b, int size, int timeout) {
                                         retry = Net_canWrite(C->socket, timeout);
                                         break;
                                 case SSL_ERROR_SYSCALL:
-                                        LogError("SSL: write error -- %s\n", STRERROR);
+                                        {
+                                                int error = ERR_get_error();
+                                                if (error)
+                                                        LogError("SSL: write error -- %s\n", ERR_error_string(error, NULL));
+                                                else if (n == 0)
+                                                        LogError("SSL: write error -- EOF\n");
+                                                else if (n == -1)
+                                                        LogError("SSL: write I/O error -- %s\n", STRERROR);
+                                        }
                                         return -1;
                                 default:
                                         LogError("SSL: write error -- %s\n", SSLERROR);
@@ -407,7 +415,15 @@ int Ssl_read(T C, void *b, int size, int timeout) {
                                         retry = Net_canWrite(C->socket, timeout);
                                         break;
                                 case SSL_ERROR_SYSCALL:
-                                        LogError("SSL: read error -- %s\n", STRERROR);
+                                        {
+                                                int error = ERR_get_error();
+                                                if (error)
+                                                        LogError("SSL: read error -- %s\n", ERR_error_string(error, NULL));
+                                                else if (n == 0)
+                                                        LogError("SSL: read error -- EOF\n");
+                                                else if (n == -1)
+                                                        LogError("SSL: read I/O error -- %s\n", STRERROR);
+                                        }
                                         return -1;
                                 default:
                                         LogError("SSL: read error -- %s\n", SSLERROR);
