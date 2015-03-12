@@ -353,21 +353,21 @@ static void _doDepend(Service_T s, Action_Type action, boolean_t flag) {
 boolean_t control_service_daemon(const char *S, const char *action) {
         ASSERT(S);
         ASSERT(action);
-        boolean_t rv = false;
         if (Util_getAction(action) == Action_Ignored) {
                 LogError("Cannot %s service '%s' -- invalid action %s\n", action, S, action);
                 return false;
         }
-        // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
-        Socket_T socket;
+        Socket_T socket = NULL;
+        boolean_t rv = false;
         if (Run.httpd.flags & Httpd_Net)
+                // FIXME: Monit HTTP support IPv4 only currently ... when IPv6 is implemented change the family to Socket_Ip
                 socket = Socket_create(Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "localhost", Run.httpd.socket.net.port, Socket_Tcp, Socket_Ip4, (SslOptions_T){.use_ssl = Run.httpd.flags & Httpd_Ssl, .clientpemfile = Run.httpd.socket.net.ssl.clientpem}, NET_TIMEOUT);
-        else
+        else if (Run.httpd.flags & Httpd_Unix)
                 socket = Socket_createUnix(Run.httpd.socket.unix.path, Socket_Tcp, NET_TIMEOUT);
-        if (! socket) {
-                LogError("Cannot connect to the monit daemon. Did you start it with http support?\n");
+        else
+                LogError("Action %s not possible - monit http interface is not enabled, please add the 'set httpd' statement\n", action);
+        if (! socket)
                 return false;
-        }
 
         /* Send request */
         char *auth = Util_getBasicAuthHeaderMonit();
