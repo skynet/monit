@@ -85,12 +85,3 @@ void set_signal_block(sigset_t *new, sigset_t *old) {
         pthread_sigmask(SIG_BLOCK, new, old);
 }
 
-
-/**
- * Set the thread signal mask back to the old mask
- * @param old The signal mask to restore
- */
-void unset_signal_block(sigset_t *old) {
-        pthread_sigmask(SIG_SETMASK, old, NULL);
-}
-

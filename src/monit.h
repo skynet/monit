@@ -1192,7 +1192,6 @@ char *format(const char *, va_list, long *);
 void  redirect_stdfd();
 void  fd_close();
 pid_t getpgid(pid_t);
-void unset_signal_block(sigset_t *);
 void set_signal_block(sigset_t *, sigset_t *);
 boolean_t check_process(Service_T);
 boolean_t check_filesystem(Service_T);
