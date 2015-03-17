@@ -137,9 +137,6 @@ void monit_http(Httpd_Action action) {
 
 
 static void *thread_wrapper(void *arg) {
-        sigset_t ns;
-        /* Block collective signals in the http thread. The http server is taken down gracefully by signaling the main monit thread */
-        set_signal_block(&ns, NULL);
         Engine_start();
 #ifdef HAVE_OPENSSL
         Ssl_threadCleanup();

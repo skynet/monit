@@ -50,7 +50,6 @@
  * in the UNIX Environment"
  */
 Sigfunc *signal(int signo, Sigfunc *func) {
-
         struct sigaction act, oact;
 
         act.sa_handler = func;
@@ -69,7 +68,6 @@ Sigfunc *signal(int signo, Sigfunc *func) {
                 return(SIG_ERR);
 
         return(oact.sa_handler);
-
 }
 
 
@@ -79,14 +77,12 @@ Sigfunc *signal(int signo, Sigfunc *func) {
  * @param old The signal mask used to save the previous mask
  */
 void set_signal_block(sigset_t *new, sigset_t *old) {
-
         sigemptyset(new);
         sigaddset(new, SIGHUP);
         sigaddset(new, SIGINT);
         sigaddset(new, SIGUSR1);
         sigaddset(new, SIGTERM);
         pthread_sigmask(SIG_BLOCK, new, old);
-
 }
 
 
@@ -95,7 +91,6 @@ void set_signal_block(sigset_t *new, sigset_t *old) {
  * @param old The signal mask to restore
  */
 void unset_signal_block(sigset_t *old) {
-
         pthread_sigmask(SIG_SETMASK, old, NULL);
-
 }
+

@@ -9,6 +9,8 @@ Fixed: Issue #169: Monit may hang if error occurred during SSL read or write.
 Fixed: Issue #170: If monit was started with no http interface, the CLI commands
 crashed.
 
+Fixed: Monit stop signal handling.
+
 
 Version 5.12.1
 

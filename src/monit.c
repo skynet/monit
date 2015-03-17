@@ -817,17 +817,12 @@ static void version() {
  * M/Monit heartbeat thread
  */
 static void *heartbeat(void *args) {
-        sigset_t ns;
-        struct timespec wait;
-
-        set_signal_block(&ns, NULL);
         LogInfo("M/Monit heartbeat started\n");
         LOCK(heartbeatMutex)
         {
                 while (! Run.stopped && ! Run.doreload) {
                         handle_mmonit(NULL);
-                        wait.tv_sec = Time_now() + Run.polltime;
-                        wait.tv_nsec = 0;
+                        struct timespec wait = {.tv_sec = Time_now() + Run.polltime, .tv_nsec = 0};
                         Sem_timeWait(heartbeatCond, heartbeatMutex, wait);
                 }
         }
