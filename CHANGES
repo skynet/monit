@@ -11,6 +11,8 @@ crashed.
 
 Fixed: Signal handling for Monit stop.
 
+Fixed: IP alias monitoring in network check.
+
 
 Version 5.12.1
 
