@@ -375,7 +375,7 @@ int Ssl_write(T C, void *b, int size, int timeout) {
                                         break;
                                 case SSL_ERROR_SYSCALL:
                                         {
-                                                int error = ERR_get_error();
+                                                unsigned long error = ERR_get_error();
                                                 if (error)
                                                         LogError("SSL: write error -- %s\n", ERR_error_string(error, NULL));
                                                 else if (n == 0)
@@ -416,7 +416,7 @@ int Ssl_read(T C, void *b, int size, int timeout) {
                                         break;
                                 case SSL_ERROR_SYSCALL:
                                         {
-                                                int error = ERR_get_error();
+                                                unsigned long error = ERR_get_error();
                                                 if (error)
                                                         LogError("SSL: read error -- %s\n", ERR_error_string(error, NULL));
                                                 else if (n == 0)
