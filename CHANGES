@@ -1,6 +1,12 @@
-                     CHANGES version 5.12.2
+                     CHANGES version 5.13
 
            This file summarizes changes made since 5.0
+
+Version 5.13
+
+Fixed: Monit doesn't try to check hostnames on start to allow faster
+startup in the case that DNS is not currently available.
+
 
 Version 5.12.2
 
