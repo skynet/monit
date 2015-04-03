@@ -7,6 +7,8 @@ Version 5.13
 Fixed: Monit doesn't try to check hostnames on start to allow faster
 startup in the case that DNS is not currently available.
 
+Fixed: The filesystem uid, gid and permission report in 'monit status' command.
+
 
 Version 5.12.2
 

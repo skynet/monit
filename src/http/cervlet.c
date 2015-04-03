@@ -2570,10 +2570,10 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                                     "  %-33s %d\n"
                                                     "  %-33s %d\n"
                                                     "  %-33s %s\n",
-                                                    "permission", s->inf->priv.directory.mode & 07777,
-                                                    "uid", (int)s->inf->priv.directory.uid,
-                                                    "gid", (int)s->inf->priv.directory.gid,
-                                                    "timestamp", Time_string(s->inf->priv.directory.timestamp, buf));
+                                                    "permission", s->inf->priv.fifo.mode & 07777,
+                                                    "uid", (int)s->inf->priv.fifo.uid,
+                                                    "gid", (int)s->inf->priv.fifo.gid,
+                                                    "timestamp", Time_string(s->inf->priv.fifo.timestamp, buf));
                                         break;
 
                                 case Service_Net:
@@ -2615,9 +2615,9 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                                     "  %-33s %o\n"
                                                     "  %-33s %d\n"
                                                     "  %-33s %d\n",
-                                                    "permission", s->inf->priv.directory.mode & 07777,
-                                                    "uid", (int)s->inf->priv.directory.uid,
-                                                    "gid", (int)s->inf->priv.directory.gid);
+                                                    "permission", s->inf->priv.filesystem.mode & 07777,
+                                                    "uid", (int)s->inf->priv.filesystem.uid,
+                                                    "gid", (int)s->inf->priv.filesystem.gid);
                                         StringBuffer_append(res->outputbuffer,
                                                             "  %-33s 0x%x\n"
                                                             "  %-33s %s\n",
