@@ -21,11 +21,11 @@ set daemon  30              # check services at 30 seconds intervals
 #                           # default Monit check immediately after Monit start)
 #
 #
-## Set syslog logging with the 'daemon' facility. If the FACILITY option is
-## omitted, Monit will use 'user' facility by default. If you want to log to 
-## a standalone log file instead, specify the full path to the log file
+## Set syslog logging. If you want to log to a standalone log file instead,
+## specify the full path to the log file
 #
-# set logfile syslog facility log_daemon                       
+set logfile syslog
+
 #
 #
 ## Set the location of the Monit lock file which stores the process id of the
