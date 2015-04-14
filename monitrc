@@ -188,7 +188,7 @@ set httpd port 2812 and
 #    if failed port 443 type tcpssl protocol http
 #       with timeout 15 seconds
 #    then restart
-#    if 3 restarts within 5 cycles then timeout
+#    if 3 restarts within 5 cycles then unmonitor
 #    depends on apache_bin
 #    group server
 #    
