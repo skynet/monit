@@ -1297,8 +1297,11 @@ statement:
 =head1 SERVICE MONITORING MODE
 
 Monit supports three monitoring modes per service: I<active>,
-I<passive> and I<manual>. See also the example section below for
-usage of the mode statement.
+I<passive> and I<manual>.
+
+Syntax:
+
+  MODE <ACTIVE | PASSIVE | MANUAL>
 
 In I<active> mode (the default), Monit will pro-actively monitor a
 service and in case of problems raise alerts and/or restart
