@@ -9,6 +9,8 @@ startup in the case that DNS is not currently available.
 
 Fixed: The filesystem uid, gid and permission report in 'monit status' command.
 
+Fixed: Issue #186: RPM should preserve the existing configuration file on update.
+
 
 Version 5.12.2
 

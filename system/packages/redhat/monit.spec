@@ -55,7 +55,7 @@ fi
 %files
 %defattr(-,root,root)
 %doc COPYING README
-%config /etc/monitrc
+%config(noreplace) /etc/monitrc
 %config /etc/init.d/%{name}
 %{_bindir}/%{name}
 %{_mandir}/man1/%{name}.1.gz
