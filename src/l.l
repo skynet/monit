@@ -318,7 +318,7 @@ tlsv12            { return TLSV12; }
 sslauto           { return SSLAUTO; }
 inode(s)?         { return INODE; }
 space             { return SPACE; }
-free              { return FREEE; } /* Note: FREE is used for memory management macro => we use FREEE for token instead */
+free              { return TFREE; }
 perm(ission)?     { return PERMISSION; }
 exec(ute)?        { return EXEC; }
 size              { return SIZE; }
