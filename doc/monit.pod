@@ -1917,6 +1917,10 @@ Syntax:
 
  IF SPACE operator value unit THEN action
 
+or:
+
+ IF SPACE FREE operator value unit THEN action
+
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
 "equal", "notequal" in human readable form (if not specified,
@@ -1943,6 +1947,10 @@ in the context of a filesystem service type.
 Syntax:
 
  IF INODE(S) operator value [unit] THEN action
+
+or:
+
+ IF INODE(S) FREE operator value [unit] THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",

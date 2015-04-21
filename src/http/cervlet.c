@@ -1693,8 +1693,28 @@ static void print_service_rules_filesystem(HttpResponse res, Service_T s) {
                         else
                                 Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
                         StringBuffer_append(res->outputbuffer, "</td></tr>");
+                } else if (dl->resource == Resource_InodeFree) {
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Inodes free limit</td><td>");
+                        if (dl->limit_absolute > -1)
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %lld", operatornames[dl->operator], dl->limit_absolute);
+                        else
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
                 } else if (dl->resource == Resource_Space) {
                         StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Space usage limit</td><td>");
+                        if (dl->limit_absolute > -1) {
+                                if (s->inf->priv.filesystem.f_bsize > 0) {
+                                        char buf[STRLEN];
+                                        Util_printRule(res->outputbuffer, dl->action, "If %s %s", operatornames[dl->operator], Str_bytesToSize(dl->limit_absolute * s->inf->priv.filesystem.f_bsize, buf));
+                                } else {
+                                        Util_printRule(res->outputbuffer, dl->action, "If %s %lld blocks", operatornames[dl->operator], dl->limit_absolute);
+                                }
+                        } else {
+                                Util_printRule(res->outputbuffer, dl->action, "If %s %.1f%%", operatornames[dl->operator], dl->limit_percent / 10.);
+                        }
+                        StringBuffer_append(res->outputbuffer, "</td></tr>");
+                } else if (dl->resource == Resource_SpaceFree) {
+                        StringBuffer_append(res->outputbuffer, "<tr class='rule'><td>Space free limit</td><td>");
                         if (dl->limit_absolute > -1) {
                                 if (s->inf->priv.filesystem.f_bsize > 0) {
                                         char buf[STRLEN];

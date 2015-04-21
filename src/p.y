@@ -319,7 +319,7 @@ static int verifyMaxForward(int);
 %token TIMESTAMP CHANGED SECOND MINUTE HOUR DAY MONTH
 %token SSLAUTO SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 CERTMD5
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
-%token INODE SPACE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
+%token INODE SPACE FREEE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
 %token EXEC UNMONITOR PING PING4 PING6 ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
 %token URL CONTENT PID PPID FSFLAG
 %token REGISTER CREDENTIALS
@@ -1904,6 +1904,20 @@ inode           : IF INODE operator NUMBER rate1 THEN action1 recovery {
                     addeventaction(&(filesystemset).action, $<number>8, $<number>9);
                     addfilesystem(&filesystemset);
                   }
+                | IF INODE FREEE operator NUMBER rate1 THEN action1 recovery {
+                    filesystemset.resource = Resource_InodeFree;
+                    filesystemset.operator = $<number>4;
+                    filesystemset.limit_absolute = $5;
+                    addeventaction(&(filesystemset).action, $<number>8, $<number>9);
+                    addfilesystem(&filesystemset);
+                  }
+                | IF INODE FREEE operator NUMBER PERCENT rate1 THEN action1 recovery {
+                    filesystemset.resource = Resource_InodeFree;
+                    filesystemset.operator = $<number>4;
+                    filesystemset.limit_percent = (int)($5 * 10);
+                    addeventaction(&(filesystemset).action, $<number>9, $<number>10);
+                    addfilesystem(&filesystemset);
+                  }
                 ;
 
 space           : IF SPACE operator value unit rate1 THEN action1 recovery {
@@ -1920,6 +1934,22 @@ space           : IF SPACE operator value unit rate1 THEN action1 recovery {
                     filesystemset.operator = $<number>3;
                     filesystemset.limit_percent = (int)($4 * 10);
                     addeventaction(&(filesystemset).action, $<number>8, $<number>9);
+                    addfilesystem(&filesystemset);
+                  }
+                | IF SPACE FREEE operator value unit rate1 THEN action1 recovery {
+                    if (! filesystem_usage(current))
+                      yyerror2("Cannot read usage of filesystem %s", current->path);
+                    filesystemset.resource = Resource_SpaceFree;
+                    filesystemset.operator = $<number>4;
+                    filesystemset.limit_absolute = (long long)((double)$<real>5 / (double)current->inf->priv.filesystem.f_bsize * (double)$<number>6);
+                    addeventaction(&(filesystemset).action, $<number>9, $<number>10);
+                    addfilesystem(&filesystemset);
+                  }
+                | IF SPACE FREEE operator NUMBER PERCENT rate1 THEN action1 recovery {
+                    filesystemset.resource = Resource_SpaceFree;
+                    filesystemset.operator = $<number>4;
+                    filesystemset.limit_percent = (int)($5 * 10);
+                    addeventaction(&(filesystemset).action, $<number>9, $<number>10);
                     addfilesystem(&filesystemset);
                   }
                 ;

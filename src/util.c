@@ -1160,6 +1160,14 @@ void Util_printService(Service_T s) {
                                :
                                StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
                                );
+                } else if (o->resource == Resource_InodeFree) {
+                        printf(" %-20s = %s\n", "Inodes free limit",
+                               o->limit_absolute > -1
+                               ?
+                               StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld", operatornames[o->operator], o->limit_absolute))
+                               :
+                               StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.))
+                               );
                 } else if (o->resource == Resource_Space) {
                         if (o->limit_absolute > -1) {
                                if (s->inf->priv.filesystem.f_bsize > 0)
@@ -1168,6 +1176,15 @@ void Util_printService(Service_T s) {
                                        printf(" %-20s = %s\n", "Space usage limit", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld blocks", operatornames[o->operator], o->limit_absolute)));
                         } else {
                                printf(" %-20s = %s\n", "Space usage limit", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.)));
+                        }
+                } else if (o->resource == Resource_SpaceFree) {
+                        if (o->limit_absolute > -1) {
+                               if (s->inf->priv.filesystem.f_bsize > 0)
+                                       printf(" %-20s = %s\n", "Space free limit", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %s", operatornames[o->operator], Str_bytesToSize(o->limit_absolute * s->inf->priv.filesystem.f_bsize, buffer))));
+                                else
+                                       printf(" %-20s = %s\n", "Space free limit", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %lld blocks", operatornames[o->operator], o->limit_absolute)));
+                        } else {
+                               printf(" %-20s = %s\n", "Space free limit", StringBuffer_toString(Util_printRule(buf, o->action, "if %s %.1f%%", operatornames[o->operator], o->limit_percent / 10.)));
                         }
                 }
         }

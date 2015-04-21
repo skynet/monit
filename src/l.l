@@ -318,6 +318,7 @@ tlsv12            { return TLSV12; }
 sslauto           { return SSLAUTO; }
 inode(s)?         { return INODE; }
 space             { return SPACE; }
+free              { return FREEE; }
 perm(ission)?     { return PERMISSION; }
 exec(ute)?        { return EXEC; }
 size              { return SIZE; }

@@ -240,10 +240,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
                                 return;
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.cpu_percent, r->limit)) {
-                                snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.cpu_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.cpu_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
-                                snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.cpu_percent/10.0);
+                                snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.cpu_percent / 10.);
                         break;
 
                 case Resource_CpuPercentTotal:
@@ -251,10 +251,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 DEBUG("'%s' total cpu usage check skipped (initializing)\n", s->name);
                                 return;
                         } else if (Util_evalQExpression(r->operator, s->inf->priv.process.total_cpu_percent, r->limit)) {
-                                snprintf(report, STRLEN, "total cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.total_cpu_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                snprintf(report, STRLEN, "total cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.total_cpu_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
-                                snprintf(report, STRLEN, "total cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.total_cpu_percent/10.0);
+                                snprintf(report, STRLEN, "total cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.total_cpu_percent / 10.);
                         break;
 
                 case Resource_CpuUser:
@@ -262,10 +262,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 DEBUG("'%s' cpu user usage check skipped (initializing)\n", s->name);
                                 return;
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_user_percent, r->limit)) {
-                                snprintf(report, STRLEN, "cpu user usage of %.1f%% matches resource limit [cpu user usage%s%.1f%%]", systeminfo.total_cpu_user_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                snprintf(report, STRLEN, "cpu user usage of %.1f%% matches resource limit [cpu user usage%s%.1f%%]", systeminfo.total_cpu_user_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
-                                snprintf(report, STRLEN, "cpu user usage check succeeded [current cpu user usage=%.1f%%]", systeminfo.total_cpu_user_percent/10.0);
+                                snprintf(report, STRLEN, "cpu user usage check succeeded [current cpu user usage=%.1f%%]", systeminfo.total_cpu_user_percent / 10.);
                         break;
 
                 case Resource_CpuSystem:
@@ -273,10 +273,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 DEBUG("'%s' cpu system usage check skipped (initializing)\n", s->name);
                                 return;
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_syst_percent, r->limit)) {
-                                snprintf(report, STRLEN, "cpu system usage of %.1f%% matches resource limit [cpu system usage%s%.1f%%]", systeminfo.total_cpu_syst_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                snprintf(report, STRLEN, "cpu system usage of %.1f%% matches resource limit [cpu system usage%s%.1f%%]", systeminfo.total_cpu_syst_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
-                                snprintf(report, STRLEN, "cpu system usage check succeeded [current cpu system usage=%.1f%%]", systeminfo.total_cpu_syst_percent/10.0);
+                                snprintf(report, STRLEN, "cpu system usage check succeeded [current cpu system usage=%.1f%%]", systeminfo.total_cpu_syst_percent / 10.);
                         break;
 
                 case Resource_CpuWait:
@@ -284,25 +284,25 @@ static void check_process_resources(Service_T s, Resource_T r) {
                                 DEBUG("'%s' cpu wait usage check skipped (initializing)\n", s->name);
                                 return;
                         } else if (Util_evalQExpression(r->operator, systeminfo.total_cpu_wait_percent, r->limit)) {
-                                snprintf(report, STRLEN, "cpu wait usage of %.1f%% matches resource limit [cpu wait usage%s%.1f%%]", systeminfo.total_cpu_wait_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                snprintf(report, STRLEN, "cpu wait usage of %.1f%% matches resource limit [cpu wait usage%s%.1f%%]", systeminfo.total_cpu_wait_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
-                                snprintf(report, STRLEN, "cpu wait usage check succeeded [current cpu wait usage=%.1f%%]", systeminfo.total_cpu_wait_percent/10.0);
+                                snprintf(report, STRLEN, "cpu wait usage check succeeded [current cpu wait usage=%.1f%%]", systeminfo.total_cpu_wait_percent / 10.);
                         break;
 
                 case Resource_MemoryPercent:
                         if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_mem_percent, r->limit)) {
-                                        snprintf(report, STRLEN, "mem usage of %.1f%% matches resource limit [mem usage%s%.1f%%]", systeminfo.total_mem_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                        snprintf(report, STRLEN, "mem usage of %.1f%% matches resource limit [mem usage%s%.1f%%]", systeminfo.total_mem_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                         okay = false;
                                 } else
-                                        snprintf(report, STRLEN, "mem usage check succeeded [current mem usage=%.1f%%]", systeminfo.total_mem_percent/10.0);
+                                        snprintf(report, STRLEN, "mem usage check succeeded [current mem usage=%.1f%%]", systeminfo.total_mem_percent / 10.);
                         } else {
                                 if (Util_evalQExpression(r->operator, s->inf->priv.process.mem_percent, r->limit)) {
-                                        snprintf(report, STRLEN, "mem usage of %.1f%% matches resource limit [mem usage%s%.1f%%]", s->inf->priv.process.mem_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                        snprintf(report, STRLEN, "mem usage of %.1f%% matches resource limit [mem usage%s%.1f%%]", s->inf->priv.process.mem_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                         okay = false;
                                 } else
-                                        snprintf(report, STRLEN, "mem usage check succeeded [current mem usage=%.1f%%]", s->inf->priv.process.mem_percent/10.0);
+                                        snprintf(report, STRLEN, "mem usage check succeeded [current mem usage=%.1f%%]", s->inf->priv.process.mem_percent / 10.);
                         }
                         break;
 
@@ -325,10 +325,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
                 case Resource_SwapPercent:
                         if (s->type == Service_System) {
                                 if (Util_evalQExpression(r->operator, systeminfo.total_swap_percent, r->limit)) {
-                                        snprintf(report, STRLEN, "swap usage of %.1f%% matches resource limit [swap usage%s%.1f%%]", systeminfo.total_swap_percent/10.0, operatorshortnames[r->operator], r->limit/10.0);
+                                        snprintf(report, STRLEN, "swap usage of %.1f%% matches resource limit [swap usage%s%.1f%%]", systeminfo.total_swap_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
                                         okay = false;
                                 } else
-                                        snprintf(report, STRLEN, "swap usage check succeeded [current swap usage=%.1f%%]", systeminfo.total_swap_percent/10.0);
+                                        snprintf(report, STRLEN, "swap usage check succeeded [current swap usage=%.1f%%]", systeminfo.total_swap_percent / 10.);
                         }
                         break;
 
@@ -343,24 +343,24 @@ static void check_process_resources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_LoadAverage1m:
-                        if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[0]*10.0), r->limit)) {
-                                snprintf(report, STRLEN, "loadavg(1min) of %.1f matches resource limit [loadavg(1min)%s%.1f]", systeminfo.loadavg[0], operatorshortnames[r->operator], r->limit/10.0);
+                        if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[0] * 10.), r->limit)) {
+                                snprintf(report, STRLEN, "loadavg(1min) of %.1f matches resource limit [loadavg(1min)%s%.1f]", systeminfo.loadavg[0], operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
                                 snprintf(report, STRLEN, "loadavg(1min) check succeeded [current loadavg(1min)=%.1f]", systeminfo.loadavg[0]);
                         break;
 
                 case Resource_LoadAverage5m:
-                        if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[1]*10.0), r->limit)) {
-                                snprintf(report, STRLEN, "loadavg(5min) of %.1f matches resource limit [loadavg(5min)%s%.1f]", systeminfo.loadavg[1], operatorshortnames[r->operator], r->limit/10.0);
+                        if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[1] * 10.), r->limit)) {
+                                snprintf(report, STRLEN, "loadavg(5min) of %.1f matches resource limit [loadavg(5min)%s%.1f]", systeminfo.loadavg[1], operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
                                 snprintf(report, STRLEN, "loadavg(5min) check succeeded [current loadavg(5min)=%.1f]", systeminfo.loadavg[1]);
                         break;
 
                 case Resource_LoadAverage15m:
-                        if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[2]*10.0), r->limit)) {
-                                snprintf(report, STRLEN, "loadavg(15min) of %.1f matches resource limit [loadavg(15min)%s%.1f]", systeminfo.loadavg[2], operatorshortnames[r->operator], r->limit/10.0);
+                        if (Util_evalQExpression(r->operator, (int)(systeminfo.loadavg[2] * 10.), r->limit)) {
+                                snprintf(report, STRLEN, "loadavg(15min) of %.1f matches resource limit [loadavg(15min)%s%.1f]", systeminfo.loadavg[2], operatorshortnames[r->operator], r->limit / 10.);
                                 okay = false;
                         } else
                                 snprintf(report, STRLEN, "loadavg(15min) check succeeded [current loadavg(15min)=%.1f]", systeminfo.loadavg[2]);
@@ -384,10 +384,10 @@ static void check_process_resources(Service_T s, Resource_T r) {
 
                 case Resource_MemoryPercentTotal:
                         if (Util_evalQExpression(r->operator, s->inf->priv.process.total_mem_percent, r->limit)) {
-                                snprintf(report, STRLEN, "total mem amount of %.1f%% matches resource limit [total mem amount%s%.1f%%]", (float)s->inf->priv.process.total_mem_percent/10.0, operatorshortnames[r->operator], (float)r->limit/10.0);
+                                snprintf(report, STRLEN, "total mem amount of %.1f%% matches resource limit [total mem amount%s%.1f%%]", (float)s->inf->priv.process.total_mem_percent / 10., operatorshortnames[r->operator], (float)r->limit / 10.);
                                 okay = false;
                         } else
-                                snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount=%.1f%%]", s->inf->priv.process.total_mem_percent/10.0);
+                                snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount=%.1f%%]", s->inf->priv.process.total_mem_percent / 10.);
                         break;
 
                 default:
@@ -778,7 +778,7 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
 
                         if (td->limit_percent >= 0) {
                                 if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.inode_percent, td->limit_percent)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode usage %.1f%% matches resource limit [inode usage%s%.1f%%]", s->inf->priv.filesystem.inode_percent/10., operatorshortnames[td->operator], td->limit_percent/10.);
+                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode usage %.1f%% matches resource limit [inode usage%s%.1f%%]", s->inf->priv.filesystem.inode_percent / 10., operatorshortnames[td->operator], td->limit_percent / 10.);
                                         return;
                                 }
                         } else {
@@ -787,13 +787,33 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                                         return;
                                 }
                         }
-                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode usage test succeeded [current inode usage=%.1f%%]", s->inf->priv.filesystem.inode_percent/10.);
+                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode usage test succeeded [current inode usage=%.1f%%]", s->inf->priv.filesystem.inode_percent / 10.);
+                        return;
+
+                case Resource_InodeFree:
+                        if (s->inf->priv.filesystem.f_files <= 0) {
+                                DEBUG("'%s' filesystem doesn't support inodes\n", s->name);
+                                return;
+                        }
+
+                        if (td->limit_percent >= 0) {
+                                if (Util_evalQExpression(td->operator, 1000 - s->inf->priv.filesystem.inode_percent, td->limit_percent)) {
+                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode free %.1f%% matches resource limit [inode free%s%.1f%%]", (1000. - s->inf->priv.filesystem.inode_percent) / 10., operatorshortnames[td->operator], td->limit_percent / 10.);
+                                        return;
+                                }
+                        } else {
+                                if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.f_filesfree, td->limit_absolute)) {
+                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode free %lld matches resource limit [inode free%s%lld]", s->inf->priv.filesystem.f_filesfree, operatorshortnames[td->operator], td->limit_absolute);
+                                        return;
+                                }
+                        }
+                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode free test succeeded [current inode free=%.1f%%]", (1000. - s->inf->priv.filesystem.inode_percent) / 10.);
                         return;
 
                 case Resource_Space:
                         if (td->limit_percent >= 0) {
                                 if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.space_percent, td->limit_percent)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "space usage %.1f%% matches resource limit [space usage%s%.1f%%]", s->inf->priv.filesystem.space_percent/10., operatorshortnames[td->operator], td->limit_percent/10.);
+                                        Event_post(s, Event_Resource, State_Failed, td->action, "space usage %.1f%% matches resource limit [space usage%s%.1f%%]", s->inf->priv.filesystem.space_percent / 10., operatorshortnames[td->operator], td->limit_percent / 10.);
                                         return;
                                 }
                         } else {
@@ -810,7 +830,30 @@ static void check_filesystem_resources(Service_T s, Filesystem_T td) {
                                         return;
                                 }
                         }
-                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space usage test succeeded [current space usage=%.1f%%]", s->inf->priv.filesystem.space_percent/10.);
+                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space usage test succeeded [current space usage=%.1f%%]", s->inf->priv.filesystem.space_percent / 10.);
+                        return;
+
+                case Resource_SpaceFree:
+                        if (td->limit_percent >= 0) {
+                                if (Util_evalQExpression(td->operator, 1000 - s->inf->priv.filesystem.space_percent, td->limit_percent)) {
+                                        Event_post(s, Event_Resource, State_Failed, td->action, "space free %.1f%% matches resource limit [space free%s%.1f%%]", (1000. - s->inf->priv.filesystem.space_percent) / 10., operatorshortnames[td->operator], td->limit_percent / 10.);
+                                        return;
+                                }
+                        } else {
+                                if (Util_evalQExpression(td->operator, s->inf->priv.filesystem.f_blocksfreetotal, td->limit_absolute)) {
+                                        if (s->inf->priv.filesystem.f_bsize > 0) {
+                                                char buf1[STRLEN];
+                                                char buf2[STRLEN];
+                                                Str_bytesToSize(s->inf->priv.filesystem.f_blocksfreetotal * s->inf->priv.filesystem.f_bsize, buf1);
+                                                Str_bytesToSize(td->limit_absolute * s->inf->priv.filesystem.f_bsize, buf2);
+                                                Event_post(s, Event_Resource, State_Failed, td->action, "space free %s matches resource limit [space free%s%s]", buf1, operatorshortnames[td->operator], buf2);
+                                        } else {
+                                                Event_post(s, Event_Resource, State_Failed, td->action, "space free %lld blocks matches resource limit [space free%s%lld blocks]", s->inf->priv.filesystem.f_blocksfreetotal, operatorshortnames[td->operator], td->limit_absolute);
+                                        }
+                                        return;
+                                }
+                        }
+                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space free test succeeded [current space free=%.1f%%]", (1000. - s->inf->priv.filesystem.space_percent) / 10.);
                         return;
 
                 default:
