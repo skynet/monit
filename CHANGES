@@ -15,6 +15,9 @@ startup in the case that DNS is not currently available.
 
 Fixed: The filesystem uid, gid and permission report in 'monit status' command.
 
+Fixed: Issue #179: If the CLI command failed, the output may contain HTML footer
+in addition to plaintext error description.
+
 Fixed: Issue #186: RPM should preserve the existing configuration file on update.
 
 

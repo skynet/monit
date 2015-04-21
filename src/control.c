@@ -418,8 +418,7 @@ boolean_t control_service_daemon(const char *S, const char *action) {
                         p += strlen(token);
                         message = CALLOC(1, content_length + 1);
                         snprintf(message, content_length + 1, "%s", p);
-                        p = strstr(message, "<p>");
-                        if (p)
+                        if ((p = strstr(message, "<p>")) || (p = strstr(message, "<hr>")))
                                 *p = 0;
                 }
         err2:
