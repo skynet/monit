@@ -20,6 +20,9 @@ in addition to plaintext error description.
 
 Fixed: Issue #186: RPM should preserve the existing configuration file on update.
 
+Fixed: Issue #188: MacOSX system memory usage statistics included inactive memory
+(technically free).
+
 
 Version 5.12.2
 

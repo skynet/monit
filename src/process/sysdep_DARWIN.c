@@ -285,30 +285,20 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  * @return: true if successful, false if failed (or not available)
  */
 boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
-        int                    mib[2];
-        unsigned int           pw, pa, pi;
-        size_t                 len;
-        struct xsw_usage       swap;
-        kern_return_t          kret;
-        vm_statistics_data_t   page_info;
-        mach_msg_type_number_t count;
-
         /* Memory */
-        count = HOST_VM_INFO_COUNT;
-        kret  = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
+        vm_statistics_data_t page_info;
+        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+        kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
         if (kret != KERN_SUCCESS) {
                 DEBUG("system statistic error -- cannot get memory usage\n");
                 return false;
         }
-        pw = page_info.wire_count * pagesize_kbyte;
-        pa = page_info.active_count * pagesize_kbyte;
-        pi = page_info.inactive_count * pagesize_kbyte;
-        si->total_mem_kbyte = pw + pa + pi;
+        si->total_mem_kbyte = (page_info.wire_count + page_info.active_count) * pagesize_kbyte;
 
         /* Swap */
-        mib[0] = CTL_VM;
-        mib[1] = VM_SWAPUSAGE;
-        len    = sizeof(struct xsw_usage);
+        int mib[2] = {CTL_VM, VM_SWAPUSAGE};
+        size_t len = sizeof(struct xsw_usage);
+        struct xsw_usage swap;
         if (sysctl(mib, 2, &swap, &len, NULL, 0) == -1) {
                 DEBUG("system statistic error -- cannot get swap usage: %s\n", STRERROR);
                 si->swap_kbyte_max = 0;
