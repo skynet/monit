@@ -21,10 +21,10 @@ in addition to plaintext error description.
 Fixed: Issue #186: RPM should preserve the existing configuration file on update.
 
 Fixed: Issue #188: MacOSX system memory usage statistics included inactive memory
-(technically free).
+(free for reuse).
 
-Fixed: FreeBSD, NetBSD: The system memory usage statistics didn't include "wired"
-part (kernel memory).
+Fixed: FreeBSD, OpenBSD, NetBSD: The system memory usage statistics didn't include
+the "wired" part (kernel memory).
 
 
 Version 5.12.2
