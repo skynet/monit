@@ -227,32 +227,17 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  * @return: true if successful, false if failed (or not available)
  */
 boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
-        int            mib[2];
-        size_t         len;
-        struct vmtotal vm;
-        struct uvmexp  vmexp;
-
-        /* Memory */
-        mib[0] = CTL_VM;
-        mib[1] = VM_METER;
-        len    = sizeof(struct vmtotal);
+        struct uvmexp_sysctl vm;
+        int mib[2] = {CTL_VM, VM_UVMEXP2};
+        size_t len = sizeof(struct uvmexp_sysctl);
         if (sysctl(mib, 2, &vm, &len, NULL, 0) == -1) {
-                LogError("system statistic error -- cannot get real memory usage: %s\n", STRERROR);
-                return false;
-        }
-        si->total_mem_kbyte = (unsigned long)(vm.t_arm * pagesize_kbyte);
-
-        /* Swap */
-        mib[1] = VM_UVMEXP;
-        len = sizeof(vmexp);
-        if (sysctl(mib, 2, &vmexp, &len, NULL, 0) == -1) {
-                LogError("system statistic error -- cannot get swap usage: %s\n", STRERROR);
+                LogError("system statistic error -- cannot get memory usage: %s\n", STRERROR);
                 si->swap_kbyte_max = 0;
                 return false;
         }
-        si->swap_kbyte_max   = (unsigned long)((double)vmexp.swpages   * ((double)vmexp.pagesize / 1024.));
-        si->total_swap_kbyte = (unsigned long)((double)vmexp.swpginuse * ((double)vmexp.pagesize / 1024.));
-
+        si->total_mem_kbyte = (long)((double)(vm.active + vm.wired) * ((double)vm.pagesize / 1024.));
+        si->swap_kbyte_max = (unsigned long)((double)vm.swpages * ((double)vm.pagesize / 1024.));
+        si->total_swap_kbyte = (unsigned long)((double)vm.swpginuse * ((double)vm.pagesize / 1024.));
         return true;
 }
 
