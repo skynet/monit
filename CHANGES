@@ -23,8 +23,8 @@ Fixed: Issue #186: RPM should preserve the existing configuration file on update
 Fixed: Issue #188: MacOSX system memory usage statistics included inactive memory
 (technically free).
 
-Fixed: NetBSD: The system memory usage statistics didn't included "wired" part
-(kernel memory).
+Fixed: FreeBSD, NetBSD: The system memory usage statistics didn't include "wired"
+part (kernel memory).
 
 
 Version 5.12.2

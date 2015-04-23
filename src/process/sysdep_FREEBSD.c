@@ -214,37 +214,42 @@ int getloadavg_sysdep(double *loadv, int nelem) {
  * @return: true if successful, false if failed (or not available)
  */
 boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
-        int                mib[16];
-        size_t             len;
-        int                n = 0;
-        int                pagesize = getpagesize();
-        int                v_active_count;
-        size_t             miblen;
-        struct xswdev      xsw;
-        unsigned long long total = 0ULL;
-        unsigned long long used  = 0ULL;
-
         /* Memory */
-        len = sizeof(v_active_count);
-        if (sysctlbyname("vm.stats.vm.v_active_count", &v_active_count, &len, NULL, 0) == -1) {
-                LogError("system statistic error -- cannot get for real memory usage: %s\n", STRERROR);
+        size_t len = sizeof(unsigned int);
+        unsigned int active;
+        if (sysctlbyname("vm.stats.vm.v_active_count", &active, &len, NULL, 0) == -1) {
+                LogError("system statistic error -- cannot get for active memory usage: %s\n", STRERROR);
                 return false;
         }
-        if (len != sizeof(v_active_count)) {
-                LogError("system statistic error -- real memory usage statics error\n");
+        if (len != sizeof(unsigned int)) {
+                LogError("system statistic error -- active memory usage statics error\n");
                 return false;
         }
-        si->total_mem_kbyte = v_active_count * pagesize_kbyte;
+        unsigned int wired;
+        if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &len, NULL, 0) == -1) {
+                LogError("system statistic error -- cannot get for wired memory usage: %s\n", STRERROR);
+                return false;
+        }
+        if (len != sizeof(unsigned int)) {
+                LogError("system statistic error -- wired memory usage statics error\n");
+                return false;
+        }
+        si->total_mem_kbyte = (active + wired) * pagesize_kbyte;
 
         /* Swap */
+        int mib[16];
         memset(mib, 0, sizeof(mib));
-        miblen = sizeof(mib) / sizeof(mib[0]);
+        unsigned long long total = 0ULL;
+        unsigned long long used  = 0ULL;
+        size_t miblen = sizeof(mib) / sizeof(mib[0]);
         if (sysctlnametomib("vm.swap_info", mib, &miblen) == -1) {
                 LogError("system statistic error -- cannot get swap usage: %s\n", STRERROR);
                 si->swap_kbyte_max = 0;
                 return false;
         }
+        int n = 0;
         while (true) {
+                struct xswdev xsw;
                 mib[miblen] = n;
                 len = sizeof(struct xswdev);
                 if (sysctl(mib, miblen + 1, &xsw, &len, NULL, 0) == -1)
@@ -258,8 +263,8 @@ boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
                 used  += xsw.xsw_used;
                 n++;
         }
-        si->swap_kbyte_max   = (unsigned long)(double)total * (double)pagesize / 1024.;
-        si->total_swap_kbyte = (unsigned long)(double)used  * (double)pagesize / 1024.;
+        si->swap_kbyte_max = total * pagesize_kbyte;
+        si->total_swap_kbyte = used * pagesize_kbyte;
         return true;
 }
 
