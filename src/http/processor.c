@@ -122,6 +122,18 @@ static boolean_t is_authenticated(HttpRequest, HttpResponse);
 static int get_next_token(char *s, int *cursor, char **r);
 
 
+/*
+ * An object for implementors of the service functions; doGet and
+ * doPost. Implementing modules i.e. CERVLETS, must implement the
+ * doGet and doPost functions and the engine will call the add_Impl
+ * function to setup the callback to these functions.
+ */
+struct  ServiceImpl {
+        void(*doGet)(HttpRequest, HttpResponse);
+        void(*doPost)(HttpRequest, HttpResponse);
+} Impl;
+
+
 /* ------------------------------------------------------------------ Public */
 
 
