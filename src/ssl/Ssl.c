@@ -300,7 +300,10 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
                 goto sslerror;
         }
         if (version == SSL_Auto)
-                SSL_CTX_set_options(C->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION);
+                SSL_CTX_set_options(C->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+#ifdef SSL_OP_NO_COMPRESSION
+        SSL_CTX_set_options(C->ctx, SSL_OP_NO_COMPRESSION);
+#endif
         if (SSL_CTX_set_cipher_list(C->ctx, CIPHER_LIST) != 1) {
                 LogError("SSL: client cipher list [%s] error -- no valid ciphers\n", CIPHER_LIST);
                 goto sslerror;
@@ -509,7 +512,10 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                 LogError("SSL: server cipher list [%s] error -- no valid ciphers\n", CIPHER_LIST);
                 goto sslerror;
         }
-        SSL_CTX_set_options(S->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION);
+        SSL_CTX_set_options(S->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+#ifdef SSL_OP_NO_COMPRESSION
+        SSL_CTX_set_options(S->ctx, SSL_OP_NO_COMPRESSION);
+#endif
         SSL_CTX_set_session_cache_mode(S->ctx, SSL_SESS_CACHE_OFF);
         if (SSL_CTX_use_certificate_chain_file(S->ctx, pemfile) != 1) {
                 LogError("SSL: server certificate chain loading failed -- %s\n", SSLERROR);
