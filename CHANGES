@@ -10,6 +10,9 @@ bytes and percent limit forms are supported. For example to check that the
 filesystem has at minimum 10GB left:
     if space free < 10 GB then alert
 
+New: Issue #190: Add support for ServerNameIndication TLS extension to support
+name based virtual SSL servers.
+
 Fixed: Monit doesn't try to check hostnames on start to allow faster
 startup in the case that DNS is not currently available.
 

@@ -242,7 +242,7 @@ T _createIpSocket(const char *host, const struct sockaddr *addr, socklen_t addrl
                                         S->host = Str_dup(host);
                                         S->port = _getPort(addr, addrlen);
                                         S->connection_type = Connection_Client;
-                                        if (ssl.use_ssl && ! Socket_enableSsl(S, ssl)) {
+                                        if (ssl.use_ssl && ! Socket_enableSsl(S, ssl, host)) {
                                                 Socket_free(&S);
                                                 THROW(IOException, "Could not switch socket to SSL");
                                         }
@@ -592,10 +592,10 @@ void Socket_test(void *P) {
 }
 
 
-boolean_t Socket_enableSsl(T S, SslOptions_T ssl)  {
+boolean_t Socket_enableSsl(T S, SslOptions_T ssl, const char *name)  {
         assert(S);
 #ifdef HAVE_OPENSSL
-        if ((S->ssl = Ssl_new(ssl.clientpemfile, ssl.version)) && Ssl_connect(S->ssl, S->socket) && (! ssl.certmd5 || Ssl_checkCertificate(S->ssl, ssl.certmd5)))
+        if ((S->ssl = Ssl_new(ssl.clientpemfile, ssl.version)) && Ssl_connect(S->ssl, S->socket, name) && (! ssl.certmd5 || Ssl_checkCertificate(S->ssl, ssl.certmd5)))
                 return true;
 #endif
         return false;

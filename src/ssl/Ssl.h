@@ -84,30 +84,32 @@ T Ssl_new(char *clientpemfile, Ssl_Version version);
 
 /**
  * Free an SSL connection object
- * @param C A reference to SSL connection object 
+ * @param C A reference to SSL connection object
  */
 void Ssl_free(T *C);
 
 
 /**
- * Connect a socket using SSL
- * @param C An SSL connection object 
+ * Connect a socket using SSL. If name is set and TLS is used,
+ * the Server Name Indication (SNI) TLS extension is enabled.
+ * @param C An SSL connection object
  * @param socket A socket
+ * @param name A server name string (optional)
  * @return true if succeeded or false if failed
  */
-boolean_t Ssl_connect(T C, int socket);
+boolean_t Ssl_connect(T C, int socket, const char *name);
 
 
 /**
  * Close an SSL connection
- * @param C An SSL connection object 
+ * @param C An SSL connection object
  */
 void Ssl_close(T C);
 
 
 /**
  * Write <code>size</code> bytes from <code>b</code> to an encrypted channel
- * @param C An SSL connection object 
+ * @param C An SSL connection object
  * @param b The data to be written
  * @param size Number of bytes in b
  * @param timeout Milliseconds to wait for data to be written
@@ -118,7 +120,7 @@ int Ssl_write(T C, void *b, int size, int timeout);
 
 /**
  * Read <code>size</code> bytes to <code>b</code> from an encrypted channel
- * @param C An SSL connection object 
+ * @param C An SSL connection object
  * @param b A byte buffer
  * @param size The size of the buffer b
  * @param timeout Milliseconds to wait for data to be read
@@ -129,7 +131,7 @@ int Ssl_read(T C, void *b, int size, int timeout);
 
 /**
  * Compare a peer certificate with a given MD5 checksum
- * @param C An SSL connection object 
+ * @param C An SSL connection object
  * @param md5sum Expected MD5 checksum in string format
  * @return true if succeeded or false if failed
  */

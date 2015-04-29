@@ -213,7 +213,7 @@ boolean_t sendmail(Mail_T mail) {
                 if (S.ssl.use_ssl && (S.ssl.version == SSL_TLSV1 || S.ssl.version == SSL_TLSV11 || S.ssl.version == SSL_TLSV12)) {
                         do_send(&S, "STARTTLS\r\n");
                         do_status(&S);
-                        if (! Socket_enableSsl(S.socket, S.ssl)) {
+                        if (! Socket_enableSsl(S.socket, S.ssl, NULL)) {
                                 S.quit = false;
                                 THROW(IOException, "Cannot switch to SSL");
                         }
