@@ -13,6 +13,8 @@ filesystem has at minimum 10GB left:
 New: Issue #190: Add support for ServerNameIndication TLS extension to support
 name based virtual SSL servers.
 
+New: The SSL/TLS compression is disabled now, as well as RC4 and DES ciphers.
+
 Fixed: Monit doesn't try to check hostnames on start to allow faster
 startup in the case that DNS is not currently available.
 

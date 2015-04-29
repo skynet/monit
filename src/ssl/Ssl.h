@@ -45,9 +45,9 @@ typedef struct T *T;
 
 
 /*
- * The list of all ciphers suites in order of strength except those containing anonymous DH ciphers, low  bit-size ciphers, export-crippled ciphers or the MD5 hash algorithm
+ * The list of all ciphers suites in order of strength except those containing anonymous DH ciphers, low bit-size ciphers, export-crippled ciphersm the MD5 hash algorithm and weak DES and RC4 ciphers.
  */
-#define CIPHER_LIST "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
+#define CIPHER_LIST "ALL:!DES:!RC4:!aNULL:!LOW:!EXP:!MD5:@STRENGTH"
 
 
 /**
