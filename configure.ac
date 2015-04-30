@@ -184,7 +184,6 @@ AC_CHECK_HEADERS([ \
 	sys/vfs.h \
 	syslog.h \
 	unistd.h \
-        uvm/uvm.h \
         uvm/uvm_extern.h \
         uvm/uvm_param.h \
         vm/vm.h \
@@ -338,6 +337,25 @@ AC_CHECK_HEADERS([ \
          #endif
         ])
 
+AC_CHECK_HEADERS([ \
+	uvm/uvm.h \
+        ],
+        [],
+        [],
+        [
+         #ifdef HAVE_SYS_MUTEX_H
+         #include <sys/mutex.h>
+         #endif
+         #ifdef HAVE_SYS_TYPES_H
+         #include <sys/types.h>
+         #endif
+         #ifdef HAVE_SYS_PARAM_H
+         #include <sys/param.h>
+         #endif
+         #ifdef HAVE_UVM_UVM_PARAM_H
+         #include <uvm/uvm_param.h>
+         #endif
+        ])
 
 # ------------------------------------------------------------------------
 # Types
