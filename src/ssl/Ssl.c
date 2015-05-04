@@ -512,6 +512,9 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                 LogError("SSL: server cipher list [%s] error -- no valid ciphers\n", CIPHER_LIST);
                 goto sslerror;
         }
+#ifdef SSL_CTRL_SET_ECDH_AUTO
+        SSL_CTX_set_ecdh_auto(S->ctx, 1);
+#endif
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 #ifdef SSL_OP_NO_COMPRESSION
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_COMPRESSION);
