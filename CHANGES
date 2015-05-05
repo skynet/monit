@@ -4,7 +4,7 @@
 
 Version 5.14
 
-New: Enable ECDH ciphers for Monit HTTP interface (requires OpenSSL 1.0.2a or newer).
+New: Enable ECDH ciphers for Monit HTTP interface.
 
 
 Version 5.13
