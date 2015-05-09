@@ -513,8 +513,10 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                 goto sslerror;
         }
 #ifdef SSL_CTRL_SET_ECDH_AUTO
+        SSL_CTX_set_options(S->ctx, SSL_OP_SINGLE_ECDH_USE);
         SSL_CTX_set_ecdh_auto(S->ctx, 1);
 #elif defined SSL_CTRL_SET_TMP_ECDH
+        SSL_CTX_set_options(S->ctx, SSL_OP_SINGLE_ECDH_USE);
         EC_KEY *key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
         if (key) {
                 SSL_CTX_set_tmp_ecdh(S->ctx, key);
