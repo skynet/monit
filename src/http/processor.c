@@ -425,6 +425,8 @@ static void do_service(Socket_T s) {
         volatile HttpResponse res = create_HttpResponse(s);
         volatile HttpRequest req = create_HttpRequest(s);
         if (res && req) {
+                if (Run.httpd.flags & Httpd_Ssl)
+                        set_header(res, "Strict-Transport-Security", "max-age=63072000; includeSubdomains; preload");
                 if (is_authenticated(req, res)) {
                         if (IS(req->method, METHOD_GET))
                                 Impl.doGet(req, res);

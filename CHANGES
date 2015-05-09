@@ -6,6 +6,9 @@ Version 5.14
 
 New: Enable ECDH ciphers for Monit HTTP interface.
 
+New: Enable HTTP Strict Transport Security (HSTS) on Monit HTTP interface if
+SSL is enabled.
+
 
 Version 5.13
 
