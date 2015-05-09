@@ -512,6 +512,9 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                 LogError("SSL: server cipher list [%s] error -- no valid ciphers\n", CIPHER_LIST);
                 goto sslerror;
         }
+#ifdef SSL_MODE_RELEASE_BUFFERS
+        SSL_CTX_set_mode(S->ctx, SSL_MODE_RELEASE_BUFFERS);
+#endif
 #ifdef SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 #endif
