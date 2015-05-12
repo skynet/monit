@@ -344,8 +344,8 @@ T Socket_create(const char *host, int port, Socket_Type type, Socket_Family fami
         ASSERT(timeout > 0);
         volatile T S = NULL;
         struct addrinfo *result = _resolve(host, port, type, family);
-        char error[STRLEN];
         if (result) {
+                char error[STRLEN];
                 // The host may resolve to multiple IPs and if at least one succeeded, we have no problem and don't have to flood the log with partial errors => log only the last error
                 for (struct addrinfo *r = result; r && S == NULL; r = r->ai_next) {
                         TRY
@@ -359,9 +359,9 @@ T Socket_create(const char *host, int port, Socket_Type type, Socket_Family fami
                         END_TRY;
                 }
                 freeaddrinfo(result);
+                if (! S)
+                        LogError("Cannot create socket to [%s]:%d -- %s\n", host, port, error);
         }
-        if (! S)
-                LogError("Cannot create socket to [%s]:%d -- %s\n", host, port, error);
         return S;
 }
 
