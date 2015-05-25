@@ -9,6 +9,9 @@ New: Enable ECDH ciphers for Monit HTTP interface.
 New: Enable HTTP Strict Transport Security (HSTS) on Monit HTTP interface if
 SSL is enabled.
 
+Fixed: Issue #98: MySQL test might blocked the host because of too many
+connection errors.
+
 
 Version 5.13
 

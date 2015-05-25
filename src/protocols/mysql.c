@@ -118,5 +118,19 @@ void check_mysql(Socket_T socket) {
         if (pkt.seq != 0)
                 THROW(IOException, "Invalid packet sequence id %d", pkt.seq);
         DEBUG("MySQL: Protocol: %d, Server Version: %s\n", protocol_version, server_version);
+        // We have to send Handshake Response Packet - if we'll close connection here, MySQL will increment interrupted connections counter and will block this host after a while. We send anonymous
+        // login packet, the server response is not important at this point, even if authentication fails => MySQL reacts
+        unsigned char handshake[38] = {
+                /** Packet Length        (3) */ 0x22, 0x00, 0x00,
+                /** Packet Number        (1) */ 0x01,
+                /** Capability Flags     (4) */ 0x01, 0x82, 0x00, 0x00,
+                /** Max Packet Size      (4) */ 0x00, 0x00, 0x00, 0x01,
+                /** Character Set        (1) */ 0x08,
+                /** Reserved            (23) */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                /** Username     string(NUL) */ 0x00,
+                /** Auth response length (1) */ 0x00
+        };
+        if (Socket_write(socket, handshake, sizeof(handshake)) < 0)
+                THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
 }
 
