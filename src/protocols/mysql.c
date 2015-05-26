@@ -241,19 +241,19 @@ static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
 }
 
 
-//FIXME: convert values to network order
+//FIXME: convert numeric values to network order
 static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt) {
         memset(pkt, 0, sizeof(*pkt));
-        pkt->len = 34; //FIXME: set packet length with username + authdata
         pkt->seq = 1;
         pkt->capabilities = CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION;
-        pkt->maxpacketsize = 8192; //FIXME: network order
+        pkt->maxpacketsize = 8192;
         pkt->characterset = 8;
         pkt->username = pkt->buf + 23; // skip reserved bytes
         //snprintf(pkt->username, xxx, "%s", yyy); //FIXME: use username if set in monit configuration, otherwise "" (anonymous)
         pkt->authdatalen = pkt->username + strlen(pkt->username + 1);
         *pkt->authdatalen = 0; //FIXME: compute authdata if password is set in monit configuration file + set authdatalen 
         pkt->authdata = pkt->authdatalen + 1;
+        pkt->len = sizeof(pkt->capabilities) + sizeof(pkt->maxpacketsize) + sizeof(pkt->characterset) + 23 + strlen(pkt->username) + 1 + 1 + strlen(pkt->authdata);
         if (Socket_write(socket, pkt, pkt->len + 4) < 0)
                 THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
 }
