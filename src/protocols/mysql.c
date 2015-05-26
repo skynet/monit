@@ -100,19 +100,34 @@
 
 
 typedef struct {
-        uint32_t       len:24,
-                       seq:8;
+        uint32_t       len : 24;
+        uint32_t       seq : 8;
         uint8_t        protocol;
         unsigned char *serverversion;
         uint32_t       connectionid;
         uint8_t        characterset;
-        uint16_t       statusflags;
-        uint32_t       capabilityflags;
+        uint16_t       status;
+        uint32_t       capabilities;
         uint8_t        authdatalen;
         unsigned char  authdata[21];
         // Data buffer
         unsigned char buf[STRLEN + 1];
 } mysql_handshake_init_t;
+
+
+typedef struct {
+        uint32_t       len : 24;
+        uint32_t       seq : 8;
+        uint32_t       capabilities;
+        uint32_t       maxpacketsize;
+        uint8_t        characterset;
+        // Data buffer
+        unsigned char buf[STRLEN + 1];
+        // Pointers to data hosted in buffer
+        unsigned char *username;
+        uint8_t       *authdatalen;
+        unsigned char *authdata;
+} mysql_handshake_response_t;
 
 
 /* --------------------------------------------------------------- Private */
@@ -190,7 +205,7 @@ static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
         // capability flags (lower 2 bytes)
         if (cursor + 2 > limit)
                 return;
-        pkt->capabilityflags = B2(cursor);
+        pkt->capabilities = B2(cursor);
         cursor += 2;
         // character set
         if (cursor + 1 > limit)
@@ -200,17 +215,17 @@ static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
         // status flags
         if (cursor + 2 > limit)
                 return;
-        pkt->statusflags = B2(cursor);
+        pkt->status = B2(cursor);
         cursor += 2;
         // capability flags (upper 2 bytes)
         if (cursor + 2 > limit)
                 return;
-        pkt->capabilityflags |= B2(cursor) << 16; // merge capability flags (lower 2 bytes + upper 2 bytes)
+        pkt->capabilities |= B2(cursor) << 16; // merge capability flags (lower 2 bytes + upper 2 bytes)
         cursor += 2;
         // byte reserved for length of auth-plugin-data
         if (cursor + 1 > limit)
                 return;
-        if (pkt->capabilityflags & CLIENT_PLUGIN_AUTH)
+        if (pkt->capabilities & CLIENT_PLUGIN_AUTH)
                 pkt->authdatalen = cursor[0];
         cursor += 1;
         // reserved bytes
@@ -220,9 +235,27 @@ static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
         // auth_plugin_data_part_2
         if (cursor + 13 > limit)
                 return;
-        if (pkt->capabilityflags & CLIENT_SECURE_CONNECTION)
+        if (pkt->capabilities & CLIENT_SECURE_CONNECTION)
                 snprintf(pkt->authdata + 8, 13, "%s", cursor);
         // auth-plugin name ... ignored (not needed)
+}
+
+
+//FIXME: convert values to network order
+static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt) {
+        memset(pkt, 0, sizeof(*pkt));
+        pkt->len = 34; //FIXME: set packet length with username + authdata
+        pkt->seq = 1;
+        pkt->capabilities = CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION;
+        pkt->maxpacketsize = 8192; //FIXME: network order
+        pkt->characterset = 8;
+        pkt->username = pkt->buf + 23; // skip reserved bytes
+        //snprintf(pkt->username, xxx, "%s", yyy); //FIXME: use username if set in monit configuration, otherwise "" (anonymous)
+        pkt->authdatalen = pkt->username + strlen(pkt->username + 1);
+        *pkt->authdatalen = 0; //FIXME: compute authdata if password is set in monit configuration file + set authdatalen 
+        pkt->authdata = pkt->authdatalen + 1;
+        if (Socket_write(socket, pkt, pkt->len + 4) < 0)
+                THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
 }
 
 
@@ -236,22 +269,12 @@ static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
  */
 void check_mysql(Socket_T socket) {
         ASSERT(socket);
-        mysql_handshake_init_t pkt;
-        _handshakeInit(socket, &pkt);
-        DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d, Character Set: 0x%x, Status: 0x%x, Capabilities: 0x%x\n", pkt.protocol, pkt.serverversion, pkt.connectionid, pkt.characterset, pkt.statusflags, pkt.capabilityflags);
-        // We have to send Handshake Response Packet - if we'll close connection here, MySQL will increment interrupted connections counter and will block this host after a while. We send anonymous
-        // login packet, the server response is not important at this point, even if authentication fails => MySQL reacts
-        unsigned char handshake[38] = {
-                /** Packet Length        (3) */ 0x22, 0x00, 0x00,
-                /** Packet Number        (1) */ 0x01,
-                /** Capability Flags     (4) */ 0x01, 0x82, 0x00, 0x00,
-                /** Max Packet Size      (4) */ 0x00, 0x00, 0x00, 0x01,
-                /** Character Set        (1) */ 0x08,
-                /** Reserved            (23) */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                /** Username     string(NUL) */ 0x00,
-                /** Auth response length (1) */ 0x00
-        };
-        if (Socket_write(socket, handshake, sizeof(handshake)) < 0)
-                THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
+
+        mysql_handshake_init_t hi;
+        _handshakeInit(socket, &hi);
+        DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d, Character Set: 0x%x, Status: 0x%x, Capabilities: 0x%x\n", hi.protocol, hi.serverversion, hi.connectionid, hi.characterset, hi.status, hi.capabilities);
+
+        mysql_handshake_response_t hr;
+        _handshakeResponse(socket, &hr);
 }
 
