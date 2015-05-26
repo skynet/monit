@@ -251,8 +251,9 @@ static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt)
         pkt->username = pkt->buf + 23; // skip reserved bytes
         //snprintf(pkt->username, xxx, "%s", yyy); //FIXME: use username if set in monit configuration, otherwise "" (anonymous)
         pkt->authdatalen = pkt->username + strlen(pkt->username) + 1;
-        *pkt->authdatalen = 0; //FIXME: compute authdata if password is set in monit configuration file + set authdatalen 
         pkt->authdata = pkt->authdatalen + 1;
+        //FIXME: compute and set authdata if password is set in monit configuration file
+        *pkt->authdatalen = strlen(pkt->authdata);
         pkt->len = sizeof(pkt->capabilities) + sizeof(pkt->maxpacketsize) + sizeof(pkt->characterset) + 23 + strlen(pkt->username) + 1 + 1 + strlen(pkt->authdata);
         if (Socket_write(socket, pkt, pkt->len + 4) < 0) // Note: pkt->len value is just payload size + need to add 4 bytes for the header itself (len + seq)
                 THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
