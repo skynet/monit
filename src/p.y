@@ -296,7 +296,7 @@ static int verifyMaxForward(int);
 %token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW ADDRESS INIT
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
 %token PEMFILE ENABLE DISABLE HTTPDSSL CLIENTPEMFILE ALLOWSELFCERTIFICATION
-%token INTERFACE LINK PACKET ERROR BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL
+%token INTERFACE LINK PACKET BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL
 %token IDFILE STATEFILE SEND EXPECT EXPECTBUFFER CYCLE COUNT REMINDER
 %token PIDFILE START STOP PATHTOK
 %token HOST HOSTNAME PORT IPV4 IPV6 TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
@@ -311,7 +311,7 @@ static int verifyMaxForward(int);
 %token <number> CLEANUPLIMIT
 %token <real> REAL
 %token CHECKPROC CHECKFILESYS CHECKFILE CHECKDIR CHECKHOST CHECKSYSTEM CHECKFIFO CHECKPROGRAM CHECKNET
-%token CHILDREN SYSTEM STATUS ORIGIN VERSIONOPT
+%token CHILDREN STATUS ORIGIN VERSIONOPT
 %token RESOURCE MEMORY TOTALMEMORY LOADAVG1 LOADAVG5 LOADAVG15 SWAP
 %token MODE ACTIVE PASSIVE MANUAL CPU TOTALCPU CPUUSER CPUSYSTEM CPUWAIT
 %token GROUP REQUEST DEPENDS BASEDIR SLOT EVENTQUEUE SECRET HOSTHEADER
@@ -1166,22 +1166,22 @@ sslversion      : /* EMPTY */  { $<number>$ = SSL_Disabled; }
                 ;
 
 protocol        : /* EMPTY */  {
-                    portset.protocol = Protocol_get(Protocol_DEFAULT);
+                        portset.protocol = Protocol_get(Protocol_DEFAULT);
                   }
                 | PROTOCOL APACHESTATUS apache_stat_list {
-                    portset.protocol = Protocol_get(Protocol_APACHESTATUS);
+                        portset.protocol = Protocol_get(Protocol_APACHESTATUS);
                   }
                 | PROTOCOL DEFAULT {
-                    portset.protocol = Protocol_get(Protocol_DEFAULT);
+                        portset.protocol = Protocol_get(Protocol_DEFAULT);
                   }
                 | PROTOCOL DNS {
-                    portset.protocol = Protocol_get(Protocol_DNS);
+                        portset.protocol = Protocol_get(Protocol_DNS);
                   }
                 | PROTOCOL DWP  {
-                    portset.protocol = Protocol_get(Protocol_DWP);
+                        portset.protocol = Protocol_get(Protocol_DWP);
                   }
                 | PROTOCOL FTP {
-                    portset.protocol = Protocol_get(Protocol_FTP);
+                        portset.protocol = Protocol_get(Protocol_FTP);
                   }
                 | PROTOCOL HTTP httplist {
                         portset.protocol = Protocol_get(Protocol_HTTP);
@@ -1202,47 +1202,54 @@ protocol        : /* EMPTY */  {
                         portset.protocol = Protocol_get(Protocol_IMAP);
                   }
                 | PROTOCOL CLAMAV {
-                    portset.protocol = Protocol_get(Protocol_CLAMAV);
+                        portset.protocol = Protocol_get(Protocol_CLAMAV);
                   }
                 | PROTOCOL LDAP2 {
-                    portset.protocol = Protocol_get(Protocol_LDAP2);
+                        portset.protocol = Protocol_get(Protocol_LDAP2);
                   }
                 | PROTOCOL LDAP3 {
-                    portset.protocol = Protocol_get(Protocol_LDAP3);
+                        portset.protocol = Protocol_get(Protocol_LDAP3);
                   }
                 | PROTOCOL MONGODB  {
-                    portset.protocol = Protocol_get(Protocol_MONGODB);
+                        portset.protocol = Protocol_get(Protocol_MONGODB);
                   }
-                | PROTOCOL MYSQL {
-                    portset.protocol = Protocol_get(Protocol_MYSQL);
+                | PROTOCOL MYSQL username password {
+                        portset.protocol = Protocol_get(Protocol_MYSQL);
+                        if ($<string>3) {
+                                if (strlen($<string>3) > 16)
+                                        yyerror2("Username too long -- Maximum MySQL username lengh is 16 characters");
+                                else
+                                        portset.username = $<string>3;
+                        }
+                        portset.password = $<string>4;
                   }
                 | PROTOCOL SIP target maxforward {
-                    portset.protocol = Protocol_get(Protocol_SIP);
+                        portset.protocol = Protocol_get(Protocol_SIP);
                   }
                 | PROTOCOL NNTP {
-                    portset.protocol = Protocol_get(Protocol_NNTP);
+                        portset.protocol = Protocol_get(Protocol_NNTP);
                   }
                 | PROTOCOL NTP3  {
-                    portset.protocol = Protocol_get(Protocol_NTP3);
-                    portset.type = Socket_Udp;
+                        portset.protocol = Protocol_get(Protocol_NTP3);
+                        portset.type = Socket_Udp;
                   }
                 | PROTOCOL POSTFIXPOLICY {
-                    portset.protocol = Protocol_get(Protocol_POSTFIXPOLICY);
+                        portset.protocol = Protocol_get(Protocol_POSTFIXPOLICY);
                   }
                 | PROTOCOL POP {
-                    portset.protocol = Protocol_get(Protocol_POP);
+                        portset.protocol = Protocol_get(Protocol_POP);
                   }
                 | PROTOCOL POPS {
-                    portset.type = Socket_Tcp;
-                    portset.SSL.use_ssl = true;
-                    portset.SSL.version = SSL_Auto;
-                    portset.protocol = Protocol_get(Protocol_POP);
+                        portset.type = Socket_Tcp;
+                        portset.SSL.use_ssl = true;
+                        portset.SSL.version = SSL_Auto;
+                        portset.protocol = Protocol_get(Protocol_POP);
                   }
                 | PROTOCOL SIEVE {
-                    portset.protocol = Protocol_get(Protocol_SIEVE);
+                        portset.protocol = Protocol_get(Protocol_SIEVE);
                   }
                 | PROTOCOL SMTP {
-                    portset.protocol = Protocol_get(Protocol_SMTP);
+                        portset.protocol = Protocol_get(Protocol_SMTP);
                   }
                 | PROTOCOL SMTPS {
                         portset.type = Socket_Tcp;
@@ -1251,40 +1258,40 @@ protocol        : /* EMPTY */  {
                         portset.protocol = Protocol_get(Protocol_SMTP);
                  }
                 | PROTOCOL SSH  {
-                    portset.protocol = Protocol_get(Protocol_SSH);
+                        portset.protocol = Protocol_get(Protocol_SSH);
                   }
                 | PROTOCOL RDATE {
-                    portset.protocol = Protocol_get(Protocol_RDATE);
+                        portset.protocol = Protocol_get(Protocol_RDATE);
                   }
                 | PROTOCOL REDIS  {
-                    portset.protocol = Protocol_get(Protocol_REDIS);
+                        portset.protocol = Protocol_get(Protocol_REDIS);
                   }
                 | PROTOCOL RSYNC {
-                    portset.protocol = Protocol_get(Protocol_RSYNC);
+                        portset.protocol = Protocol_get(Protocol_RSYNC);
                   }
                 | PROTOCOL TNS {
-                    portset.protocol = Protocol_get(Protocol_TNS);
+                        portset.protocol = Protocol_get(Protocol_TNS);
                   }
                 | PROTOCOL PGSQL {
-                    portset.protocol = Protocol_get(Protocol_PGSQL);
+                        portset.protocol = Protocol_get(Protocol_PGSQL);
                   }
                 | PROTOCOL LMTP {
-                    portset.protocol = Protocol_get(Protocol_LMTP);
+                        portset.protocol = Protocol_get(Protocol_LMTP);
                   }
                 | PROTOCOL GPS {
-                    portset.protocol = Protocol_get(Protocol_GPS);
+                        portset.protocol = Protocol_get(Protocol_GPS);
                   }
                 | PROTOCOL RADIUS secret {
-                    portset.protocol = Protocol_get(Protocol_RADIUS);
+                        portset.protocol = Protocol_get(Protocol_RADIUS);
                   }
                 | PROTOCOL MEMCACHE {
-                    portset.protocol = Protocol_get(Protocol_MEMCACHE);
+                        portset.protocol = Protocol_get(Protocol_MEMCACHE);
                   }
                 | PROTOCOL WEBSOCKET websocketlist {
-                    portset.protocol = Protocol_get(Protocol_WEBSOCKET);
+                        portset.protocol = Protocol_get(Protocol_WEBSOCKET);
                   }
                 | sendexpectlist {
-                    portset.protocol = Protocol_get(Protocol_GENERIC);
+                        portset.protocol = Protocol_get(Protocol_GENERIC);
                   }
                 ;
 
@@ -2668,6 +2675,8 @@ static void addport(Port_T *list, Port_T port) {
         p->action             = port->action;
         p->timeout            = port->timeout;
         p->retry              = port->retry;
+        p->username           = port->username;
+        p->password           = port->password;
         p->request            = port->request;
         p->generic            = port->generic;
         p->protocol           = port->protocol;

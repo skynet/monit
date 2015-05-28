@@ -355,6 +355,8 @@ static void _gcppl(Port_T *p) {
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
         FREE((*p)->request);
+        FREE((*p)->username);
+        FREE((*p)->password);
         FREE((*p)->hostname);
         FREE((*p)->pathname);
         FREE((*p)->SSL.certmd5);

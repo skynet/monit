@@ -193,7 +193,6 @@ httpd             { return HTTPD; }
 address           { return ADDRESS; }
 interface         { return INTERFACE; }
 link              { return LINK; }
-error(s)?         { return ERROR; }
 packet(s)?("/s")? { return PACKET; }
 bytein            { return BYTEIN; }
 byteout           { return BYTEOUT; }
@@ -239,7 +238,6 @@ mailserver        { return MAILSERVER; }
 host              { return HOST; }
 hostheader        { return HOSTHEADER; }
 status            { return STATUS; }
-system            { return SYSTEM; }
 default           { return DEFAULT; }
 http              { return HTTP; }
 https             { return HTTPS; }

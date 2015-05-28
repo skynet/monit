@@ -540,6 +540,8 @@ typedef struct mygenericproto {
 /** Defines a port object */
 //FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
+        unsigned char *username;                            /**< Optional username */
+        unsigned char *password;                            /**< Optional password */
         char *hostname;                                     /**< Hostname to check */
         List_T http_headers;    /**< Optional list of headers to send with request */
         char *request;                              /**< Specific protocol request */

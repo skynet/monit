@@ -41,6 +41,7 @@
 #endif
 
 #include "protocol.h"
+#include "sha1.h"
 
 // libmonit
 #include "exceptions/IOException.h"
@@ -161,6 +162,32 @@ static unsigned int B4(unsigned char *b) {
 }
 
 
+// Set the password (see http://dev.mysql.com/doc/internals/en/secure-password-authentication.html):
+static void _setPassword(mysql_handshake_response_t *pkt, const unsigned char *password, const unsigned char *salt) {
+        sha1_context_t ctx;
+        // SHA1(password)
+        uint8_t stage1[SHA1_DIGEST_SIZE];
+        sha1_init(&ctx);
+        sha1_append(&ctx, password, strlen(password));
+        sha1_finish(&ctx, stage1);
+        // SHA1(SHA1(password))
+        uint8_t stage2[SHA1_DIGEST_SIZE];
+        sha1_init(&ctx);
+        sha1_append(&ctx, stage1, SHA1_DIGEST_SIZE);
+        sha1_finish(&ctx, stage2);
+        // SHA1("20-bytes random data from server" <concat> SHA1(SHA1(password)))
+        uint8_t stage3[SHA1_DIGEST_SIZE];
+        sha1_init(&ctx);
+        sha1_append(&ctx, salt, strlen(salt));
+        sha1_append(&ctx, stage2, SHA1_DIGEST_SIZE);
+        sha1_finish(&ctx, stage3);
+        // XOR into destination
+        for (int i = 0; i < SHA1_DIGEST_SIZE; i++)
+                pkt->authdata[i] = stage1[i] ^ stage3[i];
+        *pkt->authdatalen = SHA1_DIGEST_SIZE;
+}
+
+
 static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
         memset(pkt, 0, sizeof(*pkt));
         // Read the packet length
@@ -242,19 +269,22 @@ static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
 
 
 //FIXME: convert numeric values to network order
-static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt) {
+static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt, const unsigned char *salt) {
+        Port_T P = Socket_getPort(socket);
+        ASSERT(P);
         memset(pkt, 0, sizeof(*pkt));
         pkt->seq = 1;
         pkt->capabilities = CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION;
         pkt->maxpacketsize = 8192;
         pkt->characterset = 8;
         pkt->username = pkt->buf + 23; // skip reserved bytes
-        //snprintf(pkt->username, xxx, "%s", yyy); //FIXME: use username if set in monit configuration, otherwise "" (anonymous)
+        if (P->username)
+                snprintf(pkt->username, 17, "%s", P->username); // Maximum MySQL username is 16 bytes
         pkt->authdatalen = pkt->username + strlen(pkt->username) + 1;
         pkt->authdata = pkt->authdatalen + 1;
-        //FIXME: compute and set authdata if password is set in monit configuration file
-        *pkt->authdatalen = strlen(pkt->authdata);
-        pkt->len = sizeof(pkt->capabilities) + sizeof(pkt->maxpacketsize) + sizeof(pkt->characterset) + 23 + strlen(pkt->username) + 1 + 1 + strlen(pkt->authdata);
+        if (P->password)
+                _setPassword(pkt, P->password, salt);
+        pkt->len = sizeof(pkt->capabilities) + sizeof(pkt->maxpacketsize) + sizeof(pkt->characterset) + 23 + strlen(pkt->username) + 1 + 1 + *pkt->authdatalen;
         if (Socket_write(socket, pkt, pkt->len + 4) < 0) // Note: pkt->len value is just payload size + need to add 4 bytes for the header itself (len + seq)
                 THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
 }
@@ -276,6 +306,6 @@ void check_mysql(Socket_T socket) {
         DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d, Character Set: 0x%x, Status: 0x%x, Capabilities: 0x%x\n", hi.protocol, hi.serverversion, hi.connectionid, hi.characterset, hi.status, hi.capabilities);
 
         mysql_handshake_response_t hr;
-        _handshakeResponse(socket, &hr);
+        _handshakeResponse(socket, &hr, hi.authdata);
 }
 
