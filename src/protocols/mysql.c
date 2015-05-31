@@ -259,16 +259,6 @@ static void _setUInt4(mysql_request_t *request, uint32_t value) {
 }
 
 
-// Note: this function does NOT automatically add '\0' to the stream as the MySQL protocol doesn't always use it (e.g. COM_QUERY). Use _setPadding(mysql, 1) to add '\0' if needed.
-static void _setString(mysql_request_t *request, const unsigned char *value) {
-        int length = strlen(value);
-        if (request->cursor + length > request->limit)
-                THROW(IOException, "Maximum packet size exceeded");
-        memcpy(request->cursor, value, length);
-        request->cursor += length;
-}
-
-
 static void _setData(mysql_request_t *request, const unsigned char *data, int length) {
         if (request->cursor + length > request->limit)
                 THROW(IOException, "Maximum packet size exceeded");
@@ -430,7 +420,7 @@ static void _requestHandshake(mysql_t *mysql) {
         _setUInt1(&mysql->request, 8);                                                                                                                               // characterset
         _setPadding(&mysql->request, 23);                                                                                                                            // reserved bytes
         if (mysql->port->username)
-                _setString(&mysql->request, mysql->port->username);                                                                                                  // username
+                _setData(&mysql->request, mysql->port->username, strlen(mysql->port->username));                                                                     // username
         _setPadding(&mysql->request, 1);                                                                                                                             // NUL
         if (mysql->port->password) {
                 _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                                        // authdatalen
@@ -472,7 +462,7 @@ static void _requestQuery(mysql_t *mysql, const unsigned char *query) {
         ASSERT(mysql->state == MySQL_Ok);
         _initRequest(mysql, 0);
         _setUInt1(&mysql->request, COM_QUERY);
-        _setString(&mysql->request, query);
+        _setData(&mysql->request, query, strlen(query));
         _sendRequest(mysql);
 }
 */
