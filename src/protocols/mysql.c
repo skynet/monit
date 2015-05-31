@@ -279,16 +279,19 @@ static void _setPadding(mysql_request_t *request, int count) {
 /* ----------------------------------------------------- Response handlers */
 
 
+// OK packet (see http://dev.mysql.com/doc/internals/en/packet-OK_Packet.html)
 static void _responseOk(mysql_t *mysql) {
         mysql->state = MySQL_Ok;
 }
 
 
+// EOF packet (see http://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html)
 static void _responseEof(mysql_t *mysql) {
         mysql->state = MySQL_Eof;
 }
 
 
+// ERR packet (see http://dev.mysql.com/doc/internals/en/packet-ERR_Packet.html)
 static void _responseError(mysql_t *mysql) {
         mysql->state = MySQL_Error;
         mysql->response.data.error.code = _getUInt2(&mysql->response);
@@ -299,6 +302,7 @@ static void _responseError(mysql_t *mysql) {
 }
 
 
+// Initial handshake packet (see http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::Handshake)
 static void _responseHandshake(mysql_t *mysql) {
         mysql->state = MySQL_Handshake;
         // Protocol is 10 for MySQL 5.x
@@ -320,6 +324,7 @@ static void _responseHandshake(mysql_t *mysql) {
 }
 
 
+// Response handler
 static void _response(mysql_t *mysql) {
         memset(&mysql->response, 0, sizeof(mysql_response_t));
         mysql->response.cursor = mysql->response.buf;
@@ -389,6 +394,7 @@ static unsigned char *_password(unsigned char result[SHA1_DIGEST_SIZE], const un
 }
 
 
+// Initiate the request
 static void _initRequest(mysql_t *mysql, uint8_t sequence) {
         memset(&mysql->request, 0, sizeof(mysql_request_t));
         mysql->request.seq = sequence;
@@ -397,6 +403,7 @@ static void _initRequest(mysql_t *mysql, uint8_t sequence) {
 }
 
 
+// Set payload length and send the request to the server
 static void _sendRequest(mysql_t *mysql) {
         mysql->request.len = mysql->request.cursor - mysql->request.buf;
         // Send request
@@ -405,6 +412,7 @@ static void _sendRequest(mysql_t *mysql) {
 }
 
 
+// Hadshake response packet (see http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::HandshakeResponse)
 static void _requestHandshake(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Handshake);
         _initRequest(mysql, 1);
@@ -426,6 +434,7 @@ static void _requestHandshake(mysql_t *mysql) {
 }
 
 
+// COM_QUIT packet (see http://dev.mysql.com/doc/internals/en/com-quit.html)
 static void _requestQuit(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Ok);
         _initRequest(mysql, 0);
@@ -434,6 +443,7 @@ static void _requestQuit(mysql_t *mysql) {
 }
 
 
+// COM_PING packet (see http://dev.mysql.com/doc/internals/en/com-ping.html)
 static void _requestPing(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Ok);
         _initRequest(mysql, 0);
@@ -443,11 +453,13 @@ static void _requestPing(mysql_t *mysql) {
 
 
 /*
-// Note: we currently don't implement COM_QUERY response handler, if it'll be added, uncomment the following COM_QUERY request implementation.
+// Note: we currently don't implement COM_QUERY *response* handler, if it'll be added and COM_QUERY used, uncomment the following COM_QUERY request implementation.
 //
 //   Usage (for example):
 //      _requestQuery(&mysql, "show global status");
 //
+
+// COM_QUERY packet (see http://dev.mysql.com/doc/internals/en/com-query.html)
 static void _requestQuery(mysql_t *mysql, const unsigned char *query) {
         ASSERT(mysql->state == MySQL_Ok);
         _initRequest(mysql, 0);
