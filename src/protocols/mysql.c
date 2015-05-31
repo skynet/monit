@@ -108,8 +108,8 @@
 
 
 typedef struct {
-        uint32_t       len : 24;
-        uint32_t       seq : 8;
+        uint32_t len : 24;
+        uint32_t seq : 8;
         // Data buffer
         unsigned char buf[STRLEN + 1];
         // State
@@ -414,7 +414,6 @@ static void _sendRequest(mysql_t *mysql) {
 static void _requestHandshake(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Handshake);
         _initRequest(mysql, 1);
-        // Data
         _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                            // capabilities
         _setUInt4(&mysql->request, 8192);                                                                                                                            // maxpacketsize
         _setUInt1(&mysql->request, 8);                                                                                                                               // characterset
@@ -451,7 +450,7 @@ static void _requestPing(mysql_t *mysql) {
 
 
 /*
-// Note: we currently don't implement COM_QUERY *response* handler, if it'll be added and COM_QUERY used, uncomment the following COM_QUERY request implementation.
+// Note: we currently don't implement COM_QUERY *response* handler (OK/EOF packet with payload), if it'll be added and COM_QUERY used, uncomment the following COM_QUERY request implementation.
 //
 //   Usage (for example):
 //      _requestQuery(&mysql, "show global status");
