@@ -259,12 +259,20 @@ static void _setUInt4(mysql_request_t *request, uint32_t value) {
 }
 
 
-// Note: this function does NOT automatically add '\0' to the stream as the MySQL protocol doesn't use it for length-encoded strings (e.g. password or COM_QUERY). Use _setPadding(mysql, 1) to add '\0' if needed.
+// Note: this function does NOT automatically add '\0' to the stream as the MySQL protocol doesn't always use it (e.g. COM_QUERY). Use _setPadding(mysql, 1) to add '\0' if needed.
 static void _setString(mysql_request_t *request, const unsigned char *value) {
         int length = strlen(value);
         if (request->cursor + length > request->limit)
                 THROW(IOException, "Maximum packet size exceeded");
         memcpy(request->cursor, value, length);
+        request->cursor += length;
+}
+
+
+static void _setData(mysql_request_t *request, const unsigned char *data, int length) {
+        if (request->cursor + length > request->limit)
+                THROW(IOException, "Maximum packet size exceeded");
+        memcpy(request->cursor, data, length);
         request->cursor += length;
 }
 
@@ -417,18 +425,18 @@ static void _requestHandshake(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Handshake);
         _initRequest(mysql, 1);
         // Data
-        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                // capabilities
-        _setUInt4(&mysql->request, 8192);                                                                                                                // maxpacketsize
-        _setUInt1(&mysql->request, 8);                                                                                                                   // characterset
-        _setPadding(&mysql->request, 23);                                                                                                                // reserved bytes
+        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                            // capabilities
+        _setUInt4(&mysql->request, 8192);                                                                                                                            // maxpacketsize
+        _setUInt1(&mysql->request, 8);                                                                                                                               // characterset
+        _setPadding(&mysql->request, 23);                                                                                                                            // reserved bytes
         if (mysql->port->username)
-                _setString(&mysql->request, mysql->port->username);                                                                                      // username
-        _setPadding(&mysql->request, 1);                                                                                                                 // NUL
+                _setString(&mysql->request, mysql->port->username);                                                                                                  // username
+        _setPadding(&mysql->request, 1);                                                                                                                             // NUL
         if (mysql->port->password) {
-                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                            // authdatalen
-                _setString(&mysql->request, _password((char[SHA1_DIGEST_SIZE + 1]){0}, mysql->port->password, mysql->response.data.handshake.authdata)); // password
+                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                                        // authdatalen
+                _setData(&mysql->request, _password((char[SHA1_DIGEST_SIZE]){0}, mysql->port->password, mysql->response.data.handshake.authdata), SHA1_DIGEST_SIZE); // password
         } else {
-                _setUInt1(&mysql->request, 0);                                                                                                           // no password
+                _setUInt1(&mysql->request, 0);                                                                                                                       // no password
         }
         _sendRequest(mysql);
 }
