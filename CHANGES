@@ -4,10 +4,13 @@
 
 Version 5.14
 
-New: Enable ECDH ciphers for Monit HTTP interface.
-
 New: Enable HTTP Strict Transport Security (HSTS) on Monit HTTP interface if
 SSL is enabled.
+
+New: Enable ECDH ciphers for Monit HTTP interface.
+
+New: MySQL protocol test now supports authentication (optional). Usage:
+    if failed port 3306 protocol mysql username myuser password mypassword then alert
 
 Fixed: Issue #98: MySQL test might blocked the host because of too many
 connection errors.

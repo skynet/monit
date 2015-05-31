@@ -2829,6 +2829,41 @@ For example:
        then alert
 
 
+=head4 MYSQL
+
+Syntax:
+
+ PROTOCOL MYSQL [USERNAME string PASSWORD string]
+
+I<USERNAME> MySQL username (maximum 16 characters).
+
+I<PASSWORD> MySQL password.
+
+The credentials are B<optional>. If no credentials are set, Monit will perform
+the test using anonymous login. That may cause authentication error to be logged
+in your MySQL log for higher MySQL log levels.
+
+If credentials are set, Monit will login and perform MySQL ping. Monit doesn't
+require any database privileges, it needs just database user, we recommend to
+create standalone user for Monit testing, for example:
+
+ CREATE USER 'monit'@'host_from_which_monit_performs_testing' IDENTIFIED BY 'mysecretpassword';
+ FLUSH PRIVILEGES;
+
+For example:
+
+ check process mysql with pidfile /var/run/mysqld/mysqld.pid
+     start program = "/sbin/start mysql"
+     stop program = "/sbin/stop mysql"
+     if failed
+         host 127.0.0.1
+         port 3306
+         protocol mysql
+         username myuser
+         password mypassword
+     then alert
+
+
 =head4 WEBSOCKET
 
 Syntax:
