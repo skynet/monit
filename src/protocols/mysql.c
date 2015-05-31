@@ -480,7 +480,7 @@ void check_mysql(Socket_T socket) {
         mysql_t mysql = {.state = MySQL_Init, .socket = socket, .port = Socket_getPort(socket)};
         _response(&mysql);
         if (mysql.state != MySQL_Handshake)
-                THROW(IOException, "Invalid server greeting - the server didn't sent a handshake packet\n");
+                THROW(IOException, "Invalid server greeting, the server didn't sent a handshake packet -- not MySQL protocol?\n");
         _requestHandshake(&mysql);
         // Check handshake response: if no credentials are set, we allow both Ok/Error as we've sent an anonymous login which may fail, but if credentials are set, we expect Ok only
         TRY
@@ -493,7 +493,7 @@ void check_mysql(Socket_T socket) {
                         RETHROW;
         }
         END_TRY;
-        // If we've logged in, ping and quit
+        // If we're logged in, ping and quit
         if (mysql.state == MySQL_Ok) {
                 _requestPing(&mysql);
                 _response(&mysql);
