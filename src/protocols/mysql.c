@@ -50,7 +50,14 @@
 /* ----------------------------------------------------------- Definitions */
 
 
+#define MYSQL_OK    0x00
+#define MYSQL_EOF   0xfe
 #define MYSQL_ERROR 0xff
+
+
+#define COM_QUIT  0x1
+#define COM_QUERY 0x3
+#define COM_PING  0xe
 
 
 // Capability flags (see http://dev.mysql.com/doc/internals/en/capability-flags.html#packet-Protocol::CapabilityFlags)
@@ -103,67 +110,261 @@
 typedef struct {
         uint32_t       len : 24;
         uint32_t       seq : 8;
-        uint8_t        protocol;
-        unsigned char *serverversion;
-        uint32_t       connectionid;
-        uint8_t        characterset;
-        uint16_t       status;
-        uint32_t       capabilities;
-        uint8_t        authdatalen;
-        unsigned char  authdata[21];
         // Data buffer
         unsigned char buf[STRLEN + 1];
-} mysql_handshake_init_t;
+        // State
+        unsigned char *cursor;
+        unsigned char *limit;
+} mysql_request_t;
 
 
 typedef struct {
-        uint32_t       len : 24;
-        uint32_t       seq : 8;
-        uint32_t       capabilities;
-        uint32_t       maxpacketsize;
-        uint8_t        characterset;
         // Data buffer
-        unsigned char buf[STRLEN + 1];
-        // Pointers to data hosted in buffer
-        unsigned char *username;
-        uint8_t       *authdatalen;
-        unsigned char *authdata;
-} mysql_handshake_response_t;
+        unsigned char buf[STRLEN + 4 + 1]; // reserve 4 bytes for header
+        // Parser state
+        unsigned char *cursor;
+        unsigned char *limit;
+        // Header
+        uint32_t len;
+        uint8_t seq;
+        uint8_t header;
+        // Packet specific data
+        union {
+                struct {
+                        uint16_t       code;
+                        unsigned char  sql_state_marker;
+                        unsigned char  sql_state[5];
+                        unsigned char *message;
+                } error;
+                struct {
+                        unsigned char *version;
+                        uint32_t       connectionid;
+                        uint8_t        characterset;
+                        uint16_t       status;
+                        uint32_t       capabilities;
+                        uint8_t        authdatalen;
+                        unsigned char  authdata[21];
+                } handshake;
+        } data;
+} mysql_response_t;
 
 
-/* --------------------------------------------------------------- Private */
+typedef enum {
+        MySQL_Init = 0,
+        MySQL_Handshake,
+        MySQL_Ok,
+        MySQL_Eof,
+        MySQL_Error
+} __attribute__((__packed__)) mysql_state_t;
 
 
-static unsigned short B2(unsigned char *b) {
-        unsigned short x;
-        *(((char *)&x) + 0) = b[1];
-        *(((char *)&x) + 1) = b[0];
-        return ntohs(x);
+typedef struct mysql_t {
+        mysql_state_t state;
+        mysql_response_t response;
+        mysql_request_t request;
+        Socket_T socket;
+        Port_T port;
+        uint32_t capabilities;
+} mysql_t;
+
+
+/* ----------------------------------------------------------- Data parser */
+
+
+static uint8_t _getUInt1(mysql_response_t *response) {
+        if (response->cursor + 1 > response->limit)
+                THROW(IOException, "Data not available -- EOF");
+        uint8_t value = response->cursor[0];
+        response->cursor += 1;
+        return value;
 }
 
 
-static unsigned int B3(unsigned char *b) {
-        unsigned int x;
-        *(((char *)&x) + 0) = 0;
-        *(((char *)&x) + 1) = b[2];
-        *(((char *)&x) + 2) = b[1];
-        *(((char *)&x) + 3) = b[0];
-        return ntohl(x);
+static uint16_t _getUInt2(mysql_response_t *response) {
+        if (response->cursor + 2 > response->limit)
+                THROW(IOException, "Data not available -- EOF");
+        uint16_t value;
+        *(((char *)&value) + 0) = response->cursor[1];
+        *(((char *)&value) + 1) = response->cursor[0];
+        response->cursor += 2;
+        return ntohs(value);
 }
 
 
-static unsigned int B4(unsigned char *b) {
-        unsigned int x;
-        *(((char *)&x) + 0) = b[3];
-        *(((char *)&x) + 1) = b[2];
-        *(((char *)&x) + 2) = b[1];
-        *(((char *)&x) + 3) = b[0];
-        return ntohl(x);
+static uint32_t _getUInt3(mysql_response_t *response) {
+        if (response->cursor + 3 > response->limit)
+                THROW(IOException, "Data not available -- EOF");
+        uint32_t value;
+        *(((char *)&value) + 0) = 0;
+        *(((char *)&value) + 1) = response->cursor[2];
+        *(((char *)&value) + 2) = response->cursor[1];
+        *(((char *)&value) + 3) = response->cursor[0];
+        response->cursor += 3;
+        return ntohl(value);
 }
+
+
+static uint32_t _getUInt4(mysql_response_t *response) {
+        if (response->cursor + 4 > response->limit)
+                THROW(IOException, "Data not available -- EOF");
+        uint32_t value;
+        *(((char *)&value) + 0) = response->cursor[3];
+        *(((char *)&value) + 1) = response->cursor[2];
+        *(((char *)&value) + 2) = response->cursor[1];
+        *(((char *)&value) + 3) = response->cursor[0];
+        response->cursor += 4;
+        return ntohl(value);
+}
+
+
+static unsigned char *_getString(mysql_response_t *response) {
+        int i;
+        unsigned char *value;
+        for (i = 0; response->cursor[i]; i++) // Check limits (cannot use strlen here as no terminating '\0' is guaranteed in the buffer)
+                if (response->cursor + i >= response->limit) // If we reached the limit and didn't found '\0', throw error
+                        THROW(IOException, "Data not available -- EOF");
+        value = response->cursor;
+        response->cursor += i + 1;
+        return value;
+}
+
+
+static void _getPadding(mysql_response_t *response, int count) {
+        if (response->cursor + count > response->limit)
+                THROW(IOException, "Data not available -- EOF");
+        response->cursor += count;
+}
+
+
+/* ----------------------------------------------------------- Data setter */
+
+
+static void _setUInt1(mysql_request_t *request, uint8_t value) {
+        if (request->cursor + 1 > request->limit)
+                THROW(IOException, "Maximum packet size exceeded");
+        request->cursor[0] = value;
+        request->cursor += 1;
+}
+
+
+static void _setUInt4(mysql_request_t *request, uint32_t value) {
+        if (request->cursor + 4 > request->limit)
+                THROW(IOException, "Maximum packet size exceeded");
+        uint32_t v = htonl(value);
+        request->cursor[0] = *(((char *)&v) + 3);
+        request->cursor[1] = *(((char *)&v) + 2);
+        request->cursor[2] = *(((char *)&v) + 1);
+        request->cursor[3] = *(((char *)&v) + 0);
+        request->cursor += 4;
+}
+
+
+// Note: this function does NOT automatically add '\0' to the stream as the MySQL protocol doesn't use it for length-encoded strings (such as password with authdatalen+authdata). Use _setPadding(mysql, 1) to add '\0' if needed.
+static void _setString(mysql_request_t *request, unsigned char *value) {
+        int length = strlen(value);
+        if (request->cursor + length > request->limit)
+                THROW(IOException, "Maximum packet size exceeded");
+        memcpy(request->cursor, value, length);
+        request->cursor += length;
+}
+
+
+static void _setPadding(mysql_request_t *request, int count) {
+        if (request->cursor + count > request->limit)
+                THROW(IOException, "Maximum packet size exceeded");
+        request->cursor += count;
+}
+
+
+/* ----------------------------------------------------- Response handlers */
+
+
+static void _responseOk(mysql_t *mysql) {
+        mysql->state = MySQL_Ok;
+}
+
+
+static void _responseEof(mysql_t *mysql) {
+        mysql->state = MySQL_Eof;
+}
+
+
+static void _responseError(mysql_t *mysql) {
+        mysql->state = MySQL_Error;
+        mysql->response.data.error.code = _getUInt2(&mysql->response);
+        if (mysql->capabilities & CLIENT_PROTOCOL_41)
+                _getPadding(&mysql->response, 6); // skip sql_state_marker and sql_state which we don't use
+        mysql->response.data.error.message = _getString(&mysql->response);
+        THROW(IOException, "Server returned error code %d -- %s", mysql->response.data.error.code, mysql->response.data.error.message);
+}
+
+
+static void _responseHandshake(mysql_t *mysql) {
+        mysql->state = MySQL_Handshake;
+        // Protocol is 10 for MySQL 5.x
+        if (mysql->response.header != 10)
+                THROW(IOException, "Invalid protocol version %d", mysql->response.header);
+        mysql->response.data.handshake.version = _getString(&mysql->response);
+        mysql->response.data.handshake.connectionid = _getUInt4(&mysql->response);
+        snprintf(mysql->response.data.handshake.authdata, 9, "%s", _getString(&mysql->response)); // auth_plugin_data_part_1
+        mysql->response.data.handshake.capabilities = _getUInt2(&mysql->response); // capability flags (lower 2 bytes)
+        mysql->response.data.handshake.characterset = _getUInt1(&mysql->response);
+        mysql->response.data.handshake.status = _getUInt2(&mysql->response);
+        mysql->response.data.handshake.capabilities |= _getUInt2(&mysql->response) << 16; // merge capability flags (lower 2 bytes + upper 2 bytes)
+        mysql->response.data.handshake.authdatalen = _getUInt1(&mysql->response);
+        _getPadding(&mysql->response, 10); // reserved bytes
+        if (mysql->response.data.handshake.capabilities & CLIENT_SECURE_CONNECTION)
+                snprintf(mysql->response.data.handshake.authdata + 8, 13, "%s", _getString(&mysql->response)); // auth_plugin_data_part_2
+        mysql->capabilities = mysql->response.data.handshake.capabilities; // Save capabilities
+        DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d, Character Set: 0x%x, Status: 0x%x, Capabilities: 0x%x\n", mysql->response.header, mysql->response.data.handshake.version, mysql->response.data.handshake.connectionid, mysql->response.data.handshake.characterset, mysql->response.data.handshake.status, mysql->response.data.handshake.capabilities);
+}
+
+
+static void _response(mysql_t *mysql) {
+        memset(&mysql->response, 0, sizeof(mysql_response_t));
+        mysql->response.cursor = mysql->response.buf;
+        mysql->response.limit = mysql->response.buf + sizeof(mysql->response.buf);
+        // Read the packet length
+        if (Socket_read(mysql->socket, mysql->response.cursor, 4) < 4)
+                THROW(IOException, "Error receiving server response -- %s", STRERROR);
+        mysql->response.len = _getUInt3(&mysql->response);
+        mysql->response.seq = _getUInt1(&mysql->response);
+        if (mysql->state == MySQL_Init) {
+                // check length to quickly identify non-MySQL server-side (handshake packet should have ca. 80-90 bytes)
+                if (! mysql->response.len || mysql->response.len > STRLEN)
+                        THROW(IOException, "Invalid handshake packet length -- not MySQL protocol?");
+                // check sequence id to quickly identify non-MySQL server-side (handshake packet should have sequence id 0)
+                if (mysql->response.seq != 0)
+                        THROW(IOException, "Invalid handshake packet sequence id -- not MySQL protocol?");
+        }
+        mysql->response.len = mysql->response.len > STRLEN ? STRLEN : mysql->response.len; // Adjust packet length for this buffer
+        // Read payload
+        if (Socket_read(mysql->socket, mysql->response.cursor, mysql->response.len) != mysql->response.len)
+                THROW(IOException, "Error receiving server response -- %s", STRERROR);
+        // Packet type router
+        mysql->response.header = _getUInt1(&mysql->response);
+        switch (mysql->response.header) {
+                case MYSQL_OK:
+                        _responseOk(mysql);
+                        break;
+                case MYSQL_EOF:
+                        _responseEof(mysql);
+                        break;
+                case MYSQL_ERROR:
+                        _responseError(mysql);
+                        break;
+                default:
+                        _responseHandshake(mysql);
+                        break;
+        }
+}
+
+
+/* ------------------------------------------------------ Request handlers */
 
 
 // Set the password (see http://dev.mysql.com/doc/internals/en/secure-password-authentication.html):
-static void _setPassword(mysql_handshake_response_t *pkt, const unsigned char *password, const unsigned char *salt) {
+static unsigned char *_password(unsigned char result[SHA1_DIGEST_SIZE], const unsigned char *password, const unsigned char *salt) {
         sha1_context_t ctx;
         // SHA1(password)
         uint8_t stage1[SHA1_DIGEST_SIZE];
@@ -181,112 +382,63 @@ static void _setPassword(mysql_handshake_response_t *pkt, const unsigned char *p
         sha1_append(&ctx, salt, strlen(salt));
         sha1_append(&ctx, stage2, SHA1_DIGEST_SIZE);
         sha1_finish(&ctx, stage3);
-        // XOR into destination
+        // XOR
         for (int i = 0; i < SHA1_DIGEST_SIZE; i++)
-                pkt->authdata[i] = stage1[i] ^ stage3[i];
-        *pkt->authdatalen = SHA1_DIGEST_SIZE;
+                result[i] = stage1[i] ^ stage3[i];
+        return result;
 }
 
 
-static void _handshakeInit(Socket_T socket, mysql_handshake_init_t *pkt) {
-        memset(pkt, 0, sizeof(*pkt));
-        // Read the packet length
-        if (Socket_read(socket, pkt->buf, 4) < 4)
-                THROW(IOException, "Error receiving server response -- %s", STRERROR);
-        pkt->len = B3(pkt->buf);
-        pkt->len = pkt->len > STRLEN ? STRLEN : pkt->len; // Adjust packet length for this buffer
-        // sequence id (handshake packet should have sequence id 0)
-        pkt->seq = pkt->buf[3];
-        if (pkt->seq != 0)
-                THROW(IOException, "Invalid packet sequence id %d", pkt->seq);
-        // read payload
-        if (Socket_read(socket, pkt->buf, pkt->len) != pkt->len)
-                THROW(IOException, "Error receiving server response -- %s", STRERROR);
-        if (*pkt->buf == MYSQL_ERROR) {
-                unsigned short code = B2(pkt->buf + 1);
-                unsigned char *err = pkt->buf + 9;
-                THROW(IOException, "Server returned error code %d -- %s", code, err);
-        }
-        unsigned char *cursor = pkt->buf;
-        unsigned char *limit = pkt->buf + sizeof(pkt->buf);
-        // protocol version
-        if (cursor + 1 > limit)
-                return;
-        pkt->protocol = pkt->buf[0];
-        if ((pkt->protocol > 12) || (pkt->protocol < 9)) // Protocol is 10 for MySQL 5.x
-                THROW(IOException, "Invalid protocol version %d", pkt->protocol);
-        cursor += 1;
-        // server version
-        pkt->serverversion = cursor;
-        cursor += strlen(pkt->serverversion) + 1;
-        // connection id
-        if (cursor + 4 > limit)
-                return;
-        pkt->connectionid = B4(cursor);
-        cursor += 4;
-        // auth_plugin_data_part_1
-        if (cursor + 9 > limit)
-                return;
-        snprintf(pkt->authdata, 9, "%s", cursor);
-        cursor += 9;
-        // capability flags (lower 2 bytes)
-        if (cursor + 2 > limit)
-                return;
-        pkt->capabilities = B2(cursor);
-        cursor += 2;
-        // character set
-        if (cursor + 1 > limit)
-                return;
-        pkt->characterset = cursor[0];
-        cursor += 1;
-        // status flags
-        if (cursor + 2 > limit)
-                return;
-        pkt->status = B2(cursor);
-        cursor += 2;
-        // capability flags (upper 2 bytes)
-        if (cursor + 2 > limit)
-                return;
-        pkt->capabilities |= B2(cursor) << 16; // merge capability flags (lower 2 bytes + upper 2 bytes)
-        cursor += 2;
-        // byte reserved for length of auth-plugin-data
-        if (cursor + 1 > limit)
-                return;
-        if (pkt->capabilities & CLIENT_PLUGIN_AUTH)
-                pkt->authdatalen = cursor[0];
-        cursor += 1;
-        // reserved bytes
-        if (cursor + 10 > limit)
-                return;
-        cursor += 10;
-        // auth_plugin_data_part_2
-        if (cursor + 13 > limit)
-                return;
-        if (pkt->capabilities & CLIENT_SECURE_CONNECTION)
-                snprintf(pkt->authdata + 8, 13, "%s", cursor);
-        // auth-plugin name ... ignored (not needed)
+static void _initRequest(mysql_t *mysql, uint8_t sequence) {
+        memset(&mysql->request, 0, sizeof(mysql_request_t));
+        mysql->request.seq = sequence;
+        mysql->request.cursor = mysql->request.buf;
+        mysql->request.limit = mysql->request.buf + sizeof(mysql->request.buf);
 }
 
 
-//FIXME: convert numeric values to network order
-static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt, const unsigned char *salt) {
-        Port_T P = Socket_getPort(socket);
-        ASSERT(P);
-        memset(pkt, 0, sizeof(*pkt));
-        pkt->seq = 1;
-        pkt->capabilities = CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION;
-        pkt->maxpacketsize = 8192;
-        pkt->characterset = 8;
-        pkt->username = pkt->buf + 23; // skip reserved bytes
-        if (P->username)
-                snprintf(pkt->username, 17, "%s", P->username); // Maximum MySQL username is 16 bytes
-        pkt->authdatalen = pkt->username + strlen(pkt->username) + 1;
-        pkt->authdata = pkt->authdatalen + 1;
-        if (P->password)
-                _setPassword(pkt, P->password, salt);
-        pkt->len = sizeof(pkt->capabilities) + sizeof(pkt->maxpacketsize) + sizeof(pkt->characterset) + 23 + strlen(pkt->username) + 1 + 1 + *pkt->authdatalen;
-        if (Socket_write(socket, pkt, pkt->len + 4) < 0) // Note: pkt->len value is just payload size + need to add 4 bytes for the header itself (len + seq)
+static void _sendRequest(mysql_t *mysql) {
+        mysql->request.len = mysql->request.cursor - mysql->request.buf;
+        // Send request
+        if (Socket_write(mysql->socket, &mysql->request, mysql->request.len + 4) < 0) // Note: mysql->request.len value is just payload size + need to add 4 bytes for the header itself (len + seq)
                 THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
+}
+
+
+static void _requestHandshake(mysql_t *mysql) {
+        ASSERT(mysql->state == MySQL_Handshake);
+        _initRequest(mysql, 1);
+        // Data
+        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                // capabilities
+        _setUInt4(&mysql->request, 8192);                                                                                                                // maxpacketsize
+        _setUInt1(&mysql->request, 8);                                                                                                                   // characterset
+        _setPadding(&mysql->request, 23);                                                                                                                // reserved bytes
+        if (mysql->port->username)
+                _setString(&mysql->request, mysql->port->username);                                                                                      // username
+        _setPadding(&mysql->request, 1);                                                                                                                 // NUL
+        if (mysql->port->password) {
+                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                            // authdatalen
+                _setString(&mysql->request, _password((char[SHA1_DIGEST_SIZE + 1]){0}, mysql->port->password, mysql->response.data.handshake.authdata)); // password
+        } else {
+                _setUInt1(&mysql->request, 0);                                                                                                           // no password
+        }
+        _sendRequest(mysql);
+}
+
+
+static void _requestQuit(mysql_t *mysql) {
+        ASSERT(mysql->state != MySQL_Init && mysql->state != MySQL_Handshake);
+        _initRequest(mysql, 0);
+        _setUInt1(&mysql->request, COM_QUIT);
+        _sendRequest(mysql);
+}
+
+
+static void _requestPing(mysql_t *mysql) {
+        ASSERT(mysql->state != MySQL_Init && mysql->state != MySQL_Handshake);
+        _initRequest(mysql, 0);
+        _setUInt1(&mysql->request, COM_PING);
+        _sendRequest(mysql);
 }
 
 
@@ -300,12 +452,27 @@ static void _handshakeResponse(Socket_T socket, mysql_handshake_response_t *pkt,
  */
 void check_mysql(Socket_T socket) {
         ASSERT(socket);
-
-        mysql_handshake_init_t hi;
-        _handshakeInit(socket, &hi);
-        DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d, Character Set: 0x%x, Status: 0x%x, Capabilities: 0x%x\n", hi.protocol, hi.serverversion, hi.connectionid, hi.characterset, hi.status, hi.capabilities);
-
-        mysql_handshake_response_t hr;
-        _handshakeResponse(socket, &hr, hi.authdata);
+        mysql_t mysql = {.state = MySQL_Init, .socket = socket, .port = Socket_getPort(socket)};
+        _response(&mysql);
+        if (mysql.state != MySQL_Handshake)
+                THROW(IOException, "Invalid server greeting - the server didn't sent a handshake packet\n");
+        _requestHandshake(&mysql);
+        // Check handshake response: if no credentials are set, we allow both Ok/Error as we've sent an anonymous login which may fail, but if credentials are set, we expect Ok only
+        TRY
+        {
+                _response(&mysql);
+        }
+        ELSE
+        {
+                if (mysql.port->username)
+                        RETHROW;
+        }
+        END_TRY;
+        // If we've logged in, ping and quit
+        if (mysql.state == MySQL_Ok) {
+                _requestPing(&mysql);
+                _response(&mysql);
+                _requestQuit(&mysql);
+        }
 }
 
