@@ -259,8 +259,8 @@ static void _setUInt4(mysql_request_t *request, uint32_t value) {
 }
 
 
-// Note: this function does NOT automatically add '\0' to the stream as the MySQL protocol doesn't use it for length-encoded strings (such as password with authdatalen+authdata). Use _setPadding(mysql, 1) to add '\0' if needed.
-static void _setString(mysql_request_t *request, unsigned char *value) {
+// Note: this function does NOT automatically add '\0' to the stream as the MySQL protocol doesn't use it for length-encoded strings (e.g. password or COM_QUERY). Use _setPadding(mysql, 1) to add '\0' if needed.
+static void _setString(mysql_request_t *request, const unsigned char *value) {
         int length = strlen(value);
         if (request->cursor + length > request->limit)
                 THROW(IOException, "Maximum packet size exceeded");
@@ -427,7 +427,7 @@ static void _requestHandshake(mysql_t *mysql) {
 
 
 static void _requestQuit(mysql_t *mysql) {
-        ASSERT(mysql->state != MySQL_Init && mysql->state != MySQL_Handshake);
+        ASSERT(mysql->state == MySQL_Ok);
         _initRequest(mysql, 0);
         _setUInt1(&mysql->request, COM_QUIT);
         _sendRequest(mysql);
@@ -435,11 +435,27 @@ static void _requestQuit(mysql_t *mysql) {
 
 
 static void _requestPing(mysql_t *mysql) {
-        ASSERT(mysql->state != MySQL_Init && mysql->state != MySQL_Handshake);
+        ASSERT(mysql->state == MySQL_Ok);
         _initRequest(mysql, 0);
         _setUInt1(&mysql->request, COM_PING);
         _sendRequest(mysql);
 }
+
+
+/*
+// Note: we currently don't implement COM_QUERY response handler, if it'll be added, uncomment the following COM_QUERY request implementation.
+//
+//   Usage (for example):
+//      _requestQuery(&mysql, "show global status");
+//
+static void _requestQuery(mysql_t *mysql, const unsigned char *query) {
+        ASSERT(mysql->state == MySQL_Ok);
+        _initRequest(mysql, 0);
+        _setUInt1(&mysql->request, COM_QUERY);
+        _setString(&mysql->request, query);
+        _sendRequest(mysql);
+}
+*/
 
 
 /* ---------------------------------------------------------------- Public */
