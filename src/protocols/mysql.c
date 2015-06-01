@@ -318,7 +318,7 @@ static void _responseHandshake(mysql_t *mysql) {
         if (mysql->response.data.handshake.capabilities & CLIENT_SECURE_CONNECTION)
                 snprintf(mysql->response.data.handshake.authdata + 8, 13, "%s", _getString(&mysql->response)); // auth_plugin_data_part_2
         mysql->capabilities = mysql->response.data.handshake.capabilities; // Save capabilities
-        DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d, Character Set: 0x%x, Status: 0x%x, Capabilities: 0x%x\n", mysql->response.header, mysql->response.data.handshake.version, mysql->response.data.handshake.connectionid, mysql->response.data.handshake.characterset, mysql->response.data.handshake.status, mysql->response.data.handshake.capabilities);
+        DEBUG("MySQL Server: Protocol: %d, Version: %s, Connection ID: %d\n", mysql->response.header, mysql->response.data.handshake.version, mysql->response.data.handshake.connectionid);
 }
 
 
