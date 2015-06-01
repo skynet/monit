@@ -375,6 +375,10 @@ static void _gcportlist(Port_T *p) {
                 FREE((*p)->parameters.sip.target);
         } else if ((*p)->protocol->check == check_radius) {
                 FREE((*p)->parameters.radius.secret);
+        } else if ((*p)->protocol->check == check_websocket) {
+                FREE((*p)->parameters.websocket.host);
+                FREE((*p)->parameters.websocket.origin);
+                FREE((*p)->parameters.websocket.request);
         }
         FREE(*p);
 }

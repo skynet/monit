@@ -542,10 +542,10 @@ typedef struct mygenericproto {
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         List_T http_headers;    /**< Optional list of headers to send with request */ //FIXME: used in: http
-        char *request;                              /**< Specific protocol request */ //FIXME: used in: websocket, http
+        char *request;                              /**< Specific protocol request */ //FIXME: used in: http
         char *request_checksum;     /**< The optional checksum for a req. document */ //FIXME: used in: http
-        char *request_hostheader;/**< The optional Host: header to use. Deprecated */ //FIXME: used in: websocket, http
-        char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union  ... used also by websocket protocol
+        char *request_hostheader;/**< The optional Host: header to use. Deprecated */ //FIXME: used in: http
+        char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union
         Generic_T generic;                                /**< Generic test handle */ //FIXME
         volatile int socket;                       /**< Socket used for connection */
         int port;                                                  /**< Portnumber */ //FIXME ... unix/inet union
@@ -556,7 +556,6 @@ typedef struct myport {
         boolean_t is_available;          /**< true if the server/port is available */
         int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
-        int version;                                         /**< Protocol version */ //FIXME: used in: websocket
         int status;                                           /**< Protocol status */ //FIXME: used in: http
         double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
@@ -592,9 +591,15 @@ typedef struct myport {
                         char *secret;
                 } radius;
                 struct {
-                        char *target;
                         int maxforward;
+                        char *target;
                 } sip;
+                struct {
+                        int version;
+                        char *host;
+                        char *origin;
+                        char *request;
+                } websocket;
         } parameters;
         SslOptions_T SSL;                                      /**< SSL definition */
         Protocol_T protocol;     /**< Protocol object for testing a port's service */

@@ -1358,16 +1358,16 @@ websocketlist   : websocket
                 ;
 
 websocket       : ORIGIN STRING {
-                    portset.pathname = $2;
+                    portset.parameters.websocket.origin = $<string>2;
                   }
                 | REQUEST PATH {
-                    portset.request = $2;
+                    portset.parameters.websocket.request = $<string>2;
                   }
                 | HOST STRING {
-                    portset.request_hostheader = $2;
+                    portset.parameters.websocket.host = $<string>2;
                   }
                 | VERSIONOPT NUMBER {
-                    portset.version = $<number>2;
+                    portset.parameters.websocket.version = $<number>2;
                   }
                 ;
 
@@ -2770,7 +2770,6 @@ static void addport(Port_T *list, Port_T port) {
         p->request_checksum   = port->request_checksum;
         p->request_hostheader = port->request_hostheader;
         p->http_headers       = port->http_headers;
-        p->version            = port->version;
         p->operator           = port->operator;
         p->status             = port->status;
         memcpy(&p->parameters, &port->parameters, sizeof(port->parameters));

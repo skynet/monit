@@ -102,10 +102,10 @@ void check_websocket(Socket_T socket) {
                          "Pragma: no-cache\r\n"
                          "Cache-Control: no-cache\r\n"
                          "\r\n",
-                         P->request ? P->request : "/",
-                         P->request_hostheader ? P->request_hostheader : Util_getHTTPHostHeader(socket, buf, sizeof(buf)),
-                         P->version,
-                         P->pathname ? P->pathname : "http://www.mmonit.com") < 0)
+                         P->parameters.websocket.request ? P->parameters.websocket.request : "/",
+                         P->parameters.websocket.host ? P->parameters.websocket.host : Util_getHTTPHostHeader(socket, buf, sizeof(buf)),
+                         P->parameters.websocket.version,
+                         P->parameters.websocket.origin ? P->parameters.websocket.origin : "http://www.mmonit.com") < 0)
         {
                 THROW(IOException, "WEBSOCKET: error sending data -- %s", STRERROR);
         }
