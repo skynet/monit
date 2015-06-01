@@ -540,8 +540,6 @@ typedef struct mygenericproto {
 /** Defines a port object */
 //FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
-        unsigned char *username;                            /**< Optional username */ //FIXME: used in: mysql
-        unsigned char *password;                            /**< Optional password */ //FIXME: used in: mysql
         char *hostname;                                     /**< Hostname to check */
         List_T http_headers;    /**< Optional list of headers to send with request */ //FIXME: used in: http
         char *request;                              /**< Specific protocol request */ //FIXME: used in: websocket, http
@@ -586,6 +584,10 @@ typedef struct myport {
                         Operator_Type gracefullimitOP;                /**< gracefullimit operator */
                         Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
                 } apachestatus;
+                struct {
+                        unsigned char *username;
+                        unsigned char *password;
+                } mysql;
                 struct {
                         char *secret;
                 } radius;

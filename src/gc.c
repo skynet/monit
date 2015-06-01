@@ -355,8 +355,6 @@ static void _gcportlist(Port_T *p) {
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
         FREE((*p)->request);
-        FREE((*p)->username);
-        FREE((*p)->password);
         FREE((*p)->hostname);
         FREE((*p)->pathname);
         FREE((*p)->SSL.certmd5);
@@ -370,10 +368,14 @@ static void _gcportlist(Port_T *p) {
                         FREE(s);
                 }
         }
-        if ((*p)->protocol->check == check_sip)
+        if ((*p)->protocol->check == check_mysql) {
+                FREE((*p)->parameters.mysql.username);
+                FREE((*p)->parameters.mysql.password);
+        } else if ((*p)->protocol->check == check_sip) {
                 FREE((*p)->parameters.sip.target);
-        else if ((*p)->protocol->check == check_radius)
+        } else if ((*p)->protocol->check == check_radius) {
                 FREE((*p)->parameters.radius.secret);
+        }
         FREE(*p);
 }
 

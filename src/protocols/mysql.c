@@ -412,18 +412,18 @@ static void _sendRequest(mysql_t *mysql) {
 static void _requestHandshake(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Handshake);
         _initRequest(mysql, 1);
-        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                            // capabilities
-        _setUInt4(&mysql->request, 8192);                                                                                                                            // maxpacketsize
-        _setUInt1(&mysql->request, 8);                                                                                                                               // characterset
-        _setPadding(&mysql->request, 23);                                                                                                                            // reserved bytes
-        if (mysql->port->username)
-                _setData(&mysql->request, mysql->port->username, strlen(mysql->port->username));                                                                     // username
-        _setPadding(&mysql->request, 1);                                                                                                                             // NUL
-        if (mysql->port->password) {
-                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                                        // authdatalen
-                _setData(&mysql->request, _password((char[SHA1_DIGEST_SIZE]){0}, mysql->port->password, mysql->response.data.handshake.authdata), SHA1_DIGEST_SIZE); // password
+        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                                             // capabilities
+        _setUInt4(&mysql->request, 8192);                                                                                                                                             // maxpacketsize
+        _setUInt1(&mysql->request, 8);                                                                                                                                                // characterset
+        _setPadding(&mysql->request, 23);                                                                                                                                             // reserved bytes
+        if (mysql->port->parameters.mysql.username)
+                _setData(&mysql->request, mysql->port->parameters.mysql.username, strlen(mysql->port->parameters.mysql.username));                                                    // username
+        _setPadding(&mysql->request, 1);                                                                                                                                              // NUL
+        if (mysql->port->parameters.mysql.password) {
+                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                                                         // authdatalen
+                _setData(&mysql->request, _password((char[SHA1_DIGEST_SIZE]){0}, mysql->port->parameters.mysql.password, mysql->response.data.handshake.authdata), SHA1_DIGEST_SIZE); // password
         } else {
-                _setUInt1(&mysql->request, 0);                                                                                                                       // no password
+                _setUInt1(&mysql->request, 0);                                                                                                                                        // no password
         }
         _sendRequest(mysql);
 }
@@ -487,7 +487,7 @@ void check_mysql(Socket_T socket) {
         }
         ELSE
         {
-                if (mysql.port->username)
+                if (mysql.port->parameters.mysql.username)
                         RETHROW;
         }
         END_TRY;

@@ -185,6 +185,7 @@ static struct myicmp icmpset;
 static struct mymail mailset;
 static struct myport portset;
 static struct mymailserver mailserverset;
+static struct mymmonit mmonitset;
 static struct myfilesystem filesystemset;
 static struct myresource resourceset;
 static struct mychecksum checksumset;
@@ -227,7 +228,7 @@ static void  addicmp(Icmp_T);
 static void  addgeneric(Port_T, char*, char*);
 static void  addcommand(int, unsigned);
 static void  addargument(char *);
-static void  addmmonit(URL_T, int, Ssl_Version, char *);
+static void  addmmonit(Mmonit_T);
 static void  addmailserver(MailServer_T);
 static boolean_t addcredentials(char *, char *, Digest_Type, boolean_t);
 #ifdef HAVE_LIBPAM
@@ -252,6 +253,7 @@ static void  setlogfile(char *);
 static void  setpidfile(char *);
 static void  reset_mailset();
 static void  reset_mailserverset();
+static void  reset_mmonitset();
 static void  reset_portset();
 static void  reset_resourceset();
 static void  reset_timestampset();
@@ -638,8 +640,22 @@ mmonitlist      : mmonit credentials
                 | mmonitlist mmonit credentials
                 ;
 
-mmonit          : URLOBJECT nettimeout sslversion certmd5 {
-                    addmmonit($<url>1, $<number>2, $<number>3, $<string>4);
+mmonit          : URLOBJECT nettimeout mmonitoptlist {
+                        mmonitset.url = $<url>1;
+                        mmonitset.timeout = $<number>2;
+                        addmmonit(&mmonitset);
+                  }
+                ;
+
+mmonitoptlist   : /* EMPTY */
+                | mmonitoptlist mmonitopt
+                ;
+
+mmonitopt       : sslversion {
+                        mmonitset.ssl.version = $<number>1;
+                  }
+                | certmd5 {
+                        mmonitset.ssl.certmd5 = $<string>1;
                   }
                 ;
 
@@ -669,38 +685,47 @@ mailserverlist  : mailserver
                 | mailserverlist mailserver
                 ;
 
-mailserver      : STRING username password sslversion certmd5 {
-                    /* Restore the current text overriden by lookahead */
-                    FREE(argyytext);
-                    argyytext = Str_dup($1);
+mailserver      : STRING mailserveroptlist {
+                        /* Restore the current text overriden by lookahead */
+                        FREE(argyytext);
+                        argyytext = Str_dup($1);
 
                     mailserverset.host = $1;
-                    mailserverset.username = $<string>2;
-                    mailserverset.password = $<string>3;
-                    mailserverset.ssl.version = $<number>4;
-                    if (mailserverset.ssl.version != SSL_Disabled) {
-                      mailserverset.ssl.use_ssl = true;
-                      if (mailserverset.ssl.version == SSL_V2 || mailserverset.ssl.version == SSL_V3)
-                         mailserverset.port = PORT_SMTPS;
-                      mailserverset.ssl.certmd5 = $<string>5;
-                    }
-                    addmailserver(&mailserverset);
+                        if (mailserverset.ssl.version != SSL_Disabled) {
+                                mailserverset.ssl.use_ssl = true;
+                                if (mailserverset.ssl.version == SSL_V2 || mailserverset.ssl.version == SSL_V3)
+                                        mailserverset.port = PORT_SMTPS;
+                        }
+                        addmailserver(&mailserverset);
                   }
-                | STRING PORT NUMBER username password sslversion certmd5 {
-                    /* Restore the current text overriden by lookahead */
-                    FREE(argyytext);
-                    argyytext = Str_dup($1);
+                | STRING PORT NUMBER mailserveroptlist {
+                        /* Restore the current text overriden by lookahead */
+                        FREE(argyytext);
+                        argyytext = Str_dup($1);
 
-                    mailserverset.host = $1;
-                    mailserverset.port = $<number>3;
-                    mailserverset.username = $<string>4;
-                    mailserverset.password = $<string>5;
-                    mailserverset.ssl.version = $<number>6;
-                    if (mailserverset.ssl.version != SSL_Disabled) {
-                      mailserverset.ssl.use_ssl = true;
-                      mailserverset.ssl.certmd5 = $<string>7;
-                    }
-                    addmailserver(&mailserverset);
+                        mailserverset.host = $1;
+                        mailserverset.port = $<number>3;
+                        if (mailserverset.ssl.version != SSL_Disabled)
+                                mailserverset.ssl.use_ssl = true;
+                        addmailserver(&mailserverset);
+                  }
+                ;
+
+mailserveroptlist : /* EMPTY */
+                  | mailserveroptlist mailserveropt
+                  ;
+
+mailserveropt   : username {
+                        mailserverset.username = $<string>1;
+                  }
+                | password {
+                        mailserverset.password = $<string>1;
+                  }
+                | sslversion {
+                        mailserverset.ssl.version = $<number>1;
+                  }
+                | certmd5 {
+                        mailserverset.ssl.certmd5 = $<string>1;
                   }
                 ;
 
@@ -1004,27 +1029,49 @@ useroptionlist  : useroption
                 | useroptionlist useroption
                 ;
 
-argument        : STRING { addargument($1); }
-                | PATH   { addargument($1); }
+argument        : STRING {
+                        addargument($1);
+                  }
+                | PATH {
+                        addargument($1);
+                  }
                 ;
 
-useroption      : UID STRING { addeuid( get_uid($2, 0) ); FREE($2); }
-                | GID STRING { addegid( get_gid($2, 0) ); FREE($2); }
-                | UID NUMBER { addeuid( get_uid(NULL, $2) ); }
-                | GID NUMBER { addegid( get_gid(NULL, $2) ); }
+useroption      : UID STRING {
+                        addeuid(get_uid($2, 0));
+                        FREE($2);
+                  }
+                | GID STRING {
+                        addegid(get_gid($2, 0));
+                        FREE($2);
+                  }
+                | UID NUMBER {
+                        addeuid(get_uid(NULL, $2));
+                  }
+                | GID NUMBER {
+                        addegid(get_gid(NULL, $2));
+                  }
                 ;
 
-username        : /* EMPTY */     { $<string>$ = NULL; }
-                | USERNAME MAILADDR { $<string>$ = $2; }
-                | USERNAME STRING { $<string>$ = $2; }
+username        : USERNAME MAILADDR {
+                        $<string>$ = $2;
+                  }
+                | USERNAME STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
-password        : /* EMPTY */     { $<string>$ = NULL; }
-                | PASSWORD STRING { $<string>$ = $2; }
+password        : PASSWORD STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
-hostname        : /* EMPTY */     { $<string>$ = NULL; }
-                | HOSTNAME STRING { $<string>$ = $2; }
+hostname        : /* EMPTY */     {
+                        $<string>$ = NULL;
+                  }
+                | HOSTNAME STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
 connection      : IF FAILED host port ip type protocol urloption nettimeout retry rate1 THEN action1 recovery {
@@ -1123,29 +1170,35 @@ type            : /* EMPTY */ {
                 | TYPE TCP {
                     portset.type = Socket_Tcp;
                   }
-                | TYPE TCPSSL sslversion certmd5  {
+                | TYPE TCPSSL typeoptlist {
                     portset.type = Socket_Tcp;
                     portset.SSL.use_ssl = true;
-                    portset.SSL.version = $<number>3;
                     if (portset.SSL.version == SSL_Disabled)
                       portset.SSL.version = SSL_Auto;
-                    portset.SSL.certmd5 = $<string>4;
                   }
                 | TYPE UDP {
                     portset.type = Socket_Udp;
                   }
                 ;
 
-certmd5         : /* EMPTY */ {
-                        $<string>$ = NULL;
+typeoptlist     : /* EMPTY */
+                | typeoptlist typeopt
+                ;
+
+typeopt         : sslversion {
+                        portset.SSL.version = $<number>1;
                   }
-                | CERTMD5 STRING {
+                | certmd5 {
+                        portset.SSL.certmd5 = $<string>1;
+                  }
+                ;
+
+certmd5         : CERTMD5 STRING {
                         $<string>$ = $2;
                   }
                 ;
 
-sslversion      : /* EMPTY */  { $<number>$ = SSL_Disabled; }
-                | SSLV2        { $<number>$ = SSL_V2; }
+sslversion      : SSLV2        { $<number>$ = SSL_V2; }
                 | SSLV3        { $<number>$ = SSL_V3; }
                 | TLSV1        { $<number>$ = SSL_TLSV1; }
                 | TLSV11
@@ -1213,15 +1266,8 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL MONGODB  {
                         portset.protocol = Protocol_get(Protocol_MONGODB);
                   }
-                | PROTOCOL MYSQL username password {
+                | PROTOCOL MYSQL mysqllist {
                         portset.protocol = Protocol_get(Protocol_MYSQL);
-                        if ($<string>3) {
-                                if (strlen($<string>3) > 16)
-                                        yyerror2("Username too long -- Maximum MySQL username lengh is 16 characters");
-                                else
-                                        portset.username = $<string>3;
-                        }
-                        portset.password = $<string>4;
                   }
                 | PROTOCOL SIP siplist {
                         portset.protocol = Protocol_get(Protocol_SIP);
@@ -1322,6 +1368,23 @@ websocket       : ORIGIN STRING {
                   }
                 | VERSIONOPT NUMBER {
                     portset.version = $<number>2;
+                  }
+                ;
+
+mysqllist       : /* EMPTY */
+                | mysqllist mysql
+                ;
+
+mysql           : username {
+                        if ($<string>1) {
+                                if (strlen($<string>1) > 16)
+                                        yyerror2("Username too long -- Maximum MySQL username lengh is 16 characters");
+                                else
+                                        portset.parameters.mysql.username = $<string>1;
+                        }
+                  }
+                | password {
+                        portset.parameters.mysql.password = $<string>1;
                   }
                 ;
 
@@ -2406,6 +2469,7 @@ static void preparse() {
         reset_sizeset();
         reset_mailset();
         reset_mailserverset();
+        reset_mmonitset();
         reset_portset();
         reset_permset();
         reset_icmpset();
@@ -2697,8 +2761,6 @@ static void addport(Port_T *list, Port_T port) {
         p->action             = port->action;
         p->timeout            = port->timeout;
         p->retry              = port->retry;
-        p->username           = port->username;
-        p->password           = port->password;
         p->request            = port->request;
         p->generic            = port->generic;
         p->protocol           = port->protocol;
@@ -3467,26 +3529,26 @@ static void  seturlrequest(int operator, char *regex) {
 /*
  * Add a new data recipient server to the mmonit server list
  */
-static void addmmonit(URL_T url, int timeout, Ssl_Version sslversion, char *certmd5) {
+static void addmmonit(Mmonit_T mmonit) {
+        ASSERT(mmonit->url);
+
         Mmonit_T c;
-
-        ASSERT(url);
-
         NEW(c);
-        c->url = url;
+        c->url = mmonit->url;
+        c->ssl.version = mmonit->ssl.version;
         if (IS(c->url->protocol, "https")) {
 #ifdef HAVE_OPENSSL
                 c->ssl.use_ssl = true;
-                c->ssl.version = (sslversion == SSL_Disabled) ? SSL_Auto : sslversion;
-                if (certmd5) {
-                        c->ssl.certmd5 = certmd5;
+                c->ssl.version = (mmonit->ssl.version == SSL_Disabled) ? SSL_Auto : mmonit->ssl.version;
+                if (mmonit->ssl.certmd5) {
+                        c->ssl.certmd5 = mmonit->ssl.certmd5;
                         cleanup_hash_string(c->ssl.certmd5);
                 }
 #else
                 yyerror("SSL check cannot be activated -- SSL disabled");
 #endif
         }
-        c->timeout = timeout;
+        c->timeout = mmonit->timeout;
         c->next = NULL;
 
         if (Run.mmonits) {
@@ -3497,6 +3559,7 @@ static void addmmonit(URL_T url, int timeout, Ssl_Version sslversion, char *cert
         } else {
                 Run.mmonits = c;
         }
+        reset_mmonitset();
 }
 
 
@@ -3854,6 +3917,17 @@ static void reset_mailset() {
 static void reset_mailserverset() {
         memset(&mailserverset, 0, sizeof(struct mymailserver));
         mailserverset.port = PORT_SMTP;
+        mailserverset.ssl.use_ssl = false;
+        mailserverset.ssl.version = SSL_Auto;
+}
+
+
+/*
+ * Reset the mmonit set to default values
+ */
+static void reset_mmonitset() {
+        memset(&mmonitset, 0, sizeof(struct mymmonit));
+        mailserverset.port = 8080;
         mailserverset.ssl.use_ssl = false;
         mailserverset.ssl.version = SSL_Auto;
 }
