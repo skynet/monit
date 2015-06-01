@@ -44,7 +44,7 @@ static void _gc_service(Service_T *);
 static void _gc_servicegroup(ServiceGroup_T *);
 static void _gc_servicegroup_member(ServiceGroupMember_T *);
 static void _gc_mail_server(MailServer_T *);
-static void _gcppl(Port_T *);
+static void _gcportlist(Port_T *);
 static void _gcfilesystem(Filesystem_T *);
 static void _gcicmp(Icmp_T *);
 static void _gcpql(Resource_T *);
@@ -177,9 +177,9 @@ static void _gc_service(Service_T *s) {
                 FREE((*s)->program);
         }
         if ((*s)->portlist)
-                _gcppl(&(*s)->portlist);
+                _gcportlist(&(*s)->portlist);
         if ((*s)->socketlist)
-                _gcppl(&(*s)->socketlist);
+                _gcportlist(&(*s)->socketlist);
         if ((*s)->filesystemlist)
                 _gcfilesystem(&(*s)->filesystemlist);
         if ((*s)->icmplist)
@@ -344,10 +344,10 @@ static void _gc_eventaction(EventAction_T *e) {
 }
 
 
-static void _gcppl(Port_T *p) {
+static void _gcportlist(Port_T *p) {
         ASSERT(p&&*p);
         if ((*p)->next)
-                _gcppl(&(*p)->next);
+                _gcportlist(&(*p)->next);
         if ((*p)->action)
                 _gc_eventaction(&(*p)->action);
         if ((*p)->generic)
@@ -370,6 +370,8 @@ static void _gcppl(Port_T *p) {
                         FREE(s);
                 }
         }
+        if ((*p)->protocol->check == check_sip)
+                FREE((*p)->parameters.sip.target);
         FREE(*p);
 }
 

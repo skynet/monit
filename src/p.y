@@ -1223,7 +1223,7 @@ protocol        : /* EMPTY */  {
                         }
                         portset.password = $<string>4;
                   }
-                | PROTOCOL SIP target maxforward {
+                | PROTOCOL SIP siplist {
                         portset.protocol = Protocol_get(Protocol_SIP);
                   }
                 | PROTOCOL NNTP {
@@ -1325,19 +1325,29 @@ websocket       : ORIGIN STRING {
                   }
                 ;
 
-target          : /* EMPTY */
-                | TARGET MAILADDR {
-                    portset.request = $2;
+target          : TARGET MAILADDR {
+                    $<string>$ = $2;
                   }
                 | TARGET STRING {
-                    portset.request = $2;
+                    $<string>$ = $2;
                   }
                 ;
 
-maxforward      : /* EMPTY */
-                |  MAXFORWARD NUMBER {
-                     portset.maxforward = verifyMaxForward($2);
-                   }
+maxforward      : MAXFORWARD NUMBER {
+                     $<number>$ = verifyMaxForward($2);
+                  }
+                ;
+
+siplist         : /* EMPTY */
+                | siplist sip
+                ;
+
+sip             : target {
+                        portset.parameters.sip.target = $<string>1;
+                  }
+                | maxforward {
+                        portset.parameters.sip.maxforward = $<number>1;
+                  }
                 ;
 
 httplist        : /* EMPTY */
@@ -1392,44 +1402,44 @@ apache_stat_list: apache_stat
                 ;
 
 apache_stat     : LOGLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.loglimitOP = $<number>2;
-                    portset.ApacheStatus.loglimit = $<number>3;
+                    portset.parameters.apachestatus.loglimitOP = $<number>2;
+                    portset.parameters.apachestatus.loglimit = $<number>3;
                   }
                 | CLOSELIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.closelimitOP = $<number>2;
-                    portset.ApacheStatus.closelimit = $<number>3;
+                    portset.parameters.apachestatus.closelimitOP = $<number>2;
+                    portset.parameters.apachestatus.closelimit = $<number>3;
                   }
                 | DNSLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.dnslimitOP = $<number>2;
-                    portset.ApacheStatus.dnslimit = $<number>3;
+                    portset.parameters.apachestatus.dnslimitOP = $<number>2;
+                    portset.parameters.apachestatus.dnslimit = $<number>3;
                   }
                 | KEEPALIVELIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.keepalivelimitOP = $<number>2;
-                    portset.ApacheStatus.keepalivelimit = $<number>3;
+                    portset.parameters.apachestatus.keepalivelimitOP = $<number>2;
+                    portset.parameters.apachestatus.keepalivelimit = $<number>3;
                   }
                 | REPLYLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.replylimitOP = $<number>2;
-                    portset.ApacheStatus.replylimit = $<number>3;
+                    portset.parameters.apachestatus.replylimitOP = $<number>2;
+                    portset.parameters.apachestatus.replylimit = $<number>3;
                   }
                 | REQUESTLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.requestlimitOP = $<number>2;
-                    portset.ApacheStatus.requestlimit = $<number>3;
+                    portset.parameters.apachestatus.requestlimitOP = $<number>2;
+                    portset.parameters.apachestatus.requestlimit = $<number>3;
                   }
                 | STARTLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.startlimitOP = $<number>2;
-                    portset.ApacheStatus.startlimit = $<number>3;
+                    portset.parameters.apachestatus.startlimitOP = $<number>2;
+                    portset.parameters.apachestatus.startlimit = $<number>3;
                   }
                 | WAITLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.waitlimitOP = $<number>2;
-                    portset.ApacheStatus.waitlimit = $<number>3;
+                    portset.parameters.apachestatus.waitlimitOP = $<number>2;
+                    portset.parameters.apachestatus.waitlimit = $<number>3;
                   }
                 | GRACEFULLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.gracefullimitOP = $<number>2;
-                    portset.ApacheStatus.gracefullimit = $<number>3;
+                    portset.parameters.apachestatus.gracefullimitOP = $<number>2;
+                    portset.parameters.apachestatus.gracefullimit = $<number>3;
                   }
                 | CLEANUPLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.cleanuplimitOP = $<number>2;
-                    portset.ApacheStatus.cleanuplimit = $<number>3;
+                    portset.parameters.apachestatus.cleanuplimitOP = $<number>2;
+                    portset.parameters.apachestatus.cleanuplimit = $<number>3;
                   }
                 ;
 
@@ -2689,7 +2699,7 @@ static void addport(Port_T *list, Port_T port) {
         p->version            = port->version;
         p->operator           = port->operator;
         p->status             = port->status;
-        memcpy(&p->ApacheStatus, &port->ApacheStatus, sizeof(struct apache_status));
+        memcpy(&p->parameters, &port->parameters, sizeof(port->parameters));
 
         if (p->request_checksum) {
                 cleanup_hash_string(p->request_checksum);
@@ -2715,7 +2725,6 @@ static void addport(Port_T *list, Port_T port) {
                 yyerror("SSL check cannot be activated -- SSL disabled");
 #endif
         }
-        p->maxforward = port->maxforward;
         p->next = *list;
         *list = p;
 
@@ -3849,7 +3858,6 @@ static void reset_portset() {
         portset.SSL.version = SSL_Auto;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;
-        portset.maxforward = 70;
         portset.operator = Operator_Less;
         portset.status = 400;
         urlrequest = NULL;
@@ -4159,14 +4167,10 @@ static void check_exec(char *exec) {
 
 /* Return a valid max forward value for SIP header */
 static int verifyMaxForward(int mf) {
-        int max = 70;
-
         if (mf >= 0 && mf <= 255)
-                max = mf;
-        else
-                yywarning2("SIP max forward is outside the range [0..255]. Setting max forward to 70");
-
-        return max;
+                return mf;
+        yywarning2("SIP max forward is outside the range [0..255]. Setting max forward to 70");
+        return 70;
 }
 
 

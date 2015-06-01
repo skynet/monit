@@ -540,56 +540,60 @@ typedef struct mygenericproto {
 /** Defines a port object */
 //FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
-        unsigned char *username;                            /**< Optional username */
-        unsigned char *password;                            /**< Optional password */
+        unsigned char *username;                            /**< Optional username */ //FIXME: used in: mysql
+        unsigned char *password;                            /**< Optional password */ //FIXME: used in: mysql
         char *hostname;                                     /**< Hostname to check */
-        List_T http_headers;    /**< Optional list of headers to send with request */
-        char *request;                              /**< Specific protocol request */
-        char *request_checksum;     /**< The optional checksum for a req. document */
-        char *request_hostheader;/**< The optional Host: header to use. Deprecated */
-        char *pathname;                   /**< Pathname, in case of an UNIX socket */
-        Generic_T generic;                                /**< Generic test handle */
+        List_T http_headers;    /**< Optional list of headers to send with request */ //FIXME: used in: http
+        char *request;                              /**< Specific protocol request */ //FIXME: used in: radius, websocket, http
+        char *request_checksum;     /**< The optional checksum for a req. document */ //FIXME: used in: http
+        char *request_hostheader;/**< The optional Host: header to use. Deprecated */ //FIXME: used in: websocket, http
+        char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union  ... used also by websocket protocol
+        Generic_T generic;                                /**< Generic test handle */ //FIXME
         volatile int socket;                       /**< Socket used for connection */
-        int port;                                                  /**< Portnumber */
+        int port;                                                  /**< Portnumber */ //FIXME ... unix/inet union
         Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
-        Hash_Type request_hashtype; /**< The optional type of hash for a req. document */
-        Operator_Type operator;                           /**< Comparison operator */
+        Hash_Type request_hashtype; /**< The optional type of hash for a req. document */ //FIXME: used in: http
+        Operator_Type operator;                           /**< Comparison operator */ //FIXME: used in: http
         boolean_t is_available;          /**< true if the server/port is available */
-        int maxforward;            /**< Optional max forward for protocol checking */
         int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
-        int version;                                         /**< Protocol version */
-        int status;                                           /**< Protocol status */
+        int version;                                         /**< Protocol version */ //FIXME: used in: websocket
+        int status;                                           /**< Protocol status */ //FIXME: used in: http
         double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
-        /** Apache-status specific parameters */
-        struct apache_status {
-                short loglimit;                  /**< Max percentage of logging processes */
-                short closelimit;             /**< Max percentage of closinging processes */
-                short dnslimit;         /**< Max percentage of processes doing DNS lookup */
-                short keepalivelimit;          /**< Max percentage of keepalive processes */
-                short replylimit;               /**< Max percentage of replying processes */
-                short requestlimit;     /**< Max percentage of processes reading requests */
-                short startlimit;            /**< Max percentage of processes starting up */
-                short waitlimit;  /**< Min percentage of processes waiting for connection */
-                short gracefullimit;/**< Max percentage of processes gracefully finishing */
-                short cleanuplimit;      /**< Max percentage of processes in idle cleanup */
-                Operator_Type loglimitOP;                          /**< loglimit operator */
-                Operator_Type closelimitOP;                      /**< closelimit operator */
-                Operator_Type dnslimitOP;                          /**< dnslimit operator */
-                Operator_Type keepalivelimitOP;              /**< keepalivelimit operator */
-                Operator_Type replylimitOP;                      /**< replylimit operator */
-                Operator_Type requestlimitOP;                  /**< requestlimit operator */
-                Operator_Type startlimitOP;                      /**< startlimit operator */
-                Operator_Type waitlimitOP;                        /**< waitlimit operator */
-                Operator_Type gracefullimitOP;                /**< gracefullimit operator */
-                Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
-        } ApacheStatus;
-
+        /** Protocol specific parameters */ //FIXME: move this to Protocol_T ???
+        union {
+                struct {
+                        short loglimit;                  /**< Max percentage of logging processes */
+                        short closelimit;             /**< Max percentage of closinging processes */
+                        short dnslimit;         /**< Max percentage of processes doing DNS lookup */
+                        short keepalivelimit;          /**< Max percentage of keepalive processes */
+                        short replylimit;               /**< Max percentage of replying processes */
+                        short requestlimit;     /**< Max percentage of processes reading requests */
+                        short startlimit;            /**< Max percentage of processes starting up */
+                        short waitlimit;  /**< Min percentage of processes waiting for connection */
+                        short gracefullimit;/**< Max percentage of processes gracefully finishing */
+                        short cleanuplimit;      /**< Max percentage of processes in idle cleanup */
+                        Operator_Type loglimitOP;                          /**< loglimit operator */
+                        Operator_Type closelimitOP;                      /**< closelimit operator */
+                        Operator_Type dnslimitOP;                          /**< dnslimit operator */
+                        Operator_Type keepalivelimitOP;              /**< keepalivelimit operator */
+                        Operator_Type replylimitOP;                      /**< replylimit operator */
+                        Operator_Type requestlimitOP;                  /**< requestlimit operator */
+                        Operator_Type startlimitOP;                      /**< startlimit operator */
+                        Operator_Type waitlimitOP;                        /**< waitlimit operator */
+                        Operator_Type gracefullimitOP;                /**< gracefullimit operator */
+                        Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
+                } apachestatus;
+                struct {
+                        char *target;
+                        int maxforward;
+                } sip;
+        } parameters;
         SslOptions_T SSL;                                      /**< SSL definition */
         Protocol_T protocol;     /**< Protocol object for testing a port's service */
-        Request_T url_request;             /**< Optional url client request object */
+        Request_T url_request;             /**< Optional url client request object */ //FIXME: used in: http
 
         /** For internal use */
         struct myport *next;                               /**< next port in chain */
