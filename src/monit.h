@@ -542,16 +542,16 @@ typedef struct mygenericproto {
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union
-        volatile int socket;                       /**< Socket used for connection */
         int port;                                                  /**< Portnumber */ //FIXME ... unix/inet union
         int timeout; /**< The timeout in milliseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
+        volatile int socket;                       /**< Socket used for connection */
         double response;                      /**< Socket connection response time */
         Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
         boolean_t is_available;          /**< true if the server/port is available */
         EventAction_T action;  /**< Description of the action upon event occurence */
-        /** Protocol specific parameters */ //FIXME: move this to Protocol_T ???
+        /** Protocol specific parameters */
         union {
                 struct {
                         short loglimit;                  /**< Max percentage of logging processes */
