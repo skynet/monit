@@ -210,6 +210,7 @@ static void  addservice(Service_T);
 static void  adddependant(char *);
 static void  addservicegroup(char *);
 static void  addport(Port_T *, Port_T);
+static void  addhttpheader(Port_T, const char *);
 static void  addresource(Resource_T);
 static void  addtimestamp(Timestamp_T, boolean_t);
 static void  addactionrate(ActionRate_T);
@@ -1442,15 +1443,14 @@ responsesum     : CHECKSUM STRING {
                 ;
 
 hostheader      : HOSTHEADER STRING {
-                    portset.parameters.http.host = $2;
+                    addhttpheader(&portset, Str_cat("Host:%s", $2));
+                    FREE($2);
                   }
                 ;
 
 httpheaderlist  : /* EMPTY */
                 | httpheaderlist HTTPHEADER {
-                        if (! portset.parameters.http.headers)
-                                portset.parameters.http.headers = List_new();
-                        List_append(portset.parameters.http.headers, $2);
+                        addhttpheader(&portset, $2);
                  }
                 ;
 
@@ -2799,6 +2799,13 @@ static void addport(Port_T *list, Port_T port) {
 
         reset_portset();
 
+}
+
+
+static void addhttpheader(Port_T port, const char *header) {
+        if (! port->parameters.http.headers)
+                port->parameters.http.headers = List_new();
+        List_append(port->parameters.http.headers, (char *)header);
 }
 
 

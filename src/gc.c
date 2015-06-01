@@ -360,7 +360,6 @@ static void _gcportlist(Port_T *p) {
         if ((*p)->protocol->check == check_http) {
                 FREE((*p)->parameters.http.request);
                 FREE((*p)->parameters.http.checksum);
-                FREE((*p)->parameters.http.host);
                 if ((*p)->parameters.http.headers) {
                         List_T l = (*p)->parameters.http.headers;
                         while (List_length(l) > 0) {

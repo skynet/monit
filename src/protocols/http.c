@@ -252,22 +252,13 @@ static char *get_auth_header(Port_T P, char *auth, int l) {
 
 
 void check_http(Socket_T socket) {
-        Port_T P;
-        char host[STRLEN];
-        char auth[STRLEN] = {};
-        const char *request = NULL;
-        const char *hostheader = NULL;
 
         ASSERT(socket);
 
-        P = Socket_getPort(socket);
-
+        Port_T P = Socket_getPort(socket);
         ASSERT(P);
 
-        request = P->parameters.http.request ? P->parameters.http.request : "/";
-
-        hostheader = _findHostHeaderIn(P->parameters.http.headers);
-        hostheader = hostheader ? hostheader : P->parameters.http.host ? P->parameters.http.host : Util_getHTTPHostHeader(socket, host, STRLEN); // Otherwise use deprecated request_hostheader or default host
+        const char *hostheader = _findHostHeaderIn(P->parameters.http.headers);
         StringBuffer_T sb = StringBuffer_create(168);
         StringBuffer_append(sb,
                             "GET %s HTTP/1.1\r\n"
@@ -275,8 +266,10 @@ void check_http(Socket_T socket) {
                             "Accept: */*\r\n"
                             "User-Agent: Monit/%s\r\n"
                             "%s",
-                            request, hostheader, VERSION,
-                            get_auth_header(P, auth, STRLEN));
+                            P->parameters.http.request ? P->parameters.http.request : "/",
+                            hostheader ? hostheader : Util_getHTTPHostHeader(socket, (char[STRLEN]){0}, STRLEN),
+                            VERSION,
+                            get_auth_header(P, (char[STRLEN]){0}, STRLEN));
         // Add headers if we have them
         if (P->parameters.http.headers) {
                 for (list_t p = P->parameters.http.headers->head; p; p = p->next) {

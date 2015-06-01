@@ -586,7 +586,6 @@ typedef struct myport {
                         int status;                                              /**< HTTP status */
                         char *request;                                          /**< HTTP request */
                         char *checksum;                         /**< Document checksum (optional) */
-                        char *host;            /**< The optional Host: header to use (deprecated) */
                         List_T headers;      /**< List of headers to send with request (optional) */
                 } http;
                 struct {
