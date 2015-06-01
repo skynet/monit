@@ -402,6 +402,14 @@ const char *Util_portTypeDescription(Port_T p);
 
 
 /**
+ * Print port request description
+ * @param p A port structure
+ * @return the request description
+ */
+const char *Util_portRequestDescription(Port_T p);
+
+
+/**
  * Print full port description \[<host>\]:<port>[request][ via TCP|TCPSSL|UDP]
  * @param p A port structure
  * @param buf Buffer

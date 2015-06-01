@@ -178,8 +178,8 @@ typedef enum {
 
 
 typedef enum {
-        Operator_Greater = 0,
-        Operator_Less,
+        Operator_Less = 0,
+        Operator_Greater,
         Operator_Equal,
         Operator_NotEqual,
         Operator_Changed
@@ -541,22 +541,15 @@ typedef struct mygenericproto {
 //FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
-        List_T http_headers;    /**< Optional list of headers to send with request */ //FIXME: used in: http
-        char *request;                              /**< Specific protocol request */ //FIXME: used in: http
-        char *request_checksum;     /**< The optional checksum for a req. document */ //FIXME: used in: http
-        char *request_hostheader;/**< The optional Host: header to use. Deprecated */ //FIXME: used in: http
         char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union
-        Generic_T generic;                                /**< Generic test handle */ //FIXME
+        Generic_T generic;                                /**< Generic test handle */ //FIXME: used by check_generic protocol test only
         volatile int socket;                       /**< Socket used for connection */
         int port;                                                  /**< Portnumber */ //FIXME ... unix/inet union
         Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
-        Hash_Type request_hashtype; /**< The optional type of hash for a req. document */ //FIXME: used in: http
-        Operator_Type operator;                           /**< Comparison operator */ //FIXME: used in: http
         boolean_t is_available;          /**< true if the server/port is available */
-        int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
+        int timeout; /**< The timeout in milliseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
-        int status;                                           /**< Protocol status */ //FIXME: used in: http
         double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
         /** Protocol specific parameters */ //FIXME: move this to Protocol_T ???
@@ -584,6 +577,15 @@ typedef struct myport {
                         Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
                 } apachestatus;
                 struct {
+                        Hash_Type hashtype;           /**< Type of hash for a checksum (optional) */
+                        Operator_Type operator;                         /**< HTTP status operator */
+                        int status;                                              /**< HTTP status */
+                        char *request;                                          /**< HTTP request */
+                        char *checksum;                         /**< Document checksum (optional) */
+                        char *host;            /**< The optional Host: header to use (deprecated) */
+                        List_T headers;      /**< List of headers to send with request (optional) */
+                } http;
+                struct {
                         unsigned char *username;
                         unsigned char *password;
                 } mysql;
@@ -603,7 +605,7 @@ typedef struct myport {
         } parameters;
         SslOptions_T SSL;                                      /**< SSL definition */
         Protocol_T protocol;     /**< Protocol object for testing a port's service */
-        Request_T url_request;             /**< Optional url client request object */ //FIXME: used in: http
+        Request_T url_request;             /**< Optional url client request object */
 
         /** For internal use */
         struct myport *next;                               /**< next port in chain */

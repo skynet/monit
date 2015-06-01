@@ -48,6 +48,7 @@
 #include "monit.h"
 #include "event.h"
 #include "process.h"
+#include "protocol.h"
 
 
 /**
@@ -370,7 +371,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                     "</port>",
                                                     p->hostname ? p->hostname : "",
                                                     p->port,
-                                                    p->request ? p->request : "",
+                                                    Util_portRequestDescription(p),
                                                     p->protocol->name ? p->protocol->name : "",
                                                     Util_portTypeDescription(p),
                                                     p->is_available ? p->response : -1.);

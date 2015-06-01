@@ -118,6 +118,7 @@
 #include "process.h"
 #include "event.h"
 #include "state.h"
+#include "protocol.h"
 
 // libmonit
 #include "io/File.h"
@@ -1046,9 +1047,9 @@ void Util_printService(Service_T s) {
         for (Port_T o = s->portlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 if (o->retry > 1)
-                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->port, Util_portRequestDescription(o), Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
                 else
-                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000)));
+                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds", o->hostname, o->port, Util_portRequestDescription(o), Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000)));
                 if (o->SSL.certmd5 != NULL)
                         printf(" %-20s = %s\n", "Server cert md5 sum", o->SSL.certmd5);
         }
@@ -1940,13 +1941,24 @@ const char *Util_portTypeDescription(Port_T p) {
 }
 
 
+const char *Util_portRequestDescription(Port_T p) {
+        char *request = "";
+        if (p->protocol->check == check_http && p->parameters.http.request)
+                request = p->parameters.http.request;
+        else if (p->protocol->check == check_websocket && p->parameters.websocket.request)
+                request = p->parameters.websocket.request;
+        return request;
+}
+
+
 char *Util_portDescription(Port_T p, char *buf, int bufsize) {
-        if (p->family == Socket_Ip || p->family == Socket_Ip4 || p->family == Socket_Ip6)
-                snprintf(buf, STRLEN, "[%s]:%d%s [%s/%s]", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), Util_portIpDescription(p));
-        else if (p->family == Socket_Unix)
+        if (p->family == Socket_Ip || p->family == Socket_Ip4 || p->family == Socket_Ip6) {
+                snprintf(buf, STRLEN, "[%s]:%d%s [%s/%s]", p->hostname, p->port, Util_portRequestDescription(p), Util_portTypeDescription(p), Util_portIpDescription(p));
+        } else if (p->family == Socket_Unix) {
                 snprintf(buf, STRLEN, "%s", p->pathname);
-        else
+        } else {
                 *buf = 0;
+        }
         return buf;
 }
 

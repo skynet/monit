@@ -138,7 +138,7 @@ ProcessTree_T *oldptree = NULL;
 char *actionnames[] = {"ignore", "alert", "restart", "stop", "exec", "unmonitor", "start", "monitor", ""};
 char *modenames[] = {"active", "passive", "manual"};
 char *checksumnames[] = {"UNKNOWN", "MD5", "SHA1"};
-char *operatornames[] = {"greater than", "less than", "equal to", "not equal to", "changed"};
+char *operatornames[] = {"less than", "greater than", "equal to", "not equal to", "changed"};
 char *operatorshortnames[] = {">", "<", "=", "!=", "<>"};
 char *statusnames[] = {"Accessible", "Accessible", "Accessible", "Running", "Online with all services", "Running", "Accessible", "Status ok", "UP"};
 char *servicetypes[] = {"Filesystem", "Directory", "File", "Process", "Remote Host", "System", "Fifo", "Program", "Network"};

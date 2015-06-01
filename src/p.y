@@ -1425,33 +1425,32 @@ http            : request
                 ;
 
 status          : STATUS operator NUMBER {
-                    portset.operator = $<number>2;
-                    portset.status = $<number>3;
+                    portset.parameters.http.operator = $<number>2;
+                    portset.parameters.http.status = $<number>3;
                   }
                 ;
 
 request         : REQUEST PATH {
-                    portset.request = Util_urlEncode($2);
+                    portset.parameters.http.request = Util_urlEncode($2);
                     FREE($2);
                   }
                 ;
 
 responsesum     : CHECKSUM STRING {
-                    portset.request_checksum = $2;
+                    portset.parameters.http.checksum = $2;
                   }
                 ;
 
 hostheader      : HOSTHEADER STRING {
-                    portset.request_hostheader = $2;
+                    portset.parameters.http.host = $2;
                   }
                 ;
 
 httpheaderlist  : /* EMPTY */
                 | httpheaderlist HTTPHEADER {
-                        if (! portset.http_headers) {
-                                portset.http_headers = List_new();
-                        }
-                        List_append(portset.http_headers, $2);
+                        if (! portset.parameters.http.headers)
+                                portset.parameters.http.headers = List_new();
+                        List_append(portset.parameters.http.headers, $2);
                  }
                 ;
 
@@ -2761,29 +2760,25 @@ static void addport(Port_T *list, Port_T port) {
         p->action             = port->action;
         p->timeout            = port->timeout;
         p->retry              = port->retry;
-        p->request            = port->request;
         p->generic            = port->generic;
         p->protocol           = port->protocol;
         p->pathname           = port->pathname;
         p->hostname           = port->hostname;
         p->url_request        = port->url_request;
-        p->request_checksum   = port->request_checksum;
-        p->request_hostheader = port->request_hostheader;
-        p->http_headers       = port->http_headers;
-        p->operator           = port->operator;
-        p->status             = port->status;
         memcpy(&p->parameters, &port->parameters, sizeof(port->parameters));
 
-        if (p->request_checksum) {
-                cleanup_hash_string(p->request_checksum);
-                if (strlen(p->request_checksum) == 32)
-                        p->request_hashtype = Hash_Md5;
-                else if (strlen(p->request_checksum) == 40)
-                        p->request_hashtype = Hash_Sha1;
-                else
-                        yyerror2("invalid checksum [%s]", p->request_checksum);
-        } else {
-                p->request_hashtype = 0;
+        if (p->protocol->check == check_http) {
+                if (p->parameters.http.checksum) {
+                        cleanup_hash_string(p->parameters.http.checksum);
+                        if (strlen(p->parameters.http.checksum) == 32)
+                                p->parameters.http.hashtype = Hash_Md5;
+                        else if (strlen(p->parameters.http.checksum) == 40)
+                                p->parameters.http.hashtype = Hash_Sha1;
+                        else
+                                yyerror2("invalid checksum [%s]", p->parameters.http.checksum);
+                } else {
+                        p->parameters.http.hashtype = Hash_Unknown;
+                }
         }
 
         if (port->SSL.use_ssl == true) {
@@ -3477,6 +3472,7 @@ static void prepare_urlrequest(URL_T U) {
 
         ASSERT(U);
 
+        /* Only the HTTP protocol is supported for URLs currently. See also the lexer if this is to be changed in the future */
         portset.protocol = Protocol_get(Protocol_HTTP);
 
         if (urlrequest == NULL)
@@ -3486,11 +3482,7 @@ static void prepare_urlrequest(URL_T U) {
         portset.port = U->port;
         portset.url_request = urlrequest;
         portset.type = Socket_Tcp;
-        portset.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");
-        /* Only the HTTP protocol is supported for URLs.
-         See also the lexer if this is to be changed in
-         the future */
-        portset.protocol = Protocol_get(Protocol_HTTP);
+        portset.parameters.http.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");
         if (IS(U->protocol, "https"))
                 portset.SSL.use_ssl = true;
 
@@ -3943,8 +3935,6 @@ static void reset_portset() {
         portset.SSL.version = SSL_Auto;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;
-        portset.operator = Operator_Less;
-        portset.status = 400;
         urlrequest = NULL;
 }
 

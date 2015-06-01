@@ -354,21 +354,22 @@ static void _gcportlist(Port_T *p) {
                 _gcgrc(&(*p)->generic);
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
-        FREE((*p)->request);
         FREE((*p)->hostname);
         FREE((*p)->pathname);
         FREE((*p)->SSL.certmd5);
         FREE((*p)->SSL.clientpemfile);
-        FREE((*p)->request_checksum);
-        FREE((*p)->request_hostheader);
-        if ((*p)->http_headers) {
-                List_T l = (*p)->http_headers;
-                while (List_length(l) > 0) {
-                        char *s = List_pop(l);
-                        FREE(s);
+        if ((*p)->protocol->check == check_http) {
+                FREE((*p)->parameters.http.request);
+                FREE((*p)->parameters.http.checksum);
+                FREE((*p)->parameters.http.host);
+                if ((*p)->parameters.http.headers) {
+                        List_T l = (*p)->parameters.http.headers;
+                        while (List_length(l) > 0) {
+                                char *s = List_pop(l);
+                                FREE(s);
+                        }
                 }
-        }
-        if ((*p)->protocol->check == check_mysql) {
+        } else if ((*p)->protocol->check == check_mysql) {
                 FREE((*p)->parameters.mysql.username);
                 FREE((*p)->parameters.mysql.password);
         } else if ((*p)->protocol->check == check_sip) {
