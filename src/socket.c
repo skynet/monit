@@ -511,7 +511,7 @@ const char *Socket_getLocalHost(T S, char *host, int hostlen) {
 
 static void _testUnix(Port_T p) {
         long long start = Time_milli();
-        T S = _createUnixSocket(p->pathname, p->type, p->timeout);
+        T S = _createUnixSocket(p->target.pathname, p->type, p->timeout);
         if (S) {
                 S->Port = p;
                 TRY
@@ -526,14 +526,14 @@ static void _testUnix(Port_T p) {
                 }
                 END_TRY;
         } else {
-                THROW(IOException, "Cannot create unix socket for %s", p->pathname);
+                THROW(IOException, "Cannot create unix socket for %s", p->target.pathname);
         }
 }
 
 
 static void _testIp(Port_T p) {
         char error[STRLEN];
-        struct addrinfo *result = _resolve(p->hostname, p->port, p->type, p->family);
+        struct addrinfo *result = _resolve(p->hostname, p->target.port, p->type, p->family);
         if (result) {
                 // The host may resolve to multiple IPs and if at least one succeeded, we have no problem and don't have to flood the log with partial errors => log only the last error
                 for (struct addrinfo *r = result; r && ! p->is_available; r = r->ai_next) {
@@ -563,7 +563,7 @@ static void _testIp(Port_T p) {
                 if (! p->is_available)
                         THROW(IOException, "%s", error);
         } else {
-                THROW(IOException, "Cannot resolve [%s]:%d", p->hostname, p->port);
+                THROW(IOException, "Cannot resolve [%s]:%d", p->hostname, p->target.port);
         }
 }
 

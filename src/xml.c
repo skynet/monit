@@ -370,7 +370,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                     "<responsetime>%.3f</responsetime>"
                                                     "</port>",
                                                     p->hostname ? p->hostname : "",
-                                                    p->port,
+                                                    p->target.port,
                                                     Util_portRequestDescription(p),
                                                     p->protocol->name ? p->protocol->name : "",
                                                     Util_portTypeDescription(p),
@@ -383,7 +383,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                     "<protocol>%s</protocol>"
                                                     "<responsetime>%.3f</responsetime>"
                                                     "</unix>",
-                                                    p->pathname ? p->pathname : "",
+                                                    p->target.pathname ? p->target.pathname : "",
                                                     p->protocol->name ? p->protocol->name : "",
                                                     p->is_available ? p->response : -1.);
                         }

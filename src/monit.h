@@ -541,8 +541,10 @@ typedef struct mygenericproto {
 /** Defines a port object */
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
-        char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union
-        int port;                                                  /**< Portnumber */ //FIXME ... unix/inet union
+        union {
+                char *pathname;           /**< Pathname, in case of an UNIX socket */
+                int port;                /**< Port number, in case of a Net socket */
+        } target;
         int timeout; /**< The timeout in milliseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
         volatile int socket;                       /**< Socket used for connection */

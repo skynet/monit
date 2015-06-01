@@ -1143,13 +1143,13 @@ host            : /* EMPTY */ {
                 ;
 
 port            : PORT NUMBER {
-                        portset.port = $2;
+                        portset.target.port = $2;
                   }
                 ;
 
 unixsocket      : UNIXSOCKET PATH {
-                        portset.pathname = $2;
                         portset.family = Socket_Unix;
+                        portset.target.pathname = $2;
                   }
                 ;
 
@@ -2753,7 +2753,6 @@ static void addport(Port_T *list, Port_T port) {
 
         Port_T p;
         NEW(p);
-        p->port               = port->port;
         p->type               = port->type;
         p->socket             = port->socket;
         p->family             = port->family;
@@ -2761,9 +2760,12 @@ static void addport(Port_T *list, Port_T port) {
         p->timeout            = port->timeout;
         p->retry              = port->retry;
         p->protocol           = port->protocol;
-        p->pathname           = port->pathname;
         p->hostname           = port->hostname;
         p->url_request        = port->url_request;
+        if (p->family == Socket_Unix)
+                p->target.pathname = port->target.pathname;
+        else
+                p->target.port = port->target.port;
         memcpy(&p->parameters, &port->parameters, sizeof(port->parameters));
 
         if (p->protocol->check == check_http) {
@@ -3478,7 +3480,7 @@ static void prepare_urlrequest(URL_T U) {
                 NEW(urlrequest);
         urlrequest->url = U;
         portset.hostname = Str_dup(U->hostname);
-        portset.port = U->port;
+        portset.target.port = U->port;
         portset.url_request = urlrequest;
         portset.type = Socket_Tcp;
         portset.parameters.http.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");

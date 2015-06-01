@@ -352,8 +352,9 @@ static void _gcportlist(Port_T *p) {
                 _gc_eventaction(&(*p)->action);
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
+        if ((*p)->family == Socket_Unix)
+                FREE((*p)->target.pathname);
         FREE((*p)->hostname);
-        FREE((*p)->pathname);
         FREE((*p)->SSL.certmd5);
         FREE((*p)->SSL.clientpemfile);
         if ((*p)->protocol->check == check_http) {
