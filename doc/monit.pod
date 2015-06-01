@@ -2855,13 +2855,7 @@ For example:
  check process mysql with pidfile /var/run/mysqld/mysqld.pid
      start program = "/sbin/start mysql"
      stop program = "/sbin/stop mysql"
-     if failed
-         host 127.0.0.1
-         port 3306
-         protocol mysql
-         username myuser
-         password mypassword
-     then alert
+     if failed port 3306 protocol mysql username foo password bar then alert
 
 
 =head4 WEBSOCKET
