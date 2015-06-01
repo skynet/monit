@@ -352,11 +352,13 @@ static void _gcportlist(Port_T *p) {
                 _gc_eventaction(&(*p)->action);
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
-        if ((*p)->family == Socket_Unix)
-                FREE((*p)->target.pathname);
+        if ((*p)->family == Socket_Unix) {
+                FREE((*p)->target.unix.pathname);
+        } else {
+                FREE((*p)->target.net.SSL.certmd5);
+                FREE((*p)->target.net.SSL.clientpemfile);
+        }
         FREE((*p)->hostname);
-        FREE((*p)->SSL.certmd5);
-        FREE((*p)->SSL.clientpemfile);
         if ((*p)->protocol->check == check_http) {
                 FREE((*p)->parameters.http.request);
                 FREE((*p)->parameters.http.checksum);

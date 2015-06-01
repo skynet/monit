@@ -542,8 +542,13 @@ typedef struct mygenericproto {
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         union {
-                char *pathname;           /**< Pathname, in case of an UNIX socket */
-                int port;                /**< Port number, in case of a Net socket */
+                struct {
+                        char *pathname;                  /**< Unix socket pathname */
+                } unix;
+                struct {
+                        SslOptions_T SSL;                      /**< SSL definition */
+                        int port;                                 /**< Port number */
+                } net;
         } target;
         int timeout; /**< The timeout in milliseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
@@ -606,7 +611,6 @@ typedef struct myport {
                         char *request;
                 } websocket;
         } parameters;
-        SslOptions_T SSL;                                      /**< SSL definition */
         Protocol_T protocol;     /**< Protocol object for testing a port's service */
         Request_T url_request;             /**< Optional url client request object */
 

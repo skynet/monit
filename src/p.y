@@ -1144,13 +1144,13 @@ host            : /* EMPTY */ {
                 ;
 
 port            : PORT NUMBER {
-                        portset.target.port = $2;
+                        portset.target.net.port = $2;
                   }
                 ;
 
 unixsocket      : UNIXSOCKET PATH {
                         portset.family = Socket_Unix;
-                        portset.target.pathname = $2;
+                        portset.target.unix.pathname = $2;
                   }
                 ;
 
@@ -1173,9 +1173,9 @@ type            : /* EMPTY */ {
                   }
                 | TYPE TCPSSL typeoptlist {
                     portset.type = Socket_Tcp;
-                    portset.SSL.use_ssl = true;
-                    if (portset.SSL.version == SSL_Disabled)
-                      portset.SSL.version = SSL_Auto;
+                    portset.target.net.SSL.use_ssl = true;
+                    if (portset.target.net.SSL.version == SSL_Disabled)
+                      portset.target.net.SSL.version = SSL_Auto;
                   }
                 | TYPE UDP {
                     portset.type = Socket_Udp;
@@ -1187,10 +1187,10 @@ typeoptlist     : /* EMPTY */
                 ;
 
 typeopt         : sslversion {
-                        portset.SSL.version = $<number>1;
+                        portset.target.net.SSL.version = $<number>1;
                   }
                 | certmd5 {
-                        portset.SSL.certmd5 = $<string>1;
+                        portset.target.net.SSL.certmd5 = $<string>1;
                   }
                 ;
 
@@ -1242,8 +1242,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL HTTPS httplist {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_HTTP);
                  }
                 | PROTOCOL IMAP {
@@ -1251,8 +1251,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL IMAPS {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_IMAP);
                   }
                 | PROTOCOL CLAMAV {
@@ -1288,8 +1288,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL POPS {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_POP);
                   }
                 | PROTOCOL SIEVE {
@@ -1300,8 +1300,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL SMTPS {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_SMTP);
                  }
                 | PROTOCOL SSH  {
@@ -2762,10 +2762,23 @@ static void addport(Port_T *list, Port_T port) {
         p->protocol           = port->protocol;
         p->hostname           = port->hostname;
         p->url_request        = port->url_request;
-        if (p->family == Socket_Unix)
-                p->target.pathname = port->target.pathname;
-        else
-                p->target.port = port->target.port;
+        if (p->family == Socket_Unix) {
+                p->target.unix.pathname = port->target.unix.pathname;
+        } else {
+                p->target.net.port = port->target.net.port;
+                if (port->target.net.SSL.use_ssl == true) {
+#ifdef HAVE_OPENSSL
+                        if (port->target.net.SSL.certmd5 != NULL) {
+                                p->target.net.SSL.certmd5 = port->target.net.SSL.certmd5;
+                                cleanup_hash_string(p->target.net.SSL.certmd5);
+                        }
+                        p->target.net.SSL.use_ssl = true;
+                        p->target.net.SSL.version = port->target.net.SSL.version;
+#else
+                        yyerror("SSL check cannot be activated -- SSL disabled");
+#endif
+                }
+        }
         memcpy(&p->parameters, &port->parameters, sizeof(port->parameters));
 
         if (p->protocol->check == check_http) {
@@ -2782,18 +2795,6 @@ static void addport(Port_T *list, Port_T port) {
                 }
         }
 
-        if (port->SSL.use_ssl == true) {
-#ifdef HAVE_OPENSSL
-                if (port->SSL.certmd5 != NULL) {
-                        p->SSL.certmd5 = port->SSL.certmd5;
-                        cleanup_hash_string(p->SSL.certmd5);
-                }
-                p->SSL.use_ssl = true;
-                p->SSL.version = port->SSL.version;
-#else
-                yyerror("SSL check cannot be activated -- SSL disabled");
-#endif
-        }
         p->next = *list;
         *list = p;
 
@@ -3487,12 +3488,12 @@ static void prepare_urlrequest(URL_T U) {
                 NEW(urlrequest);
         urlrequest->url = U;
         portset.hostname = Str_dup(U->hostname);
-        portset.target.port = U->port;
+        portset.target.net.port = U->port;
         portset.url_request = urlrequest;
         portset.type = Socket_Tcp;
         portset.parameters.http.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");
         if (IS(U->protocol, "https"))
-                portset.SSL.use_ssl = true;
+                portset.target.net.SSL.use_ssl = true;
 
 }
 
@@ -3940,7 +3941,6 @@ static void reset_portset() {
         portset.socket = -1;
         portset.type = Socket_Tcp;
         portset.family = Socket_Ip;
-        portset.SSL.version = SSL_Auto;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;
         urlrequest = NULL;
