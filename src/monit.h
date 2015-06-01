@@ -537,20 +537,19 @@ typedef struct mygenericproto {
         struct mygenericproto *next;
 } *Generic_T;
 
+
 /** Defines a port object */
-//FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
         char *hostname;                                     /**< Hostname to check */
         char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union
-        Generic_T generic;                                /**< Generic test handle */ //FIXME: used by check_generic protocol test only
         volatile int socket;                       /**< Socket used for connection */
         int port;                                                  /**< Portnumber */ //FIXME ... unix/inet union
-        Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
-        Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
-        boolean_t is_available;          /**< true if the server/port is available */
         int timeout; /**< The timeout in milliseconds to wait for connect or read i/o */
         int retry;       /**< Number of connection retry before reporting an error */
         double response;                      /**< Socket connection response time */
+        Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
+        Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
+        boolean_t is_available;          /**< true if the server/port is available */
         EventAction_T action;  /**< Description of the action upon event occurence */
         /** Protocol specific parameters */ //FIXME: move this to Protocol_T ???
         union {
@@ -576,6 +575,9 @@ typedef struct myport {
                         Operator_Type gracefullimitOP;                /**< gracefullimit operator */
                         Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
                 } apachestatus;
+                struct {
+                        Generic_T sendexpect;
+                } generic;
                 struct {
                         Hash_Type hashtype;           /**< Type of hash for a checksum (optional) */
                         Operator_Type operator;                         /**< HTTP status operator */

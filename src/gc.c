@@ -68,7 +68,7 @@ static void _gcpid(Pid_T *);
 static void _gcppid(Pid_T *);
 static void _gcfsflag(Fsflag_T *);
 static void _gcnonexist(Nonexist_T *);
-static void _gcgrc(Generic_T *);
+static void _gcgeneric(Generic_T *);
 static void _gcath(Auth_T *);
 static void _gc_mmonit(Mmonit_T *);
 static void _gc_url(URL_T *);
@@ -350,8 +350,6 @@ static void _gcportlist(Port_T *p) {
                 _gcportlist(&(*p)->next);
         if ((*p)->action)
                 _gc_eventaction(&(*p)->action);
-        if ((*p)->generic)
-                _gcgrc(&(*p)->generic);
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
         FREE((*p)->hostname);
@@ -369,6 +367,9 @@ static void _gcportlist(Port_T *p) {
                                 FREE(s);
                         }
                 }
+        } else if ((*p)->protocol->check == check_generic) {
+                if ((*p)->parameters.generic.sendexpect)
+                        _gcgeneric(&(*p)->parameters.generic.sendexpect);
         } else if ((*p)->protocol->check == check_mysql) {
                 FREE((*p)->parameters.mysql.username);
                 FREE((*p)->parameters.mysql.password);
@@ -592,10 +593,10 @@ static void _gcpdl(Dependant_T *d) {
 }
 
 
-static void _gcgrc(Generic_T *g) {
+static void _gcgeneric(Generic_T *g) {
         ASSERT(g);
         if ((*g)->next)
-                _gcgrc(&(*g)->next);
+                _gcgeneric(&(*g)->next);
         FREE((*g)->send);
 #ifdef HAVE_REGEX_H
         if ((*g)->expect != NULL)

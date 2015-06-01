@@ -2760,7 +2760,6 @@ static void addport(Port_T *list, Port_T port) {
         p->action             = port->action;
         p->timeout            = port->timeout;
         p->retry              = port->retry;
-        p->generic            = port->generic;
         p->protocol           = port->protocol;
         p->pathname           = port->pathname;
         p->hostname           = port->hostname;
@@ -3388,11 +3387,11 @@ static void addeventaction(EventAction_T *_ea, Action_Type failed, Action_Type s
  * Add a generic protocol handler to
  */
 static void addgeneric(Port_T port, char *send, char *expect) {
-        Generic_T g = port->generic;
+        Generic_T g = port->parameters.generic.sendexpect;
 
         if (g == NULL) {
                 NEW(g);
-                port->generic = g;
+                port->parameters.generic.sendexpect = g;
         } else {
                 while (g->next)
                         g = g->next;
@@ -3406,7 +3405,7 @@ static void addgeneric(Port_T port, char *send, char *expect) {
         } else if (expect != NULL) {
 #ifdef HAVE_REGEX_H
 
-                int   reg_return;
+                int reg_return;
                 NEW(g->expect);
                 reg_return = regcomp(g->expect, expect, REG_NOSUB|REG_EXTENDED);
                 FREE(expect);
