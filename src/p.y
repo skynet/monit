@@ -1281,7 +1281,7 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL GPS {
                         portset.protocol = Protocol_get(Protocol_GPS);
                   }
-                | PROTOCOL RADIUS secret {
+                | PROTOCOL RADIUS radiuslist {
                         portset.protocol = Protocol_get(Protocol_RADIUS);
                   }
                 | PROTOCOL MEMCACHE {
@@ -1393,7 +1393,16 @@ httpheaderlist  : /* EMPTY */
                 ;
 
 secret          : SECRET STRING {
-                    portset.request = $2;
+                    $<string>$ = $2;
+                  }
+                ;
+
+radiuslist      : /* EMPTY */
+                | radiuslist radius
+                ;
+
+radius          : secret {
+                        portset.parameters.radius.secret = $<string>1;
                   }
                 ;
 
@@ -2675,6 +2684,9 @@ static void addmail(char *mailto, Mail_T f, Mail_T *l) {
  */
 static void addport(Port_T *list, Port_T port) {
         ASSERT(port);
+
+        if (port->protocol->check == check_radius && port->type != Socket_Udp)
+                yyerror("Radius protocol test supports UDP only");
 
         Port_T p;
         NEW(p);

@@ -544,7 +544,7 @@ typedef struct myport {
         unsigned char *password;                            /**< Optional password */ //FIXME: used in: mysql
         char *hostname;                                     /**< Hostname to check */
         List_T http_headers;    /**< Optional list of headers to send with request */ //FIXME: used in: http
-        char *request;                              /**< Specific protocol request */ //FIXME: used in: radius, websocket, http
+        char *request;                              /**< Specific protocol request */ //FIXME: used in: websocket, http
         char *request_checksum;     /**< The optional checksum for a req. document */ //FIXME: used in: http
         char *request_hostheader;/**< The optional Host: header to use. Deprecated */ //FIXME: used in: websocket, http
         char *pathname;                   /**< Pathname, in case of an UNIX socket */ //FIXME ... unix/inet union  ... used also by websocket protocol
@@ -586,6 +586,9 @@ typedef struct myport {
                         Operator_Type gracefullimitOP;                /**< gracefullimit operator */
                         Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
                 } apachestatus;
+                struct {
+                        char *secret;
+                } radius;
                 struct {
                         char *target;
                         int maxforward;

@@ -372,6 +372,8 @@ static void _gcportlist(Port_T *p) {
         }
         if ((*p)->protocol->check == check_sip)
                 FREE((*p)->parameters.sip.target);
+        else if ((*p)->protocol->check == check_radius)
+                FREE((*p)->parameters.radius.secret);
         FREE(*p);
 }
 

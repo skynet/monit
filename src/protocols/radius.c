@@ -116,13 +116,10 @@ void check_radius(Socket_T socket) {
 
         ASSERT(socket);
 
-        if (Socket_getType(socket) != Socket_Udp)
-                THROW(IOException, "RADIUS: unsupported socket type -- protocol test skipped");
-
         P = Socket_getPort(socket);
         ASSERT(P);
 
-        secret = P->request ? P->request : "testing123";
+        secret = P->parameters.radius.secret ? P->parameters.radius.secret : "testing123";
         secret_len = (int)strlen(secret);
 
         /* get 16 bytes of random data */
