@@ -2860,6 +2860,16 @@ For example:
         protocol mysql username foo password bar
      then alert
 
+or with unix-socket and OS X start/stop commands
+
+ check process mysql with pidfile /var/run/mysqld/mysqld.pid
+     start program = "/usr/local/mysql/support-files/mysql.server start"
+     stop program = "/usr/local/mysql/support-files/mysql.server stop"
+     if failed
+        unixsocket /tmp/mysql.sock
+        protocol mysql username foo password bar
+     then alert
+
 
 =head4 WEBSOCKET
 
