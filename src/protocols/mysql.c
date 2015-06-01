@@ -333,12 +333,10 @@ static void _response(mysql_t *mysql) {
         mysql->response.len = _getUInt3(&mysql->response);
         mysql->response.seq = _getUInt1(&mysql->response);
         if (mysql->state == MySQL_Init) {
-                // check length to quickly identify non-MySQL server-side (handshake packet should have ca. 80-90 bytes)
                 if (! mysql->response.len || mysql->response.len > STRLEN)
-                        THROW(IOException, "Invalid handshake packet length -- not MySQL protocol?");
-                // check sequence id to quickly identify non-MySQL server-side (handshake packet should have sequence id 0)
+                        THROW(IOException, "Invalid handshake packet length -- not MySQL protocol");
                 if (mysql->response.seq != 0)
-                        THROW(IOException, "Invalid handshake packet sequence id -- not MySQL protocol?");
+                        THROW(IOException, "Invalid handshake packet sequence id -- not MySQL protocol");
         }
         mysql->response.len = mysql->response.len > STRLEN ? STRLEN : mysql->response.len; // Adjust packet length for this buffer
         // Read payload
@@ -480,7 +478,7 @@ void check_mysql(Socket_T socket) {
         mysql_t mysql = {.state = MySQL_Init, .socket = socket, .port = Socket_getPort(socket)};
         _response(&mysql);
         if (mysql.state != MySQL_Handshake)
-                THROW(IOException, "Invalid server greeting, the server didn't sent a handshake packet -- not MySQL protocol?\n");
+                THROW(IOException, "Invalid server greeting, the server didn't sent a handshake packet -- not MySQL protocol\n");
         _requestHandshake(&mysql);
         // Check handshake response: if no credentials are set, we allow both Ok/Error as we've sent an anonymous login which may fail, but if credentials are set, we expect Ok only
         TRY
