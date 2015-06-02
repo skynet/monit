@@ -786,10 +786,10 @@ void Util_printRunList() {
         printf(" %-18s = %s\n", "Id file", is_str_defined(Run.files.id));
         printf(" %-18s = %s\n", "State file", is_str_defined(Run.files.state));
         printf(" %-18s = %s\n", "Debug", Run.debug ? "True" : "False");
-        printf(" %-18s = %s\n", "Log", Run.dolog ? "True" : "False");
-        printf(" %-18s = %s\n", "Use syslog", Run.use_syslog ? "True" : "False");
-        printf(" %-18s = %s\n", "Is Daemon", Run.isdaemon ? "True" : "False");
-        printf(" %-18s = %s\n", "Use process engine", Run.doprocess ? "True" : "False");
+        printf(" %-18s = %s\n", "Log", (Run.flags & Run_Log) ? "True" : "False");
+        printf(" %-18s = %s\n", "Use syslog", (Run.flags & Run_UseSyslog) ? "True" : "False");
+        printf(" %-18s = %s\n", "Is Daemon", (Run.flags & Run_Daemon) ? "True" : "False");
+        printf(" %-18s = %s\n", "Use process engine", (Run.flags & Run_ProcessEngineEnabled) ? "True" : "False");
         printf(" %-18s = %d seconds with start delay %d seconds\n", "Poll time", Run.polltime, Run.startdelay);
         printf(" %-18s = %d bytes\n", "Expect buffer", Run.expectbuffer);
 
@@ -819,7 +819,7 @@ void Util_printRunList() {
                                c->url->user ? " using credentials" : "",
                                c->next ? ",\n                    = " : "");
                 }
-                if (! Run.dommonitcredentials)
+                if (! (Run.flags & Run_MmonitCredentials))
                         printf("\n                      register without credentials");
                 printf("\n");
         }
@@ -1419,7 +1419,7 @@ int Util_isProcessRunning(Service_T s, boolean_t refresh) {
                 /* The process table read may sporadically fail during read, because we're using glob on some platforms which may fail if the proc filesystem
                  * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
                  * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
-                if (Run.doprocess) {
+                if (Run.flags & Run_ProcessEngineEnabled) {
                         for (int i = 0; i < ptreesize; i++) {
                                 boolean_t found = false;
                                 if (ptree[i].cmdline) {

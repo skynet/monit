@@ -261,7 +261,8 @@ static void do_init() {
         /*
          * Initialize the process information gathering interface
          */
-        Run.doprocess = init_process_info();
+        if (init_process_info())
+                Run.flags |= Run_ProcessEngineEnabled;
 
         /*
          * Start the Parser and create the service list. This will also set
@@ -327,7 +328,7 @@ static void do_reinit() {
                 heartbeatRunning = false;
         }
 
-        Run.doreload = false;
+        Run.flags &= ~Run_DoReload;
 
         /* Stop http interface */
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix)
@@ -392,7 +393,7 @@ static void do_action(char **args) {
         char *action = args[optind];
         char *service = args[++optind];
 
-        Run.once = true;
+        Run.flags |= Run_Once;
 
         if (! action) {
                 do_default();
@@ -461,8 +462,8 @@ static void do_action(char **args) {
 static void do_exit() {
         sigset_t ns;
         set_signal_block(&ns, NULL);
-        Run.stopped = true;
-        if (Run.isdaemon && ! Run.once) {
+        Run.flags |= Run_Stopped;
+        if ((Run.flags & Run_Daemon) && ! (Run.flags & Run_Once)) {
                 if (can_http())
                         monit_http(Httpd_Stop);
 
@@ -491,11 +492,11 @@ static void do_exit() {
  * Also, if specified, start the monit http server if in deamon mode.
  */
 static void do_default() {
-        if (Run.isdaemon) {
+        if (Run.flags & Run_Daemon) {
                 if (do_wakeupcall())
                         exit(0);
 
-                Run.once = false;
+                Run.flags &= ~Run_Once;
                 if (can_http()) {
                         if (Run.httpd.flags & Httpd_Net)
                                 LogInfo("Starting Monit %s daemon with http interface at [%s]:%d\n", VERSION, Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "*", Run.httpd.socket.net.port);
@@ -508,7 +509,7 @@ static void do_default() {
                 if (Run.startdelay)
                         LogInfo("Monit start delay set -- pause for %ds\n", Run.startdelay);
 
-                if (! Run.init)
+                if (! (Run.flags & Run_Foreground))
                         daemonize();
                 else if (! Run.debug)
                         Util_redirectStdFds();
@@ -531,7 +532,7 @@ static void do_default() {
                         /* sleep can be interrupted by signal => make sure we paused long enough */
                         while (now < delay) {
                                 sleep((unsigned int)(delay - now));
-                                if (Run.stopped)
+                                if (Run.flags & Run_Stopped)
                                         do_exit();
                                 now = Time_now();
                         }
@@ -553,17 +554,17 @@ static void do_default() {
                         State_save();
 
                         /* In the case that there is no pending action then sleep */
-                        if (! Run.doaction)
+                        if (! (Run.flags & Run_ActionPending))
                                 sleep(Run.polltime);
 
-                        if (Run.dowakeup) {
-                                Run.dowakeup = false;
+                        if (Run.flags & Run_DoWakeup) {
+                                Run.flags &= ~Run_DoWakeup;
                                 LogInfo("Awakened by User defined signal 1\n");
                         }
 
-                        if (Run.stopped)
+                        if (Run.flags & Run_Stopped)
                                 do_exit();
-                        else if (Run.doreload)
+                        else if (Run.flags & Run_DoReload)
                                 do_reinit();
                 }
         } else {
@@ -623,7 +624,7 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 case 'd':
                                 {
-                                        Run.isdaemon = true;
+                                        Run.flags |= Run_Daemon;
                                         sscanf(optarg, "%d", &Run.polltime);
                                         if (Run.polltime < 1) {
                                                 LogError("Option -%c requires a natural number\n", opt);
@@ -640,8 +641,8 @@ static void handle_options(int argc, char **argv) {
                                 {
                                         Run.files.log = Str_dup(optarg);
                                         if (IS(Run.files.log, "syslog"))
-                                                Run.use_syslog = true;
-                                        Run.dolog = true;
+                                                Run.flags |= Run_UseSyslog;
+                                        Run.flags |= Run_Log;
                                         break;
                                 }
                                 case 'p':
@@ -656,7 +657,7 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 case 'I':
                                 {
-                                        Run.init = true;
+                                        Run.flags |= Run_Foreground;
                                         break;
                                 }
                                 case 'i':
@@ -820,7 +821,7 @@ static void *heartbeat(void *args) {
         LogInfo("M/Monit heartbeat started\n");
         LOCK(heartbeatMutex)
         {
-                while (! Run.stopped && ! Run.doreload) {
+                while (! (Run.flags & Run_Stopped) && ! (Run.flags & Run_DoReload)) {
                         handle_mmonit(NULL);
                         struct timespec wait = {.tv_sec = Time_now() + Run.polltime, .tv_nsec = 0};
                         Sem_timeWait(heartbeatCond, heartbeatMutex, wait);
@@ -839,7 +840,7 @@ static void *heartbeat(void *args) {
  * Signalhandler for a daemon reload call
  */
 static RETSIGTYPE do_reload(int sig) {
-        Run.doreload = true;
+        Run.flags |= Run_DoReload;
 }
 
 
@@ -847,7 +848,7 @@ static RETSIGTYPE do_reload(int sig) {
  * Signalhandler for monit finalization
  */
 static RETSIGTYPE do_destroy(int sig) {
-        Run.stopped = true;
+        Run.flags |= Run_Stopped;
 }
 
 
@@ -855,7 +856,7 @@ static RETSIGTYPE do_destroy(int sig) {
  * Signalhandler for a daemon wakeup call
  */
 static RETSIGTYPE do_wakeup(int sig) {
-        Run.dowakeup = true;
+        Run.flags |= Run_DoWakeup;
 }
 
 

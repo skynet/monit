@@ -470,10 +470,10 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                             "<tr><td>Debug</td><td>%s</td></tr>",
                             Run.debug ? "True" : "False");
         StringBuffer_append(res->outputbuffer,
-                            "<tr><td>Log</td><td>%s</td></tr>", Run.dolog ? "True" : "False");
+                            "<tr><td>Log</td><td>%s</td></tr>", (Run.flags & Run_Log) ? "True" : "False");
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Use syslog</td><td>%s</td></tr>",
-                            Run.use_syslog ? "True" : "False");
+                            (Run.flags & Run_UseSyslog) ? "True" : "False");
         if (Run.eventlist_dir) {
                 char slots[STRLEN];
                 if (Run.eventlist_slots < 0)
@@ -575,7 +575,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                                     "<td><form method=POST action='_runtime'>Force validate now? <input type=hidden name='action' value='validate'>"
                                     "<input type=submit value='Go'></form></td>");
 
-                if (Run.dolog && ! Run.use_syslog) {
+                if ((Run.flags & Run_Log) && ! (Run.flags & Run_UseSyslog)) {
                         StringBuffer_append(res->outputbuffer,
                                             "<td><form method=GET action='_viewlog'>View Monit logfile? <input type=submit value='Go'></form></td>");
                 }
@@ -592,7 +592,7 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
                 return;
         }
         do_head(res, "_viewlog", "View log", 100);
-        if (Run.dolog && ! Run.use_syslog) {
+        if ((Run.flags & Run_Log) && ! (Run.flags & Run_UseSyslog)) {
                 struct stat sb;
                 if (! stat(Run.files.log, &sb)) {
                         FILE *f = fopen(Run.files.log, "r");
@@ -616,7 +616,7 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
         } else {
                 StringBuffer_append(res->outputbuffer,
                                     "<b>Cannot view logfile:</b><br>");
-                if (! Run.dolog)
+                if (! (Run.flags & Run_Log))
                         StringBuffer_append(res->outputbuffer, "Monit was started without logging");
                 else
                         StringBuffer_append(res->outputbuffer, "Monit uses syslog");
@@ -654,7 +654,7 @@ static void handle_action(HttpRequest req, HttpResponse res) {
                         s->token = Str_dup(token);
                 }
                 LogInfo("'%s' %s on user request\n", s->name, action);
-                Run.doaction = true; /* set the global flag */
+                Run.flags |= Run_ActionPending; /* set the global flag */
                 do_wakeupcall();
         }
         do_service(req, res, s);
@@ -702,7 +702,7 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
                                 q->token = Str_dup(token);
                         }
                 }
-                Run.doaction = true;
+                Run.flags |= Run_ActionPending;
                 do_wakeupcall();
         }
 }
@@ -952,7 +952,7 @@ static void do_home_system(HttpRequest req, HttpResponse res) {
                             "<th align='left' class='first'>System</th>"
                             "<th align='left'>Status</th>");
 
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer,
                                     "<th align='right'>Load</th>"
                                     "<th align='right'>CPU</th>"
@@ -968,7 +968,7 @@ static void do_home_system(HttpRequest req, HttpResponse res) {
         _printServiceStatus(res->outputbuffer, s);
         StringBuffer_append(res->outputbuffer,
                             "</td>");
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer,
                                     "<td align='right'>[%.2f]&nbsp;[%.2f]&nbsp;[%.2f]</td>"
                                     "<td align='right'>"
@@ -1012,7 +1012,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                                             "<th align='left' class='first'>Process</th>"
                                             "<th align='left'>Status</th>"
                                             "<th align='right'>Uptime</th>");
-                        if (Run.doprocess) {
+                        if (Run.flags & Run_ProcessEngineEnabled) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "<th align='right'>CPU Total</b></th>"
                                                     "<th align='right'>Memory Total</th>");
@@ -1032,7 +1032,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
                                             "<td align='right'>-</td>");
-                        if (Run.doprocess) {
+                        if (Run.flags & Run_ProcessEngineEnabled) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "<td align='right'>-</td>"
                                                     "<td align='right'>-</td>");
@@ -1042,7 +1042,7 @@ static void do_home_process(HttpRequest req, HttpResponse res) {
                         StringBuffer_append(res->outputbuffer,
                                             "<td align='right'>%s</td>", uptime);
                         FREE(uptime);
-                        if (Run.doprocess) {
+                        if (Run.flags & Run_ProcessEngineEnabled) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "<td align='right' class='%s'>%.1f%%</td>",
                                                     (s->error & Event_Resource) ? "red-text" : "",
@@ -2317,7 +2317,7 @@ static void print_service_status_process_uptime(HttpResponse res, Service_T s) {
 
 
 static void print_service_status_process_children(HttpResponse res, Service_T s) {
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Children</td>");
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<td>-</td>");
@@ -2329,7 +2329,7 @@ static void print_service_status_process_children(HttpResponse res, Service_T s)
 
 
 static void print_service_status_process_cpu(HttpResponse res, Service_T s) {
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>CPU usage</td>");
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<td>-</td>");
@@ -2341,7 +2341,7 @@ static void print_service_status_process_cpu(HttpResponse res, Service_T s) {
 
 
 static void print_service_status_process_cputotal(HttpResponse res, Service_T s) {
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Total CPU usage (incl. children)</td>");
                 if (! Util_hasServiceStatus(s))
                         StringBuffer_append(res->outputbuffer, "<td>-</td>");
@@ -2353,7 +2353,7 @@ static void print_service_status_process_cputotal(HttpResponse res, Service_T s)
 
 
 static void print_service_status_process_memory(HttpResponse res, Service_T s) {
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Memory usage</td>");
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td>-</td>");
@@ -2367,7 +2367,7 @@ static void print_service_status_process_memory(HttpResponse res, Service_T s) {
 
 
 static void print_service_status_process_memorytotal(HttpResponse res, Service_T s) {
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>Total memory usage (incl. children)</td>");
                 if (! Util_hasServiceStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td>-</td>");
@@ -2689,7 +2689,7 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                                             "gid", s->inf->priv.process.gid,
                                                             "uptime", uptime);
                                         FREE(uptime);
-                                        if (Run.doprocess) {
+                                        if (Run.flags & Run_ProcessEngineEnabled) {
                                                 StringBuffer_append(res->outputbuffer,
                                                                     "  %-33s %d\n",
                                                                     "children", s->inf->priv.process.children);
@@ -2748,7 +2748,7 @@ static void status_service_txt(Service_T s, HttpResponse res, Level_Type level) 
                                                     "  %-33s FAILED to %s type %s protocol %s\n",
                                                     "unix socket response time", p->target.unix.pathname, Util_portTypeDescription(p), p->protocol->name);
                         }
-                        if (s->type == Service_System && Run.doprocess) {
+                        if (s->type == Service_System && (Run.flags & Run_ProcessEngineEnabled)) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "  %-33s [%.2f] [%.2f] [%.2f]\n"
                                                     "  %-33s %.1f%%us %.1f%%sy"

@@ -324,7 +324,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                 S->inf->priv.process.euid,
                                                 S->inf->priv.process.gid,
                                                 (long long)S->inf->priv.process.uptime);
-                                        if (Run.doprocess) {
+                                        if (Run.flags & Run_ProcessEngineEnabled) {
                                                 StringBuffer_append(B,
                                                         "<children>%d</children>"
                                                         "<memory>"
@@ -387,7 +387,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                     p->protocol->name ? p->protocol->name : "",
                                                     p->is_available ? p->response : -1.);
                         }
-                        if (S->type == Service_System && Run.doprocess) {
+                        if (S->type == Service_System && (Run.flags & Run_ProcessEngineEnabled)) {
                                 StringBuffer_append(B,
                                                     "<system>"
                                                     "<load>"

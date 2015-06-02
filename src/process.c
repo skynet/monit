@@ -151,7 +151,7 @@ boolean_t update_process_data(Service_T s, ProcessTree_T *pt, int treesize, pid_
  * @return true if successful, otherwise false
  */
 boolean_t update_system_load() {
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 ASSERT(systeminfo.mem_kbyte_max > 0);
 
                 /** Get load average triplet */
@@ -214,13 +214,13 @@ int initprocesstree(ProcessTree_T **pt_r, int *size_r, ProcessTree_T **oldpt_r, 
 
         if ((*size_r = initprocesstree_sysdep(pt_r)) <= 0 || ! *pt_r) {
                 DEBUG("System statistic error -- cannot initialize the process tree -- process resource monitoring disabled\n");
-                Run.doprocess = false;
+                Run.flags &= ~Run_ProcessEngineEnabled;
                 if (*oldpt_r)
                         delprocesstree(oldpt_r, oldsize_r);
                 return -1;
-        } else if (! Run.doprocess) {
+        } else if (! (Run.flags & Run_ProcessEngineEnabled)) {
                 DEBUG("System statistic -- initialization of the process tree succeeded -- process resource monitoring enabled\n");
-                Run.doprocess = true;
+                Run.flags |= Run_ProcessEngineEnabled;
         }
 
         int oldentry;
@@ -355,7 +355,7 @@ void process_testmatch(char *pattern) {
         }
 #endif
         initprocesstree(&ptree, &ptreesize, &oldptree, &oldptreesize);
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 int count = 0;
                 printf("List of processes matching pattern \"%s\":\n", pattern);
                 printf("------------------------------------------\n");

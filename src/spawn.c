@@ -179,7 +179,7 @@ void spawn(Service_T S, command_t C, Event_T E) {
 
                 set_monit_environment(S, C, E, date);
 
-                if (! Run.isdaemon) {
+                if (! (Run.flags & Run_Daemon)) {
                         for (int i = 0; i < 3; i++)
                                 if (close(i) == -1 || open("/dev/null", O_RDWR) != i)
                                         stat_loc |= redirect_ERROR;

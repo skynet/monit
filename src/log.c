@@ -121,7 +121,7 @@ static void log_backtrace();
  * @return true if the log system was successfully initialized
  */
 boolean_t log_init() {
-        if (! Run.dolog)
+        if (! (Run.flags & Run_Log))
                 return true;
         if (! open_log())
                 return false;
@@ -289,7 +289,7 @@ void LogDebug(const char *s, ...) {
  */
 void log_close() {
 
-        if (Run.use_syslog) {
+        if (Run.flags & Run_UseSyslog) {
                 closelog();
         }
 
@@ -322,7 +322,7 @@ void vsyslog (int facility_priority, const char *format, va_list arglist) {
  */
 static boolean_t open_log() {
 
-        if (Run.use_syslog) {
+        if (Run.flags & Run_UseSyslog) {
                 openlog(prog, LOG_PID, Run.facility);
         } else {
                 LOG = fopen(Run.files.log, "a+");
@@ -404,8 +404,8 @@ static void log_log(int priority, const char *s, va_list ap) {
 #endif
                 fflush(output);
 
-                if (Run.dolog) {
-                        if (Run.use_syslog) {
+                if (Run.flags & Run_Log) {
+                        if (Run.flags & Run_UseSyslog) {
 #ifdef HAVE_VA_COPY
                                 va_copy(ap_copy, ap);
                                 vsyslog(priority, s, ap_copy);

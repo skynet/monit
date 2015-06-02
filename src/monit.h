@@ -155,6 +155,23 @@ typedef enum {
 
 
 typedef enum {
+        Run_Once                 = 0x1,                   /**< Run Monit only once */
+        Run_Foreground           = 0x2,                 /**< Don't daemonize Monit */ //FIXME: cleanup: Run_Foreground and Run_Daemon are mutually exclusive => no need for 2 flags
+        Run_Daemon               = 0x4,                       /**< Daemonize Monit */ //FIXME: cleanup: Run_Foreground and Run_Daemon are mutually exclusive => no need for 2 flags
+        Run_Log                  = 0x8,                           /**< Log enabled */
+        Run_UseSyslog            = 0x10,                           /**< Use syslog */ //FIXME: cleanup: no need for standalone flag ... if syslog is enabled, don't set Run.files.log, then (Run.flags&Run_Log && ! Run.files.log => syslog)
+        Run_FipsEnabled          = 0x20,                 /** FIPS-140 mode enabled */
+        Run_HandlerInit          = 0x40,    /**< The handlers queue initialization */
+        Run_ProcessEngineEnabled = 0x80,    /**< Process monitoring engine enabled */
+        Run_ActionPending        = 0x100,              /**< Service action pending */
+        Run_MmonitCredentials    = 0x200,      /**< Should set M/Monit credentials */
+        Run_Stopped              = 0x400,                          /**< Stop Monit */
+        Run_DoReload             = 0x800,                        /**< Reload Monit */
+        Run_DoWakeup             = 0x1000                        /**< Wakeup Monit */
+} __attribute__((__packed__)) Run_Flags;
+
+
+typedef enum {
         Httpd_Start = 1,
         Httpd_Stop
 } __attribute__((__packed__)) Httpd_Action;
@@ -1063,21 +1080,8 @@ typedef struct myevent *Event_T;
 
 /** Defines data for application runtime */
 struct myrun {
-        //FIXME: create enum for Run flags and replace set of various boolean_t single-purpose flags with common flags where possible
         uint8_t debug;                                            /**< Debug level */
-        boolean_t once;                                  /**< true - run only once */
-        boolean_t init;              /**< true - don't background to run from init */
-        boolean_t isdaemon;            /**< true if program should run as a daemon */
-        boolean_t use_syslog;                     /**< If true write log to syslog */
-        boolean_t dolog;  /**< true if program should log actions, otherwise false */
-        boolean_t fipsEnabled;          /** true if monit should use FIPS-140 mode */
-        boolean_t handler_init;             /**< The handlers queue initialization */
-        boolean_t doprocess;            /**< true if process status engine is used */
-        boolean_t doaction;        /**< true if some service(s) has action pending */
-        boolean_t dommonitcredentials; /**< true if M/Monit should receive credentials */
-        volatile boolean_t stopped; /**< true if monit was stopped. Flag used by threads */
-        volatile boolean_t doreload; /**< true if a monit daemon should reinitialize */
-        volatile boolean_t dowakeup; /**< true if a monit daemon was wake up by signal */
+        volatile Run_Flags flags;
         Handler_Type handler_flag;                    /**< The handlers state flag */
         struct {
                 char *control;            /**< The file to read configuration from */

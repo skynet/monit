@@ -87,7 +87,7 @@ static void _gc_request(Request_T *);
 
 void gc() {
         Engine_destroyHostsAllow();
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 delprocesstree(&oldptree, &oldptreesize);
                 delprocesstree(&ptree, &ptreesize);
         }

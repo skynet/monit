@@ -443,7 +443,7 @@ const char *Event_get_action_description(Event_T E) {
  */
 void Event_queue_process() {
         /* return in the case that the eventqueue is not enabled or empty */
-        if (! Run.eventlist_dir || (! Run.handler_init && ! Run.handler_queue[Handler_Alert] && ! Run.handler_queue[Handler_Mmonit]))
+        if (! Run.eventlist_dir || (! (Run.flags & Run_HandlerInit) && ! Run.handler_queue[Handler_Alert] && ! Run.handler_queue[Handler_Mmonit]))
                 return;
 
         DIR *dir = opendir(Run.eventlist_dir);
@@ -541,7 +541,7 @@ void Event_queue_process() {
 
                         /* alert */
                         if (e->flag & Handler_Alert) {
-                                if (Run.handler_init)
+                                if (Run.flags & Run_HandlerInit)
                                         Run.handler_queue[Handler_Alert]++;
                                 if ((Run.handler_flag & Handler_Alert) != Handler_Alert) {
                                         if ( handle_alert(e) != Handler_Alert ) {
@@ -557,7 +557,7 @@ void Event_queue_process() {
 
                         /* mmonit */
                         if (e->flag & Handler_Mmonit) {
-                                if (Run.handler_init)
+                                if (Run.flags & Run_HandlerInit)
                                         Run.handler_queue[Handler_Mmonit]++;
                                 if ((Run.handler_flag & Handler_Mmonit) != Handler_Mmonit) {
                                         if ( handle_mmonit(e) != Handler_Mmonit ) {
@@ -597,7 +597,7 @@ void Event_queue_process() {
         error1:
                 de = readdir(dir);
         }
-        Run.handler_init = false;
+        Run.flags &= ~Run_HandlerInit;
         closedir(dir);
         FREE(a);
         FREE(ea);
@@ -772,9 +772,9 @@ error:
                 if (unlink(file_name) < 0)
                         LogError("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);
         } else {
-                if (! Run.handler_init && E->flag & Handler_Alert)
+                if (! (Run.flags & Run_HandlerInit) && E->flag & Handler_Alert)
                         Run.handler_queue[Handler_Alert]++;
-                if (! Run.handler_init && E->flag & Handler_Mmonit)
+                if (! (Run.flags & Run_HandlerInit) && E->flag & Handler_Mmonit)
                         Run.handler_queue[Handler_Mmonit]++;
         }
 

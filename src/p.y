@@ -557,9 +557,9 @@ setalert        : SET alertmail formatlist reminder {
                 ;
 
 setdaemon       : SET DAEMON NUMBER startdelay {
-                    if (! Run.isdaemon || ihp.daemon) {
+                    if (! (Run.flags & Run_Daemon) || ihp.daemon) {
                       ihp.daemon     = true;
-                      Run.isdaemon   = true;
+                      Run.flags      |= Run_Daemon;
                       Run.polltime   = $3;
                       Run.startdelay = $<number>4;
                     }
@@ -578,12 +578,12 @@ setexpectbuffer : SET EXPECTBUFFER NUMBER unit {
                 ;
 
 setinit         : SET INIT {
-                    Run.init = true;
+                    Run.flags |= Run_Foreground;
                   }
                 ;
 
 setfips         : SET FIPS {
-                    Run.fipsEnabled = true;
+                    Run.flags |= Run_FipsEnabled;
                   }
                 ;
 
@@ -591,8 +591,8 @@ setlog          : SET LOGFILE PATH   {
                    if (! Run.files.log || ihp.logfile) {
                      ihp.logfile = true;
                      setlogfile($3);
-                     Run.use_syslog = false;
-                     Run.dolog = true;
+                     Run.flags &= ~Run_UseSyslog;
+                     Run.flags |= Run_Log;
                    }
                   }
                 | SET LOGFILE SYSLOG {
@@ -662,7 +662,7 @@ mmonitopt       : sslversion {
 
 credentials     : /* EMPTY */
                 | REGISTER CREDENTIALS {
-                    Run.dommonitcredentials = false;
+                    Run.flags &= ~Run_MmonitCredentials;
                   }
                 ;
 
@@ -2433,10 +2433,6 @@ static void preparse() {
         argcurrentfile              = NULL;
         argyytext                   = NULL;
         /* Reset parser */
-        Run.stopped                 = false;
-        Run.dolog                   = false;
-        Run.doaction                = false;
-        Run.dommonitcredentials     = true;
         Run.mmonitcredentials       = NULL;
         Run.httpd.flags             = Httpd_Disabled | Httpd_Signature;
         Run.httpd.credentials       = NULL;
@@ -2455,8 +2451,7 @@ static void preparse() {
         Run.MailFormat.subject      = NULL;
         Run.MailFormat.message      = NULL;
         depend_list                 = NULL;
-        Run.handler_init            = true;
-        Run.fipsEnabled             = false;
+        Run.flags |= Run_HandlerInit | Run_MmonitCredentials;
         for (i = 0; i <= Handler_Max; i++)
                 Run.handler_queue[i] = 0;
         /*
@@ -2497,13 +2492,13 @@ static void postparse() {
                 addservice(current);
 
         /* Check that we do not start monit in daemon mode without having a poll time */
-        if (! Run.polltime && (Run.isdaemon || Run.init)) {
+        if (! Run.polltime && ((Run.flags & Run_Daemon) || (Run.flags & Run_Foreground))) {
                 LogError("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0)  or use the -d option when starting monit\n");
                 cfg_errflag++;
         }
 
         if (Run.files.log)
-                Run.dolog = true;
+                Run.flags |= Run_Log;
 
         /* Add the default general system service if not specified explicitly: service name default to hostname */
         if (! Run.system) {
@@ -2522,8 +2517,8 @@ static void postparse() {
         }
 
         if (Run.mmonits) {
-                if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
-                        if (Run.dommonitcredentials) {
+                if (Run.httpd.flags & Httpd_Net) {
+                        if (Run.flags & Run_MmonitCredentials) {
                                 Auth_T c;
                                 for (c = Run.httpd.credentials; c; c = c->next) {
                                         if (c->digesttype == Digest_Cleartext && ! c->is_readonly) {
@@ -2534,6 +2529,8 @@ static void postparse() {
                                 if (! Run.mmonitcredentials)
                                         LogWarning("M/Monit registration with credentials enabled, but no suitable credentials found in monit configuration file -- please add 'allow user:password' option to 'set httpd' statement\n");
                         }
+                } else if (Run.httpd.flags & Httpd_Unix) {
+                        LogWarning("M/Monit enabled but Monit httpd is using unix socket -- please change 'set httpd' statement to use TCP port in order to be able to manage services on Monit\n");
                 } else {
                         LogWarning("M/Monit enabled but no httpd allowed -- please add 'set httpd' statement\n");
                 }
@@ -2543,7 +2540,7 @@ static void postparse() {
         check_depend();
 
 #ifdef HAVE_OPENSSL
-        Ssl_setFipsMode(Run.fipsEnabled);
+        Ssl_setFipsMode(Run.flags & Run_FipsEnabled);
 #endif
 }
 
@@ -2819,7 +2816,7 @@ static void addresource(Resource_T rr) {
         ASSERT(rr);
 
         NEW(r);
-        if (! Run.doprocess)
+        if (! (Run.flags & Run_ProcessEngineEnabled))
                 yyerror("Cannot activate service check. The process status engine was disabled. On certain systems you must run monit as root to utilize this feature)\n");
         r->resource_id = rr->resource_id;
         r->limit       = rr->limit;
@@ -3871,8 +3868,8 @@ static void setsyslog(char *facility) {
         if (! Run.files.log || ihp.logfile) {
                 ihp.logfile = true;
                 setlogfile(Str_dup("syslog"));
-                Run.use_syslog = true;
-                Run.dolog = true;
+                Run.flags |= Run_UseSyslog;
+                Run.flags |= Run_Log;
         }
 
         if (facility) {

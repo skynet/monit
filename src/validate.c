@@ -971,15 +971,15 @@ int validate() {
         gettimeofday(&systeminfo.collected, NULL);
 
         /* In the case that at least one action is pending, perform quick loop to handle the actions ASAP */
-        if (Run.doaction) {
-                Run.doaction = false;
+        if (Run.flags & Run_ActionPending) {
+                Run.flags &= ~Run_ActionPending;
                 for (s = servicelist; s; s = s->next)
                         do_scheduled_action(s);
         }
 
         /* Check the services */
         for (s = servicelist; s; s = s->next) {
-                if (Run.stopped)
+                if (Run.flags & Run_Stopped)
                         break;
                 if (! do_scheduled_action(s) && s->monitor && ! check_skip(s)) {
                         check_timeout(s); // Can disable monitoring => need to check s->monitor again
@@ -1022,7 +1022,7 @@ boolean_t check_process(Service_T s) {
         if (IS_EVENT_SET(s->error, Event_Timeout))
                 for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next)
                         Event_post(s, Event_Timeout, State_Succeeded, ar->action, "process is running after previous restart timeout (manually recovered?)");
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 if (update_process_data(s, ptree, ptreesize, pid)) {
                         check_process_state(s);
                         check_process_pid(s);
