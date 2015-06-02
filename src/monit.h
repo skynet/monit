@@ -594,8 +594,8 @@ typedef struct myport {
                         List_T headers;      /**< List of headers to send with request (optional) */
                 } http;
                 struct {
-                        unsigned char *username;
-                        unsigned char *password;
+                        char *username;
+                        char *password;
                 } mysql;
                 struct {
                         char *secret;
