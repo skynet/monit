@@ -255,8 +255,8 @@ static void do_init() {
         /*
          * Get the position of the control file
          */
-        if (! Run.controlfile)
-                Run.controlfile = file_findControlFile();
+        if (! Run.files.control)
+                Run.files.control = file_findControlFile();
 
         /*
          * Initialize the process information gathering interface
@@ -267,7 +267,7 @@ static void do_init() {
          * Start the Parser and create the service list. This will also set
          * any Runtime constants defined in the controlfile.
          */
-        if (! parse(Run.controlfile))
+        if (! parse(Run.files.control))
                 exit(1);
 
         /*
@@ -311,7 +311,7 @@ static void do_init() {
 static void do_reinit() {
         LogInfo("Awakened by the SIGHUP signal\n"
                 "Reinitializing Monit - Control file '%s'\n",
-                Run.controlfile);
+                Run.files.control);
 
         /* Wait non-blocking for any children that has exited. Since we
          reinitialize any information about children we have setup to wait
@@ -340,7 +340,7 @@ static void do_reinit() {
         /* Run the garbage collector */
         gc();
 
-        if (! parse(Run.controlfile)) {
+        if (! parse(Run.files.control)) {
                 LogError("%s daemon died\n", prog);
                 exit(1);
         }
@@ -361,7 +361,7 @@ static void do_reinit() {
         /* Reinitialize Runtime file variables */
         file_init();
 
-        if (! file_createPidFile(Run.pidfile)) {
+        if (! file_createPidFile(Run.files.pid)) {
                 LogError("%s daemon died\n", prog);
                 exit(1);
         }
@@ -513,7 +513,7 @@ static void do_default() {
                 else if (! Run.debug)
                         Util_redirectStdFds();
 
-                if (! file_createPidFile(Run.pidfile)) {
+                if (! file_createPidFile(Run.files.pid)) {
                         LogError("Monit daemon died\n");
                         exit(1);
                 }
@@ -618,7 +618,7 @@ static void handle_options(int argc, char **argv) {
                                                 THROW(AssertException, "The control file '%s' is not a file", Str_trunc(f, 80));
                                         if (! File_isReadable(f))
                                                 THROW(AssertException, "The control file '%s' is not readable", Str_trunc(f, 80));
-                                        Run.controlfile = Str_dup(f);
+                                        Run.files.control = Str_dup(f);
                                         break;
                                 }
                                 case 'd':
@@ -638,20 +638,20 @@ static void handle_options(int argc, char **argv) {
                                 }
                                 case 'l':
                                 {
-                                        Run.logfile = Str_dup(optarg);
-                                        if (IS(Run.logfile, "syslog"))
+                                        Run.files.log = Str_dup(optarg);
+                                        if (IS(Run.files.log, "syslog"))
                                                 Run.use_syslog = true;
                                         Run.dolog = true;
                                         break;
                                 }
                                 case 'p':
                                 {
-                                        Run.pidfile = Str_dup(optarg);
+                                        Run.files.pid = Str_dup(optarg);
                                         break;
                                 }
                                 case 's':
                                 {
-                                        Run.statefile = Str_dup(optarg);
+                                        Run.files.state = Str_dup(optarg);
                                         break;
                                 }
                                 case 'I':
@@ -741,8 +741,8 @@ static void handle_options(int argc, char **argv) {
                         assert(Run.id);
                         printf("Reset Monit Id? [y/n]> ");
                         if ( getchar() == 'y') {
-                                File_delete(Run.idfile);
-                                Util_monitId(Run.idfile);
+                                File_delete(Run.files.id);
+                                Util_monitId(Run.files.id);
                                 kill_daemon(SIGHUP); // make any running Monit Daemon reload the new ID-File
                         }
                         exit(0);

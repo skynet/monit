@@ -588,7 +588,7 @@ setfips         : SET FIPS {
                 ;
 
 setlog          : SET LOGFILE PATH   {
-                   if (! Run.logfile || ihp.logfile) {
+                   if (! Run.files.log || ihp.logfile) {
                      ihp.logfile = true;
                      setlogfile($3);
                      Run.use_syslog = false;
@@ -617,17 +617,17 @@ seteventqueue   : SET EVENTQUEUE BASEDIR PATH {
                 ;
 
 setidfile       : SET IDFILE PATH {
-                    Run.idfile = $3;
+                    Run.files.id = $3;
                   }
                 ;
 
 setstatefile    : SET STATEFILE PATH {
-                    Run.statefile = $3;
+                    Run.files.state = $3;
                   }
                 ;
 
 setpid          : SET PIDFILE PATH {
-                   if (! Run.pidfile || ihp.pidfile) {
+                   if (! Run.files.pid || ihp.pidfile) {
                      ihp.pidfile = true;
                      setpidfile($3);
                    }
@@ -2502,7 +2502,7 @@ static void postparse() {
                 cfg_errflag++;
         }
 
-        if (Run.logfile)
+        if (Run.files.log)
                 Run.dolog = true;
 
         /* Add the default general system service if not specified explicitly: service name default to hostname */
@@ -3685,15 +3685,15 @@ static void addegid(gid_t gid) {
  * Reset the logfile if changed
  */
 static void setlogfile(char *logfile) {
-        if (Run.logfile) {
-                if (IS(Run.logfile, logfile)) {
+        if (Run.files.log) {
+                if (IS(Run.files.log, logfile)) {
                         FREE(logfile);
                         return;
                 } else {
-                        FREE(Run.logfile);
+                        FREE(Run.files.log);
                 }
         }
-        Run.logfile = logfile;
+        Run.files.log = logfile;
 }
 
 
@@ -3701,15 +3701,15 @@ static void setlogfile(char *logfile) {
  * Reset the pidfile if changed
  */
 static void setpidfile(char *pidfile) {
-        if (Run.pidfile) {
-                if (IS(Run.pidfile, pidfile)) {
+        if (Run.files.pid) {
+                if (IS(Run.files.pid, pidfile)) {
                         FREE(pidfile);
                         return;
                 } else {
-                        FREE(Run.pidfile);
+                        FREE(Run.files.pid);
                 }
         }
-        Run.pidfile = pidfile;
+        Run.files.pid = pidfile;
 }
 
 
@@ -3868,7 +3868,7 @@ static boolean_t addcredentials(char *uname, char *passwd, Digest_Type dtype, bo
  */
 static void setsyslog(char *facility) {
 
-        if (! Run.logfile || ihp.logfile) {
+        if (! Run.files.log || ihp.logfile) {
                 ihp.logfile = true;
                 setlogfile(Str_dup("syslog"));
                 Run.use_syslog = true;

@@ -325,9 +325,9 @@ static boolean_t open_log() {
         if (Run.use_syslog) {
                 openlog(prog, LOG_PID, Run.facility);
         } else {
-                LOG = fopen(Run.logfile, "a+");
+                LOG = fopen(Run.files.log, "a+");
                 if (! LOG) {
-                        LogError("Error opening the log file '%s' for writing -- %s\n", Run.logfile, STRERROR);
+                        LogError("Error opening the log file '%s' for writing -- %s\n", Run.files.log, STRERROR);
                         return false;
                 }
                 /* Set logger in unbuffered mode */

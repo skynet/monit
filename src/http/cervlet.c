@@ -458,14 +458,14 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                             "<tr><td>Effective user running Monit</td>"
                             "<td>%s</td></tr>", Run.Env.user);
         StringBuffer_append(res->outputbuffer,
-                            "<tr><td>Controlfile</td><td>%s</td></tr>", Run.controlfile);
-        if (Run.logfile)
+                            "<tr><td>Controlfile</td><td>%s</td></tr>", Run.files.control);
+        if (Run.files.log)
                 StringBuffer_append(res->outputbuffer,
-                                    "<tr><td>Logfile</td><td>%s</td></tr>", Run.logfile);
+                                    "<tr><td>Logfile</td><td>%s</td></tr>", Run.files.log);
         StringBuffer_append(res->outputbuffer,
-                            "<tr><td>Pidfile</td><td>%s</td></tr>", Run.pidfile);
+                            "<tr><td>Pidfile</td><td>%s</td></tr>", Run.files.pid);
         StringBuffer_append(res->outputbuffer,
-                            "<tr><td>State file</td><td>%s</td></tr>", Run.statefile);
+                            "<tr><td>State file</td><td>%s</td></tr>", Run.files.state);
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Debug</td><td>%s</td></tr>",
                             Run.debug ? "True" : "False");
@@ -594,8 +594,8 @@ static void do_viewlog(HttpRequest req, HttpResponse res) {
         do_head(res, "_viewlog", "View log", 100);
         if (Run.dolog && ! Run.use_syslog) {
                 struct stat sb;
-                if (! stat(Run.logfile, &sb)) {
-                        FILE *f = fopen(Run.logfile, "r");
+                if (! stat(Run.files.log, &sb)) {
+                        FILE *f = fopen(Run.files.log, "r");
                         if (f) {
 #define BUFSIZE 512
                                 size_t n;

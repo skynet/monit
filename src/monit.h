@@ -1064,7 +1064,7 @@ typedef struct myevent *Event_T;
 /** Defines data for application runtime */
 struct myrun {
         //FIXME: create enum for Run flags and replace set of various boolean_t single-purpose flags with common flags where possible
-        char debug;                                               /**< Debug level */
+        uint8_t debug;                                            /**< Debug level */
         boolean_t once;                                  /**< true - run only once */
         boolean_t init;              /**< true - don't background to run from init */
         boolean_t isdaemon;            /**< true if program should run as a daemon */
@@ -1079,12 +1079,13 @@ struct myrun {
         volatile boolean_t doreload; /**< true if a monit daemon should reinitialize */
         volatile boolean_t dowakeup; /**< true if a monit daemon was wake up by signal */
         Handler_Type handler_flag;                    /**< The handlers state flag */
-        //FIXME: move files to sub-struct
-        char *controlfile;                /**< The file to read configuration from */
-        char *logfile;                         /**< The file to write logdata into */
-        char *pidfile;                                  /**< This programs pidfile */
-        char *idfile;                           /**< The file with unique monit id */
-        char *statefile;                /**< The file with the saved runtime state */
+        struct {
+                char *control;            /**< The file to read configuration from */
+                char *log;                     /**< The file to write logdata into */
+                char *pid;                              /**< This programs pidfile */
+                char *id;                       /**< The file with unique monit id */
+                char *state;            /**< The file with the saved runtime state */
+        } files;
         char *mygroup;                              /**< Group Name of the Service */
         MD_T id;                                              /**< Unique monit id */
         int  polltime;        /**< In deamon mode, the sleeptime (sec) between run */

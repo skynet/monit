@@ -106,7 +106,7 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
                             Run.polltime,
                             Run.startdelay,
                             Run.system->name ? Run.system->name : "",
-                            Run.controlfile ? Run.controlfile : "");
+                            Run.files.control ? Run.files.control : "");
 
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
                 if (Run.httpd.flags & Httpd_Net)

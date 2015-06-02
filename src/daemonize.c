@@ -142,7 +142,7 @@ boolean_t kill_daemon(int sig) {
 int exist_daemon() {
         errno = 0;
         pid_t pid;
-        if ((pid = Util_getPid(Run.pidfile)) && (getpgid(pid) > -1 || errno == EPERM))
+        if ((pid = Util_getPid(Run.files.pid)) && (getpgid(pid) > -1 || errno == EPERM))
                 return (int)pid;
         return 0;
 }

@@ -780,11 +780,11 @@ boolean_t Util_existService(const char *name) {
 
 void Util_printRunList() {
         printf("Runtime constants:\n");
-        printf(" %-18s = %s\n", "Control file", is_str_defined(Run.controlfile));
-        printf(" %-18s = %s\n", "Log file", is_str_defined(Run.logfile));
-        printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.pidfile));
-        printf(" %-18s = %s\n", "Id file", is_str_defined(Run.idfile));
-        printf(" %-18s = %s\n", "State file", is_str_defined(Run.statefile));
+        printf(" %-18s = %s\n", "Control file", is_str_defined(Run.files.control));
+        printf(" %-18s = %s\n", "Log file", is_str_defined(Run.files.log));
+        printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.files.pid));
+        printf(" %-18s = %s\n", "Id file", is_str_defined(Run.files.id));
+        printf(" %-18s = %s\n", "State file", is_str_defined(Run.files.state));
         printf(" %-18s = %s\n", "Debug", Run.debug ? "True" : "False");
         printf(" %-18s = %s\n", "Log", Run.dolog ? "True" : "False");
         printf(" %-18s = %s\n", "Use syslog", Run.use_syslog ? "True" : "False");
