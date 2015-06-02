@@ -94,7 +94,7 @@ void check_generic(Socket_T socket) {
                          buffer and then set a low timeout on next read which reads remaining bytes
                          as well as wait on EOF */
                         *buf = Socket_readByte(socket);
-                        if (*buf < 0) {
+                        if ((int8_t)*buf < 0) {
                                 FREE(buf);
                                 THROW(IOException, "GENERIC: error receiving data -- %s", STRERROR);
                         }
