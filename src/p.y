@@ -1786,6 +1786,7 @@ resourcecpu     : resourcecpuid operator NUMBER PERCENT {
 resourcecpuid   : CPUUSER   { $<number>$ = Resource_CpuUser; }
                 | CPUSYSTEM { $<number>$ = Resource_CpuSystem; }
                 | CPUWAIT   { $<number>$ = Resource_CpuWait; }
+                | CPU       { $<number>$ = Resource_CpuPercent; }
                 ;
 
 resourcemem     : MEMORY operator value unit {

@@ -236,14 +236,28 @@ static void check_process_resources(Service_T s, Resource_T r) {
         switch (r->resource_id) {
 
                 case Resource_CpuPercent:
-                        if (s->monitor & Monitor_Init || s->inf->priv.process.cpu_percent < 0) {
-                                DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
-                                return;
-                        } else if (Util_evalQExpression(r->operator, s->inf->priv.process.cpu_percent, r->limit)) {
-                                snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.cpu_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
-                                okay = false;
-                        } else
-                                snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.cpu_percent / 10.);
+                        {
+                                short cpu;
+                                if (s->type == Service_System) {
+                                        cpu =
+#ifdef HAVE_CPU_WAIT
+                                                (systeminfo.total_cpu_wait_percent > 0 ? systeminfo.total_cpu_wait_percent : 0) +
+#endif
+                                                (systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent : 0) +
+                                                (systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent : 0);
+                                } else {
+                                        cpu = s->inf->priv.process.cpu_percent;
+                                }
+                                if (s->monitor & Monitor_Init || cpu < 0) {
+                                        DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
+                                        return;
+                                } else if (Util_evalQExpression(r->operator, cpu, r->limit)) {
+                                        snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", cpu / 10., operatorshortnames[r->operator], r->limit / 10.);
+                                        okay = false;
+                                } else {
+                                        snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", cpu / 10.);
+                                }
+                        }
                         break;
 
                 case Resource_CpuPercentTotal:

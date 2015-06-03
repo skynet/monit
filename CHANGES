@@ -11,6 +11,9 @@ New: Enable ECDH ciphers for Monit HTTP interface.
 
 New: The SSL IDEA ciphers are disabled now.
 
+New: Added simpler system-wide cpu usage test (total of user%, system%, wait%). Example:
+        if cpu usage > 99% then alert
+
 New: MySQL protocol test now supports authentication (optional). Usage:
     if failed port 3306 protocol mysql username myuser password mypassword then alert
 

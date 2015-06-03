@@ -1667,7 +1667,8 @@ both:
 System only resource tests:
 
 CPU([user|system|wait]) is the percent of time the system spend
-in user or kernel space and I/O.
+in user or kernel space and I/O. The user/system/wait modifier is
+optional, if not used, the total system cpu usage is tested.
 
 SWAP is the swap usage of the system in either percent (of the
 systems total) or as an amount (Byte, kB, MB, GB).
