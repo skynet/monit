@@ -901,10 +901,25 @@ then
 fi
 # Check TLS version
 if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
-        AC_CHECK_LIB([ssl], [TLSv1_1_method],
-                [AC_DEFINE([HAVE_TLSV1_1], 1, [Define to 1 if you have openssl with TLSv1.1])])
-        AC_CHECK_LIB([ssl], [TLSv1_2_method],
-                [AC_DEFINE([HAVE_TLSV1_2], 1, [Define to 1 if you have openssl with TLSv1.2])])
+        AC_MSG_CHECKING([for TLSv1.1])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [TLSv1_1_method()])],
+                [tlsv11=yes],
+                [tlsv11=no])
+        AC_MSG_RESULT($tlsv11)
+        if test "$tlsv11" = "yes" ; then
+                AC_DEFINE([HAVE_TLSV1_1], 1, [Define to 1 if you have openssl with TLSv1.1])
+        fi
+
+        AC_MSG_CHECKING([for TLSv1.2])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [TLSv1_2_method()])],
+                [tlsv12=yes],
+                [tlsv12=no])
+        AC_MSG_RESULT($tlsv12)
+        if test "$tlsv12" = "yes" ; then
+                AC_DEFINE([HAVE_TLSV1_2], 1, [Define to 1 if you have openssl with TLSv1.2])
+        fi
 fi
 
 
