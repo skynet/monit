@@ -9,6 +9,8 @@ SSL is enabled.
 
 New: Enable ECDH ciphers for Monit HTTP interface.
 
+New: The SSL IDEA ciphers are disabled now.
+
 New: MySQL protocol test now supports authentication (optional). Usage:
     if failed port 3306 protocol mysql username myuser password mypassword then alert
 
