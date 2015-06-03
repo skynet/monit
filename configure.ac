@@ -736,7 +736,7 @@ AC_ARG_WITH(ssl-static,
             checksslincldir "$dir"
         done
         for dir in "$withval" "$withval/lib"; do
-            checkssllibdirstatic "$dir" && break 2
+            checkssllibdirstatic "$dir" && break
         done
         use_sslstatic=1
         LDFLAGS="`echo $LDFLAGS | sed -e 's/-rdynamic/-ldl/g'`"
@@ -788,7 +788,7 @@ then
                 	checksslincldir "$dir"
                 done
                 for dir in "$withval" "$withval/lib"; do
-                    checkssllibdirdynamic "$dir" && break 2
+                    checkssllibdirdynamic "$dir" && break
                 done
             ]
         )
