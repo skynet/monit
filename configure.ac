@@ -678,7 +678,9 @@ AC_ARG_WITH(pam,
         fi
     ],
     [
-        if test "x$use_pam" = "x" ; then
+        if test "$use_pam" = "0"; then
+            AC_MSG_RESULT([disabled])
+        else
             use_pam=1
             AC_MSG_RESULT([enabled])
         fi
