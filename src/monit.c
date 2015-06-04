@@ -82,6 +82,7 @@
 #include "io/Dir.h"
 #include "io/File.h"
 #include "system/Time.h"
+#include "util/List.h"
 #include "exceptions/AssertException.h"
 
 
@@ -409,9 +410,11 @@ static void do_action(char **args) {
                         if (Run.mygroup) {
                                 for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
                                         if (IS(Run.mygroup, sg->name)) {
-                                                for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
-                                                        if (! _control_service(sgm->service->name, action))
+                                                for (list_t m = sg->members->head; m; m = m->next) {
+                                                        Service_T s = m->e;
+                                                        if (! _control_service(s->name, action))
                                                                 errors++;
+                                                }
                                                 break;
                                         }
                                 }

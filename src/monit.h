@@ -1061,17 +1061,9 @@ typedef struct myservice {
 typedef struct myevent *Event_T;
 
 
-typedef struct myservicegroupmember {
-        Service_T service;                                  /**< Service reference */
-
-        /** For internal use */
-        struct myservicegroupmember *next;              /**< next service in chain */
-} *ServiceGroupMember_T;
-
-
 typedef struct myservicegroup {
         char *name;                                     /**< name of service group */
-        struct myservicegroupmember *members;           /**< Service group members */ //FIXME: replace with List_T and drop ServiceGroupMember_T
+        List_T members;                                 /**< Service group members */
 
         /** For internal use */
         struct myservicegroup *next;              /**< next service group in chain */

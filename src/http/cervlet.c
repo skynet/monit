@@ -64,6 +64,10 @@
 #include <sys/time.h>
 #endif
 
+// libmonit
+#include "system/Time.h"
+#include "util/List.h"
+
 #include "monit.h"
 #include "cervlet.h"
 #include "engine.h"
@@ -74,9 +78,6 @@
 #include "process.h"
 #include "device.h"
 #include "protocol.h"
-
-// libmonit
-#include "system/Time.h"
 
 #define ACTION(c) ! strncasecmp(req->url, c, sizeof(c))
 
@@ -762,8 +763,8 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         _printServiceStatus(res->outputbuffer, s);
         StringBuffer_append(res->outputbuffer, "</td></tr>");
         for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next)
-                for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
-                        if (sgm->service == s)
+                for (list_t m = sg->members->head; m; m = m->next)
+                        if (m->e == s)
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Group</td><td class='blue-text'>%s</td></tr>", sg->name);
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Monitoring mode</td><td>%s</td></tr>", modenames[s->mode]);
@@ -2532,8 +2533,8 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
                 if (stringGroup) {
                         for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
                                 if (IS(stringGroup, sg->name)) {
-                                        for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
-                                                status_service_txt(sgm->service, res, level);
+                                        for (list_t m = sg->members->head; m; m = m->next)
+                                                status_service_txt(m->e, res, level);
                                         break;
                                 }
                         }

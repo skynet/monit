@@ -45,6 +45,9 @@
 #include <errno.h>
 #endif
 
+// libmonit
+#include "util/List.h"
+
 #include "monit.h"
 #include "event.h"
 #include "process.h"
@@ -451,8 +454,10 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
  */
 static void status_servicegroup(ServiceGroup_T SG, StringBuffer_T B, Level_Type L) {
         StringBuffer_append(B, "<servicegroup name=\"%s\">", SG->name);
-        for (ServiceGroupMember_T SGM = SG->members; SGM; SGM = SGM->next)
-                StringBuffer_append(B, "<service>%s</service>", SGM->service->name);
+        for (list_t m = SG->members->head; m; m = m->next) {
+                Service_T s = m->e;
+                StringBuffer_append(B, "<service>%s</service>", s->name);
+        }
         StringBuffer_append(B, "</servicegroup>");
 }
 

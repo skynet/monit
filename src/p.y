@@ -2676,7 +2676,6 @@ static void addservice(Service_T s) {
  */
 static void addservicegroup(char *name) {
         ServiceGroup_T g;
-        ServiceGroupMember_T m;
 
         ASSERT(name);
 
@@ -2688,14 +2687,12 @@ static void addservicegroup(char *name) {
         if (! g) {
                 NEW(g);
                 g->name = Str_dup(name);
+                g->members = List_new();
                 g->next = servicegrouplist;
                 servicegrouplist = g;
         }
 
-        NEW(m);
-        m->service = current;
-        m->next = g->members;
-        g->members = m;
+        List_append(g->members, current);
 }
 
 

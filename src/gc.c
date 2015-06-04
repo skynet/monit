@@ -32,6 +32,9 @@
 #include <stdlib.h>
 #endif
 
+// libmonit
+#include "util/List.h"
+
 #include "monit.h"
 #include "protocol.h"
 #include "process.h"
@@ -42,7 +45,6 @@
 static void _gc_service_list(Service_T *);
 static void _gc_service(Service_T *);
 static void _gc_servicegroup(ServiceGroup_T *);
-static void _gc_servicegroup_member(ServiceGroupMember_T *);
 static void _gc_mail_server(MailServer_T *);
 static void _gcportlist(Port_T *);
 static void _gcfilesystem(Filesystem_T *);
@@ -272,18 +274,9 @@ static void _gc_servicegroup(ServiceGroup_T *sg) {
         ASSERT(sg && *sg);
         if ((*sg)->next)
                 _gc_servicegroup(&(*sg)->next);
-        if ((*sg)->members)
-                _gc_servicegroup_member(&(*sg)->members);
+        List_free(&(*sg)->members);
         FREE((*sg)->name);
         FREE(*sg);
-}
-
-
-static void _gc_servicegroup_member(ServiceGroupMember_T *m) {
-        ASSERT(m && *m);
-        if ((*m)->next)
-                _gc_servicegroup_member(&(*m)->next);
-        FREE(*m);
 }
 
 

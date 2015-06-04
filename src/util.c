@@ -893,13 +893,14 @@ void Util_printService(Service_T s) {
         printf("%-21s = %s\n", StringBuffer_toString(StringBuffer_append(buf, "%s Name", servicetypes[s->type])), s->name);
 
         for (ServiceGroup_T o = servicegrouplist; o; o = o->next) {
-                for (ServiceGroupMember_T om = o->members; om; om = om->next) {
-                        if (om->service == s) {
+                for (list_t m = o->members->head; m; m = m->next) {
+                        if (m->e == s) {
                                 if (! sgheader) {
                                         printf(" %-20s = %s", "Group", o->name);
                                         sgheader = true;
-                                } else
+                                } else {
                                         printf(", %s", o->name);
+                                }
                         }
                 }
         }
