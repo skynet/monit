@@ -894,7 +894,7 @@ void Util_printService(Service_T s) {
 
         for (ServiceGroup_T o = servicegrouplist; o; o = o->next) {
                 for (ServiceGroupMember_T om = o->members; om; om = om->next) {
-                        if (IS(om->name, s->name)) {
+                        if (om->service == s) {
                                 if (! sgheader) {
                                         printf(" %-20s = %s", "Group", o->name);
                                         sgheader = true;

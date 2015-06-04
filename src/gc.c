@@ -283,7 +283,6 @@ static void _gc_servicegroup_member(ServiceGroupMember_T *m) {
         ASSERT(m && *m);
         if ((*m)->next)
                 _gc_servicegroup_member(&(*m)->next);
-        FREE((*m)->name);
         FREE(*m);
 }
 

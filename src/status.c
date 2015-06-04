@@ -72,7 +72,7 @@
 /**
  * Show all services in the service list.
  */
-boolean_t status(char *level) {
+boolean_t status(const char *level, const char *group, const char *service) {
         boolean_t status = false;
         if (! exist_daemon()) {
                 LogError("Status not available -- the monit daemon is not running\n");
@@ -87,9 +87,20 @@ boolean_t status(char *level) {
         else
                 LogError("Status not available - monit http interface is not enabled, please add the 'set httpd' statement\n");
         if (S) {
-                char *auth = Util_getBasicAuthHeaderMonit();
-                Socket_print(S, "GET /_status?format=text&level=%s HTTP/1.0\r\n%s\r\n", level, auth ? auth : "");
-                FREE(auth);
+                Socket_print(S, "GET /_status?format=text&level=%s", level);
+                if (group) {
+                        char *_group = Util_urlEncode((char *)group);
+                        Socket_print(S, "&group=%s", _group);
+                        FREE(_group);
+                }
+                if (service) {
+                        char *_service = Util_urlEncode((char *)service);
+                        Socket_print(S, "&service=%s", _service);
+                        FREE(_service);
+                }
+                char *_auth = Util_getBasicAuthHeaderMonit();
+                Socket_print(S, " HTTP/1.0\r\n%s\r\n", _auth ? _auth : "");
+                FREE(_auth);
 
                 /* Read past HTTP headers and check status */
                 char buf[1024];

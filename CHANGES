@@ -14,6 +14,11 @@ New: The SSL IDEA ciphers are disabled now.
 New: Added simpler system-wide cpu usage test (total of user%, system%, wait%). Example:
         if cpu usage > 99% then alert
 
+New: Issue #202: Added support for restricting the command-line "monit status" and "monit summary"
+only to a certain service or service group. For example:
+        monit status apache  # show status of "apache" service
+        monit -g www status  # show status of "www" service group
+
 New: MySQL protocol test now supports authentication (optional). Usage:
     if failed port 3306 protocol mysql username myuser password mypassword then alert
 

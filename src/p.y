@@ -1702,7 +1702,10 @@ mode            : MODE ACTIVE  {
                   }
                 ;
 
-group           : GROUP STRINGNAME { addservicegroup($2); FREE($2);}
+group           : GROUP STRINGNAME {
+                        addservicegroup($2);
+                        FREE($2);
+                  }
                 ;
 
 
@@ -2690,7 +2693,7 @@ static void addservicegroup(char *name) {
         }
 
         NEW(m);
-        m->name = Str_dup(current->name);
+        m->service = current;
         m->next = g->members;
         g->members = m;
 }

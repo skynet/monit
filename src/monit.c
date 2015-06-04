@@ -410,7 +410,7 @@ static void do_action(char **args) {
                                 for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
                                         if (IS(Run.mygroup, sg->name)) {
                                                 for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
-                                                        if (! _control_service(sgm->name, action))
+                                                        if (! _control_service(sgm->service->name, action))
                                                                 errors++;
                                                 break;
                                         }
@@ -435,9 +435,9 @@ static void do_action(char **args) {
                 LogInfo("Reinitializing %s daemon\n", prog);
                 kill_daemon(SIGHUP);
         } else if (IS(action, "status")) {
-                status(LEVEL_NAME_FULL);
+                status(LEVEL_NAME_FULL, Run.mygroup, service);
         } else if (IS(action, "summary")) {
-                status(LEVEL_NAME_SUMMARY);
+                status(LEVEL_NAME_SUMMARY, Run.mygroup, service);
         } else if (IS(action, "procmatch")) {
                 if (! service) {
                         printf("Invalid syntax - usage: procmatch \"<pattern>\"\n");
@@ -769,7 +769,7 @@ static void help() {
         printf("Options are as follows:\n");
         printf(" -c file       Use this control file\n");
         printf(" -d n          Run as a daemon once per n seconds\n");
-        printf(" -g name       Set group name for start, stop, restart, monitor and unmonitor\n");
+        printf(" -g name       Set group name for start, stop, restart, monitor, unmonitor, status and summary\n");
         printf(" -l logfile    Print log information to this file\n");
         printf(" -p pidfile    Use this lock file in daemon mode\n");
         printf(" -s statefile  Set the file monit should write state information to\n");
@@ -795,8 +795,8 @@ static void help() {
         printf(" unmonitor all       - Disable monitoring of all services\n");
         printf(" unmonitor name      - Only disable monitoring of the named service\n");
         printf(" reload              - Reinitialize monit\n");
-        printf(" status              - Print full status information for each service\n");
-        printf(" summary             - Print short status information for each service\n");
+        printf(" status [name]       - Print full status information for service(s)\n");
+        printf(" summary [name]      - Print short status information for service(s)\n");
         printf(" quit                - Kill monit daemon process\n");
         printf(" validate            - Check all services and start if not running\n");
         printf(" procmatch <pattern> - Test process matching pattern\n");

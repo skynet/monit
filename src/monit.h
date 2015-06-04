@@ -651,23 +651,6 @@ typedef struct myicmp {
 } *Icmp_T;
 
 
-typedef struct myservicegroupmember {
-        char *name;                                           /**< name of service */
-
-        /** For internal use */
-        struct myservicegroupmember *next;              /**< next service in chain */
-} *ServiceGroupMember_T;
-
-
-typedef struct myservicegroup {
-        char *name;                                     /**< name of service group */
-        struct myservicegroupmember *members;           /**< Service group members */
-
-        /** For internal use */
-        struct myservicegroup *next;              /**< next service group in chain */
-} *ServiceGroup_T;
-
-
 typedef struct mydependant {
         char *dependant;                            /**< name of dependant service */
 
@@ -1078,6 +1061,23 @@ typedef struct myservice {
 typedef struct myevent *Event_T;
 
 
+typedef struct myservicegroupmember {
+        Service_T service;                                  /**< Service reference */
+
+        /** For internal use */
+        struct myservicegroupmember *next;              /**< next service in chain */
+} *ServiceGroupMember_T;
+
+
+typedef struct myservicegroup {
+        char *name;                                     /**< name of service group */
+        struct myservicegroupmember *members;           /**< Service group members */ //FIXME: replace with List_T and drop ServiceGroupMember_T
+
+        /** For internal use */
+        struct myservicegroup *next;              /**< next service group in chain */
+} *ServiceGroup_T;
+
+
 /** Defines data for application runtime */
 struct myrun {
         uint8_t debug;                                            /**< Debug level */
@@ -1188,7 +1188,7 @@ boolean_t control_service_string(const char *, const char *);
 boolean_t control_service_daemon(const char *, const char *);
 void  reset_depend();
 void  spawn(Service_T, command_t, Event_T);
-boolean_t status(char *);
+boolean_t status(const char *, const char *, const char *);
 boolean_t log_init();
 void  LogEmergency(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogAlert(const char *, ...) __attribute__((format (printf, 1, 2)));

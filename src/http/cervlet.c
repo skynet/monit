@@ -763,7 +763,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         StringBuffer_append(res->outputbuffer, "</td></tr>");
         for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next)
                 for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
-                        if (IS(sgm->name, s->name))
+                        if (sgm->service == s)
                                 StringBuffer_append(res->outputbuffer, "<tr><td>Group</td><td class='blue-text'>%s</td></tr>", sg->name);
         StringBuffer_append(res->outputbuffer,
                             "<tr><td>Monitoring mode</td><td>%s</td></tr>", modenames[s->mode]);
@@ -2511,6 +2511,8 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
         Level_Type level = Level_Full;
         const char *stringFormat = get_parameter(req, "format");
         const char *stringLevel = get_parameter(req, "level");
+        const char *stringGroup = Util_urlDecode((char *)get_parameter(req, "group"));
+        const char *stringService = Util_urlDecode((char *)get_parameter(req, "service"));
 
         if (stringLevel && Str_startsWith(stringLevel, LEVEL_NAME_SUMMARY))
                 level = Level_Summary;
@@ -2527,8 +2529,19 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
                 StringBuffer_append(res->outputbuffer, "The Monit daemon %s uptime: %s\n\n", VERSION, uptime);
                 FREE(uptime);
 
-                for (Service_T s = servicelist_conf; s; s = s->next_conf)
-                        status_service_txt(s, res, level);
+                if (stringGroup) {
+                        for (ServiceGroup_T sg = servicegrouplist; sg; sg = sg->next) {
+                                if (IS(stringGroup, sg->name)) {
+                                        for (ServiceGroupMember_T sgm = sg->members; sgm; sgm = sgm->next)
+                                                status_service_txt(sgm->service, res, level);
+                                        break;
+                                }
+                        }
+                } else {
+                        for (Service_T s = servicelist_conf; s; s = s->next_conf)
+                                if (! stringService || IS(stringService, s->name))
+                                        status_service_txt(s, res, level);
+                }
                 set_content_type(res, "text/plain");
         }
 }
