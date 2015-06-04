@@ -376,6 +376,9 @@ Sigfunc *signal(int signo, Sigfunc * func);
 /* --------------------------------------------------------- Data structures */
 
 
+//FIXME: refactor internal linked lists (*next) with List_T
+
+
 /** Message Digest type with size for the longest digest we will compute */
 typedef char MD_T[MD_SIZE];
 
