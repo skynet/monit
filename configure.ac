@@ -901,8 +901,12 @@ then
 fi
 # Check TLS version
 if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
-        CFLAGS="$CFLAGS -I$sslincldir"
-        LIBS="$LIBS -L$ssllibdir"
+        if test "x$sslincldir" != "x"; then
+                CFLAGS="$CFLAGS -I$sslincldir"
+        fi
+        if test "x$ssllibdir" != "x"; then
+                LIBS="$LIBS -L$ssllibdir"
+        fi
         AC_MSG_CHECKING([for TLSv1.1])
         AC_LINK_IFELSE(
                 [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [TLSv1_1_method()])],
