@@ -2904,48 +2904,41 @@ For example:
 =head1 CONFIGURATION EXAMPLES
 
 The simplest form is just the check statement. In this example we
-check to see if the server is running and log a message if not:
+check to see if our web server is running and log a message if not:
 
  check process nginx with pidfile /var/run/nginx.pid
-
-Checking process without pidfile (based on pattern):
-
- check process pager matching "/sbin/dynamic_pager -F /private/var/vm/swapfile"
 
 To have Monit start the server if it's not running, add a start
 statement:
 
  check process nginx with pidfile /var/run/nginx.pid
        start program = "/etc/init.d/nginx start"
-       stop program  = "/etc/init.d/nginx stop"
 
-Here's a more advanced example for monitoring an apache
-web-server listening on the default port number for HTTP and
-HTTPS. In this example Monit will restart apache if it's not
-accepting connections at the port numbers. The method Monit use
-for a process restart is to first execute the stop-program, wait
-up to 30s for the process to stop and then execute the start-program
-and wait up to 30s for it to start. The length of start or stop
-timeout can be overridden using the 'timeout' option. If Monit was
-unable to stop or start the service a failed alert message will
-be sent if you have requested alert messages to be sent.
+Here's a more advanced example for monitoring an apache web-server
+listening on the default port number for HTTP and HTTPS. In this
+example Monit will restart apache if it's not accepting connections at
+the port numbers. The method Monit use for restart is to first execute
+the stop-program, then wait (up to 30s) for the process to stop and
+then execute the start-program and wait (30s) for it to start. The
+length of start or stop wait can be overridden using the 'timeout'
+option. If Monit was unable to stop or start the service a failed alert
+message will be sent if you have requested alert messages to be sent.
 
  check process apache with pidfile /var/run/httpd.pid
        start program = "/etc/init.d/httpd start" with timeout 60 seconds
        stop program  = "/etc/init.d/httpd stop"
        if failed port 80 for 2 cycles then restart
-       if failed port 443 for 2 cycles with timeout 15 seconds then restart
+       if failed port 443 for 2 cycles then restart
 
-This example demonstrate how you can run a program as a specified
-user (uid) and with a specified group (gid). Many daemon programs
-will do the uid and gid switch by them self, but for those
-programs that does not (e.g. Java programs), monit's ability to
-start a program as a certain user can be very useful. In this
-example we start the Tomcat Java Servlet Engine as the standard
-I<nobody> user and group. Please note that Monit will only switch
-uid and gid for a program if the super-user is running monit,
-otherwise Monit will simply ignore the request to change uid and
-gid.
+This example demonstrate how you can run a program as a specified user
+(uid) and with a specified group (gid). Many daemon programs can do the
+uid and gid switch by themselves, but for those programs that does not
+(e.g. Java programs), monit's ability to start a program as a certain
+user can be very useful. In this example we start the Tomcat Java
+Servlet Engine as the standard I<nobody> user and group. Please note
+that Monit can only switch uid and gid for the program if the
+super-user is running Monit, otherwise Monit will simply ignore the
+request to change uid and gid.
 
  check process tomcat with pidfile /var/run/tomcat.pid
        start program = "/etc/init.d/tomcat start"
@@ -2956,7 +2949,7 @@ gid.
        if failed port 8080 then alert
 
 In this example we use udp for connection testing to check if the
-name-server is running and also use timeout:
+name-server is running:
 
  check process named with pidfile /var/run/named.pid
        start program = "/etc/init.d/named start"
@@ -2972,7 +2965,7 @@ The following example illustrates how to check if the service
        if failed unix /var/run/sophie then restart
 
 In this example we check an apache web-server running on
-localhost that answers for several IP-based virtual hosts or
+localhost which answers for several IP-based virtual hosts or
 vhosts, hence the host statement before port:
 
  check process apache with pidfile /var/run/httpd.pid
@@ -2992,7 +2985,7 @@ protocol test can be added:
           host www.sol.no port 80 protocol http
        then alert
 
-This example shows a different way to check a web-server using
+This example demonstrate a different way to check a web-server using
 the send/expect mechanism:
 
  check process apache with pidfile /var/run/httpd.pid
@@ -3004,8 +2997,8 @@ the send/expect mechanism:
           expect "HTTP/[0-9\.]{3} 200.*"
        then alert
 
-Here we use an icmp ping test to check if a remote host is up and
-if not send an alert:
+Here we ping a remote host to check if it is up and if not, send an
+alert:
 
  check host www.tildeslash.com with address www.tildeslash.com
        if failed ping then alert
@@ -3013,7 +3006,7 @@ if not send an alert:
 In the following example we ask Monit to compute and verify the
 checksum for the underlying apache binary used by the start and
 stop programs. If the the checksum test should fail, monitoring
-will be disabled to prevent possibly starting a compromised
+will be disabled to prevent possibly restarting a compromised
 binary:
 
  check process apache with pidfile /var/run/httpd.pid
@@ -3025,10 +3018,10 @@ binary:
  check file apache_bin with path /usr/local/apache/bin/httpd
        if failed checksum then unmonitor
 
-In this example we ask Monit to test the checksum for a document
-on a remote server. If the checksum was changed we send an alert:
+In this example we ask Monit to test a document's checksum on a remote
+server. If the checksum was changed we send an alert:
 
- check host tildeslash with address www.tildeslash.com
+ check host mmonit.com with address mmonit.com
        if failed
           port 80 protocol http and
           request "/monit/dist/monit-5.7.tar.gz"
@@ -3065,10 +3058,10 @@ server and then an Asterisk server
       and target me@foo.bar maxforward 10
    then restart
 
-Some servers are slow starters, like for example Java based
-Application Servers. So if we want to keep the poll-cycle low
-(i.e. < 60 seconds) but allow some services to take its time to
-start, the B<every> statement is handy:
+Some servers are slow starters, like for example Java based Application
+Servers. If we want to keep the poll-cycle low (i.e. < 60 seconds) but
+allow some services to take its time to start, the B<every> statement
+is handy:
 
  check process dynamo with pidfile /etc/dynamo.pid every 2 cycles
        start program = "/etc/init.d/dynamo start"
@@ -3090,18 +3083,16 @@ service if it is not running:
  check process oracle with pidfile /var/run/oracle.pid
        start program = "/etc/init.d/oracle start"
        stop program  = "/etc/init.d/oracle stop"
-       mode active # Not necessary really, since it's the default
        if failed
           port 9001 protocol tns
        then restart
        group database
 
-Here is an example to show the usage of the resource checks. It
-will send an alert when the CPU usage of the http daemon and its
-child processes raises beyond 60% for over two cycles. Apache is
-restarted if the CPU usage is over 80% for five cycles or the
-memory usage over 100Mb for five cycles or if the machines load
-average is more than 10 for 8 cycles:
+This resource checks example will send an alert if CPU usage of the
+Apache's http daemon and its child processes goes beyond 60% for two
+cycles. Apache is restarted if the CPU usage is over 80% for five
+cycles or the memory usage is over 100Mb for five cycles or if the
+machines load average is more than 10 for 8 cycles:
 
  check process apache with pidfile /var/run/httpd.pid
        start program = "/etc/init.d/httpd start"
