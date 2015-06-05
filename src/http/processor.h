@@ -102,7 +102,7 @@ void add_Impl(void(*doGet)(HttpRequest, HttpResponse), void(*doPost)(HttpRequest
 void set_content_type(HttpResponse res, const char *mime);
 const char *get_header(HttpRequest req, const char *header_name);
 void escapeHTML(StringBuffer_T sb, const char *s);
-void send_error(HttpResponse, int status, const char *message, ...);
+void send_error(HttpRequest, HttpResponse, int status, const char *message, ...);
 const char *get_parameter(HttpRequest req, const char *parameter_name);
 void set_header(HttpResponse res, const char *name, const char *value);
 

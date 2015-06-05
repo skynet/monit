@@ -589,7 +589,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
 
 static void do_viewlog(HttpRequest req, HttpResponse res) {
         if (is_readonly(req)) {
-                send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
+                send_error(req, res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                 return;
         }
         do_head(res, "_viewlog", "View log", 100);
@@ -630,22 +630,22 @@ static void handle_action(HttpRequest req, HttpResponse res) {
         char *name = req->url;
         Service_T s = Util_getService(++name);
         if (! s) {
-                send_error(res, SC_NOT_FOUND, "There is no service named \"%s\"", name ? name : "");
+                send_error(req, res, SC_NOT_FOUND, "There is no service named \"%s\"", name ? name : "");
                 return;
         }
         const char *action = get_parameter(req, "action");
         if (action) {
                 if (is_readonly(req)) {
-                        send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
+                        send_error(req, res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
                 Action_Type doaction = Util_getAction(action);
                 if (doaction == Action_Ignored) {
-                        send_error(res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
+                        send_error(req, res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
                         return;
                 }
                 if (s->doaction != Action_Ignored) {
-                        send_error(res, SC_SERVICE_UNAVAILABLE, "Other action already in progress -- please try again later");
+                        send_error(req, res, SC_SERVICE_UNAVAILABLE, "Other action already in progress -- please try again later");
                         return;
                 }
                 s->doaction = doaction;
@@ -670,22 +670,22 @@ static void handle_do_action(HttpRequest req, HttpResponse res) {
 
         if (action) {
                 if (is_readonly(req)) {
-                        send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
+                        send_error(req, res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
                 if ((doaction = Util_getAction(action)) == Action_Ignored) {
-                        send_error(res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
+                        send_error(req, res, SC_BAD_REQUEST, "Invalid action \"%s\"", action);
                         return;
                 }
                 for (HttpParameter p = req->params; p; p = p->next) {
                         if (IS(p->name, "service")) {
                                 s  = Util_getService(p->value);
                                 if (! s) {
-                                        send_error(res, SC_BAD_REQUEST, "There is no service named \"%s\"", p->value ? p->value : "");
+                                        send_error(req, res, SC_BAD_REQUEST, "There is no service named \"%s\"", p->value ? p->value : "");
                                         return;
                                 }
                                 if (s->doaction != Action_Ignored) {
-                                        send_error(res, SC_SERVICE_UNAVAILABLE, "Other action already in progress -- please try again later");
+                                        send_error(req, res, SC_SERVICE_UNAVAILABLE, "Other action already in progress -- please try again later");
                                         return;
                                 }
                                 s->doaction = doaction;
@@ -713,7 +713,7 @@ static void handle_run(HttpRequest req, HttpResponse res) {
         const char *action = get_parameter(req, "action");
         if (action) {
                 if (is_readonly(req)) {
-                        send_error(res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
+                        send_error(req, res, SC_FORBIDDEN, "You do not have sufficent privileges to access this page");
                         return;
                 }
                 if (IS(action, "validate")) {
@@ -721,7 +721,7 @@ static void handle_run(HttpRequest req, HttpResponse res) {
                         do_wakeupcall();
                 } else if (IS(action, "stop")) {
                         LogInfo("The Monit http server stopped on user request\n");
-                        send_error(res, SC_SERVICE_UNAVAILABLE, "The Monit http server is stopped");
+                        send_error(req, res, SC_SERVICE_UNAVAILABLE, "The Monit http server is stopped");
                         Engine_stop();
                         return;
                 }

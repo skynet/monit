@@ -25,6 +25,8 @@ New: MySQL protocol test now supports authentication (optional). Usage:
 Fixed: Issue #98: MySQL test might blocked the host because of too many
 connection errors.
 
+Fixed: Issue #208: log client address in case of HTTP request error.
+
 
 Version 5.13
 
