@@ -22,10 +22,12 @@ only to a certain service or service group. For example:
 New: MySQL protocol test now supports authentication (optional). Usage:
     if failed port 3306 protocol mysql username myuser password mypassword then alert
 
+New: Issue #208: log client address in case of HTTP request error.
+
+New: Issue #206: report monit version in the instance start/stop message.
+
 Fixed: Issue #98: MySQL test might blocked the host because of too many
 connection errors.
-
-Fixed: Issue #208: log client address in case of HTTP request error.
 
 
 Version 5.13
