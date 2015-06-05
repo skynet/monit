@@ -691,7 +691,8 @@ mailserver      : STRING mailserveroptlist {
                         FREE(argyytext);
                         argyytext = Str_dup($1);
 
-                    mailserverset.host = $1;
+                        mailserverset.host = $1;
+                        mailserverset.port = PORT_SMTP;
                         if (mailserverset.ssl.version != SSL_Disabled) {
                                 mailserverset.ssl.use_ssl = true;
                                 if (mailserverset.ssl.version == SSL_V2 || mailserverset.ssl.version == SSL_V3)
@@ -3916,7 +3917,7 @@ static void reset_mailserverset() {
         memset(&mailserverset, 0, sizeof(struct mymailserver));
         mailserverset.port = PORT_SMTP;
         mailserverset.ssl.use_ssl = false;
-        mailserverset.ssl.version = SSL_Auto;
+        mailserverset.ssl.version = SSL_Disabled;
 }
 
 
@@ -3927,7 +3928,7 @@ static void reset_mmonitset() {
         memset(&mmonitset, 0, sizeof(struct mymmonit));
         mailserverset.port = 8080;
         mailserverset.ssl.use_ssl = false;
-        mailserverset.ssl.version = SSL_Auto;
+        mailserverset.ssl.version = SSL_Disabled;
 }
 
 
