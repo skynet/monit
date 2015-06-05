@@ -87,25 +87,25 @@ static void parse_scoreboard(Socket_T socket, char *scoreboard) {
                 return; // Idle server
         Port_T p = Socket_getPort(socket);
         ASSERT(p);
-        if (p->ApacheStatus.loglimit > 0 && Util_evalQExpression(p->ApacheStatus.loglimitOP, (100 * logging / total), p->ApacheStatus.loglimit))
+        if (p->parameters.apachestatus.loglimit > 0 && Util_evalQExpression(p->parameters.apachestatus.loglimitOP, (100 * logging / total), p->parameters.apachestatus.loglimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are logging", 100 * logging / total);
-        if (p->ApacheStatus.startlimit > 0 && Util_evalQExpression(p->ApacheStatus.startlimitOP, (100 * start / total), p->ApacheStatus.startlimit))
+        if (p->parameters.apachestatus.startlimit > 0 && Util_evalQExpression(p->parameters.apachestatus.startlimitOP, (100 * start / total), p->parameters.apachestatus.startlimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are starting", 100 * start / total);
-        if (p->ApacheStatus.requestlimit > 0 && Util_evalQExpression(p->ApacheStatus.requestlimitOP, (100 * request / total), p->ApacheStatus.requestlimit))
+        if (p->parameters.apachestatus.requestlimit > 0 && Util_evalQExpression(p->parameters.apachestatus.requestlimitOP, (100 * request / total), p->parameters.apachestatus.requestlimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are reading requests", 100 * request / total);
-        if (p->ApacheStatus.replylimit > 0 && Util_evalQExpression(p->ApacheStatus.replylimitOP, (100 * reply / total), p->ApacheStatus.replylimit))
+        if (p->parameters.apachestatus.replylimit > 0 && Util_evalQExpression(p->parameters.apachestatus.replylimitOP, (100 * reply / total), p->parameters.apachestatus.replylimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are sending a reply", 100 * reply / total);
-        if (p->ApacheStatus.keepalivelimit > 0 && Util_evalQExpression(p->ApacheStatus.keepalivelimitOP, (100 * keepalive / total), p->ApacheStatus.keepalivelimit))
+        if (p->parameters.apachestatus.keepalivelimit > 0 && Util_evalQExpression(p->parameters.apachestatus.keepalivelimitOP, (100 * keepalive / total), p->parameters.apachestatus.keepalivelimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are in keepalive", 100 * keepalive / total);
-        if (p->ApacheStatus.dnslimit > 0 && Util_evalQExpression(p->ApacheStatus.dnslimitOP, (100 * dns / total), p->ApacheStatus.dnslimit))
+        if (p->parameters.apachestatus.dnslimit > 0 && Util_evalQExpression(p->parameters.apachestatus.dnslimitOP, (100 * dns / total), p->parameters.apachestatus.dnslimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are waiting for DNS", 100 * dns / total);
-        if (p->ApacheStatus.closelimit > 0 && Util_evalQExpression(p->ApacheStatus.closelimitOP, (100 * close / total), p->ApacheStatus.closelimit))
+        if (p->parameters.apachestatus.closelimit > 0 && Util_evalQExpression(p->parameters.apachestatus.closelimitOP, (100 * close / total), p->parameters.apachestatus.closelimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are closing connections", 100 * close / total);
-        if (p->ApacheStatus.gracefullimit > 0 && Util_evalQExpression(p->ApacheStatus.gracefullimitOP, (100 * graceful / total), p->ApacheStatus.gracefullimit))
+        if (p->parameters.apachestatus.gracefullimit > 0 && Util_evalQExpression(p->parameters.apachestatus.gracefullimitOP, (100 * graceful / total), p->parameters.apachestatus.gracefullimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are finishing gracefully", 100 * graceful / total);
-        if (p->ApacheStatus.cleanuplimit > 0 && Util_evalQExpression(p->ApacheStatus.cleanuplimitOP, (100 * cleanup / total), p->ApacheStatus.cleanuplimit))
+        if (p->parameters.apachestatus.cleanuplimit > 0 && Util_evalQExpression(p->parameters.apachestatus.cleanuplimitOP, (100 * cleanup / total), p->parameters.apachestatus.cleanuplimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are in idle cleanup", 100 * cleanup / total);
-        if (p->ApacheStatus.waitlimit > 0 && Util_evalQExpression(p->ApacheStatus.waitlimitOP, (100 * wait / total), p->ApacheStatus.waitlimit))
+        if (p->parameters.apachestatus.waitlimit > 0 && Util_evalQExpression(p->parameters.apachestatus.waitlimitOP, (100 * wait / total), p->parameters.apachestatus.waitlimit))
                 THROW(IOException, "APACHE-STATUS: error -- %d percent of processes are waiting for a connection", 100 * wait / total);
 }
 

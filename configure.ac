@@ -678,7 +678,9 @@ AC_ARG_WITH(pam,
         fi
     ],
     [
-        if test "x$use_pam" = "x" ; then
+        if test "$use_pam" = "0"; then
+            AC_MSG_RESULT([disabled])
+        else
             use_pam=1
             AC_MSG_RESULT([enabled])
         fi
@@ -736,7 +738,7 @@ AC_ARG_WITH(ssl-static,
             checksslincldir "$dir"
         done
         for dir in "$withval" "$withval/lib"; do
-            checkssllibdirstatic "$dir" && break 2
+            checkssllibdirstatic "$dir" && break
         done
         use_sslstatic=1
         LDFLAGS="`echo $LDFLAGS | sed -e 's/-rdynamic/-ldl/g'`"
@@ -788,7 +790,7 @@ then
                 	checksslincldir "$dir"
                 done
                 for dir in "$withval" "$withval/lib"; do
-                    checkssllibdirdynamic "$dir" && break 2
+                    checkssllibdirdynamic "$dir" && break
                 done
             ]
         )
@@ -899,10 +901,31 @@ then
 fi
 # Check TLS version
 if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
-        AC_CHECK_LIB([ssl], [TLSv1_1_method],
-                [AC_DEFINE([HAVE_TLSV1_1], 1, [Define to 1 if you have openssl with TLSv1.1])])
-        AC_CHECK_LIB([ssl], [TLSv1_2_method],
-                [AC_DEFINE([HAVE_TLSV1_2], 1, [Define to 1 if you have openssl with TLSv1.2])])
+        if test "x$sslincldir" != "x"; then
+                CFLAGS="$CFLAGS -I$sslincldir"
+        fi
+        if test "x$ssllibdir" != "x"; then
+                LIBS="$LIBS -L$ssllibdir"
+        fi
+        AC_MSG_CHECKING([for TLSv1.1])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [TLSv1_1_method()])],
+                [tlsv11=yes],
+                [tlsv11=no])
+        AC_MSG_RESULT($tlsv11)
+        if test "$tlsv11" = "yes" ; then
+                AC_DEFINE([HAVE_TLSV1_1], 1, [Define to 1 if you have openssl with TLSv1.1])
+        fi
+
+        AC_MSG_CHECKING([for TLSv1.2])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [TLSv1_2_method()])],
+                [tlsv12=yes],
+                [tlsv12=no])
+        AC_MSG_RESULT($tlsv12)
+        if test "$tlsv12" = "yes" ; then
+                AC_DEFINE([HAVE_TLSV1_2], 1, [Define to 1 if you have openssl with TLSv1.2])
+        fi
 fi
 
 

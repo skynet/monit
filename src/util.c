@@ -118,6 +118,7 @@
 #include "process.h"
 #include "event.h"
 #include "state.h"
+#include "protocol.h"
 
 // libmonit
 #include "io/File.h"
@@ -779,16 +780,16 @@ boolean_t Util_existService(const char *name) {
 
 void Util_printRunList() {
         printf("Runtime constants:\n");
-        printf(" %-18s = %s\n", "Control file", is_str_defined(Run.controlfile));
-        printf(" %-18s = %s\n", "Log file", is_str_defined(Run.logfile));
-        printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.pidfile));
-        printf(" %-18s = %s\n", "Id file", is_str_defined(Run.idfile));
-        printf(" %-18s = %s\n", "State file", is_str_defined(Run.statefile));
+        printf(" %-18s = %s\n", "Control file", is_str_defined(Run.files.control));
+        printf(" %-18s = %s\n", "Log file", is_str_defined(Run.files.log));
+        printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.files.pid));
+        printf(" %-18s = %s\n", "Id file", is_str_defined(Run.files.id));
+        printf(" %-18s = %s\n", "State file", is_str_defined(Run.files.state));
         printf(" %-18s = %s\n", "Debug", Run.debug ? "True" : "False");
-        printf(" %-18s = %s\n", "Log", Run.dolog ? "True" : "False");
-        printf(" %-18s = %s\n", "Use syslog", Run.use_syslog ? "True" : "False");
-        printf(" %-18s = %s\n", "Is Daemon", Run.isdaemon ? "True" : "False");
-        printf(" %-18s = %s\n", "Use process engine", Run.doprocess ? "True" : "False");
+        printf(" %-18s = %s\n", "Log", (Run.flags & Run_Log) ? "True" : "False");
+        printf(" %-18s = %s\n", "Use syslog", (Run.flags & Run_UseSyslog) ? "True" : "False");
+        printf(" %-18s = %s\n", "Is Daemon", (Run.flags & Run_Daemon) ? "True" : "False");
+        printf(" %-18s = %s\n", "Use process engine", (Run.flags & Run_ProcessEngineEnabled) ? "True" : "False");
         printf(" %-18s = %d seconds with start delay %d seconds\n", "Poll time", Run.polltime, Run.startdelay);
         printf(" %-18s = %d bytes\n", "Expect buffer", Run.expectbuffer);
 
@@ -818,7 +819,7 @@ void Util_printRunList() {
                                c->url->user ? " using credentials" : "",
                                c->next ? ",\n                    = " : "");
                 }
-                if (! Run.dommonitcredentials)
+                if (! (Run.flags & Run_MmonitCredentials))
                         printf("\n                      register without credentials");
                 printf("\n");
         }
@@ -892,13 +893,14 @@ void Util_printService(Service_T s) {
         printf("%-21s = %s\n", StringBuffer_toString(StringBuffer_append(buf, "%s Name", servicetypes[s->type])), s->name);
 
         for (ServiceGroup_T o = servicegrouplist; o; o = o->next) {
-                for (ServiceGroupMember_T om = o->members; om; om = om->next) {
-                        if (IS(om->name, s->name)) {
+                for (list_t m = o->members->head; m; m = m->next) {
+                        if (m->e == s) {
                                 if (! sgheader) {
                                         printf(" %-20s = %s", "Group", o->name);
                                         sgheader = true;
-                                } else
+                                } else {
                                         printf(", %s", o->name);
+                                }
                         }
                 }
         }
@@ -1046,19 +1048,19 @@ void Util_printService(Service_T s) {
         for (Port_T o = s->portlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 if (o->retry > 1)
-                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->target.net.port, Util_portRequestDescription(o), Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
                 else
-                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds", o->hostname, o->port, o->request ? o->request : "", Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000)));
-                if (o->SSL.certmd5 != NULL)
-                        printf(" %-20s = %s\n", "Server cert md5 sum", o->SSL.certmd5);
+                        printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds", o->hostname, o->target.net.port, Util_portRequestDescription(o), Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000)));
+                if (o->target.net.SSL.certmd5 != NULL)
+                        printf(" %-20s = %s\n", "Server cert md5 sum", o->target.net.SSL.certmd5);
         }
 
         for (Port_T o = s->socketlist; o; o = o->next) {
                 StringBuffer_clear(buf);
                 if (o->retry > 1)
-                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s protocol %s with timeout %d seconds and retry %d times", o->pathname, Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s protocol %s with timeout %d seconds and retry %d times", o->target.unix.pathname, Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
                 else
-                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s protocol %s with timeout %d seconds", o->pathname, Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
+                        printf(" %-20s = %s\n", "Unix Socket", StringBuffer_toString(Util_printRule(buf, o->action, "if failed %s type %s protocol %s with timeout %d seconds", o->target.unix.pathname, Util_portTypeDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
         }
 
         for (Timestamp_T o = s->timestamplist; o; o = o->next) {
@@ -1418,7 +1420,7 @@ int Util_isProcessRunning(Service_T s, boolean_t refresh) {
                 /* The process table read may sporadically fail during read, because we're using glob on some platforms which may fail if the proc filesystem
                  * which it traverses is changed during glob (process stopped). Note that the glob failure is rare and temporary - it will be OK on next cycle.
                  * We skip the process matching that cycle however because we don't have process informations - will retry next cycle */
-                if (Run.doprocess) {
+                if (Run.flags & Run_ProcessEngineEnabled) {
                         for (int i = 0; i < ptreesize; i++) {
                                 boolean_t found = false;
                                 if (ptree[i].cmdline) {
@@ -1931,7 +1933,7 @@ const char *Util_portIpDescription(Port_T p) {
 const char *Util_portTypeDescription(Port_T p) {
         switch (p->type) {
                 case Socket_Tcp:
-                        return p->SSL.use_ssl ? "TCPSSL" : "TCP";
+                        return p->target.net.SSL.use_ssl ? "TCPSSL" : "TCP";
                 case Socket_Udp:
                         return "UDP";
                 default:
@@ -1940,13 +1942,24 @@ const char *Util_portTypeDescription(Port_T p) {
 }
 
 
+const char *Util_portRequestDescription(Port_T p) {
+        char *request = "";
+        if (p->protocol->check == check_http && p->parameters.http.request)
+                request = p->parameters.http.request;
+        else if (p->protocol->check == check_websocket && p->parameters.websocket.request)
+                request = p->parameters.websocket.request;
+        return request;
+}
+
+
 char *Util_portDescription(Port_T p, char *buf, int bufsize) {
-        if (p->family == Socket_Ip || p->family == Socket_Ip4 || p->family == Socket_Ip6)
-                snprintf(buf, STRLEN, "[%s]:%d%s [%s/%s]", p->hostname, p->port, p->request ? p->request : "", Util_portTypeDescription(p), Util_portIpDescription(p));
-        else if (p->family == Socket_Unix)
-                snprintf(buf, STRLEN, "%s", p->pathname);
-        else
+        if (p->family == Socket_Ip || p->family == Socket_Ip4 || p->family == Socket_Ip6) {
+                snprintf(buf, STRLEN, "[%s]:%d%s [%s/%s]", p->hostname, p->target.net.port, Util_portRequestDescription(p), Util_portTypeDescription(p), Util_portIpDescription(p));
+        } else if (p->family == Socket_Unix) {
+                snprintf(buf, STRLEN, "%s", p->target.unix.pathname);
+        } else {
                 *buf = 0;
+        }
         return buf;
 }
 

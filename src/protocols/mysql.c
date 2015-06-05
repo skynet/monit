@@ -111,19 +111,19 @@ typedef struct {
         uint32_t len : 24;
         uint32_t seq : 8;
         // Data buffer
-        unsigned char buf[STRLEN + 1];
+        char buf[STRLEN + 1];
         // State
-        unsigned char *cursor;
-        unsigned char *limit;
+        char *cursor;
+        char *limit;
 } mysql_request_t;
 
 
 typedef struct {
         // Data buffer
-        unsigned char buf[STRLEN + 4 + 1]; // reserve 4 bytes for header
+        char buf[STRLEN + 4 + 1]; // reserve 4 bytes for header
         // Parser state
-        unsigned char *cursor;
-        unsigned char *limit;
+        char *cursor;
+        char *limit;
         // Header
         uint32_t len;
         uint8_t seq;
@@ -131,19 +131,19 @@ typedef struct {
         // Packet specific data
         union {
                 struct {
-                        uint16_t       code;
-                        unsigned char  sql_state_marker;
-                        unsigned char  sql_state[5];
-                        unsigned char *message;
+                        uint16_t  code;
+                        char      sql_state_marker;
+                        char      sql_state[5];
+                        char     *message;
                 } error;
                 struct {
-                        unsigned char *version;
-                        uint32_t       connectionid;
-                        uint8_t        characterset;
-                        uint16_t       status;
-                        uint32_t       capabilities;
-                        uint8_t        authdatalen;
-                        unsigned char  authdata[21];
+                        char     *version;
+                        uint32_t  connectionid;
+                        uint8_t   characterset;
+                        uint16_t  status;
+                        uint32_t  capabilities;
+                        uint8_t   authdatalen;
+                        char      authdata[21];
                 } handshake;
         } data;
 } mysql_response_t;
@@ -217,9 +217,9 @@ static uint32_t _getUInt4(mysql_response_t *response) {
 }
 
 
-static unsigned char *_getString(mysql_response_t *response) {
+static char *_getString(mysql_response_t *response) {
         int i;
-        unsigned char *value;
+        char *value;
         for (i = 0; response->cursor[i]; i++) // Check limits (cannot use strlen here as no terminating '\0' is guaranteed in the buffer)
                 if (response->cursor + i >= response->limit) // If we reached the limit and didn't found '\0', throw error
                         THROW(IOException, "Data not available -- EOF");
@@ -259,7 +259,7 @@ static void _setUInt4(mysql_request_t *request, uint32_t value) {
 }
 
 
-static void _setData(mysql_request_t *request, const unsigned char *data, int length) {
+static void _setData(mysql_request_t *request, const char *data, unsigned long length) {
         if (request->cursor + length > request->limit)
                 THROW(IOException, "Maximum packet size exceeded");
         memcpy(request->cursor, data, length);
@@ -365,23 +365,23 @@ static void _response(mysql_t *mysql) {
 
 
 // Set the password (see http://dev.mysql.com/doc/internals/en/secure-password-authentication.html):
-static unsigned char *_password(unsigned char result[SHA1_DIGEST_SIZE], const unsigned char *password, const unsigned char *salt) {
+static char *_password(char result[SHA1_DIGEST_SIZE], const char *password, const char *salt) {
         sha1_context_t ctx;
         // SHA1(password)
         uint8_t stage1[SHA1_DIGEST_SIZE];
         sha1_init(&ctx);
-        sha1_append(&ctx, password, strlen(password));
+        sha1_append(&ctx, (const unsigned char *)password, strlen(password));
         sha1_finish(&ctx, stage1);
         // SHA1(SHA1(password))
         uint8_t stage2[SHA1_DIGEST_SIZE];
         sha1_init(&ctx);
-        sha1_append(&ctx, stage1, SHA1_DIGEST_SIZE);
+        sha1_append(&ctx, (const unsigned char *)stage1, SHA1_DIGEST_SIZE);
         sha1_finish(&ctx, stage2);
         // SHA1("20-bytes random data from server" <concat> SHA1(SHA1(password)))
         uint8_t stage3[SHA1_DIGEST_SIZE];
         sha1_init(&ctx);
-        sha1_append(&ctx, salt, strlen(salt));
-        sha1_append(&ctx, stage2, SHA1_DIGEST_SIZE);
+        sha1_append(&ctx, (const unsigned char *)salt, strlen(salt));
+        sha1_append(&ctx, (const unsigned char *)stage2, SHA1_DIGEST_SIZE);
         sha1_finish(&ctx, stage3);
         // XOR
         for (int i = 0; i < SHA1_DIGEST_SIZE; i++)
@@ -401,7 +401,7 @@ static void _initRequest(mysql_t *mysql, uint8_t sequence) {
 
 // Set payload length and send the request to the server
 static void _sendRequest(mysql_t *mysql) {
-        mysql->request.len = mysql->request.cursor - mysql->request.buf;
+        mysql->request.len = (uint32_t)(mysql->request.cursor - mysql->request.buf);
         // Send request
         if (Socket_write(mysql->socket, &mysql->request, mysql->request.len + 4) < 0) // Note: mysql->request.len value is just payload size + need to add 4 bytes for the header itself (len + seq)
                 THROW(IOException, "Cannot send handshake response -- %s\n", STRERROR);
@@ -412,18 +412,18 @@ static void _sendRequest(mysql_t *mysql) {
 static void _requestHandshake(mysql_t *mysql) {
         ASSERT(mysql->state == MySQL_Handshake);
         _initRequest(mysql, 1);
-        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                            // capabilities
-        _setUInt4(&mysql->request, 8192);                                                                                                                            // maxpacketsize
-        _setUInt1(&mysql->request, 8);                                                                                                                               // characterset
-        _setPadding(&mysql->request, 23);                                                                                                                            // reserved bytes
-        if (mysql->port->username)
-                _setData(&mysql->request, mysql->port->username, strlen(mysql->port->username));                                                                     // username
-        _setPadding(&mysql->request, 1);                                                                                                                             // NUL
-        if (mysql->port->password) {
-                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                                        // authdatalen
-                _setData(&mysql->request, _password((char[SHA1_DIGEST_SIZE]){0}, mysql->port->password, mysql->response.data.handshake.authdata), SHA1_DIGEST_SIZE); // password
+        _setUInt4(&mysql->request, CLIENT_LONG_PASSWORD | CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION);                                                                             // capabilities
+        _setUInt4(&mysql->request, 8192);                                                                                                                                             // maxpacketsize
+        _setUInt1(&mysql->request, 8);                                                                                                                                                // characterset
+        _setPadding(&mysql->request, 23);                                                                                                                                             // reserved bytes
+        if (mysql->port->parameters.mysql.username)
+                _setData(&mysql->request, mysql->port->parameters.mysql.username, strlen(mysql->port->parameters.mysql.username));                                                    // username
+        _setPadding(&mysql->request, 1);                                                                                                                                              // NUL
+        if (mysql->port->parameters.mysql.password) {
+                _setUInt1(&mysql->request, SHA1_DIGEST_SIZE);                                                                                                                         // authdatalen
+                _setData(&mysql->request, _password((char[SHA1_DIGEST_SIZE]){0}, mysql->port->parameters.mysql.password, mysql->response.data.handshake.authdata), SHA1_DIGEST_SIZE); // password
         } else {
-                _setUInt1(&mysql->request, 0);                                                                                                                       // no password
+                _setUInt1(&mysql->request, 0);                                                                                                                                        // no password
         }
         _sendRequest(mysql);
 }
@@ -487,7 +487,7 @@ void check_mysql(Socket_T socket) {
         }
         ELSE
         {
-                if (mysql.port->username)
+                if (mysql.port->parameters.mysql.username)
                         RETHROW;
         }
         END_TRY;

@@ -65,18 +65,13 @@ static char *_escapeZeroInExpectBuffer(char *s, int n) {
  *  @file
  */
 void check_generic(Socket_T socket) {
-        Generic_T g = NULL;
-        char *buf;
-#ifdef HAVE_REGEX_H
-        int regex_return;
-#endif
-
         ASSERT(socket);
 
+        Generic_T g = NULL;
         if (Socket_getPort(socket))
-                g = ((Port_T)(Socket_getPort(socket)))->generic;
+                g = ((Port_T)(Socket_getPort(socket)))->parameters.generic.sendexpect;
 
-        buf = CALLOC(sizeof(char), Run.expectbuffer + 1);
+        char *buf = CALLOC(sizeof(char), Run.expectbuffer + 1);
 
         while (g != NULL) {
 
@@ -99,7 +94,7 @@ void check_generic(Socket_T socket) {
                          buffer and then set a low timeout on next read which reads remaining bytes
                          as well as wait on EOF */
                         *buf = Socket_readByte(socket);
-                        if (*buf < 0) {
+                        if ((int8_t)*buf < 0) {
                                 FREE(buf);
                                 THROW(IOException, "GENERIC: error receiving data -- %s", STRERROR);
                         }
@@ -111,7 +106,7 @@ void check_generic(Socket_T socket) {
                                 _escapeZeroInExpectBuffer(buf, n);
                         Socket_setTimeout(socket, timeout); // Reset back original timeout for next send/expect
 #ifdef HAVE_REGEX_H
-                        regex_return = regexec(g->expect, buf, 0, NULL, 0);
+                        int regex_return = regexec(g->expect, buf, 0, NULL, 0);
                         if (regex_return != 0) {
                                 char e[STRLEN];
                                 regerror(regex_return, g->expect, e, STRLEN);

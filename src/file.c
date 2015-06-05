@@ -86,34 +86,34 @@ void file_init() {
         char buf[STRLEN];
 
         /* Check if the pidfile was already set during configfile parsing */
-        if (Run.pidfile == NULL) {
+        if (Run.files.pid == NULL) {
                 /* Set the location of this programs pidfile */
                 if (! getuid()) {
                         snprintf(pidfile, STRLEN, "%s/%s", MYPIDDIR, MYPIDFILE);
                 } else {
                         snprintf(pidfile, STRLEN, "%s/.%s", Run.Env.home, MYPIDFILE);
                 }
-                Run.pidfile = Str_dup(pidfile);
+                Run.files.pid = Str_dup(pidfile);
         }
 
         /* Set the location of monit's id file */
-        if (Run.idfile == NULL) {
+        if (Run.files.id == NULL) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYIDFILE);
-                Run.idfile = Str_dup(buf);
+                Run.files.id = Str_dup(buf);
         }
-        Util_monitId(Run.idfile);
+        Util_monitId(Run.files.id);
 
         /* Set the location of monit's state file */
-        if (Run.statefile == NULL) {
+        if (Run.files.state == NULL) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYSTATEFILE);
-                Run.statefile = Str_dup(buf);
+                Run.files.state = Str_dup(buf);
         }
 }
 
 
 void file_finalize() {
         Engine_cleanup();
-        unlink(Run.pidfile);
+        unlink(Run.files.pid);
 }
 
 

@@ -185,6 +185,7 @@ static struct myicmp icmpset;
 static struct mymail mailset;
 static struct myport portset;
 static struct mymailserver mailserverset;
+static struct mymmonit mmonitset;
 static struct myfilesystem filesystemset;
 static struct myresource resourceset;
 static struct mychecksum checksumset;
@@ -209,6 +210,7 @@ static void  addservice(Service_T);
 static void  adddependant(char *);
 static void  addservicegroup(char *);
 static void  addport(Port_T *, Port_T);
+static void  addhttpheader(Port_T, const char *);
 static void  addresource(Resource_T);
 static void  addtimestamp(Timestamp_T, boolean_t);
 static void  addactionrate(ActionRate_T);
@@ -227,7 +229,7 @@ static void  addicmp(Icmp_T);
 static void  addgeneric(Port_T, char*, char*);
 static void  addcommand(int, unsigned);
 static void  addargument(char *);
-static void  addmmonit(URL_T, int, Ssl_Version, char *);
+static void  addmmonit(Mmonit_T);
 static void  addmailserver(MailServer_T);
 static boolean_t addcredentials(char *, char *, Digest_Type, boolean_t);
 #ifdef HAVE_LIBPAM
@@ -252,6 +254,7 @@ static void  setlogfile(char *);
 static void  setpidfile(char *);
 static void  reset_mailset();
 static void  reset_mailserverset();
+static void  reset_mmonitset();
 static void  reset_portset();
 static void  reset_resourceset();
 static void  reset_timestampset();
@@ -554,9 +557,9 @@ setalert        : SET alertmail formatlist reminder {
                 ;
 
 setdaemon       : SET DAEMON NUMBER startdelay {
-                    if (! Run.isdaemon || ihp.daemon) {
+                    if (! (Run.flags & Run_Daemon) || ihp.daemon) {
                       ihp.daemon     = true;
-                      Run.isdaemon   = true;
+                      Run.flags      |= Run_Daemon;
                       Run.polltime   = $3;
                       Run.startdelay = $<number>4;
                     }
@@ -575,21 +578,21 @@ setexpectbuffer : SET EXPECTBUFFER NUMBER unit {
                 ;
 
 setinit         : SET INIT {
-                    Run.init = true;
+                    Run.flags |= Run_Foreground;
                   }
                 ;
 
 setfips         : SET FIPS {
-                    Run.fipsEnabled = true;
+                    Run.flags |= Run_FipsEnabled;
                   }
                 ;
 
 setlog          : SET LOGFILE PATH   {
-                   if (! Run.logfile || ihp.logfile) {
+                   if (! Run.files.log || ihp.logfile) {
                      ihp.logfile = true;
                      setlogfile($3);
-                     Run.use_syslog = false;
-                     Run.dolog = true;
+                     Run.flags &= ~Run_UseSyslog;
+                     Run.flags |= Run_Log;
                    }
                   }
                 | SET LOGFILE SYSLOG {
@@ -614,17 +617,17 @@ seteventqueue   : SET EVENTQUEUE BASEDIR PATH {
                 ;
 
 setidfile       : SET IDFILE PATH {
-                    Run.idfile = $3;
+                    Run.files.id = $3;
                   }
                 ;
 
 setstatefile    : SET STATEFILE PATH {
-                    Run.statefile = $3;
+                    Run.files.state = $3;
                   }
                 ;
 
 setpid          : SET PIDFILE PATH {
-                   if (! Run.pidfile || ihp.pidfile) {
+                   if (! Run.files.pid || ihp.pidfile) {
                      ihp.pidfile = true;
                      setpidfile($3);
                    }
@@ -638,14 +641,28 @@ mmonitlist      : mmonit credentials
                 | mmonitlist mmonit credentials
                 ;
 
-mmonit          : URLOBJECT nettimeout sslversion certmd5 {
-                    addmmonit($<url>1, $<number>2, $<number>3, $<string>4);
+mmonit          : URLOBJECT nettimeout mmonitoptlist {
+                        mmonitset.url = $<url>1;
+                        mmonitset.timeout = $<number>2;
+                        addmmonit(&mmonitset);
+                  }
+                ;
+
+mmonitoptlist   : /* EMPTY */
+                | mmonitoptlist mmonitopt
+                ;
+
+mmonitopt       : sslversion {
+                        mmonitset.ssl.version = $<number>1;
+                  }
+                | certmd5 {
+                        mmonitset.ssl.certmd5 = $<string>1;
                   }
                 ;
 
 credentials     : /* EMPTY */
                 | REGISTER CREDENTIALS {
-                    Run.dommonitcredentials = false;
+                    Run.flags &= ~Run_MmonitCredentials;
                   }
                 ;
 
@@ -669,38 +686,48 @@ mailserverlist  : mailserver
                 | mailserverlist mailserver
                 ;
 
-mailserver      : STRING username password sslversion certmd5 {
-                    /* Restore the current text overriden by lookahead */
-                    FREE(argyytext);
-                    argyytext = Str_dup($1);
+mailserver      : STRING mailserveroptlist {
+                        /* Restore the current text overriden by lookahead */
+                        FREE(argyytext);
+                        argyytext = Str_dup($1);
 
-                    mailserverset.host = $1;
-                    mailserverset.username = $<string>2;
-                    mailserverset.password = $<string>3;
-                    mailserverset.ssl.version = $<number>4;
-                    if (mailserverset.ssl.version != SSL_Disabled) {
-                      mailserverset.ssl.use_ssl = true;
-                      if (mailserverset.ssl.version == SSL_V2 || mailserverset.ssl.version == SSL_V3)
-                         mailserverset.port = PORT_SMTPS;
-                      mailserverset.ssl.certmd5 = $<string>5;
-                    }
-                    addmailserver(&mailserverset);
+                        mailserverset.host = $1;
+                        mailserverset.port = PORT_SMTP;
+                        if (mailserverset.ssl.version != SSL_Disabled) {
+                                mailserverset.ssl.use_ssl = true;
+                                if (mailserverset.ssl.version == SSL_V2 || mailserverset.ssl.version == SSL_V3)
+                                        mailserverset.port = PORT_SMTPS;
+                        }
+                        addmailserver(&mailserverset);
                   }
-                | STRING PORT NUMBER username password sslversion certmd5 {
-                    /* Restore the current text overriden by lookahead */
-                    FREE(argyytext);
-                    argyytext = Str_dup($1);
+                | STRING PORT NUMBER mailserveroptlist {
+                        /* Restore the current text overriden by lookahead */
+                        FREE(argyytext);
+                        argyytext = Str_dup($1);
 
-                    mailserverset.host = $1;
-                    mailserverset.port = $<number>3;
-                    mailserverset.username = $<string>4;
-                    mailserverset.password = $<string>5;
-                    mailserverset.ssl.version = $<number>6;
-                    if (mailserverset.ssl.version != SSL_Disabled) {
-                      mailserverset.ssl.use_ssl = true;
-                      mailserverset.ssl.certmd5 = $<string>7;
-                    }
-                    addmailserver(&mailserverset);
+                        mailserverset.host = $1;
+                        mailserverset.port = $<number>3;
+                        if (mailserverset.ssl.version != SSL_Disabled)
+                                mailserverset.ssl.use_ssl = true;
+                        addmailserver(&mailserverset);
+                  }
+                ;
+
+mailserveroptlist : /* EMPTY */
+                  | mailserveroptlist mailserveropt
+                  ;
+
+mailserveropt   : username {
+                        mailserverset.username = $<string>1;
+                  }
+                | password {
+                        mailserverset.password = $<string>1;
+                  }
+                | sslversion {
+                        mailserverset.ssl.version = $<number>1;
+                  }
+                | certmd5 {
+                        mailserverset.ssl.certmd5 = $<string>1;
                   }
                 ;
 
@@ -1004,27 +1031,49 @@ useroptionlist  : useroption
                 | useroptionlist useroption
                 ;
 
-argument        : STRING { addargument($1); }
-                | PATH   { addargument($1); }
+argument        : STRING {
+                        addargument($1);
+                  }
+                | PATH {
+                        addargument($1);
+                  }
                 ;
 
-useroption      : UID STRING { addeuid( get_uid($2, 0) ); FREE($2); }
-                | GID STRING { addegid( get_gid($2, 0) ); FREE($2); }
-                | UID NUMBER { addeuid( get_uid(NULL, $2) ); }
-                | GID NUMBER { addegid( get_gid(NULL, $2) ); }
+useroption      : UID STRING {
+                        addeuid(get_uid($2, 0));
+                        FREE($2);
+                  }
+                | GID STRING {
+                        addegid(get_gid($2, 0));
+                        FREE($2);
+                  }
+                | UID NUMBER {
+                        addeuid(get_uid(NULL, $2));
+                  }
+                | GID NUMBER {
+                        addegid(get_gid(NULL, $2));
+                  }
                 ;
 
-username        : /* EMPTY */     { $<string>$ = NULL; }
-                | USERNAME MAILADDR { $<string>$ = $2; }
-                | USERNAME STRING { $<string>$ = $2; }
+username        : USERNAME MAILADDR {
+                        $<string>$ = $2;
+                  }
+                | USERNAME STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
-password        : /* EMPTY */     { $<string>$ = NULL; }
-                | PASSWORD STRING { $<string>$ = $2; }
+password        : PASSWORD STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
-hostname        : /* EMPTY */     { $<string>$ = NULL; }
-                | HOSTNAME STRING { $<string>$ = $2; }
+hostname        : /* EMPTY */     {
+                        $<string>$ = NULL;
+                  }
+                | HOSTNAME STRING {
+                        $<string>$ = $2;
+                  }
                 ;
 
 connection      : IF FAILED host port ip type protocol urloption nettimeout retry rate1 THEN action1 recovery {
@@ -1096,13 +1145,13 @@ host            : /* EMPTY */ {
                 ;
 
 port            : PORT NUMBER {
-                        portset.port = $2;
+                        portset.target.net.port = $2;
                   }
                 ;
 
 unixsocket      : UNIXSOCKET PATH {
-                        portset.pathname = $2;
                         portset.family = Socket_Unix;
+                        portset.target.unix.pathname = $2;
                   }
                 ;
 
@@ -1123,29 +1172,35 @@ type            : /* EMPTY */ {
                 | TYPE TCP {
                     portset.type = Socket_Tcp;
                   }
-                | TYPE TCPSSL sslversion certmd5  {
+                | TYPE TCPSSL typeoptlist {
                     portset.type = Socket_Tcp;
-                    portset.SSL.use_ssl = true;
-                    portset.SSL.version = $<number>3;
-                    if (portset.SSL.version == SSL_Disabled)
-                      portset.SSL.version = SSL_Auto;
-                    portset.SSL.certmd5 = $<string>4;
+                    portset.target.net.SSL.use_ssl = true;
+                    if (portset.target.net.SSL.version == SSL_Disabled)
+                      portset.target.net.SSL.version = SSL_Auto;
                   }
                 | TYPE UDP {
                     portset.type = Socket_Udp;
                   }
                 ;
 
-certmd5         : /* EMPTY */ {
-                        $<string>$ = NULL;
+typeoptlist     : /* EMPTY */
+                | typeoptlist typeopt
+                ;
+
+typeopt         : sslversion {
+                        portset.target.net.SSL.version = $<number>1;
                   }
-                | CERTMD5 STRING {
+                | certmd5 {
+                        portset.target.net.SSL.certmd5 = $<string>1;
+                  }
+                ;
+
+certmd5         : CERTMD5 STRING {
                         $<string>$ = $2;
                   }
                 ;
 
-sslversion      : /* EMPTY */  { $<number>$ = SSL_Disabled; }
-                | SSLV2        { $<number>$ = SSL_V2; }
+sslversion      : SSLV2        { $<number>$ = SSL_V2; }
                 | SSLV3        { $<number>$ = SSL_V3; }
                 | TLSV1        { $<number>$ = SSL_TLSV1; }
                 | TLSV11
@@ -1188,8 +1243,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL HTTPS httplist {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_HTTP);
                  }
                 | PROTOCOL IMAP {
@@ -1197,8 +1252,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL IMAPS {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_IMAP);
                   }
                 | PROTOCOL CLAMAV {
@@ -1213,17 +1268,10 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL MONGODB  {
                         portset.protocol = Protocol_get(Protocol_MONGODB);
                   }
-                | PROTOCOL MYSQL username password {
+                | PROTOCOL MYSQL mysqllist {
                         portset.protocol = Protocol_get(Protocol_MYSQL);
-                        if ($<string>3) {
-                                if (strlen($<string>3) > 16)
-                                        yyerror2("Username too long -- Maximum MySQL username lengh is 16 characters");
-                                else
-                                        portset.username = $<string>3;
-                        }
-                        portset.password = $<string>4;
                   }
-                | PROTOCOL SIP target maxforward {
+                | PROTOCOL SIP siplist {
                         portset.protocol = Protocol_get(Protocol_SIP);
                   }
                 | PROTOCOL NNTP {
@@ -1241,8 +1289,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL POPS {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_POP);
                   }
                 | PROTOCOL SIEVE {
@@ -1253,8 +1301,8 @@ protocol        : /* EMPTY */  {
                   }
                 | PROTOCOL SMTPS {
                         portset.type = Socket_Tcp;
-                        portset.SSL.use_ssl = true;
-                        portset.SSL.version = SSL_Auto;
+                        portset.target.net.SSL.use_ssl = true;
+                        portset.target.net.SSL.version = SSL_Auto;
                         portset.protocol = Protocol_get(Protocol_SMTP);
                  }
                 | PROTOCOL SSH  {
@@ -1281,7 +1329,7 @@ protocol        : /* EMPTY */  {
                 | PROTOCOL GPS {
                         portset.protocol = Protocol_get(Protocol_GPS);
                   }
-                | PROTOCOL RADIUS secret {
+                | PROTOCOL RADIUS radiuslist {
                         portset.protocol = Protocol_get(Protocol_RADIUS);
                   }
                 | PROTOCOL MEMCACHE {
@@ -1312,32 +1360,59 @@ websocketlist   : websocket
                 ;
 
 websocket       : ORIGIN STRING {
-                    portset.pathname = $2;
+                    portset.parameters.websocket.origin = $<string>2;
                   }
                 | REQUEST PATH {
-                    portset.request = $2;
+                    portset.parameters.websocket.request = $<string>2;
                   }
                 | HOST STRING {
-                    portset.request_hostheader = $2;
+                    portset.parameters.websocket.host = $<string>2;
                   }
                 | VERSIONOPT NUMBER {
-                    portset.version = $<number>2;
+                    portset.parameters.websocket.version = $<number>2;
                   }
                 ;
 
-target          : /* EMPTY */
-                | TARGET MAILADDR {
-                    portset.request = $2;
+mysqllist       : /* EMPTY */
+                | mysqllist mysql
+                ;
+
+mysql           : username {
+                        if ($<string>1) {
+                                if (strlen($<string>1) > 16)
+                                        yyerror2("Username too long -- Maximum MySQL username lengh is 16 characters");
+                                else
+                                        portset.parameters.mysql.username = $<string>1;
+                        }
+                  }
+                | password {
+                        portset.parameters.mysql.password = $<string>1;
+                  }
+                ;
+
+target          : TARGET MAILADDR {
+                    $<string>$ = $2;
                   }
                 | TARGET STRING {
-                    portset.request = $2;
+                    $<string>$ = $2;
                   }
                 ;
 
-maxforward      : /* EMPTY */
-                |  MAXFORWARD NUMBER {
-                     portset.maxforward = verifyMaxForward($2);
-                   }
+maxforward      : MAXFORWARD NUMBER {
+                     $<number>$ = verifyMaxForward($2);
+                  }
+                ;
+
+siplist         : /* EMPTY */
+                | siplist sip
+                ;
+
+sip             : target {
+                        portset.parameters.sip.target = $<string>1;
+                  }
+                | maxforward {
+                        portset.parameters.sip.maxforward = $<number>1;
+                  }
                 ;
 
 httplist        : /* EMPTY */
@@ -1352,38 +1427,45 @@ http            : request
                 ;
 
 status          : STATUS operator NUMBER {
-                    portset.operator = $<number>2;
-                    portset.status = $<number>3;
+                    portset.parameters.http.operator = $<number>2;
+                    portset.parameters.http.status = $<number>3;
                   }
                 ;
 
 request         : REQUEST PATH {
-                    portset.request = Util_urlEncode($2);
+                    portset.parameters.http.request = Util_urlEncode($2);
                     FREE($2);
                   }
                 ;
 
 responsesum     : CHECKSUM STRING {
-                    portset.request_checksum = $2;
+                    portset.parameters.http.checksum = $2;
                   }
                 ;
 
 hostheader      : HOSTHEADER STRING {
-                    portset.request_hostheader = $2;
+                    addhttpheader(&portset, Str_cat("Host:%s", $2));
+                    FREE($2);
                   }
                 ;
 
 httpheaderlist  : /* EMPTY */
                 | httpheaderlist HTTPHEADER {
-                        if (! portset.http_headers) {
-                                portset.http_headers = List_new();
-                        }
-                        List_append(portset.http_headers, $2);
+                        addhttpheader(&portset, $2);
                  }
                 ;
 
 secret          : SECRET STRING {
-                    portset.request = $2;
+                    $<string>$ = $2;
+                  }
+                ;
+
+radiuslist      : /* EMPTY */
+                | radiuslist radius
+                ;
+
+radius          : secret {
+                        portset.parameters.radius.secret = $<string>1;
                   }
                 ;
 
@@ -1392,44 +1474,44 @@ apache_stat_list: apache_stat
                 ;
 
 apache_stat     : LOGLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.loglimitOP = $<number>2;
-                    portset.ApacheStatus.loglimit = $<number>3;
+                    portset.parameters.apachestatus.loglimitOP = $<number>2;
+                    portset.parameters.apachestatus.loglimit = $<number>3;
                   }
                 | CLOSELIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.closelimitOP = $<number>2;
-                    portset.ApacheStatus.closelimit = $<number>3;
+                    portset.parameters.apachestatus.closelimitOP = $<number>2;
+                    portset.parameters.apachestatus.closelimit = $<number>3;
                   }
                 | DNSLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.dnslimitOP = $<number>2;
-                    portset.ApacheStatus.dnslimit = $<number>3;
+                    portset.parameters.apachestatus.dnslimitOP = $<number>2;
+                    portset.parameters.apachestatus.dnslimit = $<number>3;
                   }
                 | KEEPALIVELIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.keepalivelimitOP = $<number>2;
-                    portset.ApacheStatus.keepalivelimit = $<number>3;
+                    portset.parameters.apachestatus.keepalivelimitOP = $<number>2;
+                    portset.parameters.apachestatus.keepalivelimit = $<number>3;
                   }
                 | REPLYLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.replylimitOP = $<number>2;
-                    portset.ApacheStatus.replylimit = $<number>3;
+                    portset.parameters.apachestatus.replylimitOP = $<number>2;
+                    portset.parameters.apachestatus.replylimit = $<number>3;
                   }
                 | REQUESTLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.requestlimitOP = $<number>2;
-                    portset.ApacheStatus.requestlimit = $<number>3;
+                    portset.parameters.apachestatus.requestlimitOP = $<number>2;
+                    portset.parameters.apachestatus.requestlimit = $<number>3;
                   }
                 | STARTLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.startlimitOP = $<number>2;
-                    portset.ApacheStatus.startlimit = $<number>3;
+                    portset.parameters.apachestatus.startlimitOP = $<number>2;
+                    portset.parameters.apachestatus.startlimit = $<number>3;
                   }
                 | WAITLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.waitlimitOP = $<number>2;
-                    portset.ApacheStatus.waitlimit = $<number>3;
+                    portset.parameters.apachestatus.waitlimitOP = $<number>2;
+                    portset.parameters.apachestatus.waitlimit = $<number>3;
                   }
                 | GRACEFULLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.gracefullimitOP = $<number>2;
-                    portset.ApacheStatus.gracefullimit = $<number>3;
+                    portset.parameters.apachestatus.gracefullimitOP = $<number>2;
+                    portset.parameters.apachestatus.gracefullimit = $<number>3;
                   }
                 | CLEANUPLIMIT operator NUMBER PERCENT {
-                    portset.ApacheStatus.cleanuplimitOP = $<number>2;
-                    portset.ApacheStatus.cleanuplimit = $<number>3;
+                    portset.parameters.apachestatus.cleanuplimitOP = $<number>2;
+                    portset.parameters.apachestatus.cleanuplimit = $<number>3;
                   }
                 ;
 
@@ -1621,7 +1703,10 @@ mode            : MODE ACTIVE  {
                   }
                 ;
 
-group           : GROUP STRINGNAME { addservicegroup($2); FREE($2);}
+group           : GROUP STRINGNAME {
+                        addservicegroup($2);
+                        FREE($2);
+                  }
                 ;
 
 
@@ -1705,6 +1790,7 @@ resourcecpu     : resourcecpuid operator NUMBER PERCENT {
 resourcecpuid   : CPUUSER   { $<number>$ = Resource_CpuUser; }
                 | CPUSYSTEM { $<number>$ = Resource_CpuSystem; }
                 | CPUWAIT   { $<number>$ = Resource_CpuWait; }
+                | CPU       { $<number>$ = Resource_CpuPercent; }
                 ;
 
 resourcemem     : MEMORY operator value unit {
@@ -2352,10 +2438,6 @@ static void preparse() {
         argcurrentfile              = NULL;
         argyytext                   = NULL;
         /* Reset parser */
-        Run.stopped                 = false;
-        Run.dolog                   = false;
-        Run.doaction                = false;
-        Run.dommonitcredentials     = true;
         Run.mmonitcredentials       = NULL;
         Run.httpd.flags             = Httpd_Disabled | Httpd_Signature;
         Run.httpd.credentials       = NULL;
@@ -2374,8 +2456,7 @@ static void preparse() {
         Run.MailFormat.subject      = NULL;
         Run.MailFormat.message      = NULL;
         depend_list                 = NULL;
-        Run.handler_init            = true;
-        Run.fipsEnabled             = false;
+        Run.flags |= Run_HandlerInit | Run_MmonitCredentials;
         for (i = 0; i <= Handler_Max; i++)
                 Run.handler_queue[i] = 0;
         /*
@@ -2387,6 +2468,7 @@ static void preparse() {
         reset_sizeset();
         reset_mailset();
         reset_mailserverset();
+        reset_mmonitset();
         reset_portset();
         reset_permset();
         reset_icmpset();
@@ -2415,13 +2497,13 @@ static void postparse() {
                 addservice(current);
 
         /* Check that we do not start monit in daemon mode without having a poll time */
-        if (! Run.polltime && (Run.isdaemon || Run.init)) {
+        if (! Run.polltime && ((Run.flags & Run_Daemon) || (Run.flags & Run_Foreground))) {
                 LogError("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0)  or use the -d option when starting monit\n");
                 cfg_errflag++;
         }
 
-        if (Run.logfile)
-                Run.dolog = true;
+        if (Run.files.log)
+                Run.flags |= Run_Log;
 
         /* Add the default general system service if not specified explicitly: service name default to hostname */
         if (! Run.system) {
@@ -2440,8 +2522,8 @@ static void postparse() {
         }
 
         if (Run.mmonits) {
-                if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
-                        if (Run.dommonitcredentials) {
+                if (Run.httpd.flags & Httpd_Net) {
+                        if (Run.flags & Run_MmonitCredentials) {
                                 Auth_T c;
                                 for (c = Run.httpd.credentials; c; c = c->next) {
                                         if (c->digesttype == Digest_Cleartext && ! c->is_readonly) {
@@ -2452,6 +2534,8 @@ static void postparse() {
                                 if (! Run.mmonitcredentials)
                                         LogWarning("M/Monit registration with credentials enabled, but no suitable credentials found in monit configuration file -- please add 'allow user:password' option to 'set httpd' statement\n");
                         }
+                } else if (Run.httpd.flags & Httpd_Unix) {
+                        LogWarning("M/Monit enabled but Monit httpd is using unix socket -- please change 'set httpd' statement to use TCP port in order to be able to manage services on Monit\n");
                 } else {
                         LogWarning("M/Monit enabled but no httpd allowed -- please add 'set httpd' statement\n");
                 }
@@ -2461,7 +2545,7 @@ static void postparse() {
         check_depend();
 
 #ifdef HAVE_OPENSSL
-        Ssl_setFipsMode(Run.fipsEnabled);
+        Ssl_setFipsMode(Run.flags & Run_FipsEnabled);
 #endif
 }
 
@@ -2593,7 +2677,6 @@ static void addservice(Service_T s) {
  */
 static void addservicegroup(char *name) {
         ServiceGroup_T g;
-        ServiceGroupMember_T m;
 
         ASSERT(name);
 
@@ -2605,14 +2688,12 @@ static void addservicegroup(char *name) {
         if (! g) {
                 NEW(g);
                 g->name = Str_dup(name);
+                g->members = List_new();
                 g->next = servicegrouplist;
                 servicegrouplist = g;
         }
 
-        NEW(m);
-        m->name = Str_dup(current->name);
-        m->next = g->members;
-        g->members = m;
+        List_append(g->members, current);
 }
 
 
@@ -2666,61 +2747,65 @@ static void addmail(char *mailto, Mail_T f, Mail_T *l) {
 static void addport(Port_T *list, Port_T port) {
         ASSERT(port);
 
+        if (port->protocol->check == check_radius && port->type != Socket_Udp)
+                yyerror("Radius protocol test supports UDP only");
+
         Port_T p;
         NEW(p);
-        p->port               = port->port;
         p->type               = port->type;
         p->socket             = port->socket;
         p->family             = port->family;
         p->action             = port->action;
         p->timeout            = port->timeout;
         p->retry              = port->retry;
-        p->username           = port->username;
-        p->password           = port->password;
-        p->request            = port->request;
-        p->generic            = port->generic;
         p->protocol           = port->protocol;
-        p->pathname           = port->pathname;
         p->hostname           = port->hostname;
         p->url_request        = port->url_request;
-        p->request_checksum   = port->request_checksum;
-        p->request_hostheader = port->request_hostheader;
-        p->http_headers       = port->http_headers;
-        p->version            = port->version;
-        p->operator           = port->operator;
-        p->status             = port->status;
-        memcpy(&p->ApacheStatus, &port->ApacheStatus, sizeof(struct apache_status));
-
-        if (p->request_checksum) {
-                cleanup_hash_string(p->request_checksum);
-                if (strlen(p->request_checksum) == 32)
-                        p->request_hashtype = Hash_Md5;
-                else if (strlen(p->request_checksum) == 40)
-                        p->request_hashtype = Hash_Sha1;
-                else
-                        yyerror2("invalid checksum [%s]", p->request_checksum);
+        if (p->family == Socket_Unix) {
+                p->target.unix.pathname = port->target.unix.pathname;
         } else {
-                p->request_hashtype = 0;
+                p->target.net.port = port->target.net.port;
+                if (port->target.net.SSL.use_ssl == true) {
+#ifdef HAVE_OPENSSL
+                        if (port->target.net.SSL.certmd5 != NULL) {
+                                p->target.net.SSL.certmd5 = port->target.net.SSL.certmd5;
+                                cleanup_hash_string(p->target.net.SSL.certmd5);
+                        }
+                        p->target.net.SSL.use_ssl = true;
+                        p->target.net.SSL.version = port->target.net.SSL.version;
+#else
+                        yyerror("SSL check cannot be activated -- SSL disabled");
+#endif
+                }
+        }
+        memcpy(&p->parameters, &port->parameters, sizeof(port->parameters));
+
+        if (p->protocol->check == check_http) {
+                if (p->parameters.http.checksum) {
+                        cleanup_hash_string(p->parameters.http.checksum);
+                        if (strlen(p->parameters.http.checksum) == 32)
+                                p->parameters.http.hashtype = Hash_Md5;
+                        else if (strlen(p->parameters.http.checksum) == 40)
+                                p->parameters.http.hashtype = Hash_Sha1;
+                        else
+                                yyerror2("invalid checksum [%s]", p->parameters.http.checksum);
+                } else {
+                        p->parameters.http.hashtype = Hash_Unknown;
+                }
         }
 
-        if (port->SSL.use_ssl == true) {
-#ifdef HAVE_OPENSSL
-                if (port->SSL.certmd5 != NULL) {
-                        p->SSL.certmd5 = port->SSL.certmd5;
-                        cleanup_hash_string(p->SSL.certmd5);
-                }
-                p->SSL.use_ssl = true;
-                p->SSL.version = port->SSL.version;
-#else
-                yyerror("SSL check cannot be activated -- SSL disabled");
-#endif
-        }
-        p->maxforward = port->maxforward;
         p->next = *list;
         *list = p;
 
         reset_portset();
 
+}
+
+
+static void addhttpheader(Port_T port, const char *header) {
+        if (! port->parameters.http.headers)
+                port->parameters.http.headers = List_new();
+        List_append(port->parameters.http.headers, (char *)header);
 }
 
 
@@ -2733,7 +2818,7 @@ static void addresource(Resource_T rr) {
         ASSERT(rr);
 
         NEW(r);
-        if (! Run.doprocess)
+        if (! (Run.flags & Run_ProcessEngineEnabled))
                 yyerror("Cannot activate service check. The process status engine was disabled. On certain systems you must run monit as root to utilize this feature)\n");
         r->resource_id = rr->resource_id;
         r->limit       = rr->limit;
@@ -3311,11 +3396,11 @@ static void addeventaction(EventAction_T *_ea, Action_Type failed, Action_Type s
  * Add a generic protocol handler to
  */
 static void addgeneric(Port_T port, char *send, char *expect) {
-        Generic_T g = port->generic;
+        Generic_T g = port->parameters.generic.sendexpect;
 
         if (g == NULL) {
                 NEW(g);
-                port->generic = g;
+                port->parameters.generic.sendexpect = g;
         } else {
                 while (g->next)
                         g = g->next;
@@ -3329,7 +3414,7 @@ static void addgeneric(Port_T port, char *send, char *expect) {
         } else if (expect != NULL) {
 #ifdef HAVE_REGEX_H
 
-                int   reg_return;
+                int reg_return;
                 NEW(g->expect);
                 reg_return = regcomp(g->expect, expect, REG_NOSUB|REG_EXTENDED);
                 FREE(expect);
@@ -3395,22 +3480,19 @@ static void prepare_urlrequest(URL_T U) {
 
         ASSERT(U);
 
+        /* Only the HTTP protocol is supported for URLs currently. See also the lexer if this is to be changed in the future */
         portset.protocol = Protocol_get(Protocol_HTTP);
 
         if (urlrequest == NULL)
                 NEW(urlrequest);
         urlrequest->url = U;
         portset.hostname = Str_dup(U->hostname);
-        portset.port = U->port;
+        portset.target.net.port = U->port;
         portset.url_request = urlrequest;
         portset.type = Socket_Tcp;
-        portset.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");
-        /* Only the HTTP protocol is supported for URLs.
-         See also the lexer if this is to be changed in
-         the future */
-        portset.protocol = Protocol_get(Protocol_HTTP);
+        portset.parameters.http.request = Str_cat("%s%s%s", U->path, U->query ? "?" : "", U->query ? U->query : "");
         if (IS(U->protocol, "https"))
-                portset.SSL.use_ssl = true;
+                portset.target.net.SSL.use_ssl = true;
 
 }
 
@@ -3446,26 +3528,26 @@ static void  seturlrequest(int operator, char *regex) {
 /*
  * Add a new data recipient server to the mmonit server list
  */
-static void addmmonit(URL_T url, int timeout, Ssl_Version sslversion, char *certmd5) {
+static void addmmonit(Mmonit_T mmonit) {
+        ASSERT(mmonit->url);
+
         Mmonit_T c;
-
-        ASSERT(url);
-
         NEW(c);
-        c->url = url;
+        c->url = mmonit->url;
+        c->ssl.version = mmonit->ssl.version;
         if (IS(c->url->protocol, "https")) {
 #ifdef HAVE_OPENSSL
                 c->ssl.use_ssl = true;
-                c->ssl.version = (sslversion == SSL_Disabled) ? SSL_Auto : sslversion;
-                if (certmd5) {
-                        c->ssl.certmd5 = certmd5;
+                c->ssl.version = (mmonit->ssl.version == SSL_Disabled) ? SSL_Auto : mmonit->ssl.version;
+                if (mmonit->ssl.certmd5) {
+                        c->ssl.certmd5 = mmonit->ssl.certmd5;
                         cleanup_hash_string(c->ssl.certmd5);
                 }
 #else
                 yyerror("SSL check cannot be activated -- SSL disabled");
 #endif
         }
-        c->timeout = timeout;
+        c->timeout = mmonit->timeout;
         c->next = NULL;
 
         if (Run.mmonits) {
@@ -3476,6 +3558,7 @@ static void addmmonit(URL_T url, int timeout, Ssl_Version sslversion, char *cert
         } else {
                 Run.mmonits = c;
         }
+        reset_mmonitset();
 }
 
 
@@ -3601,15 +3684,15 @@ static void addegid(gid_t gid) {
  * Reset the logfile if changed
  */
 static void setlogfile(char *logfile) {
-        if (Run.logfile) {
-                if (IS(Run.logfile, logfile)) {
+        if (Run.files.log) {
+                if (IS(Run.files.log, logfile)) {
                         FREE(logfile);
                         return;
                 } else {
-                        FREE(Run.logfile);
+                        FREE(Run.files.log);
                 }
         }
-        Run.logfile = logfile;
+        Run.files.log = logfile;
 }
 
 
@@ -3617,15 +3700,15 @@ static void setlogfile(char *logfile) {
  * Reset the pidfile if changed
  */
 static void setpidfile(char *pidfile) {
-        if (Run.pidfile) {
-                if (IS(Run.pidfile, pidfile)) {
+        if (Run.files.pid) {
+                if (IS(Run.files.pid, pidfile)) {
                         FREE(pidfile);
                         return;
                 } else {
-                        FREE(Run.pidfile);
+                        FREE(Run.files.pid);
                 }
         }
-        Run.pidfile = pidfile;
+        Run.files.pid = pidfile;
 }
 
 
@@ -3784,11 +3867,11 @@ static boolean_t addcredentials(char *uname, char *passwd, Digest_Type dtype, bo
  */
 static void setsyslog(char *facility) {
 
-        if (! Run.logfile || ihp.logfile) {
+        if (! Run.files.log || ihp.logfile) {
                 ihp.logfile = true;
                 setlogfile(Str_dup("syslog"));
-                Run.use_syslog = true;
-                Run.dolog = true;
+                Run.flags |= Run_UseSyslog;
+                Run.flags |= Run_Log;
         }
 
         if (facility) {
@@ -3834,7 +3917,18 @@ static void reset_mailserverset() {
         memset(&mailserverset, 0, sizeof(struct mymailserver));
         mailserverset.port = PORT_SMTP;
         mailserverset.ssl.use_ssl = false;
-        mailserverset.ssl.version = SSL_Auto;
+        mailserverset.ssl.version = SSL_Disabled;
+}
+
+
+/*
+ * Reset the mmonit set to default values
+ */
+static void reset_mmonitset() {
+        memset(&mmonitset, 0, sizeof(struct mymmonit));
+        mailserverset.port = 8080;
+        mailserverset.ssl.use_ssl = false;
+        mailserverset.ssl.version = SSL_Disabled;
 }
 
 
@@ -3846,12 +3940,8 @@ static void reset_portset() {
         portset.socket = -1;
         portset.type = Socket_Tcp;
         portset.family = Socket_Ip;
-        portset.SSL.version = SSL_Auto;
         portset.timeout = NET_TIMEOUT;
         portset.retry = 1;
-        portset.maxforward = 70;
-        portset.operator = Operator_Less;
-        portset.status = 400;
         urlrequest = NULL;
 }
 
@@ -4159,14 +4249,10 @@ static void check_exec(char *exec) {
 
 /* Return a valid max forward value for SIP header */
 static int verifyMaxForward(int mf) {
-        int max = 70;
-
         if (mf >= 0 && mf <= 255)
-                max = mf;
-        else
-                yywarning2("SIP max forward is outside the range [0..255]. Setting max forward to 70");
-
-        return max;
+                return mf;
+        yywarning2("SIP max forward is outside the range [0..255]. Setting max forward to 70");
+        return 70;
 }
 
 

@@ -305,7 +305,7 @@ static Socket_T _socketProducer(int server, Httpd_Flags flags) {
 
 void Engine_start() {
         Engine_cleanup();
-        stopped = Run.stopped;
+        stopped = Run.flags & Run_Stopped;
         init_service();
         //FIXME: we listen currently only on one server socket: either on IP or unix socket ... should support listening on multiple sockets (IPv4, IPv6, unix)
         if (Run.httpd.flags & Httpd_Net) {

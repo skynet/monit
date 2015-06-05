@@ -181,7 +181,7 @@ static void update_v1() {
 
 boolean_t State_open() {
         State_close();
-        if ((file = open(Run.statefile, O_RDWR | O_CREAT, 0600)) == -1) {
+        if ((file = open(Run.files.state, O_RDWR | O_CREAT, 0600)) == -1) {
                 LogError("Cannot open for write -- %s\n", STRERROR);
                 return false;
         }
@@ -193,7 +193,7 @@ boolean_t State_open() {
 void State_close() {
         if (file != -1) {
                 if (close(file) == -1)
-                        LogError("State file '%s': close error -- %s\n", Run.statefile, STRERROR);
+                        LogError("State file '%s': close error -- %s\n", Run.files.state, STRERROR);
                 else
                         file = -1;
         }
@@ -234,7 +234,7 @@ void State_save() {
         }
         ELSE
         {
-                LogError("State file '%s': %s\n", Run.statefile, Exception_frame.message);
+                LogError("State file '%s': %s\n", Run.files.state, Exception_frame.message);
         }
         END_TRY;
 }
@@ -263,12 +263,12 @@ void State_update() {
                         if (version == StateVersion1)
                                 update_v1();
                         else
-                                LogWarning("State file '%s': incompatible version %d\n", Run.statefile, version);
+                                LogWarning("State file '%s': incompatible version %d\n", Run.files.state, version);
                 }
         }
         ELSE
         {
-                LogError("State file '%s': %s\n", Run.statefile, Exception_frame.message);
+                LogError("State file '%s': %s\n", Run.files.state, Exception_frame.message);
         }
         END_TRY;
 }

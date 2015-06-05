@@ -32,6 +32,9 @@
 #include <stdlib.h>
 #endif
 
+// libmonit
+#include "util/List.h"
+
 #include "monit.h"
 #include "protocol.h"
 #include "process.h"
@@ -42,9 +45,8 @@
 static void _gc_service_list(Service_T *);
 static void _gc_service(Service_T *);
 static void _gc_servicegroup(ServiceGroup_T *);
-static void _gc_servicegroup_member(ServiceGroupMember_T *);
 static void _gc_mail_server(MailServer_T *);
-static void _gcppl(Port_T *);
+static void _gcportlist(Port_T *);
 static void _gcfilesystem(Filesystem_T *);
 static void _gcicmp(Icmp_T *);
 static void _gcpql(Resource_T *);
@@ -68,7 +70,7 @@ static void _gcpid(Pid_T *);
 static void _gcppid(Pid_T *);
 static void _gcfsflag(Fsflag_T *);
 static void _gcnonexist(Nonexist_T *);
-static void _gcgrc(Generic_T *);
+static void _gcgeneric(Generic_T *);
 static void _gcath(Auth_T *);
 static void _gc_mmonit(Mmonit_T *);
 static void _gc_url(URL_T *);
@@ -87,7 +89,7 @@ static void _gc_request(Request_T *);
 
 void gc() {
         Engine_destroyHostsAllow();
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 delprocesstree(&oldptree, &oldptreesize);
                 delprocesstree(&ptree, &ptreesize);
         }
@@ -177,9 +179,9 @@ static void _gc_service(Service_T *s) {
                 FREE((*s)->program);
         }
         if ((*s)->portlist)
-                _gcppl(&(*s)->portlist);
+                _gcportlist(&(*s)->portlist);
         if ((*s)->socketlist)
-                _gcppl(&(*s)->socketlist);
+                _gcportlist(&(*s)->socketlist);
         if ((*s)->filesystemlist)
                 _gcfilesystem(&(*s)->filesystemlist);
         if ((*s)->icmplist)
@@ -272,19 +274,9 @@ static void _gc_servicegroup(ServiceGroup_T *sg) {
         ASSERT(sg && *sg);
         if ((*sg)->next)
                 _gc_servicegroup(&(*sg)->next);
-        if ((*sg)->members)
-                _gc_servicegroup_member(&(*sg)->members);
+        List_free(&(*sg)->members);
         FREE((*sg)->name);
         FREE(*sg);
-}
-
-
-static void _gc_servicegroup_member(ServiceGroupMember_T *m) {
-        ASSERT(m && *m);
-        if ((*m)->next)
-                _gc_servicegroup_member(&(*m)->next);
-        FREE((*m)->name);
-        FREE(*m);
 }
 
 
@@ -344,31 +336,45 @@ static void _gc_eventaction(EventAction_T *e) {
 }
 
 
-static void _gcppl(Port_T *p) {
+static void _gcportlist(Port_T *p) {
         ASSERT(p&&*p);
         if ((*p)->next)
-                _gcppl(&(*p)->next);
+                _gcportlist(&(*p)->next);
         if ((*p)->action)
                 _gc_eventaction(&(*p)->action);
-        if ((*p)->generic)
-                _gcgrc(&(*p)->generic);
         if ((*p)->url_request)
                 _gc_request(&(*p)->url_request);
-        FREE((*p)->request);
-        FREE((*p)->username);
-        FREE((*p)->password);
+        if ((*p)->family == Socket_Unix) {
+                FREE((*p)->target.unix.pathname);
+        } else {
+                FREE((*p)->target.net.SSL.certmd5);
+                FREE((*p)->target.net.SSL.clientpemfile);
+        }
         FREE((*p)->hostname);
-        FREE((*p)->pathname);
-        FREE((*p)->SSL.certmd5);
-        FREE((*p)->SSL.clientpemfile);
-        FREE((*p)->request_checksum);
-        FREE((*p)->request_hostheader);
-        if ((*p)->http_headers) {
-                List_T l = (*p)->http_headers;
-                while (List_length(l) > 0) {
-                        char *s = List_pop(l);
-                        FREE(s);
+        if ((*p)->protocol->check == check_http) {
+                FREE((*p)->parameters.http.request);
+                FREE((*p)->parameters.http.checksum);
+                if ((*p)->parameters.http.headers) {
+                        List_T l = (*p)->parameters.http.headers;
+                        while (List_length(l) > 0) {
+                                char *s = List_pop(l);
+                                FREE(s);
+                        }
                 }
+        } else if ((*p)->protocol->check == check_generic) {
+                if ((*p)->parameters.generic.sendexpect)
+                        _gcgeneric(&(*p)->parameters.generic.sendexpect);
+        } else if ((*p)->protocol->check == check_mysql) {
+                FREE((*p)->parameters.mysql.username);
+                FREE((*p)->parameters.mysql.password);
+        } else if ((*p)->protocol->check == check_sip) {
+                FREE((*p)->parameters.sip.target);
+        } else if ((*p)->protocol->check == check_radius) {
+                FREE((*p)->parameters.radius.secret);
+        } else if ((*p)->protocol->check == check_websocket) {
+                FREE((*p)->parameters.websocket.host);
+                FREE((*p)->parameters.websocket.origin);
+                FREE((*p)->parameters.websocket.request);
         }
         FREE(*p);
 }
@@ -581,10 +587,10 @@ static void _gcpdl(Dependant_T *d) {
 }
 
 
-static void _gcgrc(Generic_T *g) {
+static void _gcgeneric(Generic_T *g) {
         ASSERT(g);
         if ((*g)->next)
-                _gcgrc(&(*g)->next);
+                _gcgeneric(&(*g)->next);
         FREE((*g)->send);
 #ifdef HAVE_REGEX_H
         if ((*g)->expect != NULL)

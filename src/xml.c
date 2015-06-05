@@ -45,9 +45,13 @@
 #include <errno.h>
 #endif
 
+// libmonit
+#include "util/List.h"
+
 #include "monit.h"
 #include "event.h"
 #include "process.h"
+#include "protocol.h"
 
 
 /**
@@ -105,7 +109,7 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
                             Run.polltime,
                             Run.startdelay,
                             Run.system->name ? Run.system->name : "",
-                            Run.controlfile ? Run.controlfile : "");
+                            Run.files.control ? Run.files.control : "");
 
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
                 if (Run.httpd.flags & Httpd_Net)
@@ -323,7 +327,7 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                 S->inf->priv.process.euid,
                                                 S->inf->priv.process.gid,
                                                 (long long)S->inf->priv.process.uptime);
-                                        if (Run.doprocess) {
+                                        if (Run.flags & Run_ProcessEngineEnabled) {
                                                 StringBuffer_append(B,
                                                         "<children>%d</children>"
                                                         "<memory>"
@@ -369,8 +373,8 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                     "<responsetime>%.3f</responsetime>"
                                                     "</port>",
                                                     p->hostname ? p->hostname : "",
-                                                    p->port,
-                                                    p->request ? p->request : "",
+                                                    p->target.net.port,
+                                                    Util_portRequestDescription(p),
                                                     p->protocol->name ? p->protocol->name : "",
                                                     Util_portTypeDescription(p),
                                                     p->is_available ? p->response : -1.);
@@ -382,11 +386,11 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
                                                     "<protocol>%s</protocol>"
                                                     "<responsetime>%.3f</responsetime>"
                                                     "</unix>",
-                                                    p->pathname ? p->pathname : "",
+                                                    p->target.unix.pathname ? p->target.unix.pathname : "",
                                                     p->protocol->name ? p->protocol->name : "",
                                                     p->is_available ? p->response : -1.);
                         }
-                        if (S->type == Service_System && Run.doprocess) {
+                        if (S->type == Service_System && (Run.flags & Run_ProcessEngineEnabled)) {
                                 StringBuffer_append(B,
                                                     "<system>"
                                                     "<load>"
@@ -450,8 +454,10 @@ static void status_service(Service_T S, StringBuffer_T B, Level_Type L, int V) {
  */
 static void status_servicegroup(ServiceGroup_T SG, StringBuffer_T B, Level_Type L) {
         StringBuffer_append(B, "<servicegroup name=\"%s\">", SG->name);
-        for (ServiceGroupMember_T SGM = SG->members; SGM; SGM = SGM->next)
-                StringBuffer_append(B, "<service>%s</service>", SGM->name);
+        for (list_t m = SG->members->head; m; m = m->next) {
+                Service_T s = m->e;
+                StringBuffer_append(B, "<service>%s</service>", s->name);
+        }
         StringBuffer_append(B, "</servicegroup>");
 }
 

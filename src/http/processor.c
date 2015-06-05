@@ -183,7 +183,7 @@ void escapeHTML(StringBuffer_T sb, const char *s) {
  * @param code Error Code to lookup and send
  * @param msg Optional error message (may be NULL)
  */
-void send_error(HttpResponse res, int code, const char *msg, ...) {
+void send_error(HttpRequest req, HttpResponse res, int code, const char *msg, ...) {
         ASSERT(msg);
 
         const char *err = get_status_string(code);
@@ -204,7 +204,8 @@ void send_error(HttpResponse res, int code, const char *msg, ...) {
         message = Str_vcat(msg, ap);
         va_end(ap);
         escapeHTML(res->outputbuffer, message);
-        LogError("HttpRequest error: %s %d %s\n", SERVER_PROTOCOL, code, message);
+        if (code != SC_UNAUTHORIZED) // We log details in basic_authenticate() already, no need to log generic error sent to client here
+                LogError("HttpRequest: error -- client %s: %s %d %s\n", Socket_getRemoteHost(req->S), SERVER_PROTOCOL, code, message);
         FREE(message);
         char server[STRLEN];
         StringBuffer_append(res->outputbuffer,
@@ -433,7 +434,7 @@ static void do_service(Socket_T s) {
                         else if (IS(req->method, METHOD_POST))
                                 Impl.doPost(req, res);
                         else
-                                send_error(res, SC_NOT_IMPLEMENTED, "Method not implemented");
+                                send_error(req, res, SC_NOT_IMPLEMENTED, "Method not implemented");
                 }
                 send_response(res);
         }
@@ -703,7 +704,8 @@ static void destroy_entry(void *p) {
 static boolean_t is_authenticated(HttpRequest req, HttpResponse res) {
         if (Run.httpd.credentials) {
                 if (! basic_authenticate(req)) {
-                        send_error(res, SC_UNAUTHORIZED, "You are not authorized to access monit. Either you supplied the wrong credentials (e.g. bad password), or your browser doesn't understand how to supply the credentials required");
+                        // Send just generic error message to the client to not disclose e.g. username existence in case of credentials harvesting attack
+                        send_error(req, res, SC_UNAUTHORIZED, "You are not authorized to access monit. Either you supplied the wrong credentials (e.g. bad password), or your browser doesn't understand how to supply the credentials required");
                         set_header(res, "WWW-Authenticate", "Basic realm=\"monit\"");
                         return false;
                 }
@@ -717,33 +719,36 @@ static boolean_t is_authenticated(HttpRequest req, HttpResponse res) {
  * the user.
  */
 static boolean_t basic_authenticate(HttpRequest req) {
-        size_t n;
-        char *password;
-        char buf[STRLEN];
-        char uname[STRLEN];
         const char *credentials = get_header(req, "Authorization");
-
-        if (! (credentials && Str_startsWith(credentials, "Basic ")))
+        if (! (credentials && Str_startsWith(credentials, "Basic "))) {
+                LogError("HttpRequest: access denied -- client %s: missing or invalid Authorization header\n", Socket_getRemoteHost(req->S));
                 return false;
+        }
+        char buf[STRLEN] = {0};
         strncpy(buf, &credentials[6], sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = 0;
-        if ((n = decode_base64((unsigned char*)uname, buf)) <= 0)
+        char uname[STRLEN] = {0};
+        if (decode_base64((unsigned char *)uname, buf) <= 0) {
+                LogError("HttpRequest: access denied -- client %s: invalid Authorization header\n", Socket_getRemoteHost(req->S));
                 return false;
-        uname[n] = 0;
-        password = strchr(uname, ':');
-        if (password == NULL)
+        }
+        if (! *uname) {
+                LogError("HttpRequest: access denied -- client %s: empty username\n", Socket_getRemoteHost(req->S));
                 return false;
+        }
+        char *password = password = strchr(uname, ':');
+        if (! password || ! *password) {
+                LogError("HttpRequest: access denied -- client %s: empty password\n", Socket_getRemoteHost(req->S));
+                return false;
+        }
         *password++ = 0;
-        if (*uname == 0 || *password == 0)
-                return false;
         /* Check if user exist */
-        if (NULL == Util_getUserCredentials(uname)) {
-                LogError("Warning: Client '%s' supplied unknown user '%s' accessing monit httpd\n", Socket_getRemoteHost(req->S), uname);
+        if (! Util_getUserCredentials(uname)) {
+                LogError("HttpRequest: access denied -- client %s: unknown user '%s'\n", Socket_getRemoteHost(req->S), uname);
                 return false;
         }
         /* Check if user has supplied the right password */
         if (! Util_checkCredentials(uname,  password)) {
-                LogError("Warning: Client '%s' supplied wrong password for user '%s' accessing monit httpd\n", Socket_getRemoteHost(req->S), uname);
+                LogError("HttpRequest: access denied -- client %s: wrong password for user '%s'\n", Socket_getRemoteHost(req->S), uname);
                 return false;
         }
         req->remote_user = Str_dup(uname);
@@ -779,7 +784,7 @@ static void internal_error(Socket_T S, int status, char *msg) {
                      "</body></html>\r\n",
                      SERVER_PROTOCOL, status, status_msg, date, server,
                      status_msg, status_msg, msg, SERVER_URL, server);
-        DEBUG("HttpRequest error: %s %d %s\n", SERVER_PROTOCOL, status, msg ? msg : status_msg);
+        DEBUG("HttpRequest: error -- client %s: %s %d %s\n", Socket_getRemoteHost(S), SERVER_PROTOCOL, status, msg ? msg : status_msg);
 }
 
 

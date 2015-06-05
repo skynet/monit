@@ -199,7 +199,7 @@ static void check_request(Socket_T socket, Port_T P) {
         Str_chomp(buf);
         if (! sscanf(buf, "%*s %d", &status))
                 THROW(IOException, "HTTP error: Cannot parse HTTP status in response: %s", buf);
-        if (! Util_evalQExpression(P->operator, status, P->status))
+        if (! Util_evalQExpression(P->parameters.http.operator, status, P->parameters.http.status ? P->parameters.http.status : 400))
                 THROW(IOException, "HTTP error: Server returned status %d", status);
         /* Get Content-Length header value */
         while (Socket_readLine(socket, buf, sizeof(buf))) {
@@ -215,8 +215,8 @@ static void check_request(Socket_T socket, Port_T P) {
         }
         if (P->url_request && P->url_request->regex)
                 do_regex(socket, content_length, P->url_request);
-        if (P->request_checksum)
-                check_request_checksum(socket, content_length, P->request_checksum, P->request_hashtype);
+        if (P->parameters.http.checksum)
+                check_request_checksum(socket, content_length, P->parameters.http.checksum, P->parameters.http.hashtype);
 }
 
 
@@ -252,23 +252,13 @@ static char *get_auth_header(Port_T P, char *auth, int l) {
 
 
 void check_http(Socket_T socket) {
-        Port_T P;
-        char host[STRLEN];
-        char auth[STRLEN] = {};
-        const char *request = NULL;
-        const char *hostheader = NULL;
 
         ASSERT(socket);
 
-        P = Socket_getPort(socket);
-
+        Port_T P = Socket_getPort(socket);
         ASSERT(P);
 
-        request = P->request ? P->request : "/";
-
-        hostheader = _findHostHeaderIn(P->http_headers);
-        hostheader = hostheader ? hostheader : P->request_hostheader
-        ? P->request_hostheader : Util_getHTTPHostHeader(socket, host, STRLEN); // Otherwise use deprecated request_hostheader or default host
+        const char *hostheader = _findHostHeaderIn(P->parameters.http.headers);
         StringBuffer_T sb = StringBuffer_create(168);
         StringBuffer_append(sb,
                             "GET %s HTTP/1.1\r\n"
@@ -276,11 +266,13 @@ void check_http(Socket_T socket) {
                             "Accept: */*\r\n"
                             "User-Agent: Monit/%s\r\n"
                             "%s",
-                            request, hostheader, VERSION,
-                            get_auth_header(P, auth, STRLEN));
+                            P->parameters.http.request ? P->parameters.http.request : "/",
+                            hostheader ? hostheader : Util_getHTTPHostHeader(socket, (char[STRLEN]){0}, STRLEN),
+                            VERSION,
+                            get_auth_header(P, (char[STRLEN]){0}, STRLEN));
         // Add headers if we have them
-        if (P->http_headers) {
-                for (list_t p = P->http_headers->head; p; p = p->next) {
+        if (P->parameters.http.headers) {
+                for (list_t p = P->parameters.http.headers->head; p; p = p->next) {
                         char *header = p->e;
                         if (Str_startsWith(header, "Host")) // Already set contrived above
                                 continue;

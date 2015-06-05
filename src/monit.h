@@ -155,6 +155,23 @@ typedef enum {
 
 
 typedef enum {
+        Run_Once                 = 0x1,                   /**< Run Monit only once */
+        Run_Foreground           = 0x2,                 /**< Don't daemonize Monit */ //FIXME: cleanup: Run_Foreground and Run_Daemon are mutually exclusive => no need for 2 flags
+        Run_Daemon               = 0x4,                       /**< Daemonize Monit */ //FIXME: cleanup: Run_Foreground and Run_Daemon are mutually exclusive => no need for 2 flags
+        Run_Log                  = 0x8,                           /**< Log enabled */
+        Run_UseSyslog            = 0x10,                           /**< Use syslog */ //FIXME: cleanup: no need for standalone flag ... if syslog is enabled, don't set Run.files.log, then (Run.flags&Run_Log && ! Run.files.log => syslog)
+        Run_FipsEnabled          = 0x20,                 /** FIPS-140 mode enabled */
+        Run_HandlerInit          = 0x40,    /**< The handlers queue initialization */
+        Run_ProcessEngineEnabled = 0x80,    /**< Process monitoring engine enabled */
+        Run_ActionPending        = 0x100,              /**< Service action pending */
+        Run_MmonitCredentials    = 0x200,      /**< Should set M/Monit credentials */
+        Run_Stopped              = 0x400,                          /**< Stop Monit */
+        Run_DoReload             = 0x800,                        /**< Reload Monit */
+        Run_DoWakeup             = 0x1000                        /**< Wakeup Monit */
+} __attribute__((__packed__)) Run_Flags;
+
+
+typedef enum {
         Httpd_Start = 1,
         Httpd_Stop
 } __attribute__((__packed__)) Httpd_Action;
@@ -178,8 +195,8 @@ typedef enum {
 
 
 typedef enum {
-        Operator_Greater = 0,
-        Operator_Less,
+        Operator_Less = 0,
+        Operator_Greater,
         Operator_Equal,
         Operator_NotEqual,
         Operator_Changed
@@ -357,6 +374,9 @@ Sigfunc *signal(int signo, Sigfunc * func);
 
 
 /* --------------------------------------------------------- Data structures */
+
+
+//FIXME: refactor internal linked lists (*next) with List_T
 
 
 /** Message Digest type with size for the longest digest we will compute */
@@ -537,57 +557,80 @@ typedef struct mygenericproto {
         struct mygenericproto *next;
 } *Generic_T;
 
+
 /** Defines a port object */
-//FIXME: use unions for protocol-specific and sockettype-specific data
 typedef struct myport {
-        unsigned char *username;                            /**< Optional username */
-        unsigned char *password;                            /**< Optional password */
         char *hostname;                                     /**< Hostname to check */
-        List_T http_headers;    /**< Optional list of headers to send with request */
-        char *request;                              /**< Specific protocol request */
-        char *request_checksum;     /**< The optional checksum for a req. document */
-        char *request_hostheader;/**< The optional Host: header to use. Deprecated */
-        char *pathname;                   /**< Pathname, in case of an UNIX socket */
-        Generic_T generic;                                /**< Generic test handle */
+        union {
+                struct {
+                        char *pathname;                  /**< Unix socket pathname */
+                } unix;
+                struct {
+                        SslOptions_T SSL;                      /**< SSL definition */
+                        int port;                                 /**< Port number */
+                } net;
+        } target;
+        int timeout; /**< The timeout in milliseconds to wait for connect or read i/o */
+        int retry;       /**< Number of connection retry before reporting an error */
         volatile int socket;                       /**< Socket used for connection */
-        int port;                                                  /**< Portnumber */
+        double response;                      /**< Socket connection response time */
         Socket_Type type;           /**< Socket type used for connection (UDP/TCP) */
         Socket_Family family;    /**< Socket family used for connection (NET/UNIX) */
-        Hash_Type request_hashtype; /**< The optional type of hash for a req. document */
-        Operator_Type operator;                           /**< Comparison operator */
         boolean_t is_available;          /**< true if the server/port is available */
-        int maxforward;            /**< Optional max forward for protocol checking */
-        int timeout; /**< The timeout in millseconds to wait for connect or read i/o */
-        int retry;       /**< Number of connection retry before reporting an error */
-        int version;                                         /**< Protocol version */
-        int status;                                           /**< Protocol status */
-        double response;                      /**< Socket connection response time */
         EventAction_T action;  /**< Description of the action upon event occurence */
-        /** Apache-status specific parameters */
-        struct apache_status {
-                short loglimit;                  /**< Max percentage of logging processes */
-                short closelimit;             /**< Max percentage of closinging processes */
-                short dnslimit;         /**< Max percentage of processes doing DNS lookup */
-                short keepalivelimit;          /**< Max percentage of keepalive processes */
-                short replylimit;               /**< Max percentage of replying processes */
-                short requestlimit;     /**< Max percentage of processes reading requests */
-                short startlimit;            /**< Max percentage of processes starting up */
-                short waitlimit;  /**< Min percentage of processes waiting for connection */
-                short gracefullimit;/**< Max percentage of processes gracefully finishing */
-                short cleanuplimit;      /**< Max percentage of processes in idle cleanup */
-                Operator_Type loglimitOP;                          /**< loglimit operator */
-                Operator_Type closelimitOP;                      /**< closelimit operator */
-                Operator_Type dnslimitOP;                          /**< dnslimit operator */
-                Operator_Type keepalivelimitOP;              /**< keepalivelimit operator */
-                Operator_Type replylimitOP;                      /**< replylimit operator */
-                Operator_Type requestlimitOP;                  /**< requestlimit operator */
-                Operator_Type startlimitOP;                      /**< startlimit operator */
-                Operator_Type waitlimitOP;                        /**< waitlimit operator */
-                Operator_Type gracefullimitOP;                /**< gracefullimit operator */
-                Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
-        } ApacheStatus;
-
-        SslOptions_T SSL;                                      /**< SSL definition */
+        /** Protocol specific parameters */
+        union {
+                struct {
+                        short loglimit;                  /**< Max percentage of logging processes */
+                        short closelimit;             /**< Max percentage of closinging processes */
+                        short dnslimit;         /**< Max percentage of processes doing DNS lookup */
+                        short keepalivelimit;          /**< Max percentage of keepalive processes */
+                        short replylimit;               /**< Max percentage of replying processes */
+                        short requestlimit;     /**< Max percentage of processes reading requests */
+                        short startlimit;            /**< Max percentage of processes starting up */
+                        short waitlimit;  /**< Min percentage of processes waiting for connection */
+                        short gracefullimit;/**< Max percentage of processes gracefully finishing */
+                        short cleanuplimit;      /**< Max percentage of processes in idle cleanup */
+                        Operator_Type loglimitOP;                          /**< loglimit operator */
+                        Operator_Type closelimitOP;                      /**< closelimit operator */
+                        Operator_Type dnslimitOP;                          /**< dnslimit operator */
+                        Operator_Type keepalivelimitOP;              /**< keepalivelimit operator */
+                        Operator_Type replylimitOP;                      /**< replylimit operator */
+                        Operator_Type requestlimitOP;                  /**< requestlimit operator */
+                        Operator_Type startlimitOP;                      /**< startlimit operator */
+                        Operator_Type waitlimitOP;                        /**< waitlimit operator */
+                        Operator_Type gracefullimitOP;                /**< gracefullimit operator */
+                        Operator_Type cleanuplimitOP;                  /**< cleanuplimit operator */
+                } apachestatus;
+                struct {
+                        Generic_T sendexpect;
+                } generic;
+                struct {
+                        Hash_Type hashtype;           /**< Type of hash for a checksum (optional) */
+                        Operator_Type operator;                         /**< HTTP status operator */
+                        int status;                                              /**< HTTP status */
+                        char *request;                                          /**< HTTP request */
+                        char *checksum;                         /**< Document checksum (optional) */
+                        List_T headers;      /**< List of headers to send with request (optional) */
+                } http;
+                struct {
+                        char *username;
+                        char *password;
+                } mysql;
+                struct {
+                        char *secret;
+                } radius;
+                struct {
+                        int maxforward;
+                        char *target;
+                } sip;
+                struct {
+                        int version;
+                        char *host;
+                        char *origin;
+                        char *request;
+                } websocket;
+        } parameters;
         Protocol_T protocol;     /**< Protocol object for testing a port's service */
         Request_T url_request;             /**< Optional url client request object */
 
@@ -609,23 +652,6 @@ typedef struct myicmp {
         /** For internal use */
         struct myicmp *next;                               /**< next icmp in chain */
 } *Icmp_T;
-
-
-typedef struct myservicegroupmember {
-        char *name;                                           /**< name of service */
-
-        /** For internal use */
-        struct myservicegroupmember *next;              /**< next service in chain */
-} *ServiceGroupMember_T;
-
-
-typedef struct myservicegroup {
-        char *name;                                     /**< name of service group */
-        struct myservicegroupmember *members;           /**< Service group members */
-
-        /** For internal use */
-        struct myservicegroup *next;              /**< next service group in chain */
-} *ServiceGroup_T;
 
 
 typedef struct mydependant {
@@ -1038,30 +1064,27 @@ typedef struct myservice {
 typedef struct myevent *Event_T;
 
 
+typedef struct myservicegroup {
+        char *name;                                     /**< name of service group */
+        List_T members;                                 /**< Service group members */
+
+        /** For internal use */
+        struct myservicegroup *next;              /**< next service group in chain */
+} *ServiceGroup_T;
+
+
 /** Defines data for application runtime */
 struct myrun {
-        //FIXME: create enum for Run flags and replace set of various boolean_t single-purpose flags with common flags where possible
-        char debug;                                               /**< Debug level */
-        boolean_t once;                                  /**< true - run only once */
-        boolean_t init;              /**< true - don't background to run from init */
-        boolean_t isdaemon;            /**< true if program should run as a daemon */
-        boolean_t use_syslog;                     /**< If true write log to syslog */
-        boolean_t dolog;  /**< true if program should log actions, otherwise false */
-        boolean_t fipsEnabled;          /** true if monit should use FIPS-140 mode */
-        boolean_t handler_init;             /**< The handlers queue initialization */
-        boolean_t doprocess;            /**< true if process status engine is used */
-        boolean_t doaction;        /**< true if some service(s) has action pending */
-        boolean_t dommonitcredentials; /**< true if M/Monit should receive credentials */
-        volatile boolean_t stopped; /**< true if monit was stopped. Flag used by threads */
-        volatile boolean_t doreload; /**< true if a monit daemon should reinitialize */
-        volatile boolean_t dowakeup; /**< true if a monit daemon was wake up by signal */
+        uint8_t debug;                                            /**< Debug level */
+        volatile Run_Flags flags;
         Handler_Type handler_flag;                    /**< The handlers state flag */
-        //FIXME: move files to sub-struct
-        char *controlfile;                /**< The file to read configuration from */
-        char *logfile;                         /**< The file to write logdata into */
-        char *pidfile;                                  /**< This programs pidfile */
-        char *idfile;                           /**< The file with unique monit id */
-        char *statefile;                /**< The file with the saved runtime state */
+        struct {
+                char *control;            /**< The file to read configuration from */
+                char *log;                     /**< The file to write logdata into */
+                char *pid;                              /**< This programs pidfile */
+                char *id;                       /**< The file with unique monit id */
+                char *state;            /**< The file with the saved runtime state */
+        } files;
         char *mygroup;                              /**< Group Name of the Service */
         MD_T id;                                              /**< Unique monit id */
         int  polltime;        /**< In deamon mode, the sleeptime (sec) between run */
@@ -1158,10 +1181,9 @@ boolean_t parse(char *);
 boolean_t control_service(const char *, Action_Type);
 boolean_t control_service_string(const char *, const char *);
 boolean_t control_service_daemon(const char *, const char *);
-void  setup_dependants();
 void  reset_depend();
 void  spawn(Service_T, command_t, Event_T);
-boolean_t status(char *);
+boolean_t status(const char *, const char *, const char *);
 boolean_t log_init();
 void  LogEmergency(const char *, ...) __attribute__((format (printf, 1, 2)));
 void  LogAlert(const char *, ...) __attribute__((format (printf, 1, 2)));
@@ -1188,14 +1210,9 @@ void  gc_event(Event_T *e);
 boolean_t kill_daemon(int);
 int   exist_daemon();
 boolean_t sendmail(Mail_T);
-int   sock_msg(int, char *, ...) __attribute__((format (printf, 2, 3)));
 void  init_env();
 void  monit_http(Httpd_Action);
 boolean_t can_http();
-char *format(const char *, va_list, long *);
-void  redirect_stdfd();
-void  fd_close();
-pid_t getpgid(pid_t);
 void set_signal_block(sigset_t *, sigset_t *);
 boolean_t check_process(Service_T);
 boolean_t check_filesystem(Service_T);
@@ -1207,10 +1224,6 @@ boolean_t check_fifo(Service_T);
 boolean_t check_program(Service_T);
 boolean_t check_net(Service_T);
 int  check_URL(Service_T s);
-int  sha_md5_stream (FILE *, void *, void *);
-void reset_procinfo(Service_T);
-int  check_service_status(Service_T);
-void printhash(char *);
 void status_xml(StringBuffer_T, Event_T, Level_Type, int, const char *);
 Handler_Type handle_mmonit(Event_T);
 boolean_t  do_wakeupcall();

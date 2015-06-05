@@ -259,7 +259,7 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
                         LogError("SSL: SSLv2 not supported\n");
                         goto sslerror;
 #else
-                        if (Run.fipsEnabled) {
+                        if (Run.flags & Run_FipsEnabled) {
                                 LogError("SSL: SSLv2 is not allowed in FIPS mode -- use TLS\n");
                                 goto sslerror;
                         }
@@ -267,7 +267,7 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
 #endif
                         break;
                 case SSL_V3:
-                        if (Run.fipsEnabled) {
+                        if (Run.flags & Run_FipsEnabled) {
                                 LogError("SSL: SSLv3 is not allowed in FIPS mode -- use TLS\n");
                                 goto sslerror;
                         }
@@ -461,7 +461,7 @@ int Ssl_read(T C, void *b, int size, int timeout) {
 boolean_t Ssl_checkCertificate(T C, char *md5sum) {
         ASSERT(C);
         ASSERT(md5sum);
-        if (! Run.fipsEnabled) {
+        if (! (Run.flags & Run_FipsEnabled)) {
                 X509 *cert = SSL_get_peer_certificate(C->handler);
                 if (! cert) {
                         LogError("SSL: cannot get peer certificate\n");

@@ -126,7 +126,7 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen, long
                         do {
                                 Time_usleep(100000); // Check interval is 100ms
                                 *timeout -= 100000;
-                        } while ((status = Process_exitStatus(P)) < 0 && *timeout > 0 && ! Run.stopped);
+                        } while ((status = Process_exitStatus(P)) < 0 && *timeout > 0 && ! (Run.flags & Run_Stopped));
                         if (*timeout <= 0)
                                 snprintf(msg, msglen, "Program %s timed out", c->arg[0]);
                         int n, total = 0;
@@ -158,7 +158,7 @@ static Process_Status _waitStart(Service_T s, long *timeout) {
                 Time_usleep(wait);
                 *timeout -= wait;
                 wait = wait < 1000000 ? wait * 2 : 1000000; // double the wait during each cycle until 1s is reached (Util_isProcessRunning can be heavy and we don't want to drain power every 100ms on mobile devices)
-        } while (*timeout > 0 && ! Run.stopped);
+        } while (*timeout > 0 && ! (Run.flags & Run_Stopped));
         return Process_Stopped;
 }
 
@@ -169,7 +169,7 @@ static Process_Status _waitStop(int pid, long *timeout) {
                         return Process_Stopped;
                 Time_usleep(100000);
                 *timeout -= 100000;
-        } while (*timeout > 0 && ! Run.stopped);
+        } while (*timeout > 0 && ! (Run.flags & Run_Stopped));
         return Process_Started;
 }
 

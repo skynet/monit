@@ -236,14 +236,28 @@ static void check_process_resources(Service_T s, Resource_T r) {
         switch (r->resource_id) {
 
                 case Resource_CpuPercent:
-                        if (s->monitor & Monitor_Init || s->inf->priv.process.cpu_percent < 0) {
-                                DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
-                                return;
-                        } else if (Util_evalQExpression(r->operator, s->inf->priv.process.cpu_percent, r->limit)) {
-                                snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", s->inf->priv.process.cpu_percent / 10., operatorshortnames[r->operator], r->limit / 10.);
-                                okay = false;
-                        } else
-                                snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", s->inf->priv.process.cpu_percent / 10.);
+                        {
+                                short cpu;
+                                if (s->type == Service_System) {
+                                        cpu =
+#ifdef HAVE_CPU_WAIT
+                                                (systeminfo.total_cpu_wait_percent > 0 ? systeminfo.total_cpu_wait_percent : 0) +
+#endif
+                                                (systeminfo.total_cpu_syst_percent > 0 ? systeminfo.total_cpu_syst_percent : 0) +
+                                                (systeminfo.total_cpu_user_percent > 0 ? systeminfo.total_cpu_user_percent : 0);
+                                } else {
+                                        cpu = s->inf->priv.process.cpu_percent;
+                                }
+                                if (s->monitor & Monitor_Init || cpu < 0) {
+                                        DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
+                                        return;
+                                } else if (Util_evalQExpression(r->operator, cpu, r->limit)) {
+                                        snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage%s%.1f%%]", cpu / 10., operatorshortnames[r->operator], r->limit / 10.);
+                                        okay = false;
+                                } else {
+                                        snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage=%.1f%%]", cpu / 10.);
+                                }
+                        }
                         break;
 
                 case Resource_CpuPercentTotal:
@@ -971,15 +985,15 @@ int validate() {
         gettimeofday(&systeminfo.collected, NULL);
 
         /* In the case that at least one action is pending, perform quick loop to handle the actions ASAP */
-        if (Run.doaction) {
-                Run.doaction = false;
+        if (Run.flags & Run_ActionPending) {
+                Run.flags &= ~Run_ActionPending;
                 for (s = servicelist; s; s = s->next)
                         do_scheduled_action(s);
         }
 
         /* Check the services */
         for (s = servicelist; s; s = s->next) {
-                if (Run.stopped)
+                if (Run.flags & Run_Stopped)
                         break;
                 if (! do_scheduled_action(s) && s->monitor && ! check_skip(s)) {
                         check_timeout(s); // Can disable monitoring => need to check s->monitor again
@@ -1022,7 +1036,7 @@ boolean_t check_process(Service_T s) {
         if (IS_EVENT_SET(s->error, Event_Timeout))
                 for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next)
                         Event_post(s, Event_Timeout, State_Succeeded, ar->action, "process is running after previous restart timeout (manually recovered?)");
-        if (Run.doprocess) {
+        if (Run.flags & Run_ProcessEngineEnabled) {
                 if (update_process_data(s, ptree, ptreesize, pid)) {
                         check_process_state(s);
                         check_process_pid(s);

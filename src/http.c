@@ -90,7 +90,7 @@ static volatile boolean_t running = false;
  * message if monit httpd _should_ start but can't.
  */
 boolean_t can_http() {
-        if ((Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) && Run.isdaemon) {
+        if ((Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) && (Run.flags & Run_Daemon)) {
                 if (! Engine_hasHostsAllow() && ! Run.httpd.credentials) {
                         LogError("%s: monit httpd not started since no connect allowed\n", prog);
                         return false;

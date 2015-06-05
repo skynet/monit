@@ -121,8 +121,8 @@ B<-d> I<n>
    daemon"> in monitrc.
 
 B<-g> I<name>
-   Set group name for start, stop, restart, monitor and
-   unmonitor action.
+   Set group name for start, stop, restart, monitor, unmonitor,
+   status and summary action.
 
 B<-l> I<logfile>
    Print log information to this file. Or use I<"set logfile">
@@ -235,11 +235,11 @@ Disable monitoring of the named service. The name is a service
 entry name from the monitrc file. Monit will also disable
 monitoring of all services that depends on this service.
 
-=item status
+=item status [name]
 
-Print status information of each service.
+Print service status information.
 
-=item summary
+=item summary [name]
 
 Print a short status summary.
 
@@ -1283,10 +1283,6 @@ To restart a group of services:
 
   monit -g <groupname> restart
 
-Note:
-the I<status> and I<summary> commands does not support the -g
-option and will print the state of all services.
-
 A service can be added to multiple groups by using more than one group
 statement:
 
@@ -1667,7 +1663,8 @@ both:
 System only resource tests:
 
 CPU([user|system|wait]) is the percent of time the system spend
-in user or kernel space and I/O.
+in user or kernel space and I/O. The user/system/wait modifier is
+optional, if not used, the total system cpu usage is tested.
 
 SWAP is the swap usage of the system in either percent (of the
 systems total) or as an amount (Byte, kB, MB, GB).

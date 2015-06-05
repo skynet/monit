@@ -52,7 +52,7 @@
  *  This test has been created in order to construct valid SIP message,
  *  even with a low poll cycle. (In case of low poll cycle, chance are
  *  high for a  misinterpretation of the generic test by the SIP AS. It
- *  will considered it for  a retransmission, not for a new message)
+ *  will considered it for a retransmission, not for a new message)
  *
  *  The test sends an OPTIONS request and check the server's status code.
  *
@@ -73,7 +73,7 @@ void check_sip(Socket_T socket) {
 
         Port_T P = Socket_getPort(socket);
         ASSERT(P);
-        const char *request = P->request ? P->request : "monit@foo.bar";
+        const char *target = P->parameters.sip.target ? P->parameters.sip.target : "monit@foo.bar";
 
         int port = Socket_getLocalPort(socket);
         char *proto = Socket_isSecure(socket) ? "sips" : "sip";
@@ -108,24 +108,24 @@ void check_sip(Socket_T socket) {
                          "Accept: application/sdp\r\n"
                          "Content-Length: 0\r\n"
                          "User-Agent: Monit/%s\r\n\r\n",
-                         proto,            // protocol
-                         request,          // to
-                         transport,        // via transport udp|tcp
-                         myip,             // who its from
-                         port,             // our port
-                         random(),         // branch
-                         rport,            // rport option
-                         P->maxforward,    // maximum forwards
-                         proto,            // protocol
-                         request,          // to
-                         proto,            // protocol
-                         myip,             // from host
-                         random(),         // tag
-                         random(),         // call id
-                         proto,            // protocol
-                         myip,             // contact host
-                         port,             // contact port
-                         VERSION           // user agent
+                         proto,                        // protocol
+                         target,                       // to
+                         transport,                    // via transport udp|tcp
+                         myip,                         // who its from
+                         port,                         // our port
+                         random(),                     // branch
+                         rport,                        // rport option
+                         P->parameters.sip.maxforward ? P->parameters.sip.maxforward : 70, // maximum forwards
+                         proto,                        // protocol
+                         target,                       // to
+                         proto,                        // protocol
+                         myip,                         // from host
+                         random(),                     // tag
+                         random(),                     // call id
+                         proto,                        // protocol
+                         myip,                         // contact host
+                         port,                         // contact port
+                         VERSION                       // user agent
                          ) < 0) {
                 THROW(IOException, "SIP: error sending data -- %s", STRERROR);
         }

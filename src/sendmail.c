@@ -172,7 +172,7 @@ static void close_server(SendMail_T *S) {
         }
         ELSE
         {
-                LogError("Sendmail: %s\n", Exception_frame.message);
+                LogError("Mail: %s\n", Exception_frame.message);
         }
         FINALLY
         {
@@ -296,7 +296,7 @@ boolean_t sendmail(Mail_T mail) {
         ELSE
         {
                 failed = true;
-                LogError("Sendmail: %s\n", Exception_frame.message);
+                LogError("Mail: %s\n", Exception_frame.message);
         }
         FINALLY
         {
