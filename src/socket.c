@@ -510,20 +510,12 @@ const char *Socket_getLocalHost(T S, char *host, int hostlen) {
 
 
 static void _testUnix(Port_T p) {
-        long long start = Time_milli();
         T S = _createUnixSocket(p->target.unix.pathname, p->type, p->timeout);
         if (S) {
                 S->Port = p;
                 TRY
                 {
                         p->protocol->check(S);
-                        p->is_available = true;
-                        p->response = (Time_milli() - start) / 1000.;
-                }
-                ELSE
-                {
-                        p->is_available = false;
-                        p->response = -1;
                 }
                 FINALLY
                 {
@@ -531,8 +523,6 @@ static void _testUnix(Port_T p) {
                 }
                 END_TRY;
         } else {
-                p->is_available = false;
-                p->response = -1;
                 THROW(IOException, "Cannot create unix socket for %s", p->target.unix.pathname);
         }
 }
@@ -548,12 +538,10 @@ static void _testIp(Port_T p) {
                         volatile T S = NULL;
                         TRY
                         {
-                                long long start = Time_milli();
                                 S = _createIpSocket(p->hostname, r->ai_addr, r->ai_addrlen, r->ai_family, r->ai_socktype, r->ai_protocol, p->target.net.SSL, p->timeout);
                                 S->Port = p;
                                 p->protocol->check(S);
-                                p->is_available = is_available = true;
-                                p->response = (Time_milli() - start) / 1000.;
+                                is_available = true;
                         }
                         ELSE
                         {
@@ -568,11 +556,8 @@ static void _testIp(Port_T p) {
                         END_TRY;
                 }
                 freeaddrinfo(result);
-                if (! is_available) {
-                        p->is_available = false;
-                        p->response = -1;
+                if (! is_available)
                         THROW(IOException, "%s", error);
-                }
         } else {
                 THROW(IOException, "Cannot resolve [%s]:%d", p->hostname, p->target.net.port);
         }
@@ -585,19 +570,32 @@ static void _testIp(Port_T p) {
 void Socket_test(void *P) {
         ASSERT(P);
         Port_T p = P;
-        switch (p->family) {
-                case Socket_Unix:
-                        _testUnix(p);
-                        break;
-                case Socket_Ip:
-                case Socket_Ip4:
-                case Socket_Ip6:
-                        _testIp(p);
-                        break;
-                default:
-                        LogError("Invalid socket family %d\n", p->family);
-                        break;
+        TRY
+        {
+                long long start = Time_milli();
+                switch (p->family) {
+                        case Socket_Unix:
+                                _testUnix(p);
+                                break;
+                        case Socket_Ip:
+                        case Socket_Ip4:
+                        case Socket_Ip6:
+                                _testIp(p);
+                                break;
+                        default:
+                                THROW(IOException, "Invalid socket family %d\n", p->family);
+                                break;
+                }
+                p->is_available = true;
+                p->response = (Time_milli() - start) / 1000.;
         }
+        ELSE
+        {
+                p->is_available = false;
+                p->response = -1;
+                RETHROW;
+        }
+        END_TRY;
 }
 
 
