@@ -117,7 +117,7 @@ Handler_Type handle_alert(Event_T E) {
                                 escape(tmp);
                                 tmp->next = list;
                                 list = tmp;
-                                DEBUG("%s notification is sent to %s\n", Event_get_description(E), m->to);
+                                DEBUG("Sending %s notification to %s\n", Event_get_description(E), m->to);
                         }
                 }
                 /*
@@ -154,7 +154,7 @@ Handler_Type handle_alert(Event_T E) {
                                 escape(tmp);
                                 tmp->next = list;
                                 list = tmp;
-                                DEBUG("%s notification is sent to %s\n", Event_get_description(E), m->to);
+                                DEBUG("Sending %s notification to %s\n", Event_get_description(E), m->to);
                         }
                 }
                 if (list) {
