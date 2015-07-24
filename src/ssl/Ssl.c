@@ -267,11 +267,16 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
 #endif
                         break;
                 case SSL_V3:
+#ifdef OPENSSL_NO_SSL3
+                        LogError("SSL: SSLv3 not supported\n");
+                        goto sslerror;
+#else
                         if (Run.flags & Run_FipsEnabled) {
                                 LogError("SSL: SSLv3 is not allowed in FIPS mode -- use TLS\n");
                                 goto sslerror;
                         }
                         method = SSLv3_client_method();
+#endif
                         break;
                 case SSL_TLSV1:
                         method = TLSv1_client_method();
