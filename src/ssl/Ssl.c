@@ -190,7 +190,7 @@ static boolean_t _setServerNameIdentification(T C, const char *hostname) {
                 ! inet_pton(AF_INET6, hostname, &(((struct sockaddr_in6 *)&addr)->sin6_addr)) &&
 #endif
                 ! SSL_set_tlsext_host_name(C->handler, hostname)) {
-                        LogError("SSL: unable to set the SNI extension to %s\n", hostname);
+                        DEBUG("SSL: unable to set the SNI extension to %s\n", hostname);
                         return false;
                 }
 #endif
