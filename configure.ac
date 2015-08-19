@@ -6,7 +6,7 @@ AC_PREREQ([2.53])
 # Note: in  case of beta subversion, use underscore "_" rather then dash "-"
 # since RPM doesn't allow dash in Version
 # Example: 5.0_beta2
-AC_INIT([monit], [5.14], [monit-general@nongnu.org])
+AC_INIT([monit], [5.14.1], [monit-general@nongnu.org])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
@@ -925,6 +925,16 @@ if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
         AC_MSG_RESULT($tlsv12)
         if test "$tlsv12" = "yes" ; then
                 AC_DEFINE([HAVE_TLSV1_2], 1, [Define to 1 if you have openssl with TLSv1.2])
+        fi
+
+        AC_MSG_CHECKING([for EC_KEY support])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [EC_KEY_new_by_curve_name(0)])],
+                [ec=yes],
+                [ec=no])
+        AC_MSG_RESULT($ec)
+        if test "$ec" = "yes" ; then
+                AC_DEFINE([HAVE_EC_KEY], 1, [Define to 1 if you have openssl with EC_KEY])
         fi
 fi
 
