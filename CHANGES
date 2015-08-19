@@ -6,6 +6,10 @@ Version 5.14.1
 
 Fixed: Issue #231: Support for OpenSSL 0.9.8
 
+Fixed: Compilation with SSL when SSLv3 is disabled in the SSL library.
+
+Fixed: Don't log error if SSL SNI is not supported by server.
+
 
 Version 5.14
 
