@@ -1117,8 +1117,14 @@ boolean_t check_file(Service_T s) {
                 return false;
         } else {
                 s->inf->priv.file.mode = stat_buf.st_mode;
-                if (s->inf->priv.file.inode)
+                if (s->inf->priv.file.inode) {
                         s->inf->priv.file.inode_prev = s->inf->priv.file.inode;
+                } else {
+                        // Seek to the end of the file the first time we see it => skip existing content (files which passed the test at least once have inode always set via state file)
+                        DEBUG("'%s' seeking to the end of the file\n", s->name);
+                        s->inf->priv.file.readpos = stat_buf.st_size;
+                        s->inf->priv.file.inode_prev = stat_buf.st_ino;
+                }
                 s->inf->priv.file.inode = stat_buf.st_ino;
                 s->inf->priv.file.uid = stat_buf.st_uid;
                 s->inf->priv.file.gid = stat_buf.st_gid;

@@ -4,6 +4,9 @@
 
 Version 5.14.1
 
+New: Issue #233: The content match test will skip existing content of the file
+the first time the file is added to Monit.
+
 Fixed: Issue #231: Support for OpenSSL 0.9.8
 
 Fixed: Compilation with SSL when SSLv3 is disabled in the SSL library.
