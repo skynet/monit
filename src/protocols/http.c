@@ -258,24 +258,21 @@ void check_http(Socket_T socket) {
         Port_T P = Socket_getPort(socket);
         ASSERT(P);
 
-        const char *hostheader = _findHeaderIn(P->parameters.http.headers, "Host");
         StringBuffer_T sb = StringBuffer_create(168);
         StringBuffer_append(sb,
                             "GET %s HTTP/1.1\r\n"
-                            "Host: %s\r\n"
                             "Accept: */*\r\n"
                             "%s",
                             P->parameters.http.request ? P->parameters.http.request : "/",
-                            hostheader ? hostheader : Util_getHTTPHostHeader(socket, (char[STRLEN]){0}, STRLEN),
                             get_auth_header(P, (char[STRLEN]){0}, STRLEN));
+        if (! _findHeaderIn(P->parameters.http.headers, "Host"))
+                StringBuffer_append(sb, "Host: %s\r\n", Util_getHTTPHostHeader(socket, (char[STRLEN]){}, STRLEN));
         if (! _findHeaderIn(P->parameters.http.headers, "User-Agent"))
                 StringBuffer_append(sb, "User-Agent: Monit/%s\r\n", VERSION);
         // Add headers if we have them
         if (P->parameters.http.headers) {
                 for (list_t p = P->parameters.http.headers->head; p; p = p->next) {
                         char *header = p->e;
-                        if (Str_startsWith(header, "Host")) // Already set contrived above
-                                continue;
                         StringBuffer_append(sb, "%s\r\n", header);
                 }
         }
