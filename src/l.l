@@ -795,7 +795,7 @@ group[ \t]+       {
                         save_arg();
                 }
 
-        [:](({ws}?["][^"]+["])|([^\r\n\],:]+)) { // : value
+        [:](({ws}?["][^"]+["])|({ws}?['][^']+['])|([^\r\n\],:]+)) { // : value
                         yylval.string = Str_cat("%s:%s", Str_trim(argyytext), Str_unquote(yytext + 1));
                         save_arg();
                         return HTTPHEADER;
