@@ -9,6 +9,8 @@ the first time the file is added to Monit.
 
 Fixed: Issue #231: Support for OpenSSL 0.9.8
 
+Fixed: Issue #228: The file permission hint was too long (may get trucanted).
+
 Fixed: Compilation with SSL when SSLv3 is disabled in the SSL library.
 
 Fixed: Don't log error if SSL SNI is not supported by server.
