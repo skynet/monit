@@ -64,16 +64,15 @@
 /* ----------------------------------------------------------------- Private */
 
 
-static const char *_findHeaderIn(List_T list, const char *name) {
+static boolean_t _hasHeader(List_T list, const char *name) {
         if (list) {
                 for (list_t h = list->head; h; h = h->next) {
                         char *header = h->e;
-                        if (Str_startsWith(header, name)) {
-                                return strchr(header, ':') + 1;
-                        }
+                        if (Str_isEqual(header, name))
+                                return true;
                 }
         }
-        return NULL;
+        return false;
 }
 
 
@@ -265,9 +264,9 @@ void check_http(Socket_T socket) {
                             "%s",
                             P->parameters.http.request ? P->parameters.http.request : "/",
                             get_auth_header(P, (char[STRLEN]){0}, STRLEN));
-        if (! _findHeaderIn(P->parameters.http.headers, "Host"))
+        if (! _hasHeader(P->parameters.http.headers, "Host"))
                 StringBuffer_append(sb, "Host: %s\r\n", Util_getHTTPHostHeader(socket, (char[STRLEN]){}, STRLEN));
-        if (! _findHeaderIn(P->parameters.http.headers, "User-Agent"))
+        if (! _hasHeader(P->parameters.http.headers, "User-Agent"))
                 StringBuffer_append(sb, "User-Agent: Monit/%s\r\n", VERSION);
         // Add headers if we have them
         if (P->parameters.http.headers) {
