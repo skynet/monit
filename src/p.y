@@ -457,7 +457,7 @@ optdir          : start
                 | depend
                 ;
 
-opthostlist     : opthost
+opthostlist     : /* EMPTY */
                 | opthostlist opthost
                 ;
 

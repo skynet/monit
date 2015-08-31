@@ -14,6 +14,8 @@ Fixed: Issue #228: The file permission hint was too long (may get trucanted).
 Fixed: Issue #241: Add the User-Agent header in the http protocol test only if
 it is not part of custom headers list and allow single quotes for the value.
 
+Fixed: Issue #221: If check host has no tests enabled, provide clear error message.
+
 Fixed: Compilation with SSL when SSLv3 is disabled in the SSL library.
 
 Fixed: Don't log error if SSL SNI is not supported by server.
