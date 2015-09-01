@@ -224,9 +224,11 @@ static boolean_t _doStop(Service_T s, boolean_t flag) {
         if (s->stop) {
                 if (s->type != Service_Process || Util_isProcessRunning(s, false)) {
                         LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
+                        int pid;
                         char msg[STRLEN];
                         long timeout = s->stop->timeout * USEC_PER_SEC;
-                        int pid = Util_isProcessRunning(s, true);
+                        if (s->type == Service_Process)
+                                pid = Util_isProcessRunning(s, true);
                         int status = _commandExecute(s, s->stop, msg, sizeof(msg), &timeout);
                         if ((s->type == Service_Process && _waitStop(pid, &timeout) != Process_Stopped) || status < 0) {
                                 rv = false;
