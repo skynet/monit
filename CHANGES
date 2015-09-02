@@ -2,7 +2,17 @@
 
            This file summarizes changes made since 5.0
 
-Version 5.14.1
+Version 5.15
+
+New: Added SSL certificate expiration check. WARNING: if you're testing some
+SSL server or you use mailserver or M/Monit with expired certificate, Monit
+will report error now.
+
+New: Added SSL certificate pre-expiration test. By default Monit will report
+error only if the certificate expired. You can set an option to be notified
+if the certificate is going to expire in given number of days, so it will
+remind you that you need to renew the certificate.
+FIXME: documentation of the new option
 
 New: Issue #233: The content match test will skip existing content of the file
 the first time the file is added to Monit.

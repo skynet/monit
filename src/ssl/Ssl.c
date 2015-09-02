@@ -168,24 +168,59 @@ static void _mutexLock(int mode, int n, const char *file, int line) {
 }
 
 
-static int _verifyCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
-        char subject[STRLEN];
-        X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), subject, STRLEN - 1);
+static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
         if (! preverify_ok) {
-                if (ctx->error != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) {
-                        if (ctx->error != X509_V_ERR_INVALID_PURPOSE) {
-                                LogError("SSL: invalid certificate [%i]\n", ctx->error);
+                int error = X509_STORE_CTX_get_error(ctx);
+                switch (error) {
+                        case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+                                //FIXME: allow to refuse self-signed certificates (user option) ... by default we should accept (provide global switch to allow to set defaults?)
+                                X509_STORE_CTX_set_error(ctx, X509_V_OK);
+                                DEBUG("BUBU: _verifyServerCertificates: reset X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT error\n");
+                                break;
+                        default:
+                                break;
+                }
+        } else {
+                //FIXME: if no error, but we have expire delta > 0 (warn X days before expire), check that the certificate is valid at minimum for given X days
+                X509 *certificate = X509_STORE_CTX_get_current_cert(ctx);
+                if (certificate) {
+                        // If we have warn-X-days-before-expire condition, check the certificate validity (deadline is left on default preverify)
+                        int day, sec;
+                        if (! ASN1_TIME_diff(&day, &sec, NULL, X509_get_notAfter(certificate))) {
+                                LogError("SSL: invalid time format in the certificate notAfter field\n");
                                 return 0;
                         }
-                } else if (! (Run.httpd.flags & Httpd_AllowSelfSignedCertificates)) {
-                        LogError("SSL: self-signed certificate not allowed [%i]\n", ctx->error);
-                        return 0;
-                } else {
-                        ctx->error = 0;
+                        if (day * 86400 + sec < 0) { //FIXME: add support for custom delta to be able to warn, that certificate will expire in X days
+                                LogError("SSL: the certificate will expire in %d days, please renew it\n", day);
+                                return 0;
+                        }
+                        //FIXME: allow to optionally check the certificate subject and issuer? Similarly to checksum test: either notify on any change, or allow to set expected string
+                }
+        }
+        return 1;
+}
+
+
+static int _verifyClientCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
+        if (! preverify_ok) {
+                int error = X509_STORE_CTX_get_error(ctx);
+                switch (error) {
+                        case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+                                if (! (Run.httpd.flags & Httpd_AllowSelfSignedCertificates)) {
+                                        LogError("SSL: self-signed certificate not allowed\n");
+                                        return 0;
+                                }
+                                X509_STORE_CTX_set_error(ctx, X509_V_OK); // Reset error if we accept self-signed certificates
+                                break;
+                        case X509_V_ERR_INVALID_PURPOSE:
+                                break;
+                        default:
+                                LogError("SSL: invalid certificate -- %s\n", X509_verify_cert_error_string(error));
+                                return 0;
                 }
         }
         X509_OBJECT found_cert;
-        if (ctx->error_depth == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(ctx->current_cert), &found_cert) != 1) {
+        if (X509_STORE_CTX_get_error_depth(ctx) == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(ctx->current_cert), &found_cert) != 1) {
                 LogError("SSL: no matching certificate found -- %s\n", SSLERROR);
                 return 0;
         }
@@ -316,6 +351,7 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
                 LogError("SSL: client context initialization failed -- %s\n", SSLERROR);
                 goto sslerror;
         }
+        SSL_CTX_set_verify(C->ctx, SSL_VERIFY_PEER, _verifyServerCertificates);
         if (version == SSL_Auto)
                 SSL_CTX_set_options(C->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 #ifdef SSL_OP_NO_COMPRESSION
@@ -400,7 +436,6 @@ boolean_t Ssl_connect(T C, int socket, int timeout, const char *name) {
                         break;
                 }
         } while (retry);
-        SSL_CTX_set_verify(C->ctx, SSL_VERIFY_PEER, NULL); //FIXME: replace builtin verify with custom verify callback and check certificate validity based on user options (expiration: notbefore-notafter with custom delta, self-signed, etc.)
         C->certificate = SSL_get_peer_certificate(C->handler);
         if (! C->certificate) {
                 LogError("SSL: cannot get peer certificate\n");
@@ -603,7 +638,7 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                         LogError("SSL: server certificate CA certificates %s loading failed -- %s\n", S->pemfile, SSLERROR);
                         goto sslerror;
                 }
-                SSL_CTX_set_verify(S->ctx, SSL_VERIFY_PEER, _verifyCertificates);
+                SSL_CTX_set_verify(S->ctx, SSL_VERIFY_PEER, _verifyClientCertificates);
         } else {
                 SSL_CTX_set_verify(S->ctx, SSL_VERIFY_NONE, NULL);
         }
