@@ -84,6 +84,7 @@
 // libmonit
 #include "io/File.h"
 #include "system/Net.h"
+#include "system/Time.h"
 #include "exceptions/AssertException.h"
 
 
@@ -125,6 +126,7 @@ struct T {
         int socket;
         SSL *handler;
         SSL_CTX *ctx;
+        X509 *certificate;
         char *clientpemfile;
 };
 
@@ -145,6 +147,15 @@ static Mutex_T *instanceMutexTable;
 
 static unsigned long _threadID() {
         return (unsigned long)Thread_self();
+}
+
+
+static boolean_t _retry(int socket, int *timeout, int (*callback)(int socket, time_t milliseconds)) {
+        long long start = Time_milli();
+        if (callback(socket, *timeout))
+                if ((*timeout -= Time_milli() - start) > 0)
+                        return true;
+        return false;
 }
 
 
@@ -341,6 +352,8 @@ sslerror:
 
 void Ssl_free(T *C) {
         ASSERT(C && *C);
+        if ((*C)->certificate)
+                X509_free((*C)->certificate);
         if ((*C)->handler)
                 SSL_free((*C)->handler);
         if ((*C)->ctx && ! (*C)->accepted)
@@ -358,24 +371,44 @@ void Ssl_close(T C) {
 }
 
 
-boolean_t Ssl_connect(T C, int socket, const char *name) {
+boolean_t Ssl_connect(T C, int socket, int timeout, const char *name) {
         ASSERT(C);
         ASSERT(socket >= 0);
         C->socket = socket;
         SSL_set_connect_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
         _setServerNameIdentification(C, name);
-        int rv = SSL_connect(C->handler);
-        if (rv < 0) {
-                switch (SSL_get_error(C->handler, rv)) {
-                        case SSL_ERROR_NONE:
-                        case SSL_ERROR_WANT_READ:
-                        case SSL_ERROR_WANT_WRITE:
-                                break;
-                        default:
-                                LogError("SSL: connection error -- %s\n", SSLERROR);
-                                return false;
+        boolean_t retry = false;
+        do {
+                int rv = SSL_connect(C->handler);
+                if (rv < 0) {
+                        switch (SSL_get_error(C->handler, rv)) {
+                                case SSL_ERROR_NONE:
+                                        break;
+                                case SSL_ERROR_WANT_READ:
+                                        retry = _retry(C->socket, &timeout, Net_canRead);
+                                        break;
+                                case SSL_ERROR_WANT_WRITE:
+                                        retry = _retry(C->socket, &timeout, Net_canWrite);
+                                        break;
+                                default:
+                                        LogError("SSL: connection error -- %s\n", SSLERROR);
+                                        return false;
+                        }
+                } else {
+                        break;
                 }
+        } while (retry);
+        SSL_CTX_set_verify(C->ctx, SSL_VERIFY_PEER, NULL); //FIXME: replace builtin verify with custom verify callback and check certificate validity based on user options (expiration: notbefore-notafter with custom delta, self-signed, etc.)
+        C->certificate = SSL_get_peer_certificate(C->handler);
+        if (! C->certificate) {
+                LogError("SSL: cannot get peer certificate\n");
+                return false;
+        }
+        long rv = SSL_get_verify_result(C->handler);
+        if (rv != X509_V_OK) {
+                LogError("SSL: certificate verification failed -- %s\n", X509_verify_cert_error_string(rv));
+                return false;
         }
         return true;
 }
@@ -394,12 +427,12 @@ int Ssl_write(T C, void *b, int size, int timeout) {
                                 case SSL_ERROR_WANT_READ:
                                         n = 0;
                                         errno = EWOULDBLOCK;
-                                        retry = Net_canRead(C->socket, timeout);
+                                        retry = _retry(C->socket, &timeout, Net_canRead);
                                         break;
                                 case SSL_ERROR_WANT_WRITE:
                                         n = 0;
                                         errno = EWOULDBLOCK;
-                                        retry = Net_canWrite(C->socket, timeout);
+                                        retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
                                 case SSL_ERROR_SYSCALL:
                                         {
@@ -435,12 +468,12 @@ int Ssl_read(T C, void *b, int size, int timeout) {
                                 case SSL_ERROR_WANT_READ:
                                         n = 0;
                                         errno = EWOULDBLOCK;
-                                        retry = Net_canRead(C->socket, timeout);
+                                        retry = _retry(C->socket, &timeout, Net_canRead);
                                         break;
                                 case SSL_ERROR_WANT_WRITE:
                                         n = 0;
                                         errno = EWOULDBLOCK;
-                                        retry = Net_canWrite(C->socket, timeout);
+                                        retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
                                 case SSL_ERROR_SYSCALL:
                                         {
@@ -463,32 +496,24 @@ int Ssl_read(T C, void *b, int size, int timeout) {
 }
 
 
-boolean_t Ssl_checkCertificate(T C, char *md5sum) {
+boolean_t Ssl_checkCertificateHash(T C, char *md5sum) {
         ASSERT(C);
+        ASSERT(C->certificate);
         ASSERT(md5sum);
         if (! (Run.flags & Run_FipsEnabled)) {
-                X509 *cert = SSL_get_peer_certificate(C->handler);
-                if (! cert) {
-                        LogError("SSL: cannot get peer certificate\n");
-                        return false;
-                }
                 unsigned int len, i = 0;
                 unsigned char md5[EVP_MAX_MD_SIZE];
-                X509_digest(cert, EVP_md5(), md5, &len);
+                X509_digest(C->certificate, EVP_md5(), md5, &len);
                 while ((i < len) && (md5sum[2 * i] != '\0') && (md5sum[2 * i + 1] != '\0')) {
                         unsigned char c = (md5sum[2 * i] > 57 ? md5sum[2 * i] - 87 : md5sum[2 * i] - 48) * 0x10 + (md5sum[2 * i + 1] > 57 ? md5sum[2 * i + 1] - 87 : md5sum[2 * i + 1] - 48);
-                        if (c != md5[i]) {
-                                X509_free(cert);
+                        if (c != md5[i])
                                 return false;
-                        }
                         i++;
                 }
-                X509_free(cert);
                 return true;
-        } else {
-                LogError("SSL: certificate checksum error -- MD5 not supported in FIPS mode\n");
-                return false;
         }
+        LogError("SSL: certificate checksum error -- MD5 not supported in FIPS mode\n");
+        return false;
 }
 
 

@@ -602,7 +602,7 @@ void Socket_test(void *P) {
 boolean_t Socket_enableSsl(T S, SslOptions_T ssl, const char *name)  {
         assert(S);
 #ifdef HAVE_OPENSSL
-        if ((S->ssl = Ssl_new(ssl.clientpemfile, ssl.version)) && Ssl_connect(S->ssl, S->socket, name) && (! ssl.certmd5 || Ssl_checkCertificate(S->ssl, ssl.certmd5)))
+        if ((S->ssl = Ssl_new(ssl.clientpemfile, ssl.version)) && Ssl_connect(S->ssl, S->socket, S->timeout, name) && (! ssl.certmd5 || Ssl_checkCertificateHash(S->ssl, ssl.certmd5)))
                 return true;
 #endif
         return false;

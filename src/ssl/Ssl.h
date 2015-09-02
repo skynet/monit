@@ -94,10 +94,11 @@ void Ssl_free(T *C);
  * the Server Name Indication (SNI) TLS extension is enabled.
  * @param C An SSL connection object
  * @param socket A socket
+ * @param timeout Milliseconds to wait for connection to be established
  * @param name A server name string (optional)
  * @return true if succeeded or false if failed
  */
-boolean_t Ssl_connect(T C, int socket, const char *name);
+boolean_t Ssl_connect(T C, int socket, int timeout, const char *name);
 
 
 /**
@@ -135,7 +136,7 @@ int Ssl_read(T C, void *b, int size, int timeout);
  * @param md5sum Expected MD5 checksum in string format
  * @return true if succeeded or false if failed
  */
-boolean_t Ssl_checkCertificate(T C, char *md5sum);
+boolean_t Ssl_checkCertificateHash(T C, char *md5sum);
 
 
 #undef T
