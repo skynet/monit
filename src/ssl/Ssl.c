@@ -93,6 +93,7 @@
  *
  *  @file
  */
+//FIXME: refactor Ssl_connect(), Ssl_write() and Ssl_read() (and the whole network layer) to be really non-blocking
 
 
 /* ------------------------------------------------------------- Definitions */
