@@ -123,8 +123,10 @@
 #define T Ssl_T
 struct T {
         boolean_t accepted;
+        boolean_t allowSelfSignedCertificates;
         Ssl_Version version;
         int socket;
+        int minimumValidDays;
         SSL *handler;
         SSL_CTX *ctx;
         X509 *certificate;
@@ -169,28 +171,31 @@ static void _mutexLock(int mode, int n, const char *file, int line) {
 
 
 static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
+        T C = SSL_get_app_data(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
+        if (! C) {
+                LogError("SSL: cannot get application data\n");
+                return 0;
+        }
         if (! preverify_ok) {
                 int error = X509_STORE_CTX_get_error(ctx);
                 switch (error) {
                         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-                                //FIXME: allow to refuse self-signed certificates (user option) ... by default we should accept (provide global switch to allow to set defaults?)
-                                X509_STORE_CTX_set_error(ctx, X509_V_OK);
-                                DEBUG("BUBU: _verifyServerCertificates: reset X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT error\n");
+                                if (C->allowSelfSignedCertificates)
+                                        X509_STORE_CTX_set_error(ctx, X509_V_OK);
                                 break;
                         default:
                                 break;
                 }
         } else {
-                //FIXME: if no error, but we have expire delta > 0 (warn X days before expire), check that the certificate is valid at minimum for given X days
                 X509 *certificate = X509_STORE_CTX_get_current_cert(ctx);
-                if (certificate) {
-                        // If we have warn-X-days-before-expire condition, check the certificate validity (deadline is left on default preverify)
+                if (certificate && C->minimumValidDays) {
+                        // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
                         int day, sec;
                         if (! ASN1_TIME_diff(&day, &sec, NULL, X509_get_notAfter(certificate))) {
                                 LogError("SSL: invalid time format in the certificate notAfter field\n");
                                 return 0;
                         }
-                        if (day * 86400 + sec < 0) { //FIXME: add support for custom delta to be able to warn, that certificate will expire in X days
+                        if (day * 86400 + sec < C->minimumValidDays * 86400) {
                                 LogError("SSL: the certificate will expire in %d days, please renew it\n", day);
                                 return 0;
                         }
@@ -293,12 +298,10 @@ void Ssl_setFipsMode(boolean_t enabled) {
 }
 
 
-T Ssl_new(char *clientpemfile, Ssl_Version version) {
+T Ssl_new(Ssl_Version version) {
         T C;
         NEW(C);
         C->version = version;
-        if (clientpemfile)
-                C->clientpemfile = Str_dup(clientpemfile);
         const SSL_METHOD *method;
         switch (version) {
                 case SSL_V2:
@@ -351,6 +354,7 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
                 LogError("SSL: client context initialization failed -- %s\n", SSLERROR);
                 goto sslerror;
         }
+        SSL_CTX_set_default_verify_paths(C->ctx);
         SSL_CTX_set_verify(C->ctx, SSL_VERIFY_PEER, _verifyServerCertificates);
         if (version == SSL_Auto)
                 SSL_CTX_set_options(C->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
@@ -366,20 +370,7 @@ T Ssl_new(char *clientpemfile, Ssl_Version version) {
                 goto sslerror;
         }
         SSL_set_mode(C->handler, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-        if (C->clientpemfile) {
-                if (SSL_CTX_use_certificate_chain_file(C->ctx, C->clientpemfile) != 1) {
-                        LogError("SSL: client certificate chain loading failed -- %s\n", SSLERROR);
-                        goto sslerror;
-                }
-                if (SSL_CTX_use_PrivateKey_file(C->ctx, C->clientpemfile, SSL_FILETYPE_PEM) != 1) {
-                        LogError("SSL: client private key loading failed -- %s\n", SSLERROR);
-                        goto sslerror;
-                }
-                if (SSL_CTX_check_private_key(C->ctx) != 1) {
-                        LogError("SSL: client private key doesn't match the certificate -- %s\n", SSLERROR);
-                        goto sslerror;
-                }
-        }
+        SSL_set_app_data(C->handler, C);
         return C;
 sslerror:
         Ssl_free(&C);
@@ -438,12 +429,12 @@ boolean_t Ssl_connect(T C, int socket, int timeout, const char *name) {
         } while (retry);
         C->certificate = SSL_get_peer_certificate(C->handler);
         if (! C->certificate) {
-                LogError("SSL: cannot get peer certificate\n");
+                LogError("SSL: cannot get server certificate\n");
                 return false;
         }
         long rv = SSL_get_verify_result(C->handler);
         if (rv != X509_V_OK) {
-                LogError("SSL: certificate verification failed -- %s\n", X509_verify_cert_error_string(rv));
+                LogError("SSL: server certificate verification failed -- %s\n", X509_verify_cert_error_string(rv));
                 return false;
         }
         return true;
@@ -531,6 +522,40 @@ int Ssl_read(T C, void *b, int size, int timeout) {
         return n;
 }
 
+
+boolean_t Ssl_setClientCertificate(T C, char *file) {
+        ASSERT(C);
+        if (file) {
+                C->clientpemfile = Str_dup(file);
+                if (SSL_CTX_use_certificate_chain_file(C->ctx, C->clientpemfile) != 1) {
+                        LogError("SSL: client certificate chain loading failed -- %s\n", SSLERROR);
+                        return false;
+                }
+                if (SSL_CTX_use_PrivateKey_file(C->ctx, C->clientpemfile, SSL_FILETYPE_PEM) != 1) {
+                        LogError("SSL: client private key loading failed -- %s\n", SSLERROR);
+                        return false;
+                }
+                if (SSL_CTX_check_private_key(C->ctx) != 1) {
+                        LogError("SSL: client private key doesn't match the certificate -- %s\n", SSLERROR);
+                        return false;
+                }
+        } else {
+                FREE(C->clientpemfile);
+        }
+        return true;
+}
+
+
+void Ssl_allowSelfSignedCertificates(T C, boolean_t allow) {
+        ASSERT(C);
+        C->allowSelfSignedCertificates = allow;
+}
+
+
+void Ssl_certificateMinimumValidDays(T C, int days) {
+        ASSERT(C);
+        C->minimumValidDays = days;
+}
 
 boolean_t Ssl_checkCertificateHash(T C, char *md5sum) {
         ASSERT(C);
@@ -691,7 +716,7 @@ boolean_t SslServer_accept(T C, int socket) {
         C->socket = socket;
         SSL_set_accept_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
-        int rv = SSL_accept(C->handler);
+        int rv = SSL_accept(C->handler); //FIXME: we most probably need to wait for accept before we can check the client certificate ... similarly to Ssl_connect()
         if (rv < 0) {
                 switch (SSL_get_error(C->handler, rv)) {
                         case SSL_ERROR_NONE:

@@ -139,6 +139,7 @@ gigabyte    ("gigabyte"|"gigabytes"|"gb")("/s")?
 
 is                {/* EMPTY */}
 as                {/* EMPTY */}
+at                {/* EMPTY */}
 are               {/* EMPTY */}
 for               {/* EMPTY */}
 on(ly)?           {/* EMPTY */}
@@ -161,6 +162,8 @@ per               {/* EMPTY */}
 in                {/* EMPTY */}
 last              {/* EMPTY */}
 capacity          {/* EMPTY */}
+valid             {/* EMPTY */}
+certificate       {/* EMPTY */}
 
 {startarg}        { BEGIN(ARGUMENT_COND); return START; }
 {stoparg}         { BEGIN(ARGUMENT_COND); return STOP; }
@@ -276,6 +279,7 @@ radius            { return RADIUS; }
 memcache          { return MEMCACHE; }
 target            { return TARGET; }
 maxforward        { return MAXFORWARD; }
+minimum           { return MINIMUM; }
 mode              { return MODE; }
 active            { return ACTIVE; }
 passive           { return PASSIVE; }

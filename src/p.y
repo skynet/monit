@@ -325,7 +325,7 @@ static int verifyMaxForward(int);
 %token INODE SPACE TFREE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME
 %token EXEC UNMONITOR PING PING4 PING6 ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
 %token URL CONTENT PID PPID FSFLAG
-%token REGISTER CREDENTIALS
+%token REGISTER CREDENTIALS MINIMUM
 %token <url> URLOBJECT
 %token <string> TARGET TIMESPEC HTTPHEADER
 %token <number> MAXFORWARD
@@ -1076,20 +1076,20 @@ hostname        : /* EMPTY */     {
                   }
                 ;
 
-connection      : IF FAILED host port ip type protocol urloption nettimeout retry rate1 THEN action1 recovery {
-                    portset.timeout = $<number>9;
-                    portset.retry = $<number>10;
+connection      : IF FAILED host port ip type ssloptlist protocol urloption nettimeout retry rate1 THEN action1 recovery {
+                    portset.timeout = $<number>10;
+                    portset.retry = $<number>11;
                     /* This is a workaround to support content match without having to create an URL object. 'urloption' creates the Request_T object we need minus the URL object, but with enough information to perform content test.
                      TODO: Parser is in need of refactoring */
                     portset.url_request = urlrequest;
-                    addeventaction(&(portset).action, $<number>13, $<number>14);
+                    addeventaction(&(portset).action, $<number>14, $<number>15);
                     addport(&(current->portlist), &portset);
                   }
-                | IF FAILED URL URLOBJECT urloption nettimeout retry rate1 THEN action1 recovery {
+                | IF FAILED URL URLOBJECT urloption ssloptlist nettimeout retry rate1 THEN action1 recovery {
                     prepare_urlrequest($<url>4);
-                    portset.timeout = $<number>6;
-                    portset.retry = $<number>7;
-                    addeventaction(&(portset).action, $<number>10, $<number>11);
+                    portset.timeout = $<number>7;
+                    portset.retry = $<number>8;
+                    addeventaction(&(portset).action, $<number>11, $<number>12);
                     addport(&(current->portlist), &portset);
                   }
                 ;
@@ -1172,7 +1172,7 @@ type            : /* EMPTY */ {
                 | TYPE TCP {
                     portset.type = Socket_Tcp;
                   }
-                | TYPE TCPSSL typeoptlist {
+                | TYPE TCPSSL {
                     portset.type = Socket_Tcp;
                     portset.target.net.SSL.use_ssl = true;
                     if (portset.target.net.SSL.version == SSL_Disabled)
@@ -1183,15 +1183,21 @@ type            : /* EMPTY */ {
                   }
                 ;
 
-typeoptlist     : /* EMPTY */
-                | typeoptlist typeopt
+ssloptlist     : /* EMPTY */
+                | ssloptlist sslopt
                 ;
 
-typeopt         : sslversion {
+sslopt         : sslversion {
                         portset.target.net.SSL.version = $<number>1;
                   }
                 | certmd5 {
                         portset.target.net.SSL.certmd5 = $<string>1;
+                  }
+                | ALLOWSELFCERTIFICATION {
+                        portset.target.net.SSL.allowSelfCertification = true;
+                  }
+                | MINIMUM NUMBER DAY {
+                        portset.target.net.SSL.minimumValidDays = $<number>2;
                   }
                 ;
 
@@ -2773,6 +2779,8 @@ static void addport(Port_T *list, Port_T port) {
                         }
                         p->target.net.SSL.use_ssl = true;
                         p->target.net.SSL.version = port->target.net.SSL.version;
+                        p->target.net.SSL.allowSelfCertification = port->target.net.SSL.allowSelfCertification;
+                        p->target.net.SSL.minimumValidDays = port->target.net.SSL.minimumValidDays;
 #else
                         yyerror("SSL check cannot be activated -- SSL disabled");
 #endif

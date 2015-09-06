@@ -4,15 +4,15 @@
 
 Version 5.15
 
-New: Added SSL certificate expiration check. WARNING: if you're testing some
-SSL server or you use mailserver or M/Monit with expired certificate, Monit
-will report error now.
+New: Added SSL certificate validation as part of connection check. Self-signed
+certificates are rejected by default and must be explicitly allowed if needed:
+   if failed port 443 allowselfcertification protocol https then alert
 
 New: Added SSL certificate pre-expiration test. By default Monit will report
-error only if the certificate expired. You can set an option to be notified
+error if the certificate expired. You can set an option to be notified
 if the certificate is going to expire in given number of days, so it will
-remind you that you need to renew the certificate.
-FIXME: documentation of the new option
+remind you that you need to renew the certificate:
+   if failed port 443 certificate valid at minimum for 365 days protocol https then alert
 
 New: Issue #233: The content match test will skip existing content of the file
 the first time the file is added to Monit.

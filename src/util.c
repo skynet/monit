@@ -1051,8 +1051,8 @@ void Util_printService(Service_T s) {
                         printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds and retry %d times", o->hostname, o->target.net.port, Util_portRequestDescription(o), Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000, o->retry)));
                 else
                         printf(" %-20s = %s\n", "Port", StringBuffer_toString(Util_printRule(buf, o->action, "if failed [%s]:%d%s type %s/%s protocol %s with timeout %d seconds", o->hostname, o->target.net.port, Util_portRequestDescription(o), Util_portTypeDescription(o), Util_portIpDescription(o), o->protocol->name, o->timeout / 1000)));
-                if (o->target.net.SSL.certmd5 != NULL)
-                        printf(" %-20s = %s\n", "Server cert md5 sum", o->target.net.SSL.certmd5);
+                if (o->target.net.SSL.use_ssl && o->target.net.SSL.certmd5)
+                                printf(" %-20s = %s\n", "Server cert md5 sum", o->target.net.SSL.certmd5);
         }
 
         for (Port_T o = s->socketlist; o; o = o->next) {

@@ -32,7 +32,9 @@
 #define T SslOptions_T
 typedef struct T {
         boolean_t use_ssl;             /**< true if SSL is required for connection */ //FIXME: drop this (can use version -> SSL_Disabled)
+        boolean_t allowSelfCertification; /**< true if SSL self certification is allowed */
         Ssl_Version version;            /**< The SSL version to use for connection */
+        int minimumValidDays;                         /**< Minimum valid days left */
         char *certmd5;       /**< The expected md5 sum of the server's certificate */
         char *clientpemfile;                      /**< Optional client certificate */
 } T;

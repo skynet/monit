@@ -77,9 +77,10 @@ void Ssl_setFipsMode(boolean_t enabled);
 
 /**
  * Create a new SSL connection object
+ * @param version An SSL version to use
  * @return a new SSL connection object or NULL if failed
  */
-T Ssl_new(char *clientpemfile, Ssl_Version version);
+T Ssl_new(Ssl_Version version);
 
 
 /**
@@ -128,6 +129,31 @@ int Ssl_write(T C, void *b, int size, int timeout);
  * @return Number of bytes read or -1 if failed
  */
 int Ssl_read(T C, void *b, int size, int timeout);
+
+
+/**
+ * Set client certificate.
+ * @param C An SSL connection object
+ * @param file Path to client PEM file
+ * @return true if succeeded, otherwise false
+ */
+boolean_t Ssl_setClientCertificate(T C, char *file);
+
+
+/**
+ * Set whether self-signed certificates should be allowed (rejected by default)
+ * @param C An SSL connection object
+ * @param allow Boolean flag (true = allow, false = reject)
+ */
+void Ssl_allowSelfSignedCertificates(T C, boolean_t allow);
+
+
+/**
+ * Set minimum days the certificate must be valid.
+ * @param C An SSL connection object
+ * @param days Minimum number of valid days
+ */
+void Ssl_certificateMinimumValidDays(T C, int days);
 
 
 /**
