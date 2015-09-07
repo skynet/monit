@@ -29,6 +29,8 @@ Fixed: Issue #221: If check host has no tests enabled, provide clear error messa
 Fixed: Issue #223: Don't log "Error reading pid from ..." for non-process checks on
 stop/restart.
 
+Fixed: Issue #226: Monit hung during ping test.
+
 Fixed: Compilation with SSL when SSLv3 is disabled in the SSL library.
 
 Fixed: Don't log error if SSL SNI is not supported by server.

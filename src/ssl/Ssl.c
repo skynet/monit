@@ -155,9 +155,11 @@ static unsigned long _threadID() {
 
 static boolean_t _retry(int socket, int *timeout, int (*callback)(int socket, time_t milliseconds)) {
         long long start = Time_milli();
-        if (callback(socket, *timeout))
-                if ((*timeout -= Time_milli() - start) > 0)
+        if (callback(socket, *timeout)) {
+                long long stop = Time_milli();
+                if (stop > start && (*timeout -= stop - start) > 0) // Reduce timeout with guard against backward clock jumps
                         return true;
+        }
         return false;
 }
 
