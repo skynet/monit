@@ -448,7 +448,7 @@ readnext:
                                 continue;
                         }
                         boolean_t in_addrmatch = false, in_typematch = false;
-                        struct timeval in_time, out_time = {.tv_sec = 0, .tv_usec = 0};
+                        struct timeval in_time;
                         gettimeofday(&in_time, NULL);
                         /* read from raw socket via recvfrom() provides messages regardless of origin, we have to check the IP and skip responses belonging to other conversations */
                         switch (addr.ss_family) {
@@ -476,7 +476,7 @@ readnext:
                                         break;
                         }
                         if (addr.ss_family != r->ai_family || ! in_addrmatch || ! in_typematch || in_id != id_out || in_seq >= (uint16_t)count) {
-                                if ((read_timeout = timeout - ((in_time.tv_sec - out_time.tv_sec) * 1000 + (in_time.tv_usec - out_time.tv_usec) / 1000.)) > 0)
+                                if (in_time.tv_sec > out_time.tv_sec && (read_timeout = timeout - ((in_time.tv_sec - out_time.tv_sec) * 1000 + (in_time.tv_usec - out_time.tv_usec) / 1000.)) > 0) // Reduce timeout with guard against backward clock jumps
                                         goto readnext; // Try to read next packet, but don't exceed the timeout while waiting for our response so we won't loop forever if the socket is flooded with other ICMP packets
                         } else {
                                 memcpy(&out_time, data, sizeof(struct timeval));
