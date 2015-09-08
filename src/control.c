@@ -215,6 +215,14 @@ static int _executeStop(Service_T s, char *msg, int msglen, long *timeout) {
 }
 
 
+static void _evaluateStop(Service_T s, boolean_t succeeded, int exitStatus, char *msg) {
+        if (succeeded)
+                Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "stopped");
+        else
+                Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to stop (exit status %d) -- %s", exitStatus, *msg ? msg : "no output");
+}
+
+
 /*
  * This function simply stops the service p.
  * @param s A Service_T object
@@ -228,27 +236,20 @@ static boolean_t _doStop(Service_T s, boolean_t flag) {
                 return rv;
         s->depend_visited = true;
         if (s->stop) {
+                int exitStatus;
                 char msg[STRLEN];
                 long timeout = s->stop->timeout * USEC_PER_SEC;
                 if (s->type == Service_Process) {
                         int pid = Util_isProcessRunning(s, true);
                         if (pid) {
-                                int status = _executeStop(s, msg, sizeof(msg), &timeout);
-                                if (_waitProcessStop(pid, &timeout) != Process_Stopped) {
-                                        rv = false;
-                                        Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
-                                } else {
-                                        Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "stopped");
-                                }
+                                exitStatus = _executeStop(s, msg, sizeof(msg), &timeout);
+                                rv = _waitProcessStop(pid, &timeout) == Process_Stopped ? true : false;
+                                _evaluateStop(s, rv, exitStatus, msg);
                         }
                 } else {
-                        int status = _executeStop(s, msg, sizeof(msg), &timeout);
-                        if (status < 0) {
-                                rv = false;
-                                Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
-                        } else {
-                                Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "stopped");
-                        }
+                        exitStatus = _executeStop(s, msg, sizeof(msg), &timeout);
+                        rv = exitStatus >= 0 ? true : false;
+                        _evaluateStop(s, rv, exitStatus, msg);
                 }
         } else {
                 LogDebug("'%s' stop skipped -- method not defined\n", s->name);
