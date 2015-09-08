@@ -35,6 +35,8 @@ Fixed: Compilation with SSL when SSLv3 is disabled in the SSL library.
 
 Fixed: Don't log error if SSL SNI is not supported by server.
 
+Fixed: SSL client certificate authentication.
+
 
 Version 5.14
 

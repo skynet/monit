@@ -143,6 +143,7 @@ struct SslServer_T {
 
 
 static Mutex_T *instanceMutexTable;
+static int session_id_context = 1;
 
 
 /* ----------------------------------------------------------------- Private */
@@ -601,6 +602,10 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                 LogError("SSL: server context initialization failed -- %s\n", SSLERROR);
                 goto sslerror;
         }
+        if (SSL_CTX_set_session_id_context(S->ctx, (void *)&session_id_context, sizeof(session_id_context)) != 1) {
+                LogError("SSL: server session id context initialization failed -- %s\n", SSLERROR);
+                goto sslerror;
+        }
         if (SSL_CTX_set_cipher_list(S->ctx, CIPHER_LIST) != 1) {
                 LogError("SSL: server cipher list [%s] error -- no valid ciphers\n", CIPHER_LIST);
                 goto sslerror;
@@ -712,24 +717,33 @@ void SslServer_freeConnection(SslServer_T S, T *C) {
 }
 
 
-boolean_t SslServer_accept(T C, int socket) {
+boolean_t SslServer_accept(T C, int socket, int timeout) {
         ASSERT(C);
         ASSERT(socket >= 0);
         C->socket = socket;
         SSL_set_accept_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
-        int rv = SSL_accept(C->handler); //FIXME: we most probably need to wait for accept before we can check the client certificate ... similarly to Ssl_connect()
-        if (rv < 0) {
-                switch (SSL_get_error(C->handler, rv)) {
-                        case SSL_ERROR_NONE:
-                        case SSL_ERROR_WANT_READ:
-                        case SSL_ERROR_WANT_WRITE:
-                                break;
-                        default:
-                                LogError("SSL: accept error -- %s\n", SSLERROR);
-                                return false;
+        boolean_t retry = false;
+        do {
+                int rv = SSL_accept(C->handler);
+                if (rv < 0) {
+                        switch (SSL_get_error(C->handler, rv)) {
+                                case SSL_ERROR_NONE:
+                                        break;
+                                case SSL_ERROR_WANT_READ:
+                                        retry = _retry(C->socket, &timeout, Net_canRead);
+                                        break;
+                                case SSL_ERROR_WANT_WRITE:
+                                        retry = _retry(C->socket, &timeout, Net_canWrite);
+                                        break;
+                                default:
+                                        LogError("SSL: connection error -- %s\n", SSLERROR);
+                                        return false;
+                        }
+                } else {
+                        break;
                 }
-        }
+        } while (retry);
         if (C->clientpemfile) {
                 X509 *cert = SSL_get_peer_certificate(C->handler);
                 if (! cert) {

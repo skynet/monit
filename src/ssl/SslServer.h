@@ -70,9 +70,10 @@ void SslServer_freeConnection(T S, Ssl_T *C);
  * Embed an accepted socket in an existing SSL connection
  * @param C An SSL connection object 
  * @param socket An accepted socket
+ * @param timeout Milliseconds to wait for connection to be established
  * @return true if succeeded or false if failed
  */
-boolean_t SslServer_accept(Ssl_T C, int socket);
+boolean_t SslServer_accept(Ssl_T C, int socket, int timeout);
 
 
 #undef T

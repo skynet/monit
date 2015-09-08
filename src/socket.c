@@ -388,7 +388,7 @@ T Socket_createAccepted(int socket, struct sockaddr *addr, socklen_t addrlen, vo
 #ifdef HAVE_OPENSSL
                 if (sslserver) {
                         S->sslserver = sslserver;
-                        if (! (S->ssl = SslServer_newConnection(S->sslserver)) || ! SslServer_accept(S->ssl, S->socket)) {
+                        if (! (S->ssl = SslServer_newConnection(S->sslserver)) || ! SslServer_accept(S->ssl, S->socket, S->timeout)) {
                                 Socket_free(&S);
                                 return NULL;
                         }
