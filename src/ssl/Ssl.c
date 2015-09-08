@@ -157,7 +157,7 @@ static boolean_t _retry(int socket, int *timeout, int (*callback)(int socket, ti
         long long start = Time_milli();
         if (callback(socket, *timeout)) {
                 long long stop = Time_milli();
-                if (stop > start && (*timeout -= stop - start) > 0) // Reduce timeout with guard against backward clock jumps
+                if (stop >= start && (*timeout -= stop - start) > 0) // Reduce timeout with guard against backward clock jumps
                         return true;
         }
         return false;
