@@ -936,6 +936,16 @@ if test "$use_sslstatic" = "1" -o "$use_ssl" = "1"; then
         if test "$ec" = "yes" ; then
                 AC_DEFINE([HAVE_EC_KEY], 1, [Define to 1 if you have openssl with EC_KEY])
         fi
+
+        AC_MSG_CHECKING([for ASN1_TIME_diff support])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [ASN1_TIME_diff(0, 0, 0, 0)])],
+                [asn1timediff=yes],
+                [asn1timediff=no])
+        AC_MSG_RESULT($asn1timediff)
+        if test "$asn1timediff" = "yes" ; then
+                AC_DEFINE([HAVE_ASN1_TIME_DIFF], 1, [Define to 1 if you have openssl with ASN1_TIME_diff])
+        fi
 fi
 
 

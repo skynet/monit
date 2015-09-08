@@ -193,6 +193,7 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                 X509 *certificate = X509_STORE_CTX_get_current_cert(ctx);
                 if (certificate && C->minimumValidDays) {
                         // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
+#ifdef HAVE_ASN1_TIME_DIFF
                         int day, sec;
                         if (! ASN1_TIME_diff(&day, &sec, NULL, X509_get_notAfter(certificate))) {
                                 LogError("SSL: invalid time format in the certificate notAfter field\n");
@@ -202,8 +203,20 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                                 LogError("SSL: the certificate will expire in %d days, please renew it\n", day);
                                 return 0;
                         }
-                        //FIXME: allow to optionally check the certificate subject and issuer? Similarly to checksum test: either notify on any change, or allow to set expected string
+#else
+
+                        time_t t = Time_now() - C->minimumValidDays * 86400;
+                        int rv = X509_cmp_time(X509_get_notAfter(certificate), &t);
+                        if (rv == 0) {
+                                LogError("SSL: invalid time format in the certificate notAfter field\n");
+                                return 0;
+                        } else if (rv < 0) {
+                                LogError("SSL: the certificate will expire in less then %d days, please renew it\n", C->minimumValidDays);
+                                return 0;
+                        }
+#endif
                 }
+                //FIXME: allow to optionally check the certificate subject and issuer? Similarly to checksum test: either notify on any change, or allow to set expected string
         }
         return 1;
 }
