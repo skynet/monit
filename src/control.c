@@ -150,7 +150,7 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen, long
 }
 
 
-static Process_Status _waitStart(Service_T s, long *timeout) {
+static Process_Status _waitProcessStart(Service_T s, long *timeout) {
         long wait = 50000;
         do {
                 if (Util_isProcessRunning(s, true))
@@ -163,7 +163,7 @@ static Process_Status _waitStart(Service_T s, long *timeout) {
 }
 
 
-static Process_Status _waitStop(int pid, long *timeout) {
+static Process_Status _waitProcessStop(int pid, long *timeout) {
         do {
                 if (! pid || (getpgid(pid) == -1 && errno != EPERM))
                         return Process_Stopped;
@@ -197,7 +197,7 @@ static void _doStart(Service_T s) {
                         char msg[STRLEN];
                         long timeout = s->start->timeout * USEC_PER_SEC;
                         int status = _commandExecute(s, s->start, msg, sizeof(msg), &timeout);
-                        if ((s->type == Service_Process && _waitStart(s, &timeout) != Process_Started) || status < 0)
+                        if ((s->type == Service_Process && _waitProcessStart(s, &timeout) != Process_Started) || status < 0)
                                 Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to start (exit status %d) -- %s", status, *msg ? msg : "no output");
                         else
                                 Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "started");
@@ -206,6 +206,12 @@ static void _doStart(Service_T s) {
                 LogDebug("'%s' start skipped -- method not defined\n", s->name);
         }
         Util_monitorSet(s);
+}
+
+
+static int _executeStop(Service_T s, char *msg, int msglen, long *timeout) {
+        LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
+        return _commandExecute(s, s->stop, msg, msglen, timeout);
 }
 
 
@@ -222,15 +228,22 @@ static boolean_t _doStop(Service_T s, boolean_t flag) {
                 return rv;
         s->depend_visited = true;
         if (s->stop) {
-                if (s->type != Service_Process || Util_isProcessRunning(s, false)) {
-                        LogInfo("'%s' stop: %s\n", s->name, s->stop->arg[0]);
-                        int pid;
-                        char msg[STRLEN];
-                        long timeout = s->stop->timeout * USEC_PER_SEC;
-                        if (s->type == Service_Process)
-                                pid = Util_isProcessRunning(s, true);
-                        int status = _commandExecute(s, s->stop, msg, sizeof(msg), &timeout);
-                        if ((s->type == Service_Process && _waitStop(pid, &timeout) != Process_Stopped) || status < 0) {
+                char msg[STRLEN];
+                long timeout = s->stop->timeout * USEC_PER_SEC;
+                if (s->type == Service_Process) {
+                        int pid = Util_isProcessRunning(s, true);
+                        if (pid) {
+                                int status = _executeStop(s, msg, sizeof(msg), &timeout);
+                                if (_waitProcessStop(pid, &timeout) != Process_Stopped) {
+                                        rv = false;
+                                        Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
+                                } else {
+                                        Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "stopped");
+                                }
+                        }
+                } else {
+                        int status = _executeStop(s, msg, sizeof(msg), &timeout);
+                        if (status < 0) {
                                 rv = false;
                                 Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to stop (exit status %d) -- %s", status, *msg ? msg : "no output");
                         } else {
@@ -260,7 +273,7 @@ static void _doRestart(Service_T s) {
                 char msg[STRLEN];
                 long timeout = s->restart->timeout * USEC_PER_SEC;
                 int status = _commandExecute(s, s->restart, msg, sizeof(msg), &timeout);
-                if ((s->type == Service_Process && _waitStart(s, &timeout) != Process_Started) || status < 0)
+                if ((s->type == Service_Process && _waitProcessStart(s, &timeout) != Process_Started) || status < 0)
                         Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to restart (exit status %d) -- %s", status, msg);
                 else
                         Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "restarted");
