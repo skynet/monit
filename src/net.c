@@ -444,7 +444,7 @@ readnext:
                                 LogError("Ping response for %s %d/%d failed -- %s\n", hostname, i + 1, count, STRERROR);
                                 continue;
                         } else if (n < in_len) {
-                                LogError("Ping response for %s %d/%d failed -- received %ld bytes, expected at least %d bytes\n", hostname, i + 1, count, n, in_len);
+                                LogError("Ping response for %s %d/%d failed -- received %ld bytes, expected at least %d bytes\n", hostname, i + 1, count, (long)n, in_len);
                                 continue;
                         }
                         boolean_t in_addrmatch = false, in_typematch = false;
