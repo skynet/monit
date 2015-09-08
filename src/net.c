@@ -425,7 +425,7 @@ static double _receivePing(const char *hostname, int socket, struct addrinfo *ad
                                 return -1.;
                 }
                 if (in_addr.ss_family != addr->ai_family || ! in_addrmatch || ! in_typematch || in_id != out_id || in_seq >= (uint16_t)maxretries) {
-                        if (stopped >= started && (read_timeout = timeout - (stopped - started)) > 0)
+                        if (stopped >= started && (read_timeout = timeout - (int)(stopped - started)) > 0)
                                 continue; // Try to read next packet, but don't exceed the timeout while waiting for our response so we won't loop forever if the socket is flooded with other ICMP packets
                 } else {
                         memcpy(&started, data, sizeof(long long));
