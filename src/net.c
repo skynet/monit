@@ -314,7 +314,7 @@ static void _setPingOptions(int socket, struct addrinfo *addr) {
 static boolean_t _sendPing(const char *hostname, int socket, struct addrinfo *addr, int retry, int maxretries, int id, long long started) {
         char buf[STRLEN];
         memset(buf, 0, sizeof(buf));
-        int out_len;
+        int out_len = 0;
         void *out_icmp = NULL;
         struct icmp *out_icmp4;
 #ifdef HAVE_IPV6
