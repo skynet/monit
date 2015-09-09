@@ -194,7 +194,7 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                 if (certificate) {
                         if (C->minimumValidDays) {
                                 // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
-                                time_t deltadays = 0;
+                                int deltadays = 0;
 #ifdef HAVE_ASN1_TIME_DIFF
                                 int deltaseconds;
                                 if (! ASN1_TIME_diff(&deltadays, &deltaseconds, NULL, X509_get_notAfter(certificate))) {
