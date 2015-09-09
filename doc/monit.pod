@@ -2516,6 +2516,12 @@ automatically, but for security reasons only TLS is used, not SSL. If
 you need SSLv2 or SSLv3 you have to explicitly select that method using
 I<SSLV2> or I<SSLV3> option.
 
+The I<md5sum> allows to check a certificate checksum. You can use an openssl
+CLI to get the checksum value for your certificate, which you can use in Monit's
+control file:
+
+ openssl x509 -fingerprint -md5 -in server.crt | head -1 | cut -f2 -d'=' | sed -e 's/://g'
+
 I<protocol: PROTO(COL) protocol>. Optionally specify the protocol
 Monit should speak when a connection is established. At the
 moment Monit knows how to speak:

@@ -218,9 +218,9 @@ void Socket_test(void *P);
  * @param S A connected Socket_T object
  * @param ssl Options for ssl
  * @param name An optional server name for SNI TLS extension
- * @return true if ssl is ready otherwise false
+ * @exception IOException or AssertException if failed
  */
-boolean_t Socket_enableSsl(T S, SslOptions_T ssl, const char *name);
+void Socket_enableSsl(T S, SslOptions_T ssl, const char *name);
 
 
 /**

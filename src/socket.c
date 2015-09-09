@@ -242,8 +242,8 @@ T _createIpSocket(const char *host, const struct sockaddr *addr, socklen_t addrl
                                         S->host = Str_dup(host);
                                         S->port = _getPort(addr, addrlen);
                                         S->connection_type = Connection_Client;
-                                        if (ssl.use_ssl && ! Socket_enableSsl(S, ssl, host))
-                                                THROW(IOException, "Could not switch socket to SSL");
+                                        if (ssl.use_ssl)
+                                                Socket_enableSsl(S, ssl, host);
                                         return S;
                                 }
                         } else {
@@ -597,18 +597,30 @@ void Socket_test(void *P) {
 }
 
 
-boolean_t Socket_enableSsl(T S, SslOptions_T ssl, const char *name)  {
+void Socket_enableSsl(T S, SslOptions_T ssl, const char *name)  {
         assert(S);
 #ifdef HAVE_OPENSSL
         if ((S->ssl = Ssl_new(ssl.version))) {
-                Ssl_allowSelfSignedCertificates(S->ssl, ssl.allowSelfCertification);
-                Ssl_certificateMinimumValidDays(S->ssl, ssl.minimumValidDays);
-                if (Ssl_setClientCertificate(S->ssl, ssl.clientpemfile) && Ssl_connect(S->ssl, S->socket, S->timeout, name) && (! ssl.certmd5 || Ssl_checkCertificateHash(S->ssl, ssl.certmd5)))
-                        return true;
-                Ssl_free(&S->ssl);
+                TRY
+                {
+                        if (ssl.allowSelfCertification)
+                                Ssl_setAllowSelfSignedCertificates(S->ssl, true);
+                        if (ssl.minimumValidDays > 0)
+                                Ssl_setCertificateMinimumValidDays(S->ssl, ssl.minimumValidDays);
+                        if (ssl.certmd5)
+                                Ssl_setCertificateChecksum(S->ssl, ssl.certmd5);
+                        if (ssl.clientpemfile)
+                                Ssl_setClientCertificate(S->ssl, ssl.clientpemfile);
+                        Ssl_connect(S->ssl, S->socket, S->timeout, name);
+                }
+                ELSE
+                {
+                        Ssl_free(&S->ssl);
+                        RETHROW;
+                }
+                END_TRY;
         }
 #endif
-        return false;
 }
 
 

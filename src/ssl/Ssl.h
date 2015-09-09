@@ -97,9 +97,9 @@ void Ssl_free(T *C);
  * @param socket A socket
  * @param timeout Milliseconds to wait for connection to be established
  * @param name A server name string (optional)
- * @return true if succeeded or false if failed
+ * @exception IOException or AssertException if failed
  */
-boolean_t Ssl_connect(T C, int socket, int timeout, const char *name);
+void Ssl_connect(T C, int socket, int timeout, const char *name);
 
 
 /**
@@ -135,9 +135,9 @@ int Ssl_read(T C, void *b, int size, int timeout);
  * Set client certificate.
  * @param C An SSL connection object
  * @param file Path to client PEM file
- * @return true if succeeded, otherwise false
+ * @exception AssertException if failed
  */
-boolean_t Ssl_setClientCertificate(T C, char *file);
+void Ssl_setClientCertificate(T C, char *file);
 
 
 /**
@@ -145,7 +145,7 @@ boolean_t Ssl_setClientCertificate(T C, char *file);
  * @param C An SSL connection object
  * @param allow Boolean flag (true = allow, false = reject)
  */
-void Ssl_allowSelfSignedCertificates(T C, boolean_t allow);
+void Ssl_setAllowSelfSignedCertificates(T C, boolean_t allow);
 
 
 /**
@@ -153,16 +153,15 @@ void Ssl_allowSelfSignedCertificates(T C, boolean_t allow);
  * @param C An SSL connection object
  * @param days Minimum number of valid days
  */
-void Ssl_certificateMinimumValidDays(T C, int days);
+void Ssl_setCertificateMinimumValidDays(T C, int days);
 
 
 /**
- * Compare a peer certificate with a given MD5 checksum
+ * Check a peer certificate with a given MD5 checksum
  * @param C An SSL connection object
- * @param md5sum Expected MD5 checksum in string format
- * @return true if succeeded or false if failed
+ * @param checksum Expected MD5 checksum in string format
  */
-boolean_t Ssl_checkCertificateHash(T C, char *md5sum);
+void Ssl_setCertificateChecksum(T C, const char *checksum);
 
 
 #undef T

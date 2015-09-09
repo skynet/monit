@@ -86,6 +86,7 @@
 #include "system/Net.h"
 #include "system/Time.h"
 #include "exceptions/AssertException.h"
+#include "exceptions/IOException.h"
 
 
 /**
@@ -131,6 +132,8 @@ struct T {
         SSL_CTX *ctx;
         X509 *certificate;
         char *clientpemfile;
+        MD_T checksum;
+        char error[128];
 };
 
 
@@ -173,63 +176,107 @@ static void _mutexLock(int mode, int n, const char *file, int line) {
 }
 
 
+static int _checkExpiration(T C, X509_STORE_CTX *ctx, X509 *certificate) {
+        if (C->minimumValidDays) {
+                // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
+                int deltadays = 0;
+#ifdef HAVE_ASN1_TIME_DIFF
+                int deltaseconds;
+                if (! ASN1_TIME_diff(&deltadays, &deltaseconds, NULL, X509_get_notAfter(certificate))) {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
+                        snprintf(C->error, sizeof(C->error), "invalid time format in the certificate notAfter field");
+                        return 0;
+                }
+#else
+                ASN1_GENERALIZEDTIME *t = ASN1_TIME_to_generalizedtime(X509_get_notAfter(certificate), NULL);
+                if (! t) {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
+                        snprintf(C->error, sizeof(C->error), "invalid time format in the certificate notAfter field");
+                        return 0;
+                }
+                TRY
+                {
+                        deltadays = (double)(Time_toTimestamp((const char *)t->data) - Time_now()) / 86400.;
+                }
+                ELSE
+                {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
+                        snprintf(C->error, sizeof(C->error), "invalid time format in the certificate notAfter field -- %s", t->data);
+                }
+                FINALLY
+                {
+                        ASN1_STRING_free(t);
+                }
+                END_TRY;
+#endif
+                if (deltadays < C->minimumValidDays) {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+                        snprintf(C->error, sizeof(C->error), "the certificate will expire in %d days, please renew it", deltadays);
+                        return 0;
+                }
+        }
+        return 1;
+}
+
+
+static int _checkChecksum(T C, X509_STORE_CTX *ctx, X509 *certificate) {
+        if (X509_STORE_CTX_get_error_depth(ctx) == 0 && *C->checksum) {
+                if (! (Run.flags & Run_FipsEnabled)) {
+                        unsigned int len, i = 0;
+                        unsigned char md5[EVP_MAX_MD_SIZE];
+                        X509_digest(certificate, EVP_md5(), md5, &len);
+                        while ((i < len) && (C->checksum[2 * i] != '\0') && (C->checksum[2 * i + 1] != '\0')) {
+                                unsigned char c = (C->checksum[2 * i] > 57 ? C->checksum[2 * i] - 87 : C->checksum[2 * i] - 48) * 0x10 + (C->checksum[2 * i + 1] > 57 ? C->checksum[2 * i + 1] - 87 : C->checksum[2 * i + 1] - 48);
+                                if (c != md5[i]) {
+                                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+                                        snprintf(C->error, sizeof(C->error), "SSL server certificate checksum failed");
+                                        return 0;
+                                }
+                                i++;
+                        }
+                } else {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+                        snprintf(C->error, sizeof(C->error), "SSL certificate checksum skipped -- MD5 not supported in FIPS mode");
+                        return 0;
+                }
+        }
+        return 1;
+}
+
+
 static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
         T C = SSL_get_app_data(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
         if (! C) {
-                LogError("SSL: cannot get application data\n");
+                LogError("SSL: cannot get application data");
                 return 0;
         }
+        *C->error = 0;
         if (! preverify_ok) {
                 int error = X509_STORE_CTX_get_error(ctx);
                 switch (error) {
                         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-                                if (C->allowSelfSignedCertificates)
+                                if (C->allowSelfSignedCertificates) {
                                         X509_STORE_CTX_set_error(ctx, X509_V_OK);
+                                        return 1;
+                                }
+                                snprintf(C->error, sizeof(C->error), "self signed certificate not allowed, please replace it or use 'allowselfcertification' option");
                                 break;
                         default:
+                                snprintf(C->error, sizeof(C->error), "%s", ERR_error_string(error, NULL));
                                 break;
                 }
         } else {
                 X509 *certificate = X509_STORE_CTX_get_current_cert(ctx);
                 if (certificate) {
-                        if (C->minimumValidDays) {
-                                // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
-                                int deltadays = 0;
-#ifdef HAVE_ASN1_TIME_DIFF
-                                int deltaseconds;
-                                if (! ASN1_TIME_diff(&deltadays, &deltaseconds, NULL, X509_get_notAfter(certificate))) {
-                                        LogError("SSL: invalid time format in the certificate notAfter field\n");
-                                        return 0;
-                                }
-#else
-                                ASN1_GENERALIZEDTIME *t = ASN1_TIME_to_generalizedtime(X509_get_notAfter(certificate), NULL);
-                                if (! t) {
-                                        LogError("SSL: invalid time format in the certificate notAfter field\n");
-                                        return 0;
-                                }
-                                TRY
-                                {
-                                        deltadays = (double)(Time_toTimestamp((const char *)t->data) - Time_now()) / 86400.;
-                                }
-                                ELSE
-                                {
-                                        LogError("SSL: invalid time format in the certificate notAfter field -- %s\n", t->data);
-                                }
-                                FINALLY
-                                {
-                                        ASN1_STRING_free(t);
-                                }
-                                END_TRY;
-#endif
-                                if (deltadays < C->minimumValidDays) {
-                                        LogError("SSL: the certificate will expire in %d days, please renew it\n", deltadays);
-                                        return 0;
-                                }
-                        }
-                        //FIXME: allow to optionally check the certificate subject and issuer? Similarly to checksum test: either notify on any change, or allow to set expected string
+                        //FIXME: additional tests ... allow to optionally check the certificate subject and issuer? (similarly to file checksum test: either notify on any change, or allow to set expected string)
+                        return (_checkExpiration(C, ctx, certificate) && _checkChecksum(C, ctx, certificate));
+                } else {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+                        snprintf(C->error, sizeof(C->error), "cannot get SSL server certificate");
+                        return 0;
                 }
         }
-        return 1;
+        return 0;
 }
 
 
@@ -407,8 +454,6 @@ sslerror:
 
 void Ssl_free(T *C) {
         ASSERT(C && *C);
-        if ((*C)->certificate)
-                X509_free((*C)->certificate);
         if ((*C)->handler)
                 SSL_free((*C)->handler);
         if ((*C)->ctx && ! (*C)->accepted)
@@ -426,7 +471,7 @@ void Ssl_close(T C) {
 }
 
 
-boolean_t Ssl_connect(T C, int socket, int timeout, const char *name) {
+void Ssl_connect(T C, int socket, int timeout, const char *name) {
         ASSERT(C);
         ASSERT(socket >= 0);
         C->socket = socket;
@@ -447,24 +492,16 @@ boolean_t Ssl_connect(T C, int socket, int timeout, const char *name) {
                                         retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
                                 default:
-                                        LogError("SSL: connection error -- %s\n", SSLERROR);
-                                        return false;
+                                        THROW(IOException, "SSL connection error: %s", *C->error ? C->error : SSLERROR);
+                                        break;
                         }
                 } else {
                         break;
                 }
         } while (retry);
-        C->certificate = SSL_get_peer_certificate(C->handler);
-        if (! C->certificate) {
-                LogError("SSL: cannot get server certificate\n");
-                return false;
-        }
         long rv = SSL_get_verify_result(C->handler);
-        if (rv != X509_V_OK) {
-                LogError("SSL: server certificate verification failed -- %s\n", X509_verify_cert_error_string(rv));
-                return false;
-        }
-        return true;
+        if (rv != X509_V_OK)
+                THROW(IOException, "SSL server certificate verification failed -- %s", *C->error ? C->error : X509_verify_cert_error_string(rv));
 }
 
 
@@ -550,58 +587,40 @@ int Ssl_read(T C, void *b, int size, int timeout) {
 }
 
 
-boolean_t Ssl_setClientCertificate(T C, char *file) {
+void Ssl_setClientCertificate(T C, char *file) {
         ASSERT(C);
         if (file) {
+                if (SSL_CTX_use_certificate_chain_file(C->ctx, file) != 1)
+                        THROW(AssertException, "SSL client certificate chain loading failed: %s", SSLERROR);
+                if (SSL_CTX_use_PrivateKey_file(C->ctx, file, SSL_FILETYPE_PEM) != 1)
+                        THROW(AssertException, "SSL client private key loading failed: %s", SSLERROR);
+                if (SSL_CTX_check_private_key(C->ctx) != 1)
+                        THROW(AssertException, "SSL client private key doesn't match the certificate: %s", SSLERROR);
                 C->clientpemfile = Str_dup(file);
-                if (SSL_CTX_use_certificate_chain_file(C->ctx, C->clientpemfile) != 1) {
-                        LogError("SSL: client certificate chain loading failed -- %s\n", SSLERROR);
-                        return false;
-                }
-                if (SSL_CTX_use_PrivateKey_file(C->ctx, C->clientpemfile, SSL_FILETYPE_PEM) != 1) {
-                        LogError("SSL: client private key loading failed -- %s\n", SSLERROR);
-                        return false;
-                }
-                if (SSL_CTX_check_private_key(C->ctx) != 1) {
-                        LogError("SSL: client private key doesn't match the certificate -- %s\n", SSLERROR);
-                        return false;
-                }
         } else {
                 FREE(C->clientpemfile);
         }
-        return true;
 }
 
 
-void Ssl_allowSelfSignedCertificates(T C, boolean_t allow) {
+void Ssl_setAllowSelfSignedCertificates(T C, boolean_t allow) {
         ASSERT(C);
         C->allowSelfSignedCertificates = allow;
 }
 
 
-void Ssl_certificateMinimumValidDays(T C, int days) {
+void Ssl_setCertificateMinimumValidDays(T C, int days) {
         ASSERT(C);
         C->minimumValidDays = days;
 }
 
-boolean_t Ssl_checkCertificateHash(T C, char *md5sum) {
+
+void Ssl_setCertificateChecksum(T C, const char *checksum) {
         ASSERT(C);
-        ASSERT(C->certificate);
-        ASSERT(md5sum);
-        if (! (Run.flags & Run_FipsEnabled)) {
-                unsigned int len, i = 0;
-                unsigned char md5[EVP_MAX_MD_SIZE];
-                X509_digest(C->certificate, EVP_md5(), md5, &len);
-                while ((i < len) && (md5sum[2 * i] != '\0') && (md5sum[2 * i + 1] != '\0')) {
-                        unsigned char c = (md5sum[2 * i] > 57 ? md5sum[2 * i] - 87 : md5sum[2 * i] - 48) * 0x10 + (md5sum[2 * i + 1] > 57 ? md5sum[2 * i + 1] - 87 : md5sum[2 * i + 1] - 48);
-                        if (c != md5[i])
-                                return false;
-                        i++;
-                }
-                return true;
-        }
-        LogError("SSL: certificate checksum error -- MD5 not supported in FIPS mode\n");
-        return false;
+        if (checksum)
+                snprintf(C->checksum, sizeof(C->checksum), "%s", checksum);
+        else
+                *C->checksum = 0;
 }
 
 
