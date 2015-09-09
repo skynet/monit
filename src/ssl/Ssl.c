@@ -191,32 +191,38 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                 }
         } else {
                 X509 *certificate = X509_STORE_CTX_get_current_cert(ctx);
-                if (certificate && C->minimumValidDays) {
-                        // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
+                if (certificate) {
+                        if (C->minimumValidDays) {
+                                // If we have warn-X-days-before-expire condition, check the certificate validity (already expired certificates are catched in preverify => we don't need to handle them here).
+                                time_t deltadays = 0;
 #ifdef HAVE_ASN1_TIME_DIFF
-                        int day, sec;
-                        if (! ASN1_TIME_diff(&day, &sec, NULL, X509_get_notAfter(certificate))) {
-                                LogError("SSL: invalid time format in the certificate notAfter field\n");
-                                return 0;
-                        }
-                        if (day * 86400 + sec < C->minimumValidDays * 86400) {
-                                LogError("SSL: the certificate will expire in %d days, please renew it\n", day);
-                                return 0;
-                        }
+                                int deltaseconds;
+                                if (! ASN1_TIME_diff(&deltadays, &deltaseconds, NULL, X509_get_notAfter(certificate))) {
+                                        LogError("SSL: invalid time format in the certificate notAfter field\n");
+                                        return 0;
+                                }
 #else
-
-                        time_t t = Time_now() - C->minimumValidDays * 86400;
-                        int rv = X509_cmp_time(X509_get_notAfter(certificate), &t);
-                        if (rv == 0) {
-                                LogError("SSL: invalid time format in the certificate notAfter field\n");
-                                return 0;
-                        } else if (rv < 0) {
-                                LogError("SSL: the certificate will expire in less then %d days, please renew it\n", C->minimumValidDays);
-                                return 0;
-                        }
+                                ASN1_GENERALIZEDTIME *t = ASN1_TIME_to_generalizedtime(X509_get_notAfter(certificate), NULL);
+                                if (! t) {
+                                        LogError("SSL: invalid time format in the certificate notAfter field\n");
+                                        return 0;
+                                }
+                                int year, month, day, hour, minute, second;
+                                if (sscanf(t->data, "%4d%2d%2d%2d%2d%2d", &year, &month, &day, &hour, &minute, &second) != 6) {
+                                        LogError("SSL: invalid time format in the certificate notAfter field -- %s\n", t->data);
+                                        ASN1_STRING_free(t);
+                                        return 0;
+                                }
+                                ASN1_STRING_free(t);
+                                deltadays = (double)(Time_build(year, month, day, hour, minute, second) - Time_now()) / 86400.;
 #endif
+                                if (deltadays < C->minimumValidDays) {
+                                        LogError("SSL: the certificate will expire in %d days, please renew it\n", deltadays);
+                                        return 0;
+                                }
+                        }
+                        //FIXME: allow to optionally check the certificate subject and issuer? Similarly to checksum test: either notify on any change, or allow to set expected string
                 }
-                //FIXME: allow to optionally check the certificate subject and issuer? Similarly to checksum test: either notify on any change, or allow to set expected string
         }
         return 1;
 }
