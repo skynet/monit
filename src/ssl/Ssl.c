@@ -596,6 +596,7 @@ void Ssl_setClientCertificate(T C, char *file) {
                         THROW(AssertException, "SSL client private key loading failed: %s", SSLERROR);
                 if (SSL_CTX_check_private_key(C->ctx) != 1)
                         THROW(AssertException, "SSL client private key doesn't match the certificate: %s", SSLERROR);
+                FREE(C->clientpemfile);
                 C->clientpemfile = Str_dup(file);
         } else {
                 FREE(C->clientpemfile);
