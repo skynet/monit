@@ -208,7 +208,7 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                                         return 0;
                                 }
                                 int year, month, day, hour, minute, second;
-                                if (sscanf(t->data, "%4d%2d%2d%2d%2d%2d", &year, &month, &day, &hour, &minute, &second) != 6) {
+                                if (sscanf((const char *)t->data, "%4d%2d%2d%2d%2d%2d", &year, &month, &day, &hour, &minute, &second) != 6) {
                                         LogError("SSL: invalid time format in the certificate notAfter field -- %s\n", t->data);
                                         ASN1_STRING_free(t);
                                         return 0;
