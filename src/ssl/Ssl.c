@@ -207,14 +207,19 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                                         LogError("SSL: invalid time format in the certificate notAfter field\n");
                                         return 0;
                                 }
-                                int year, month, day, hour, minute, second;
-                                if (sscanf((const char *)t->data, "%4d%2d%2d%2d%2d%2d", &year, &month, &day, &hour, &minute, &second) != 6) {
-                                        LogError("SSL: invalid time format in the certificate notAfter field -- %s\n", t->data);
-                                        ASN1_STRING_free(t);
-                                        return 0;
+                                TRY
+                                {
+                                        deltadays = (double)(Time_toTimestamp((const char *)t->data) - Time_now()) / 86400.;
                                 }
-                                ASN1_STRING_free(t);
-                                deltadays = (double)(Time_build(year, month, day, hour, minute, second) - Time_now()) / 86400.;
+                                ELSE
+                                {
+                                        LogError("SSL: invalid time format in the certificate notAfter field -- %s\n", t->data);
+                                }
+                                FINALLY
+                                {
+                                        ASN1_STRING_free(t);
+                                }
+                                END_TRY;
 #endif
                                 if (deltadays < C->minimumValidDays) {
                                         LogError("SSL: the certificate will expire in %d days, please renew it\n", deltadays);
