@@ -498,9 +498,6 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
                         break;
                 }
         } while (retry);
-        long rv = SSL_get_verify_result(C->handler);
-        if (rv != X509_V_OK)
-                THROW(IOException, "SSL server certificate verification failed -- %s", *C->error ? C->error : X509_verify_cert_error_string(rv));
 }
 
 
