@@ -262,7 +262,6 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                                 snprintf(C->error, sizeof(C->error), "self signed certificate is not allowed, please use a trusted certificate or use the 'allowselfcertification' option");
                                 break;
                         default:
-                                snprintf(C->error, sizeof(C->error), "%s", ERR_error_string(error, NULL));
                                 break;
                 }
         } else {
@@ -479,7 +478,7 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
         _setServerNameIdentification(C, name);
         boolean_t retry = false;
         do {
-                int rv = SSL_connect(C->handler);
+                long rv = SSL_connect(C->handler);
                 if (rv < 0) {
                         switch (SSL_get_error(C->handler, rv)) {
                                 case SSL_ERROR_NONE:
@@ -491,7 +490,11 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
                                         retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
                                 default:
-                                        THROW(IOException, "SSL connection error: %s", *C->error ? C->error : SSLERROR);
+					rv = SSL_get_verify_result(C->handler);
+					if (rv != X509_V_OK)
+                                                THROW(IOException, "SSL server certificate verification error: %s", *C->error ? C->error : X509_verify_cert_error_string(rv));
+					else
+                                                THROW(IOException, "SSL connection error: %s", SSLERROR);
                                         break;
                         }
                 } else {
