@@ -184,14 +184,14 @@ static int _checkExpiration(T C, X509_STORE_CTX *ctx, X509 *certificate) {
                 int deltaseconds;
                 if (! ASN1_TIME_diff(&deltadays, &deltaseconds, NULL, X509_get_notAfter(certificate))) {
                         X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
-                        snprintf(C->error, sizeof(C->error), "invalid time format in the certificate notAfter field");
+                        snprintf(C->error, sizeof(C->error), "invalid time format (in certificate's notAfter field)");
                         return 0;
                 }
 #else
                 ASN1_GENERALIZEDTIME *t = ASN1_TIME_to_generalizedtime(X509_get_notAfter(certificate), NULL);
                 if (! t) {
                         X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
-                        snprintf(C->error, sizeof(C->error), "invalid time format in the certificate notAfter field");
+                        snprintf(C->error, sizeof(C->error), "invalid time format (in certificate's notAfter field)");
                         return 0;
                 }
                 TRY
@@ -201,7 +201,7 @@ static int _checkExpiration(T C, X509_STORE_CTX *ctx, X509 *certificate) {
                 ELSE
                 {
                         X509_STORE_CTX_set_error(ctx, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
-                        snprintf(C->error, sizeof(C->error), "invalid time format in the certificate notAfter field -- %s", t->data);
+                        snprintf(C->error, sizeof(C->error), "invalid time format (in certificate's notAfter field) -- %s", t->data);
                 }
                 FINALLY
                 {
@@ -259,7 +259,7 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                                         X509_STORE_CTX_set_error(ctx, X509_V_OK);
                                         return 1;
                                 }
-                                snprintf(C->error, sizeof(C->error), "self signed certificate not allowed, please use trusted one or use 'allowselfcertification' option");
+                                snprintf(C->error, sizeof(C->error), "self signed certificate is not allowed, please use a trusted certificate or use the 'allowselfcertification' option");
                                 break;
                         default:
                                 snprintf(C->error, sizeof(C->error), "%s", ERR_error_string(error, NULL));
@@ -285,7 +285,7 @@ static int _verifyClientCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                 switch (error) {
                         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
                                 if (! (Run.httpd.flags & Httpd_AllowSelfSignedCertificates)) {
-                                        LogError("SSL: self-signed certificate not allowed\n");
+                                        LogError("SSL: self-signed certificate is not allowed\n");
                                         return 0;
                                 }
                                 X509_STORE_CTX_set_error(ctx, X509_V_OK); // Reset error if we accept self-signed certificates
@@ -684,7 +684,7 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                 goto sslerror;
         }
         if (SSL_CTX_check_private_key(S->ctx) != 1) {
-                LogError("SSL: server private key doesn't match the certificate -- %s\n", SSLERROR);
+                LogError("SSL: server private key do not match the certificate -- %s\n", SSLERROR);
                 goto sslerror;
         }
         if (S->clientpemfile) {
@@ -705,7 +705,7 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                         }
                         SSL_CTX_set_client_CA_list(S->ctx, SSL_load_client_CA_file(S->clientpemfile));
                 } else {
-                        LogError("SSL: client PEM %s is not file nor directory\n", S->clientpemfile);
+                        LogError("SSL: client PEM %s is not a file nor a directory\n", S->clientpemfile);
                         goto sslerror;
                 }
                 // Load server certificate for monit CLI authentication
@@ -790,7 +790,7 @@ boolean_t SslServer_accept(T C, int socket, int timeout) {
         if (C->clientpemfile) {
                 X509 *cert = SSL_get_peer_certificate(C->handler);
                 if (! cert) {
-                        LogError("SSL: client didn't send a client certificate\n");
+                        LogError("SSL: client did not send a client certificate\n");
                         return false;
                 }
                 X509_free(cert);
