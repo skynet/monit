@@ -259,7 +259,7 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                                         X509_STORE_CTX_set_error(ctx, X509_V_OK);
                                         return 1;
                                 }
-                                snprintf(C->error, sizeof(C->error), "self signed certificate not allowed, please replace it or use 'allowselfcertification' option");
+                                snprintf(C->error, sizeof(C->error), "self signed certificate not allowed, please use trusted one or use 'allowselfcertification' option");
                                 break;
                         default:
                                 snprintf(C->error, sizeof(C->error), "%s", ERR_error_string(error, NULL));
@@ -268,7 +268,6 @@ static int _verifyServerCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
         } else {
                 X509 *certificate = X509_STORE_CTX_get_current_cert(ctx);
                 if (certificate) {
-                        //FIXME: additional tests ... allow to optionally check the certificate subject and issuer? (similarly to file checksum test: either notify on any change, or allow to set expected string)
                         return (_checkExpiration(C, ctx, certificate) && _checkChecksum(C, ctx, certificate));
                 } else {
                         X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
