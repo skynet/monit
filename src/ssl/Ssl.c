@@ -478,7 +478,7 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
         _setServerNameIdentification(C, name);
         boolean_t retry = false;
         do {
-                long rv = SSL_connect(C->handler);
+                int rv = SSL_connect(C->handler);
                 if (rv < 0) {
                         switch (SSL_get_error(C->handler, rv)) {
                                 case SSL_ERROR_NONE:
@@ -490,7 +490,7 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
                                         retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
                                 default:
-					rv = SSL_get_verify_result(C->handler);
+					rv = (int)SSL_get_verify_result(C->handler);
 					if (rv != X509_V_OK)
                                                 THROW(IOException, "SSL server certificate verification error: %s", *C->error ? C->error : X509_verify_cert_error_string(rv));
 					else
@@ -713,7 +713,7 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                         LogError("SSL: server certificate CA certificates %s loading failed -- %s\n", S->pemfile, SSLERROR);
                         goto sslerror;
                 }
-                SSL_CTX_set_verify(S->ctx, SSL_VERIFY_PEER, _verifyClientCertificates);
+                SSL_CTX_set_verify(S->ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, _verifyClientCertificates);
         } else {
                 SSL_CTX_set_verify(S->ctx, SSL_VERIFY_NONE, NULL);
         }
@@ -780,26 +780,17 @@ boolean_t SslServer_accept(T C, int socket, int timeout) {
                                         retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
                                 default:
-                                        LogError("SSL: connection error -- %s\n", SSLERROR);
+                                        rv = (int)SSL_get_verify_result(C->handler);
+                                        if (rv != X509_V_OK)
+                                                LogError("SSL client certificate verification error: %s\n", *C->error ? C->error : X509_verify_cert_error_string(rv));
+                                        else
+                                                LogError("SSL accept error: %s\n", SSLERROR);
                                         return false;
                         }
                 } else {
                         break;
                 }
         } while (retry);
-        if (C->clientpemfile) {
-                X509 *cert = SSL_get_peer_certificate(C->handler);
-                if (! cert) {
-                        LogError("SSL: client did not send a client certificate\n");
-                        return false;
-                }
-                X509_free(cert);
-                long rv = SSL_get_verify_result(C->handler);
-                if (rv != X509_V_OK) {
-                        LogError("SSL: client certificate verification failed -- %s\n", X509_verify_cert_error_string(rv));
-                        return false;
-                }
-        }
         return true;
 }
 
