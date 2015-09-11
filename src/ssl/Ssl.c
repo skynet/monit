@@ -297,7 +297,7 @@ static int _verifyClientCertificates(int preverify_ok, X509_STORE_CTX *ctx) {
                 }
         }
         X509_OBJECT found_cert;
-        if (X509_STORE_CTX_get_error_depth(ctx) == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(ctx->current_cert), &found_cert) != 1) {
+        if (X509_STORE_CTX_get_error_depth(ctx) == 0 && X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_subject_name(X509_STORE_CTX_get_current_cert(ctx)), &found_cert) != 1) {
                 LogError("SSL: no matching certificate found -- %s\n", SSLERROR);
                 return 0;
         }
