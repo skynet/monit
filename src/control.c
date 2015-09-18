@@ -327,21 +327,19 @@ static void _doUnmonitor(Service_T s) {
 static void _doDepend(Service_T s, Action_Type action, boolean_t unmonitor) {
         ASSERT(s);
         for (Service_T child = servicelist; child; child = child->next) {
-                if (child->dependantlist) {
-                        for (Dependant_T d = child->dependantlist; d; d = d->next) {
-                                if (IS(d->dependant, s->name)) {
-                                        if (action == Action_Start && s->monitor != Monitor_Not)
-                                                // Start the child only if its monitoring is allowed (parent restart first stops all children and then starts them again, but ony those which were active before parent's restart
-                                                _doStart(child);
-                                        else if (action == Action_Monitor)
-                                                _doMonitor(child);
-                                        _doDepend(child, action, unmonitor);
-                                        if (action == Action_Stop)
-                                                _doStop(child, unmonitor);
-                                        else if (action == Action_Unmonitor)
-                                                _doUnmonitor(child);
-                                        break;
-                                }
+                for (Dependant_T d = child->dependantlist; d; d = d->next) {
+                        if (IS(d->dependant, s->name)) {
+                                if (action == Action_Start && child->monitor != Monitor_Not)
+                                        // Start the child only if its monitoring is allowed (parent restart first stops all children and then starts them again, but ony those which were active before parent's restart
+                                        _doStart(child);
+                                else if (action == Action_Monitor)
+                                        _doMonitor(child);
+                                _doDepend(child, action, unmonitor);
+                                if (action == Action_Stop)
+                                        _doStop(child, unmonitor);
+                                else if (action == Action_Unmonitor)
+                                        _doUnmonitor(child);
+                                break;
                         }
                 }
         }
