@@ -957,7 +957,7 @@ static boolean_t do_scheduled_action(Service_T s) {
         if (s->doaction != Action_Ignored) {
                 // FIXME: let the event engine do the action directly? (just replace s->action_ACTION with s->doaction and drop control_service call)
                 rv = control_service(s->name, s->doaction);
-                Event_post(s, Event_Action, State_Changed, s->action_ACTION, "%s action done", actionnames[s->doaction]);
+                Event_post(s, Event_Action, State_Changed, s->action_ACTION, "%s action %s", actionnames[s->doaction], rv ? "done" : "failed");
                 s->doaction = Action_Ignored;
                 FREE(s->token);
         }
@@ -1268,6 +1268,7 @@ boolean_t check_fifo(Service_T s) {
 boolean_t check_program(Service_T s) {
         ASSERT(s);
         ASSERT(s->program);
+        boolean_t rv = true;
         time_t now = Time_now();
         Process_T P = s->program->P;
         if (P) {
@@ -1307,10 +1308,12 @@ boolean_t check_program(Service_T s) {
                                         status->return_value = s->program->exitStatus;
                                 }
                         } else {
-                                if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value))
+                                if (Util_evalQExpression(status->operator, s->program->exitStatus, status->return_value)) {
+                                        rv = false;
                                         Event_post(s, Event_Status, State_Failed, status->action, "'%s' failed with exit status (%d) -- %s", s->path, s->program->exitStatus, StringBuffer_length(s->program->output) ? StringBuffer_toString(s->program->output) : "no output");
-                                else
+                                } else {
                                         Event_post(s, Event_Status, State_Succeeded, status->action, "status succeeded [status=%d] -- %s", s->program->exitStatus, StringBuffer_length(s->program->output) ? StringBuffer_toString(s->program->output) : "no output");
+                                }
                         }
                 }
                 Process_free(&s->program->P);
@@ -1323,7 +1326,7 @@ boolean_t check_program(Service_T s) {
                 Event_post(s, Event_Status, State_Succeeded, s->action_EXEC, "'%s' program started", s->name);
                 s->program->started = now;
         }
-        return true;
+        return rv;
 }
 
 
