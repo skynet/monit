@@ -610,15 +610,13 @@ void Socket_test(void *P) {
 void Socket_enableSsl(T S, SslOptions_T ssl, const char *name)  {
         assert(S);
 #ifdef HAVE_OPENSSL
-        if ((S->ssl = Ssl_new(ssl.version))) {
+        if ((S->ssl = Ssl_new(ssl.version, ssl.clientpemfile))) {
                 if (ssl.allowSelfCertification)
                         Ssl_setAllowSelfSignedCertificates(S->ssl, true);
                 if (ssl.minimumValidDays > 0)
                         Ssl_setCertificateMinimumValidDays(S->ssl, ssl.minimumValidDays);
                 if (ssl.certmd5)
                         Ssl_setCertificateChecksum(S->ssl, ssl.certmd5);
-                if (ssl.clientpemfile)
-                        Ssl_setClientCertificate(S->ssl, ssl.clientpemfile);
                 Ssl_connect(S->ssl, S->socket, S->timeout, name);
         } else {
                 THROW(AssertException, "Cannot create a SSL object");

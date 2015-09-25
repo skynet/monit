@@ -159,9 +159,9 @@ static unsigned long _threadID() {
 
 static boolean_t _retry(int socket, int *timeout, int (*callback)(int socket, time_t milliseconds)) {
         long long start = Time_milli();
-        if (callback(socket, *timeout)) {
+        if (callback(socket, *timeout) && ! (Run.flags & Run_Stopped)) {
                 long long stop = Time_milli();
-                if (stop >= start && (*timeout -= stop - start) > 0) // Reduce timeout with guard against backward clock jumps
+                if (stop >= start && (*timeout -= stop - start) > 0 && ! (Run.flags & Run_Stopped)) // Reduce timeout with guard against backward clock jumps
                         return true;
         }
         return false;
@@ -323,6 +323,24 @@ static boolean_t _setServerNameIdentification(T C, const char *hostname) {
 }
 
 
+static boolean_t _setClientCertificate(T C, const char *file) {
+        if (SSL_CTX_use_certificate_chain_file(C->ctx, file) != 1) {
+                LogError("SSL client certificate chain loading failed: %s\n", SSLERROR);
+                return false;
+        }
+        if (SSL_CTX_use_PrivateKey_file(C->ctx, file, SSL_FILETYPE_PEM) != 1) {
+                LogError("SSL client private key loading failed: %s\n", SSLERROR);
+                return false;
+        }
+        if (SSL_CTX_check_private_key(C->ctx) != 1) {
+                LogError("SSL client private key doesn't match the certificate: %s\n", SSLERROR);
+                return false;
+        }
+        C->clientpemfile = Str_dup(file);
+        return true;
+}
+
+
 /* ------------------------------------------------------------------ Public */
 
 
@@ -371,7 +389,7 @@ void Ssl_setFipsMode(boolean_t enabled) {
 }
 
 
-T Ssl_new(Ssl_Version version) {
+T Ssl_new(Ssl_Version version, const char *clientpem) {
         T C;
         NEW(C);
         C->version = version;
@@ -427,6 +445,8 @@ T Ssl_new(Ssl_Version version) {
                 LogError("SSL: client context initialization failed -- %s\n", SSLERROR);
                 goto sslerror;
         }
+        if (clientpem && ! _setClientCertificate(C, clientpem))
+                goto sslerror;
         SSL_CTX_set_default_verify_paths(C->ctx);
         SSL_CTX_set_verify(C->ctx, SSL_VERIFY_PEER, _verifyServerCertificates);
         if (version == SSL_Auto)
@@ -587,23 +607,6 @@ int Ssl_read(T C, void *b, int size, int timeout) {
 }
 
 
-void Ssl_setClientCertificate(T C, char *file) {
-        ASSERT(C);
-        if (file) {
-                if (SSL_CTX_use_certificate_chain_file(C->ctx, file) != 1)
-                        THROW(AssertException, "SSL client certificate chain loading failed: %s", SSLERROR);
-                if (SSL_CTX_use_PrivateKey_file(C->ctx, file, SSL_FILETYPE_PEM) != 1)
-                        THROW(AssertException, "SSL client private key loading failed: %s", SSLERROR);
-                if (SSL_CTX_check_private_key(C->ctx) != 1)
-                        THROW(AssertException, "SSL client private key doesn't match the certificate: %s", SSLERROR);
-                FREE(C->clientpemfile);
-                C->clientpemfile = Str_dup(file);
-        } else {
-                FREE(C->clientpemfile);
-        }
-}
-
-
 void Ssl_setAllowSelfSignedCertificates(T C, boolean_t allow) {
         ASSERT(C);
         C->allowSelfSignedCertificates = allow;
@@ -694,22 +697,15 @@ SslServer_T SslServer_new(char *pemfile, char *clientpemfile, int socket) {
                         LogError("SSL: client PEM file %s error -- %s\n", Run.httpd.socket.net.ssl.clientpem, STRERROR);
                         goto sslerror;
                 }
-                if (S_ISDIR(sb.st_mode)) {
-                        if (! SSL_CTX_load_verify_locations(S->ctx, NULL , S->clientpemfile)) {
-                                LogError("SSL: client PEM file CA certificates %s loading failed -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
-                                goto sslerror;
-                        }
-                } else if (S_ISREG(sb.st_mode)) {
-                        if (! SSL_CTX_load_verify_locations(S->ctx, S->clientpemfile, NULL)) {
-                                LogError("SSL: client PEM file CA certificates %s loading failed -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
-                                goto sslerror;
-                        }
-                        SSL_CTX_set_client_CA_list(S->ctx, SSL_load_client_CA_file(S->clientpemfile));
-                } else {
-                        LogError("SSL: client PEM %s is not a file nor a directory\n", S->clientpemfile);
+                if (! S_ISREG(sb.st_mode)) {
+                        LogError("SSL: client PEM file %s is not a file\n", S->clientpemfile);
                         goto sslerror;
                 }
-                // Load server certificate for monit CLI authentication
+                if (! SSL_CTX_load_verify_locations(S->ctx, S->clientpemfile, NULL)) {
+                        LogError("SSL: client PEM file CA certificates %s loading failed -- %s\n", Run.httpd.socket.net.ssl.clientpem, SSLERROR);
+                        goto sslerror;
+                }
+                SSL_CTX_set_client_CA_list(S->ctx, SSL_load_client_CA_file(S->clientpemfile));
                 if (! SSL_CTX_load_verify_locations(S->ctx, S->pemfile, NULL)) {
                         LogError("SSL: server certificate CA certificates %s loading failed -- %s\n", S->pemfile, SSLERROR);
                         goto sslerror;
