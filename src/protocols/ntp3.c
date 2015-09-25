@@ -59,13 +59,10 @@
 
 void check_ntp3(Socket_T socket) {
         int  br;
-        char ntpRequest[NTPLEN];
-        char ntpResponse[NTPLEN];
+        char ntpRequest[NTPLEN] = {};
+        char ntpResponse[NTPLEN] = {};
 
         ASSERT(socket);
-
-        memset(ntpRequest, 0, NTPLEN);
-        memset(ntpResponse, 0, NTPLEN);
 
         /*
          Prepare NTP request. The first octet consists of:

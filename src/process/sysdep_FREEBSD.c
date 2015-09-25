@@ -237,8 +237,7 @@ boolean_t used_system_memory_sysdep(SystemInfo_T *si) {
         si->total_mem_kbyte = (active + wired) * pagesize_kbyte;
 
         /* Swap */
-        int mib[16];
-        memset(mib, 0, sizeof(mib));
+        int mib[16] = {};
         unsigned long long total = 0ULL;
         unsigned long long used  = 0ULL;
         size_t miblen = sizeof(mib) / sizeof(mib[0]);

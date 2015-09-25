@@ -312,8 +312,7 @@ static void _setPingOptions(int socket, struct addrinfo *addr) {
 
 
 static boolean_t _sendPing(const char *hostname, int socket, struct addrinfo *addr, int retry, int maxretries, int id, long long started) {
-        char buf[STRLEN];
-        memset(buf, 0, sizeof(buf));
+        char buf[STRLEN] = {};
         int out_len = 0;
         void *out_icmp = NULL;
         struct icmp *out_icmp4;

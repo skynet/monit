@@ -713,8 +713,8 @@ boolean_t Util_getChecksum(char *file, Hash_Type hashtype, char *buf, int bufsiz
 void Util_hmacMD5(const unsigned char *data, int datalen, const unsigned char *key, int keylen, unsigned char *digest) {
         md5_context_t ctx;
         md5_init(&ctx);
-        unsigned char k_ipad[65];
-        unsigned char k_opad[65];
+        unsigned char k_ipad[65] = {};
+        unsigned char k_opad[65] = {};
         unsigned char tk[16];
         int i;
 
@@ -727,8 +727,6 @@ void Util_hmacMD5(const unsigned char *data, int datalen, const unsigned char *k
                 keylen = 16;
         }
 
-        memset(k_ipad, 0, sizeof(k_ipad));
-        memset(k_opad, 0, sizeof(k_opad));
         memcpy(k_ipad, key, keylen);
         memcpy(k_opad, key, keylen);
 
